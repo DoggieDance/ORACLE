@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.3 · 2026-07-16">
+<meta name="oracle-build" content="v4.5 · 2026-07-16">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -748,12 +748,57 @@
     .card-name-row, .result-name { font-size: 14px; }
   }
 
+
+  /* ============ v4.4 DESKTOP REFINEMENT: use the monitor ============ */
+  @media (min-width: 900px) {
+    /* Wider shell: QHD shouldn't be half dead space */
+    .app { max-width: 1920px; grid-template-columns: 264px minmax(0, 1fr); }
+    .results-pad, .deck-screen, .decks-screen { max-width: 1460px; }
+
+    /* Deck actions: one flowing row, no orphan Moxfield */
+    .deck-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(172px, 1fr)); gap: 10px; }
+    .deck-action { min-width: 0; }
+
+    /* Deck list: two-column groups, headers span both */
+    .deck-screen > div:has(> .deck-section-head) { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; align-items: start; }
+    .deck-screen > div:has(> .deck-section-head) > .deck-section-head { grid-column: 1 / -1; }
+
+    /* My Decks: card grid instead of a stretched stack */
+    .decks-screen div:has(> .deck-card-item) { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 12px; }
+    .decks-screen .deck-card-item { margin-bottom: 0; }
+
+    /* Workshop panel earns the width too */
+    .detail-overlay { width: min(1340px, calc(100% - 96px)); }
+    .synergy-rail { grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); }
+  }
+
+
+  /* ============ v4.5 DESKTOP FULL-BLEED ============ */
+  @media (min-width: 900px) {
+    /* No shell cap: sidebar hugs the window edge, content owns the rest */
+    .app { max-width: none; border-left: none; border-right: none; }
+
+    /* Content fills, with breathing room instead of caps */
+    .results-pad, .deck-screen, .decks-screen { max-width: none; padding: 26px 44px 70px; }
+
+    /* Deck groups scale: 2 columns at laptop width, 3-4 on a big monitor */
+    .deck-screen > div:has(> .deck-section-head) { grid-template-columns: repeat(auto-fill, minmax(520px, 1fr)); }
+
+    /* Keep the top-of-deck controls from stretching absurdly wide */
+    .cmdr-banner, .deck-actions, .deck-count-hero, .mode-toggle, .synergy-toggle-row { max-width: 1560px; margin-left: auto; margin-right: auto; }
+    .deck-actions { grid-template-columns: repeat(auto-fit, minmax(172px, 1fr)); }
+    .cmdr-banner { margin-bottom: 14px; }
+
+    /* Workshop panel scales with the window */
+    .detail-overlay { width: min(1680px, calc(100% - 120px)); }
+  }
+
 </style>
 </head>
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v4.3 \u00B7 2026-07-16', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v4.5 \u00B7 2026-07-16', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
