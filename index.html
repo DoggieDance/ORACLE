@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.12 · 2026-07-16">
+<meta name="oracle-build" content="v4.14 · 2026-07-16">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -827,12 +827,16 @@
   .plan-note { margin-top: 9px; font-family: var(--serif); font-style: italic; font-size: 12px; color: rgba(232,205,120,.66); }
   @media (max-width: 899px) { .plan-row, .blend-row { flex-wrap: wrap; } .plan-name { min-width: 0; } }
 
+
+  /* v4.13: honesty note */
+  .novel-note { border: 1px solid rgba(236,196,106,.3); background: rgba(224,180,90,.07); border-radius: 14px; padding: 11px 14px; margin-bottom: 14px; font-family: var(--serif); font-style: italic; font-size: 13px; line-height: 1.45; color: rgba(236,208,140,.85); }
+
 </style>
 </head>
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v4.12 \u00B7 2026-07-16', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v4.13 \u00B7 2026-07-16', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -1303,7 +1307,7 @@ const ATOMS = [
     { key: 'blood', w: 6, chip: 'Blood', title: 'Blood Tokens', sub: 'Loot and rummage', test: /blood token/, q: 'o:"blood token"', oq: 'o:"blood token"', why: 'trades in Blood tokens' },
     { key: 'extracombat', w: 6, chip: 'Extra combats', title: 'Extra Combats', sub: 'Attack again', test: /additional combat|extra combat/, q: '(o:"additional combat" OR o:"extra combat")', oq: '(o:"additional combat" OR o:"extra combat")', why: 'wants more combat steps' },
     { key: 'reanimate', w: 6, chip: 'Reanimator', title: 'Reanimation', sub: 'Raise the dead', test: /from (your|a) graveyard (on)?to the battlefield/, q: 'o:"graveyard to the battlefield"', oq: 'o:"graveyard to the battlefield"', why: 'reanimates from the graveyard' },
-    { key: 'proliferate', w: 6, chip: 'Proliferate', title: 'Proliferate & Counters', sub: 'More of everything', test: /proliferate/, q: '(o:proliferate OR o:"counter on")', oq: 'o:proliferate', why: 'proliferates' },
+    { key: 'proliferate', w: 6, chip: 'Proliferate', title: 'Proliferate & Counters', sub: 'More of everything', test: /proliferate|experience counter/, q: '(o:proliferate OR o:"counter on")', oq: 'o:proliferate', why: 'proliferates' },
     { key: 'energy', w: 6, chip: 'Energy', title: 'Energy Engine', sub: 'Charge it up', test: /\{e\}|energy counter/, q: '(o:"{e}" OR o:"energy counter")', oq: '(o:"{e}" OR o:"energy counter")', why: 'runs on Energy' },
     { key: 'devotion', w: 5, chip: 'Devotion', title: 'Devotion Payoffs', sub: 'Pips are power', test: /devotion to/, q: 'o:\"devotion to\"', oq: 'o:\"devotion to\"', why: 'counts colored pips \u2014 pack heavy-pip permanents and devotion payoffs' },
     { key: 'mutate', w: 6, chip: 'Mutate', title: 'Mutate Pile', sub: 'One creature, many souls', test: /\bmutates?\b/, q: 'o:mutate', oq: 'o:mutate', why: 'mutates \u2014 stack abilities on one body' },
@@ -1311,16 +1315,31 @@ const ATOMS = [
     { key: 'goad', w: 6, chip: 'Goad', title: 'Goad & Table Politics', sub: 'Make them fight', test: /\bgoad/, q: 'o:goad', oq: 'o:goad', why: 'goads the table' },
     { key: 'vote', w: 6, chip: 'Voting', title: 'Vote Payoffs & Blink', sub: 'Per-vote value', test: /\bvotes?\b|council's dilemma|will of the council/, q: '(o:votes OR o:"vote for")', oq: 'o:vote', why: 'rewards each vote \u2014 blink re-triggers the council' },
     { key: 'dungeon', w: 6, chip: 'Dungeons', title: 'Venture & Dungeons', sub: 'Delve the depths', test: /venture into the dungeon|completed? a dungeon/, q: '(o:venture OR o:dungeon)', oq: 'o:venture', why: 'ventures into dungeons' },
-    { key: 'wheels', w: 6, chip: 'Wheels', title: 'Wheels & Forced Draw', sub: 'Everyone draws, they pay', test: /whenever an opponent draws|whenever a player draws|each player draws|draws an additional card/, q: '(o:"each player draws" OR o:"draws an additional card" OR o:"whenever an opponent draws")', oq: '(o:"each player draws" OR o:"whenever an opponent draws" OR o:"draws an additional card")', why: 'forces cards into everyone\u2019s hands and punishes the drawing' },
+    { key: 'wheels', w: 6, chip: 'Wheels', title: 'Wheels & Forced Draw', sub: 'Everyone draws, they pay', test: /whenever an opponent draws|whenever a player draws|each player draws|draws an additional card|can't draw more than one/, q: '(o:"each player draws" OR o:"draws an additional card" OR o:"whenever an opponent draws")', oq: '(o:"each player draws" OR o:"whenever an opponent draws" OR o:"draws an additional card")', why: 'forces cards into everyone\u2019s hands and punishes the drawing' },
     { key: 'exalted', w: 6, chip: 'Attacks alone', title: 'Attack Alone Payoffs', sub: 'One perfect strike', test: /attacks alone|exalted/, q: '(keyword:exalted OR o:"attacks alone")', oq: '(keyword:exalted OR o:"attacks alone")', why: 'rewards attacking with exactly one creature' },
     { key: 'theft', w: 5, chip: 'Theft', title: 'Steal & Sacrifice', sub: 'Yours now', test: /you (gain|get) control of|gains? control of (target|enchanted|up to|that creature|it until)/, q: '(o:"gain control of target" OR o:"sacrifice a creature:")', oq: 'o:"gain control of"', why: 'takes their stuff \u2014 sac outlets make borrowed things permanent' },
-    { key: 'equipment', w: 5, chip: 'Equipment', title: 'Equipment & Gear', sub: 'Suit up', test: /\bequip(ped|ment)?\b|attach/, q: '(t:equipment OR o:equipped)', oq: '(o:equipment OR o:equipped OR o:equip)', why: 'wants Equipment attached' },
-    { key: 'auras', w: 5, chip: 'Auras', title: 'Auras & Enchantress', sub: 'Blessings stack', test: /\bauras?\b|enchanted creature/, q: '(t:aura OR o:"enchanted creature")', oq: '(o:aura OR o:"enchanted creature")', why: 'builds around Auras' },
-    { key: 'landfall', w: 5, chip: 'Landfall', title: 'Landfall & Extra Lands', sub: 'Lands as fuel', test: /landfall|whenever a land (you control )?enters|play (an )?additional land|(number of )?(plains|islands?|swamps?|mountains?|forests?) you control/, q: '(o:landfall OR o:"play an additional land" OR o:"whenever a land you control enters")', oq: '(o:landfall OR o:"additional land")', why: 'triggers off lands' },
-    { key: 'mill', w: 5, chip: 'Mill', title: 'Mill & Self-Mill', sub: 'Feed the yard', test: /\bmills?\b/, q: 'o:mill', oq: 'o:mill', why: 'mills cards' },
-    { key: 'oppdiscard', w: 5, chip: 'Discard (them)', title: 'Opponent Discard', sub: 'Empty their hands', test: /each opponent discards|opponents? discards?|target (player|opponent) discards/, q: '(o:"each opponent discards" OR o:"target player discards" OR o:"whenever an opponent discards")', oq: '(o:"each opponent discards" OR o:"opponent discards")', why: 'attacks opposing hands' },
+    { key: 'equipment', w: 5, chip: 'Equipment', title: 'Equipment & Gear', sub: 'Suit up', test: /\bequip(ped|ment)?\b|attach/, sup: ['curses'], q: '(t:equipment OR o:equipped)', oq: '(o:equipment OR o:equipped OR o:equip)', why: 'wants Equipment attached' },
+    { key: 'auras', w: 5, chip: 'Auras', title: 'Auras & Enchantress', sub: 'Blessings stack', test: /\bauras?\b|enchanted creature/, sup: ['curses'], q: '(t:aura OR o:"enchanted creature")', oq: '(o:aura OR o:"enchanted creature")', why: 'builds around Auras' },
+    { key: 'landfall', w: 5, chip: 'Landfall', title: 'Landfall & Extra Lands', sub: 'Lands as fuel', test: /landfall|whenever a land (you control )?enters|play (an )?additional land|any number of lands|(number of )?(plains|islands?|swamps?|mountains?|forests?) you control/, q: '(o:landfall OR o:"play an additional land" OR o:"whenever a land you control enters")', oq: '(o:landfall OR o:"additional land")', why: 'triggers off lands' },
+    { key: 'mill', w: 5, chip: 'Mill', title: 'Mill & Self-Mill', sub: 'Feed the yard', test: /\bmills?\b|surveil|put into your graveyard from your library|from your library into your graveyard/, q: '(o:mill OR o:surveil)', oq: 'o:mill', why: 'mills cards' },
+    { key: 'oppdiscard', w: 5, chip: 'Discard (them)', title: 'Opponent Discard', sub: 'Empty their hands', test: /each opponent discards|opponents? discards?|target (player|opponent) discards|that player discards|each player discards/, q: '(o:"each opponent discards" OR o:"target player discards" OR o:"whenever an opponent discards")', oq: '(o:"each opponent discards" OR o:"opponent discards")', why: 'attacks opposing hands' },
     { key: 'discard', w: 5, chip: 'Loot & Madness', title: 'Looting & Madness', sub: 'Your yard is a resource', sup: ['oppdiscard', 'wheels'], test: /you (may )?discard|discard your hand|madness|discards? [^.]{0,24}, then draw|draw [^.]{0,24}, then discard/, q: '(o:madness OR o:"draw a card, then discard" OR o:"discard a card:")', oq: '(o:madness OR o:"you may discard")', why: 'profits from your own discards' },
-    { key: 'exileplay', w: 5, chip: 'Impulse', title: 'Impulse & Exile Play', sub: 'Cast from beyond', test: /exile the top|you may (play|cast) (it|that|them|those|a spell)|from exile|becomes? plotted|\bplot\b|foretell|foretold|suspend/, q: '(o:"exile the top" o:play)', oq: 'o:"exile the top"', why: 'plays cards from exile' },
+    { key: 'exileplay', w: 5, chip: 'Impulse', title: 'Impulse & Exile Play', sub: 'Cast from beyond', test: /exile the top|you may (play|cast) (it|that|them|those|a spell)|from exile|becomes? plotted|\bplot\b|foretell|foretold|suspend/, q: '((o:"exile the top" (o:play OR o:cast)) OR o:"from exile" OR o:foretell)', oq: 'o:"exile the top"', why: 'plays cards from exile' },
+    { key: 'leavesbf', w: 5, chip: 'Leaves play', title: 'Departure Triggers', sub: 'Every exit pays', test: /(creature|permanent)s? (you control )?leaves the battlefield/, q: '(o:"leaves the battlefield" OR o:exile o:return)', oq: 'o:"leaves the battlefield"', why: 'profits every time something leaves' },
+    { key: 'donate', w: 7, chip: 'Gifts', title: 'Gifts & Donations', sub: 'Generosity with teeth', test: /opponent gains control of [^.]{0,36}you (own|control)/, q: '(o:"target opponent gains control" OR o:"an opponent gains control" OR o:"exchange control")', oq: 'o:"gains control"', why: 'gives things away on purpose' },
+    { key: 'flash', w: 5, chip: 'Flash', title: 'Flash & Instant Speed', sub: 'Their end step, your turn', test: /as though (it|they) had flash/, q: '(keyword:flash -t:land)', oq: 'o:flash', why: 'plays at instant speed' },
+    { key: 'poison', w: 7, chip: 'Poison', title: 'Poison & Toxic', sub: 'Ten drops of venom', test: /\btoxic \d|poison counters?|\binfect\b/, q: '(keyword:toxic OR keyword:infect OR o:"poison counter")', oq: '(o:toxic OR o:infect OR o:"poison counter")', why: 'wins on poison', sup: [] },
+    { key: 'burn', w: 6, chip: 'Burn', title: 'Pingers & Burn', sub: 'Death by degrees', test: /deals? \d+ damage to (any target|each opponent|that player|each player|target player)|noncombat damage|would deal damage[^.]{0,50}(double|plus)/, q: '(o:"deals 1 damage" OR o:"deals 2 damage" OR o:"damage to each opponent")', oq: '(o:"deals damage" o:opponent)', why: 'turns small damage into a win' },
+    { key: 'walkers', w: 7, chip: 'Superfriends', title: 'Planeswalkers', sub: 'Assemble the council', test: /planeswalkers? you control|loyalty (abilit|counter)/, q: 't:planeswalker', oq: '(o:planeswalker OR o:loyalty)', why: 'builds around planeswalkers' },
+    { key: 'curses', w: 7, chip: 'Curses', title: 'Curses', sub: 'Hex the table', test: /\bcurses?\b/, q: '(t:curse OR o:"enchant player")', oq: 'o:curse', why: 'hangs Curses on players' },
+    { key: 'topdeck', w: 5, chip: 'Top of library', title: 'Top of the Library', sub: 'The future, revealed', test: /top card of your library[^.]{0,50}(any time|play|cast)|(play|cast) [^.]{0,24}from the top of your library/, q: '(o:"top of your library" (o:play OR o:cast OR o:reveal) OR o:scry)', oq: 'o:"top of your library"', why: 'plays off the top' },
+    { key: 'sagas', w: 6, chip: 'Sagas', title: 'Sagas', sub: 'Stories with chapters', test: /sagas? you control|chapter abilit|read ahead|lore counter/, q: '(t:saga)', oq: '(o:saga OR o:"lore counter")', why: 'cares about Sagas' },
+    { key: 'taxes', w: 5, chip: 'Taxes', title: 'Taxes & Friction', sub: 'Make them pay', test: /opponents? cast cost \{?\d\}? more|spells your opponents cast cost|unless (that player|its controller) pays/, q: '(o:"cost {1} more" OR o:"cost {2} more" OR o:"unless that player pays")', oq: 'o:"cost" o:"more"', why: 'taxes the table' },
+    { key: 'fort', w: 5, chip: 'Pillowfort', title: 'Pillowfort', sub: 'Come at the king', test: /can't attack you( or planeswalkers you control)? unless|attack you unless [^.]{0,24}pays/, q: '(o:"attack you unless" OR o:"can\'t attack you")', oq: 'o:"attack you"', why: 'discourages attacks' },
+    { key: 'scrysurv', w: 5, chip: 'Scry matters', title: 'Scry & Surveil Payoffs', sub: 'Knowledge is power', test: /whenever you (scry|surveil)/, q: '(o:scry OR o:surveil)', oq: '(o:scry OR o:surveil)', why: 'rewards looking ahead' },
+    { key: 'extraturn', w: 6, chip: 'Extra turns', title: 'Extra Turns', sub: 'Time is a resource', test: /take (an|two) extra turns?|extra turn after this one/, q: '(o:"extra turn")', oq: 'o:"extra turn"', why: 'bends the turn structure' },
+    { key: 'ninjutsu', w: 6, chip: 'Ninjutsu', title: 'Unblockable Enablers', sub: 'Slip through', test: /ninjutsu/, q: '(keyword:ninjutsu OR o:"can\'t be blocked")', oq: 'o:ninjutsu', why: 'sneaks in through open lanes' },
+    { key: 'domain', w: 5, chip: 'Domain', title: 'Domain & Land Types', sub: 'All five basics', test: /\bdomain\b|basic land types? among/, q: '(o:domain OR o:"basic land type")', oq: 'o:domain', why: 'counts basic land types' },
     { key: 'costdown', w: 6, chip: 'Cost reducer', title: 'Big Spells Cheap', sub: 'Discount engine', test: /(instant|sorcery)[^.]{0,40}spells you cast[^.]{0,40}cost [^.]{0,14}less/, q: '((t:instant OR t:sorcery) mv>=4)', oq: '(o:"spells you cast" o:"less")', why: 'discounts big spells' },
     { key: 'massdeploy', w: 7, chip: 'Mass deploy', title: 'Cheat Into Play', sub: 'Skip the mana', test: /creature cards? from your hand onto the battlefield/, q: '(t:creature (pow>=7 OR mv>=7))', oq: 'o:"from your hand onto the battlefield"', why: 'deploys creatures without paying' },
     { key: 'selftap', w: 6, chip: 'Tap engine', title: 'Tap Triggers', sub: 'Value every tap', test: /whenever [^.]{0,30}becomes tapped/, q: '(t:vehicle OR keyword:convoke OR o:"tap an untapped creature you control")', oq: 'o:"becomes tapped"', why: 'triggers whenever it becomes tapped' },
@@ -1328,10 +1347,10 @@ const ATOMS = [
     { key: 'xspells', w: 5, chip: 'Big X', title: 'X Spells & Big Mana', sub: 'Go over the top', test: /\{x\}/, q: '(m:{X})', oq: 'o:"{x}"', why: 'scales with big mana' },
     { key: 'power4', w: 5, chip: 'Big power', title: 'Power Matters', sub: 'Bigger is better', test: /power [3-9] or greater/, q: '(o:"power 4 or greater" OR (t:creature pow>=4))', oq: 'o:"power 4 or greater"', why: 'rewards high power' },
     { key: 'countersgen', w: 5, chip: 'Counters', title: 'Counter Engine', sub: 'Any counter, more of it', sup: ['counters', 'proliferate'], test: /counters? on |counters? from among|remove [^.]{0,26}counter/, q: '(o:proliferate OR (o:"put a" o:"counter on"))', oq: 'o:"counter on"', why: 'runs on counters \u2014 proliferate scales every source' },
-    { key: 'handsize', w: 4, chip: 'Hand size', title: 'Hand Size Matters', sub: 'A full grip is power', test: /for each card in your hand|cards? in (your|their|each player's) hand|no maximum hand size/, q: '(o:"no maximum hand size" OR o:"for each card in your hand" OR o:"draw two cards")', oq: 'o:"card in your hand"', why: 'scales with cards in hand' },
+    { key: 'handsize', w: 4, chip: 'Hand size', title: 'Hand Size Matters', sub: 'A full grip is power', test: /for each card in your hand|cards? in (your|their|each player's) hand|no maximum hand size/, q: '(o:"no maximum hand size" OR o:"for each card in your hand")', oq: 'o:"card in your hand"', why: 'scales with cards in hand' },
     { key: 'sac', w: 4, chip: 'Sacrifice', title: 'Sacrifice Outlets & Fodder', sub: 'Grist for the mill', sup: ['death'], test: /sacrifices? (a|an|another|this|two|three|four|x|that|each)/, q: '(o:"sacrifice a creature" OR o:"sacrifice another")', oq: 'o:"sacrifice a"', why: 'wants things sacrificed' },
     { key: 'death', w: 4, chip: 'Death triggers', title: 'Death Triggers', sub: 'Profit from the fallen', test: /(whenever|when) (a|an|another|each|one or more)[^.]{0,44}dies|or another [^.]{0,34}dies|creatures? (you control )?die\b|died this turn|is put into a graveyard from the battlefield/, q: '(o:"you control dies" OR o:"another creature dies" OR o:"a creature dies")', oq: 'o:dies', why: 'triggers when creatures die' },
-    { key: 'drain', w: 4, chip: 'Drain', title: 'Drain the Table', sub: 'Aristocrat finishers', test: /each opponent loses|opponents? loses? .{0,12}life/, q: '(o:"each opponent loses" OR o:"opponents lose")', oq: '(o:"each opponent loses" OR o:"opponents lose")', why: 'drains every opponent' },
+    { key: 'drain', w: 4, chip: 'Drain', title: 'Drain the Table', sub: 'Aristocrat finishers', test: /each opponent loses|that player loses \d+ life|opponents? loses? .{0,12}life/, q: '(o:"each opponent loses" OR o:"opponents lose")', oq: '(o:"each opponent loses" OR o:"opponents lose")', why: 'drains every opponent' },
     { key: 'spellslinger', w: 4, chip: 'Spells', title: 'Spellslinger', sub: 'Cast, copy, repeat', test: /instant or sorcery|noncreature spell|magecraft|prowess/, q: '(o:"whenever you cast an instant or sorcery" OR o:magecraft OR keyword:prowess)', oq: '(o:"instant or sorcery" OR o:magecraft)', why: 'rewards casting spells' },
     { key: 'attack', w: 4, chip: 'Attack triggers', title: 'Attack Triggers', sub: 'Reward the red zone', test: /whenever .{0,30}attacks|whenever you attack\b|deals combat damage to (a player|an opponent|each|one of your opponents)|can.t be blocked/, q: '(o:whenever o:attacks)', oq: '(o:whenever o:attacks)', why: 'triggers on attacks' },
     { key: 'deathtouchkw', w: 4, chip: 'Deathtouch', title: 'Deathtouch Matters', sub: 'Every point is lethal', test: /deathtouch/, q: '((t:creature keyword:deathtouch) OR o:"gains deathtouch" OR o:"have deathtouch")', oq: 'o:deathtouch', why: 'cares about deathtouch \u2014 granters multiply the trigger pool' },
@@ -1378,12 +1397,22 @@ function extractAtoms(card) {
     const found = [];
     const tribe = detectTribe(o);
     if (tribe) found.push({ atom: tribalAtom(tribe), snippet: '', tribe: tribe });
+    // polarity layer: opponent-scoped trigger clauses must not feed you-scoped atoms
+    const oPol = o
+        .replace(/(whenever|when|if) [^,.]{0,36}an opponent controls dies[^.]*/g, ' ')
+        .replace(/(whenever|when|if) [^,.]{0,30}opponents? control d(ie|ies)[^.]*/g, ' ')
+        .replace(/(whenever|if) an opponent (would gain life|gains life)[^.]*/g, ' ')
+        .replace(/whenever an opponent casts[^.]*/g, ' ')
+        .replace(/(whenever|when) [^,.]{0,40}under an opponent's control[^.]*/g, ' ')
+        .replace(/(each|an) opponent sacrifices[^.]*/g, ' ');
+    const POLAR = { death: 1, etb: 1, sac: 1, lifegain: 1, spellslinger: 1, casttrigger: 1 };
     ATOMS.forEach(a => {
-        const m = o.match(a.test);
+        const m = (POLAR[a.key] ? oPol : o).match(a.test);
         if (m) found.push({ atom: a, snippet: m[0] || '' });
     });
     const hasGear = found.some(f => f.atom.key === 'equipment' || f.atom.key === 'auras');
-    if (!hasGear && (['hexproof', 'indestructible', 'double strike', 'shroud'].some(k => kws.indexOf(k) !== -1) || (!kws.length && /\b(hexproof|indestructible|shroud|double strike)\b/.test(o)))) {
+    const oSelf = o.replace(/(other )?(creatures|planeswalkers|permanents|\w+s) you control (have|gain|get)[^.]*\./g, ' ');
+    if (!hasGear && (['hexproof', 'indestructible', 'double strike', 'shroud'].some(k => kws.indexOf(k) !== -1) || (!kws.length && /\b(hexproof|indestructible|shroud|double strike)\b/.test(oSelf)))) {
         found.push({ atom: ATOM_VOLTRON, snippet: '' });
     }
     const have = {};
@@ -1469,6 +1498,34 @@ const RAILS = {
         rails: [
             { role: 'enabler', title: 'Sac Outlets & Fodder', sub: 'Keep the deaths coming', q: '(o:"sacrifice a creature:" OR o:"sacrifice another creature" OR (o:create o:token o:creature))', why: 'free outlets plus token fodder keep the trigger flowing' },
             { role: 'payoff', title: 'Aristocrat Drains', sub: 'Finish the table', q: '(o:"each opponent loses" OR (o:dies o:"loses 1 life"))', why: 'turns each death into reach' }
+        ]
+    },
+    leavesbf: {
+        pTest: /leaves the battlefield/,
+        rails: [
+            { role: 'enabler', title: 'Blink & Flicker', sub: 'Exit, stage left', q: '(o:exile o:return o:battlefield)', why: 'every flicker is a departure and a return' },
+            { role: 'enabler', title: 'Free Sac Outlets', sub: 'Leave on your terms', q: '(o:"sacrifice a creature:" OR o:"sacrifice another creature:")', why: 'sacrifice makes things leave whenever you want' }
+        ]
+    },
+    poison: {
+        pTest: /poison counters?/,
+        rails: [
+            { role: 'enabler', title: 'Toxic & Infect Creatures', sub: 'The delivery system', q: '(keyword:toxic OR keyword:infect)', why: 'bodies that carry the poison' },
+            { role: 'payoff', title: 'Poison Payoffs & Proliferate', sub: 'Ten is the number', q: '(o:"poison counter" OR o:proliferate OR o:corrupted)', why: 'proliferate turns one touch into lethal' }
+        ]
+    },
+    burn: {
+        pTest: /would deal damage[^.]{0,50}(double|plus)/,
+        rails: [
+            { role: 'enabler', title: 'Pingers & Damage Sources', sub: 'Constant pressure', q: '((o:"deals 1 damage" OR o:"deals 2 damage") (o:"any target" OR o:"each opponent"))', why: 'repeatable damage feeds the engine' },
+            { role: 'amplifier', title: 'Damage Amplifiers', sub: 'Turn it up', q: '(o:"deals double" OR o:"damage plus" OR o:"instead deals")', why: 'doublers make every ping a hammer' }
+        ]
+    },
+    walkers: {
+        pTest: /planeswalkers? you control/,
+        rails: [
+            { role: 'payoff', title: 'Planeswalkers', sub: 'The council itself', q: 't:planeswalker', why: 'the deck is the walkers' },
+            { role: 'enabler', title: 'Superfriends Support', sub: 'Protect and proliferate', q: '(o:proliferate OR o:"loyalty counter" OR o:"planeswalkers you control")', why: 'proliferate and protection keep the council alive' }
         ]
     },
     costdown: {
@@ -1583,6 +1640,17 @@ const ARCHETYPES = {
     massdeploy: { name: 'Cheat Big Creatures', win: 'slam the hand onto the table and swing' },
     copytoken: { name: 'Copy Value', win: 'clone the best thing in play, repeatedly' },
     artifacts: { name: 'Artifacts', win: 'artifact value engines snowball into combo finishes' },
+    poison: { name: 'Poison', win: 'ten poison counters \u2014 a third of the usual damage job' },
+    burn: { name: 'Burn & Pingers', win: 'amplified pings drain the whole table at once' },
+    walkers: { name: 'Superfriends', win: 'ultimate a walker behind a protected board' },
+    taxes: { name: 'Stax & Taxes', win: 'win slowly while everyone else can\u2019t afford to' },
+    fort: { name: 'Pillowfort', win: 'outlast the table behind walls, then combo or drain' },
+    curses: { name: 'Curses', win: 'stack punishments until the table crumbles' },
+    extraturn: { name: 'Extra Turns', win: 'chain turns until nobody else gets one' },
+    sagas: { name: 'Sagas & Chapters', win: 'loop chapter value into an engine' },
+    donate: { name: 'Gifts & Group Hug', win: 'give presents that punish, drain the grateful table' },
+    leavesbf: { name: 'Departures', win: 'blink and sacrifice loops that pay on every exit' },
+    flash: { name: 'Flash', win: 'hold everything up, act last, punish sorcery-speed tables' },
     lifegain: { name: 'Lifegain', win: 'convert life into cards and drain wins' },
     landfall: { name: 'Lands Matter', win: 'lands as an engine \u2014 Scapeshift-style finishes' },
     reanimate: { name: 'Graveyard', win: 'cheat cost by reanimating haymakers' },
@@ -1671,7 +1739,17 @@ function buildEngineModel(commander) {
         artifactCopy: /whenever another nontoken artifact you control enters[^.]{0,60}/.test(o) && /copy/.test(o),
         countPower: /where x is [^.]{0,36}power/.test(o),
         countToughness: /where x is [^.]{0,36}toughness/.test(o),
-        selfPow: o.indexOf(firstName.toLowerCase() + "'s power") !== -1 || /where x is this creature's power/.test(o)
+        selfPow: o.indexOf(firstName.toLowerCase() + "'s power") !== -1 || /where x is this creature's power/.test(o),
+        landsDie: /lands? you control (is|are) put into a graveyard/.test(o),
+        gyLeave: /leave your graveyard/.test(o),
+        oppDeath: /(whenever|when) [^,.]{0,36}an opponent controls dies|creatures? (your )?opponents? control d(ie|ies)/.test(o),
+        giftGain: /(if|whenever) an opponent (would gain life|gains life)/.test(o),
+        oppCast: /whenever an opponent casts/.test(o),
+        oppEtb: /(whenever|when) [^,.]{0,40}under an opponent's control/.test(o),
+        edict: /(each|an) opponent sacrifices/.test(o),
+        negCounters: /-1\/-1 counters?/.test(o),
+        theirYard: /opponents'? graveyards?|an opponent's graveyard/.test(o),
+        castType: (o.match(/whenever you cast (?:a|an) (creature|enchantment|artifact|legendary|planeswalker) spell/) || [])[1]
     };
     let foundForPlans = found;
     if (P.xRestricted) {
@@ -1690,6 +1768,62 @@ function buildEngineModel(commander) {
     if (P.xIsDiscount) {
         for (let i = out.length - 1; i >= 0; i--) if (/^xspells/.test(out[i].key || '')) out.splice(i, 1);
         foundForPlans = foundForPlans.filter(f => f.atom.key !== 'xspells');
+    }
+    // lands dying is not creature aristocrats: re-scope the death family to lands
+    if (P.landsDie) {
+        for (let i = out.length - 1; i >= 0; i--) if (/^death/.test(out[i].key || '') || /^sac/.test(out[i].key || '')) out.splice(i, 1);
+        out.push({ key: 'landsac', role: 'enabler', title: 'Land Sacrifice', sub: 'Lands want to die', q: base + ' (o:"sacrifice a land" OR (t:land o:"sacrifice this land"))', why: firstName + ' triggers on your lands hitting the graveyard \u2014 fetches and sac lands are triggers, not just fixing.' });
+        out.push({ key: 'landrec', role: 'enabler', title: 'Land Recursion', sub: 'Die, return, repeat', q: base + ' (o:"play lands from your graveyard" OR o:"land card from your graveyard")', why: 'Crucible effects loop the deaths forever.' });
+    }
+    // cards leaving the graveyard is its own engine half
+    if (P.gyLeave) {
+        out.push({ key: 'gy-depart', role: 'enabler', title: 'Graveyard Departures', sub: 'Exits are triggers', q: base + ' (keyword:delve OR keyword:escape OR (o:exile o:"from your graveyard"))', why: 'delve, escape, and exile costs make cards leave in batches.' });
+    }
+    // POLARITY: opponent-scoped triggers get opponent-aimed rails
+    if (P.oppDeath) {
+        out.push({ key: 'opp-die', role: 'enabler', title: 'Make Them Die', sub: 'Their losses, your gain', q: base + ' (o:"destroy target creature" OR o:"each opponent sacrifices" OR (o:fight -t:land))', why: firstName + " triggers on opponents' creatures dying \u2014 removal, edicts, and fights pull the trigger." });
+    }
+    if (P.edict && !P.oppDeath) {
+        out.push({ key: 'edicts', role: 'enabler', title: 'Edicts & Forced Sacrifice', sub: 'They choose, they lose', q: base + ' (o:"each opponent sacrifices" OR o:"its controller sacrifices" OR o:"that player sacrifices")', why: 'forced sacrifice ignores hexproof and indestructible entirely.' });
+    }
+    if (P.giftGain) {
+        out.push({ key: 'gifts-life', role: 'enabler', title: 'Forced Gifts', sub: 'Poisoned generosity', q: base + ' (o:"each opponent gains" OR o:"an opponent gains life" OR o:"opponents gain")', why: firstName + ' punishes opponents for gaining life \u2014 so make them gain it.' });
+    }
+    if (P.oppCast) {
+        out.push({ key: 'cast-punish', role: 'payoff', title: 'Cast Punishers', sub: 'Taxing their turns', q: base + ' (o:"whenever an opponent casts" OR o:"whenever a player casts")', why: 'opponents cast spells every turn \u2014 stack more punishers on the same trigger.' });
+    }
+    if (P.oppEtb) {
+        out.push({ key: 'give-crea', role: 'enabler', title: 'Give Them Creatures', sub: 'Trojan horses', q: base + ' (o:"opponent creates" OR o:"under their control" OR o:"under that player\'s control")', why: firstName + ' triggers when creatures enter under opponents\' control \u2014 gift effects pull it on demand.' });
+    }
+    // DIRECTION: -1/-1 counters are not +1/+1 counters
+    if (P.negCounters) {
+        for (let i = out.length - 1; i >= 0; i--) if (/^counters|^countersgen/.test(out[i].key || '')) out.splice(i, 1);
+        foundForPlans = foundForPlans.filter(f => f.atom.key !== 'counters' && f.atom.key !== 'countersgen');
+        out.push({ key: 'negctr-src', role: 'enabler', title: 'Wither & \u22121/\u22121 Sources', sub: 'The withering touch', q: base + ' (keyword:wither OR keyword:persist OR o:"-1/-1 counter")', why: firstName + ' wants \u22121/\u22121 counters placed \u2014 a +1/+1 shell starves the engine.' });
+        out.push({ key: 'negctr-pay', role: 'payoff', title: '\u22121/\u22121 Payoffs', sub: 'Profit from decay', q: base + ' (o:"whenever" o:"-1/-1 counter")', why: 'doubles down on every counter placed.' });
+    }
+    // ZONE: their graveyards are not your graveyard
+    if (P.theirYard) {
+        for (let i = out.length - 1; i >= 0; i--) if (/^graveyard/.test(out[i].key || '')) out.splice(i, 1);
+        foundForPlans = foundForPlans.filter(f => f.atom.key !== 'graveyard');
+        out.push({ key: 'fill-yards', role: 'enabler', title: 'Fill Their Yards', sub: 'Stock the pantry', q: base + ' (o:"opponent mills" OR o:"each player mills" OR o:"target player mills")', why: firstName + ' feeds on opponents\' graveyards \u2014 mill them, not yourself.' });
+    } else {
+        const oYard = o.replace(/from (a|all|each) graveyards?|from graveyards/g, ' ');
+        if (!/graveyard/.test(oYard)) {
+            for (let i = out.length - 1; i >= 0; i--) if (/^graveyard/.test(out[i].key || '')) out.splice(i, 1);
+            foundForPlans = foundForPlans.filter(f => f.atom.key !== 'graveyard');
+            if (/exile[^.]{0,24}from (a|all|each) graveyards?/.test(o)) out.push({ key: 'gy-hate', role: 'enabler', title: 'Graveyard Hate That Pays', sub: 'Salt the earth', q: base + ' (o:exile (o:"from a graveyard" OR o:"from graveyards" OR o:"all graveyards"))', why: firstName + ' profits from exiling out of any graveyard \u2014 hate pieces are triggers.' });
+        }
+    }
+    // TYPE: cast triggers scoped to a spell type get type-scoped rails
+    if (P.castType) {
+        const TQ = { creature: '(o:"whenever you cast a creature" OR o:"creature spells you cast" OR o:"creature spells cost")', enchantment: '(o:constellation OR o:"whenever you cast an enchantment" OR o:"enchantment spells")', artifact: '(o:"whenever you cast an artifact" OR o:"artifact spells" OR o:affinity)', legendary: '(o:legendary (o:cast OR o:cost OR o:spell))', planeswalker: '(o:"planeswalker spells" OR o:"loyalty")' };
+        const TC = { creature: '(t:creature o:enters)', enchantment: '(t:enchantment o:enters)', artifact: '(t:artifact o:enters)', legendary: '(t:legendary -t:land)', planeswalker: 't:planeswalker' };
+        out.forEach(s => {
+            if (/^casttrigger/.test(s.key || '')) { s.title = P.castType.charAt(0).toUpperCase() + P.castType.slice(1) + ' Cast Payoffs'; s.q = base + ' ' + TQ[P.castType]; s.why = firstName + ' only counts ' + P.castType + ' spells \u2014 the payoffs must match.'; }
+            if (/^spellcopy/.test(s.key || '') && s.title === 'Worth Copying') { s.q = base + ' ' + TC[P.castType]; s.sub = 'Copy the right type'; s.why = 'copy targets scoped to ' + P.castType + ' spells.'; }
+        });
+        if (P.castType === 'legendary') out.push({ key: 'legends', role: 'enabler', title: 'Legendary Density', sub: 'A hall of heroes', q: base + ' (t:legendary -t:land)', why: 'the trigger needs legendary spells \u2014 pack the deck with them.' });
     }
     // copy trigger scoped to nontoken artifacts: re-aim the copy rails, drop token-input rails
     if (P.artifactCopy) {
@@ -1745,6 +1879,7 @@ function buildEngineModel(commander) {
     }
     if (out.length > 9) out.length = 9;
     const oOwn = o.replace(/\([^)]*\)/g, ' ').replace(/"[^"]*"/g, ' ');
+    const coreRails = out.length;
     GATES.forEach(g => {
         if (g.test.test(oOwn) && !seen['gate:' + g.key]) {
             seen['gate:' + g.key] = 1;
@@ -1786,6 +1921,7 @@ function buildEngineModel(commander) {
         sections: out,
         traps: traps.slice(0, 5),
         gamePlans: buildGamePlans(foundForPlans),
+        novel: coreRails === 0,
         insight: studied ? studied.insight : '',
         verified: !!studied
     };
@@ -3132,6 +3268,7 @@ function SynergyOverlay({ onViewAll, commander, deck, deckList, onClose, onAdd, 
                         "Building around",
                         model.verified && React.createElement("span", { className: "verified-chip" }, "\u2713 Studied")),
                     React.createElement("div", { className: "shc-name" }, commander.name))),
+            model.novel && React.createElement("div", { className: "novel-note" }, "\u26A1 This commander uses mechanics the engine doesn't fully read yet. Rails below are the reliable staples floor \u2014 check EDHREC for the spice."),
             React.createElement("div", { className: "cov-card" },
                 React.createElement("div", { className: "cov-title" },
                     React.createElement("span", null, "Deck Doctor"),
