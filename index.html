@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.6 · 2026-07-16">
+<meta name="oracle-build" content="v4.9 · 2026-07-16">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -812,7 +812,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v4.6 \u00B7 2026-07-16', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v4.9 \u00B7 2026-07-16', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -1324,12 +1324,13 @@ const ATOMS = [
 ];
 const ATOM_VOLTRON = { key: 'voltron', w: 5, chip: 'Voltron', title: 'Voltron Protection & Gear', sub: 'One big threat', q: '(t:equipment OR (t:aura o:"enchanted creature gets") OR o:"double strike" OR o:hexproof OR o:indestructible)', oq: '(keyword:hexproof OR keyword:indestructible OR keyword:"double strike")', why: 'is built to swing alone' };
 const TRIBES = ['advisor','ally','angel','artificer','assassin','astartes','bat','bear','beast','bird','cat','cleric','construct','crab','demon','devil','dinosaur','dog','dragon','drake','druid','dwarf','eldrazi','elemental','elephant','elf','elves','faerie','fish','fox','frog','fungus','giant','gnome','goblin','god','golem','horror','human','hydra','illusion','imp','insect','kithkin','knight','kor','kraken','leviathan','lizard','merfolk','minotaur','monk','moonfolk','mouse','myr','ninja','octopus','ogre','ooze','otter','outlaw','ox','pegasus','phoenix','phyrexian','pirate','plant','praetor','rabbit','raccoon','rat','rebel','rogue','samurai','saproling','satyr','scarecrow','scout','serpent','shaman','shapeshifter','skeleton','sliver','slug','snake','soldier','specter','sphinx','spider','spirit','squirrel','thopter','treefolk','troll','turtle','unicorn','vampire','vedalken','wall','warlock','warrior','weird','werewolf','whale','wizard','wolf','wurm','zombie'];
-const TRIBE_GENERIC = { creature: 1, creatures: 1, permanent: 1, permanents: 1, token: 1, tokens: 1, artifact: 1, artifacts: 1, land: 1, lands: 1, player: 1, players: 1, opponent: 1, opponents: 1, spell: 1, spells: 1, card: 1, cards: 1, commander: 1 };
+const TRIBE_GENERIC = { creature: 1, creatures: 1, permanent: 1, permanents: 1, token: 1, tokens: 1, artifact: 1, artifacts: 1, land: 1, lands: 1, player: 1, players: 1, opponent: 1, opponents: 1, spell: 1, spells: 1, card: 1, cards: 1, commander: 1, attacking: 1, blocking: 1, blocked: 1, tapped: 1, untapped: 1, nontoken: 1, nonland: 1, nonartifact: 1, noncreature: 1, nonlegendary: 1, legendary: 1, target: 1, another: 1, other: 1, each: 1, white: 1, blue: 1, black: 1, red: 1, green: 1, colorless: 1, multicolored: 1, monocolored: 1, enchanted: 1, equipped: 1, exiled: 1, sacrificed: 1, enchantment: 1, enchantments: 1, planeswalker: 1, planeswalkers: 1, battle: 1, battles: 1, basic: 1, snow: 1, historic: 1, kicked: 1, modified: 1, goaded: 1, renowned: 1, face: 1, second: 1, first: 1, new: 1, chosen: 1 };
 function normTribe(t) {
     const IRR = { elve: 'elf', wolve: 'wolf', dwarve: 'dwarf', thieve: 'thief', mice: 'mouse', mouses: 'mouse', foxe: 'fox' };
     if (IRR[t]) t = IRR[t]; return t === 'elves' ? 'elf' : t; }
 function detectTribe(o) {
-    let m = o.match(/other ([a-z]+?)s? you control/) || o.match(/another ([a-z]+) you control/) || o.match(/([a-z]+) spells you cast cost/) || o.match(/([a-z]+) creatures you control get/);
+    let m = o.match(/other ([a-z]+?)s? you control/) || o.match(/another ([a-z]+) you control/) || o.match(/([a-z]+) spells you cast cost/) || o.match(/([a-z]+) creatures you control get/)
+        || o.match(/(?:target|a|an|another|each) ([a-z]+) creature card/) || o.match(/return (?:up to \w+ )?target ([a-z]+) creature/) || o.match(/whenever (?:a|an) ([a-z]+) you control (?:enters|dies|attacks)/);
     if (m && !TRIBE_GENERIC[m[1]]) {
         const t = normTribe(m[1]);
         if (TRIBES.indexOf(t) !== -1) return t;
@@ -1560,12 +1561,33 @@ function buildEngineModel(commander) {
             });
         }
     });
-    // conditional copy triggers: 'spells with {X}' restricts what's worth copying
-    const xCond = /spells? with \{x\}|\{x\} in (its|their) mana cost/.test(o);
-    if (xCond) {
+    // ---- Parameter layer: read restrictions INSIDE triggers, transform rails ----
+    const P = {
+        xRestricted: /spells? with \{x\}|\{x\} in (its|their) mana cost/.test(o),
+        drawbackCounter: /with (a|an) (finality|stun) counters? on (it|them)/.test(o),
+        statOverride: /base power and toughness \d+\/\d+/.test(o),
+        selfLoops: /at the beginning of [^.]{0,60}return [^.]{0,80}graveyard to the battlefield/.test(o)
+    };
+    if (P.xRestricted) {
         for (let i = out.length - 1; i >= 0; i--) if (out[i].title === 'Worth Copying') out.splice(i, 1);
     }
-    if (out.length > 8) out.length = 8;
+    if (P.drawbackCounter) {
+        for (let i = out.length - 1; i >= 0; i--) if (/^counters/.test(out[i].key || '') || /proliferate/.test(out[i].q || '')) out.splice(i, 1);
+        out.push({ key: 'ctr-tech', role: 'enabler', title: 'Counter Removal Tech', sub: 'Shed the drawback',
+            q: base + ' (o:"remove a counter" OR o:"remove all counters" OR o:"move a counter")',
+            why: firstName + ' saddles its returns with drawback counters \u2014 removing or moving them makes the recursion permanent.' });
+    }
+    if (P.selfLoops) {
+        for (let i = out.length - 1; i >= 0; i--) if (out[i].title === 'Reanimation') out.splice(i, 1);
+    }
+    const tribeF = found.slice(0, 6).find(f => f.tribe);
+    if (tribeF) {
+        const T = capWord(tribeF.tribe);
+        out.push({ key: 'tribe-anthem', role: 'enabler', title: T + ' Anthems & Banners', sub: 'Lift the whole crew',
+            q: base + ' (o:"choose a creature type" OR o:"creatures you control get +" OR o:"share a creature type")',
+            why: (P.statOverride ? 'stats are overwritten anyway, so board-wide effects and banners carry the weight.' : 'typal bodies run small \u2014 banners and anthems patch stats and add draw.') });
+    }
+    if (out.length > 9) out.length = 9;
     const oOwn = o.replace(/\([^)]*\)/g, ' ').replace(/"[^"]*"/g, ' ');
     GATES.forEach(g => {
         if (g.test.test(oOwn) && !seen['gate:' + g.key]) {
@@ -1577,7 +1599,13 @@ function buildEngineModel(commander) {
     out.push({ key: 'draw', role: 'staple', title: 'Card Advantage', sub: 'Refill your hand', q: base + ' otag:card-advantage', why: 'Aim for ~10 sources of card advantage.' });
     out.push({ key: 'removal', role: 'staple', title: 'Removal', sub: 'Answer their threats', q: base + ' otag:removal', why: 'Roughly 8 answers keeps threats in check.' });
     out.push({ key: 'wipe', role: 'staple', title: 'Board Wipes', sub: 'Reset the board', q: base + ' otag:board-wipe', why: '2\u20134 resets for when the table runs away.' });
-    out.push({ key: 'tutor', role: 'staple', title: 'Tutors', sub: 'Find your key pieces', q: base + ' otag:tutor', why: 'Consistency for your engine pieces.' });
+    const landsMatter = found.some(f => /^land/.test(f.atom.key)) || /landfall|whenever a land [^.]{0,40}enters/.test(o);
+    if (landsMatter) {
+        out.push({ key: 'tutor', role: 'staple', title: 'Tutors', sub: 'Find your key pieces', q: base + ' otag:tutor', why: 'Consistency for your engine pieces \u2014 land tutors and fetches double as triggers here.' });
+        out.push({ key: 'fetches', role: 'enabler', title: 'Fetches & Land Tutors', sub: 'Extra land drops, extra triggers', q: base + ' ((t:land o:"search your library") OR o:"basic land cards" OR o:"land card, put")', why: 'every fetch is another landfall trigger, and they refill from the graveyard loops.' });
+    } else {
+        out.push({ key: 'tutor', role: 'staple', title: 'Tutors', sub: 'Find your key pieces', q: base + ' (otag:tutor -t:land -o:"basic land")', why: 'Consistency for your engine pieces.' });
+    }
     if (ciArr.indexOf('U') !== -1) out.push({ key: 'counter', role: 'staple', title: 'Counterspells', sub: 'Protect your plan', q: base + ' otag:counterspell', why: 'Blue gets to say no.' });
     const studied = commander.oracle_id && (typeof STUDY_DB !== 'undefined') ? STUDY_DB[commander.oracle_id] : null;
     const traps = ((studied && studied.traps) || []).concat(genericTraps(commander, found));
