@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.11 · 2026-07-16">
+<meta name="oracle-build" content="v4.12 · 2026-07-16">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -832,7 +832,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v4.11 \u00B7 2026-07-16', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v4.12 \u00B7 2026-07-16', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -1321,6 +1321,10 @@ const ATOMS = [
     { key: 'oppdiscard', w: 5, chip: 'Discard (them)', title: 'Opponent Discard', sub: 'Empty their hands', test: /each opponent discards|opponents? discards?|target (player|opponent) discards/, q: '(o:"each opponent discards" OR o:"target player discards" OR o:"whenever an opponent discards")', oq: '(o:"each opponent discards" OR o:"opponent discards")', why: 'attacks opposing hands' },
     { key: 'discard', w: 5, chip: 'Loot & Madness', title: 'Looting & Madness', sub: 'Your yard is a resource', sup: ['oppdiscard', 'wheels'], test: /you (may )?discard|discard your hand|madness|discards? [^.]{0,24}, then draw|draw [^.]{0,24}, then discard/, q: '(o:madness OR o:"draw a card, then discard" OR o:"discard a card:")', oq: '(o:madness OR o:"you may discard")', why: 'profits from your own discards' },
     { key: 'exileplay', w: 5, chip: 'Impulse', title: 'Impulse & Exile Play', sub: 'Cast from beyond', test: /exile the top|you may (play|cast) (it|that|them|those|a spell)|from exile|becomes? plotted|\bplot\b|foretell|foretold|suspend/, q: '(o:"exile the top" o:play)', oq: 'o:"exile the top"', why: 'plays cards from exile' },
+    { key: 'costdown', w: 6, chip: 'Cost reducer', title: 'Big Spells Cheap', sub: 'Discount engine', test: /(instant|sorcery)[^.]{0,40}spells you cast[^.]{0,40}cost [^.]{0,14}less/, q: '((t:instant OR t:sorcery) mv>=4)', oq: '(o:"spells you cast" o:"less")', why: 'discounts big spells' },
+    { key: 'massdeploy', w: 7, chip: 'Mass deploy', title: 'Cheat Into Play', sub: 'Skip the mana', test: /creature cards? from your hand onto the battlefield/, q: '(t:creature (pow>=7 OR mv>=7))', oq: 'o:"from your hand onto the battlefield"', why: 'deploys creatures without paying' },
+    { key: 'selftap', w: 6, chip: 'Tap engine', title: 'Tap Triggers', sub: 'Value every tap', test: /whenever [^.]{0,30}becomes tapped/, q: '(t:vehicle OR keyword:convoke OR o:"tap an untapped creature you control")', oq: 'o:"becomes tapped"', why: 'triggers whenever it becomes tapped' },
+    { key: 'discover', w: 5, chip: 'Discover', title: 'Discover & Impulse', sub: 'Free casts off the top', test: /\bdiscover \d|\bdiscover x\b/, q: '(o:discover)', oq: 'o:discover', why: 'discovers off the top' },
     { key: 'xspells', w: 5, chip: 'Big X', title: 'X Spells & Big Mana', sub: 'Go over the top', test: /\{x\}/, q: '(m:{X})', oq: 'o:"{x}"', why: 'scales with big mana' },
     { key: 'power4', w: 5, chip: 'Big power', title: 'Power Matters', sub: 'Bigger is better', test: /power [3-9] or greater/, q: '(o:"power 4 or greater" OR (t:creature pow>=4))', oq: 'o:"power 4 or greater"', why: 'rewards high power' },
     { key: 'countersgen', w: 5, chip: 'Counters', title: 'Counter Engine', sub: 'Any counter, more of it', sup: ['counters', 'proliferate'], test: /counters? on |counters? from among|remove [^.]{0,26}counter/, q: '(o:proliferate OR (o:"put a" o:"counter on"))', oq: 'o:"counter on"', why: 'runs on counters \u2014 proliferate scales every source' },
@@ -1329,7 +1333,7 @@ const ATOMS = [
     { key: 'death', w: 4, chip: 'Death triggers', title: 'Death Triggers', sub: 'Profit from the fallen', test: /(whenever|when) (a|an|another|each|one or more)[^.]{0,44}dies|or another [^.]{0,34}dies|creatures? (you control )?die\b|died this turn|is put into a graveyard from the battlefield/, q: '(o:"you control dies" OR o:"another creature dies" OR o:"a creature dies")', oq: 'o:dies', why: 'triggers when creatures die' },
     { key: 'drain', w: 4, chip: 'Drain', title: 'Drain the Table', sub: 'Aristocrat finishers', test: /each opponent loses|opponents? loses? .{0,12}life/, q: '(o:"each opponent loses" OR o:"opponents lose")', oq: '(o:"each opponent loses" OR o:"opponents lose")', why: 'drains every opponent' },
     { key: 'spellslinger', w: 4, chip: 'Spells', title: 'Spellslinger', sub: 'Cast, copy, repeat', test: /instant or sorcery|noncreature spell|magecraft|prowess/, q: '(o:"whenever you cast an instant or sorcery" OR o:magecraft OR keyword:prowess)', oq: '(o:"instant or sorcery" OR o:magecraft)', why: 'rewards casting spells' },
-    { key: 'attack', w: 4, chip: 'Attack triggers', title: 'Attack Triggers', sub: 'Reward the red zone', test: /whenever .{0,30}attacks|deals combat damage to (a player|an opponent|each|one of your opponents)|can.t be blocked/, q: '(o:whenever o:attacks)', oq: '(o:whenever o:attacks)', why: 'triggers on attacks' },
+    { key: 'attack', w: 4, chip: 'Attack triggers', title: 'Attack Triggers', sub: 'Reward the red zone', test: /whenever .{0,30}attacks|whenever you attack\b|deals combat damage to (a player|an opponent|each|one of your opponents)|can.t be blocked/, q: '(o:whenever o:attacks)', oq: '(o:whenever o:attacks)', why: 'triggers on attacks' },
     { key: 'deathtouchkw', w: 4, chip: 'Deathtouch', title: 'Deathtouch Matters', sub: 'Every point is lethal', test: /deathtouch/, q: '((t:creature keyword:deathtouch) OR o:"gains deathtouch" OR o:"have deathtouch")', oq: 'o:deathtouch', why: 'cares about deathtouch \u2014 granters multiply the trigger pool' },
     { key: 'casttrigger', w: 3, chip: 'Cast triggers', title: 'Cast Triggers', sub: 'Every spell counts', test: /whenever you cast/, q: 'o:"whenever you cast"', oq: 'o:"whenever you cast"', why: 'triggers on your casts' },
     { key: 'tokens', w: 3, chip: 'Tokens', title: 'Tokens & Go Wide', sub: 'Build an army', test: /creates? .{0,40}token|tokens? (would be |are )?created|plus an additional [^.]{0,24}token|\bamass\b/, q: '(o:create o:token)', oq: '(o:create o:token)', why: 'creates tokens' },
@@ -1467,6 +1471,25 @@ const RAILS = {
             { role: 'payoff', title: 'Aristocrat Drains', sub: 'Finish the table', q: '(o:"each opponent loses" OR (o:dies o:"loses 1 life"))', why: 'turns each death into reach' }
         ]
     },
+    costdown: {
+        pTest: /cost [^.]{0,14}less/,
+        rails: [
+            { role: 'payoff', title: 'Big Instants & Sorceries', sub: 'What the discount buys', q: '((t:instant OR t:sorcery) mv>=4)', why: 'the discount only touches mana value 4+' }
+        ]
+    },
+    massdeploy: {
+        pTest: /from your hand onto the battlefield/,
+        rails: [
+            { role: 'payoff', title: 'Haymakers', sub: 'Worth cheating in', q: '(t:creature (pow>=7 OR mv>=7))', why: 'cost is irrelevant when they arrive free' },
+            { role: 'enabler', title: 'Keep the Hand Full', sub: 'Fuel the dump', q: '(o:"no maximum hand size" OR o:"draw cards equal to" OR o:"draw x cards")', why: 'the trigger is only as big as your hand' }
+        ]
+    },
+    selftap: {
+        eTest: /becomes tapped/,
+        rails: [
+            { role: 'enabler', title: 'Ways to Tap', sub: 'On your terms', q: '(t:vehicle OR keyword:convoke OR o:"tap an untapped creature you control")', why: 'crewing and convoke tap it without attacking' }
+        ]
+    },
     xspells: {
         eTest: /add \{c\}\{c\}|add (two|three|x) mana|twice that much mana/,
         pTest: /spells? with \{x\}|\{x\} in (its|their) mana cost/,
@@ -1555,6 +1578,11 @@ const ARCHETYPES = {
     cast: { name: 'Spellslinger', win: 'chain spells into storm-style or burn finishes' },
     spellcopy: { name: 'Spellslinger', win: 'chain spells into storm-style or burn finishes' },
     xspells: { name: 'Big Mana X', win: 'one lethal X spell after ramping past the table' },
+    proliferate: { name: '+1/+1 Counters', win: 'go tall \u2014 a few huge threats plus proliferate' },
+    costdown: { name: 'Spellslinger', win: 'chain spells into storm-style or burn finishes' },
+    massdeploy: { name: 'Cheat Big Creatures', win: 'slam the hand onto the table and swing' },
+    copytoken: { name: 'Copy Value', win: 'clone the best thing in play, repeatedly' },
+    artifacts: { name: 'Artifacts', win: 'artifact value engines snowball into combo finishes' },
     lifegain: { name: 'Lifegain', win: 'convert life into cards and drain wins' },
     landfall: { name: 'Lands Matter', win: 'lands as an engine \u2014 Scapeshift-style finishes' },
     reanimate: { name: 'Graveyard', win: 'cheat cost by reanimating haymakers' },
@@ -1638,8 +1666,14 @@ function buildEngineModel(commander) {
         xRestricted: /spells? with \{x\}|\{x\} in (its|their) mana cost/.test(o),
         drawbackCounter: /with (a|an) (finality|stun) counters? on (it|them)/.test(o),
         statOverride: /base power and toughness \d+\/\d+/.test(o),
-        selfLoops: /at the beginning of [^.]{0,60}return [^.]{0,80}graveyard to the battlefield/.test(o)
+        selfLoops: /at the beginning of [^.]{0,60}return [^.]{0,80}graveyard to the battlefield/.test(o),
+        xIsDiscount: /cost \{x\} less/.test(o),
+        artifactCopy: /whenever another nontoken artifact you control enters[^.]{0,60}/.test(o) && /copy/.test(o),
+        countPower: /where x is [^.]{0,36}power/.test(o),
+        countToughness: /where x is [^.]{0,36}toughness/.test(o),
+        selfPow: o.indexOf(firstName.toLowerCase() + "'s power") !== -1 || /where x is this creature's power/.test(o)
     };
+    let foundForPlans = found;
     if (P.xRestricted) {
         for (let i = out.length - 1; i >= 0; i--) if (out[i].title === 'Worth Copying') out.splice(i, 1);
     }
@@ -1652,12 +1686,62 @@ function buildEngineModel(commander) {
     if (P.selfLoops) {
         for (let i = out.length - 1; i >= 0; i--) if (out[i].title === 'Reanimation') out.splice(i, 1);
     }
+    // {X} as a discount amount, not a spell restriction: xspells is a false positive
+    if (P.xIsDiscount) {
+        for (let i = out.length - 1; i >= 0; i--) if (/^xspells/.test(out[i].key || '')) out.splice(i, 1);
+        foundForPlans = foundForPlans.filter(f => f.atom.key !== 'xspells');
+    }
+    // copy trigger scoped to nontoken artifacts: re-aim the copy rails, drop token-input rails
+    if (P.artifactCopy) {
+        for (let i = out.length - 1; i >= 0; i--) {
+            if (out[i].key === 'copytoken') {
+                out[i] = Object.assign({}, out[i], { role: 'payoff', title: 'Artifacts Worth Copying', sub: 'The trigger only sees these', q: base + ' (t:artifact -t:land o:enters)', why: firstName + ' copies only nontoken artifacts \u2014 ETB artifacts pay twice.' });
+            } else if (out[i].title === 'Token Producers') {
+                out.splice(i, 1);
+            }
+        }
+        out.push({ key: 'cheap-arts', role: 'enabler', title: 'Cheap Artifacts', sub: 'Feed the trigger', q: base + ' (t:artifact -t:land mv<=2)', why: 'nontoken artifact density is the fuel \u2014 token producers do not trigger it.' });
+    }
+    // counted-stat parameters: "where X is ..." tells you what to maximize
+    if (P.countToughness) {
+        out.push({ key: 'tough', role: 'enabler', title: 'High-Toughness Bodies', sub: 'Big butts dig deepest', q: base + ' (t:creature tou>=5)', why: 'X reads toughness \u2014 every point is reach.' });
+    }
+    if (P.selfPow) {
+        out.push({ key: 'selfpump', role: 'enabler', title: 'Pump the Commander', sub: 'Grow the number', q: base + ' (((t:aura OR t:equipment) o:"gets +") OR (o:"+1/+1 counter" o:target))', why: 'X reads ' + firstName + "'s power \u2014 every +1 raises it." });
+    } else if (P.countPower) {
+        out.push({ key: 'heavy', role: 'enabler', title: 'Heavy Hitters', sub: 'One giant sets X', q: base + ' (t:creature pow>=6)', why: 'X reads the greatest power in the attack \u2014 one huge body carries the count.' });
+    }
+    // lifegain fired only off keyword text inside token creation: incidental, not a plan
+    const lgFired = found.some(f => f.atom.key === 'lifegain');
+    if (lgFired) {
+        const oNoTok = o.replace(/tokens? with [^.]{0,40}lifelink/g, ' ').replace(/lifelink creature tokens?/g, ' ');
+        const lgReal = /gains? .{0,10}life|lifelink|whenever you gain life/.test(oNoTok);
+        if (!lgReal) {
+            for (let i = out.length - 1; i >= 0; i--) if (/^lifegain/.test(out[i].key || '')) out.splice(i, 1);
+            foundForPlans = foundForPlans.filter(f => f.atom.key !== 'lifegain');
+        }
+    }
     const tribeF = found.slice(0, 6).find(f => f.tribe);
     if (tribeF) {
         const T = capWord(tribeF.tribe);
+        if (new RegExp('another ' + tribeF.tribe + '[^.]{0,24}enters').test(o)) {
+            out.forEach(s => { if (s.title === 'ETB Value Creatures') { s.q += ' t:' + tribeF.tribe; s.title = 'ETB ' + T + 's'; s.why = 'only ' + T + 's trigger it \u2014 value creatures scoped to the tribe.'; } });
+        }
+        out.forEach(s => { if (s.key === 'tough') { s.q += ' t:' + tribeF.tribe; s.sub = 'Tall ' + T + 's dig deepest'; } });
         out.push({ key: 'tribe-anthem', role: 'enabler', title: T + ' Anthems & Banners', sub: 'Lift the whole crew',
             q: base + ' ((o:"choose a creature type" OR o:"creatures you control get +" OR o:"share a creature type") OR (o:' + tribeF.tribe + ' o:"get +"))',
             why: (P.statOverride ? 'stats are overwritten anyway, so board-wide effects and banners carry the weight.' : 'typal bodies run small \u2014 banners and anthems patch stats and add draw.') });
+    }
+    if (!tribeF) {
+        const outT = [];
+        const rxT = /([a-z]+) creature tokens?/g; let mm;
+        while ((mm = rxT.exec(o)) && outT.length < 2) {
+            const w = normTribe(mm[1]);
+            if (!TRIBE_GENERIC[mm[1]] && outT.indexOf(w) === -1) outT.push(w);
+        }
+        if (outT.length) {
+            out.push({ key: 'out-typal', role: 'payoff', title: 'Token Typal Payoffs', sub: 'The tokens have types', q: base + ' ((' + outT.map(t => 'o:' + t).join(' OR ') + ') o:"you control")', why: 'the tokens are ' + outT.map(capWord).join(' and ') + 's \u2014 typal payoffs see them.' });
+        }
     }
     if (out.length > 9) out.length = 9;
     const oOwn = o.replace(/\([^)]*\)/g, ' ').replace(/"[^"]*"/g, ' ');
@@ -1701,7 +1785,7 @@ function buildEngineModel(commander) {
     return {
         sections: out,
         traps: traps.slice(0, 5),
-        gamePlans: buildGamePlans(found),
+        gamePlans: buildGamePlans(foundForPlans),
         insight: studied ? studied.insight : '',
         verified: !!studied
     };
