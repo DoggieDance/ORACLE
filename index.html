@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.5 · 2026-07-16">
+<meta name="oracle-build" content="v4.6 · 2026-07-16">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -793,12 +793,26 @@
     .detail-overlay { width: min(1680px, calc(100% - 120px)); }
   }
 
+
+  /* ============ v4.6: desktop search-header polish ============ */
+  @media (min-width: 900px) {
+    /* Search header: one coherent glass band instead of scattered rows */
+    .search-area { position: sticky; top: 0; z-index: 40; background: linear-gradient(180deg, rgba(12,13,20,.94), rgba(12,13,20,.86)); backdrop-filter: blur(24px) saturate(150%); -webkit-backdrop-filter: blur(24px) saturate(150%); border-bottom: 1px solid var(--hair); padding: 14px 44px 4px; margin: 0; }
+    .search-row { max-width: 1040px; }
+    .search-input { font-size: 14.5px; }
+    .chip-row { padding: 8px 0 4px; }
+    .result-mode-row { padding: 2px 0 10px; display: flex; align-items: center; gap: 10px; }
+    .results-pad { padding-top: 18px; }
+    .results-bar { padding: 2px 4px 16px; align-items: baseline; }
+    .results-meta { font-size: 13.5px; }
+  }
+
 </style>
 </head>
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v4.5 \u00B7 2026-07-16', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v4.6 \u00B7 2026-07-16', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -2171,12 +2185,12 @@ function SearchScreen({ injectQuery, onInjectConsumed, activeDeck, onOpenDetail,
         const parts = [];
         if (f.colors.size) {
             if (f.colors.has('C') && f.colors.size === 1)
-                parts.push('c:c');
+                parts.push('id=c');
             else {
                 const c = [...f.colors].filter(x => x !== 'C').join('');
                 if (c) {
                     const op = f.colorMode === 'exact' ? '=' : f.colorMode === 'atmost' ? '<=' : '>=';
-                    parts.push('c' + op + c);
+                    parts.push('id' + op + c);
                 }
             }
         }
@@ -2225,7 +2239,8 @@ function SearchScreen({ injectQuery, onInjectConsumed, activeDeck, onOpenDetail,
             parts.push(chip);
         if (fq)
             parts.push(fq);
-        const q = parts.join(' ').trim() || 'game:paper';
+        let q = parts.join(' ').trim() || 'game:paper';
+        if (!/\bgame:|\bin:/.test(q)) q += ' game:paper';
         const requestId = ++requestNo.current;
         if (searchCtrl.current)
             searchCtrl.current.abort();
