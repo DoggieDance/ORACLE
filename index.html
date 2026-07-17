@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.17 · 2026-07-17">
+<meta name="oracle-build" content="v4.32 · 2026-07-17">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -508,6 +508,11 @@
   /* ===== Toast, modals ===== */
   .toast { position: fixed; left: 50%; bottom: calc(28px + var(--sab-live)); transform: translateX(-50%); border: 1px solid rgba(255,235,173,.28); border-radius: 16px; background: rgba(36,38,50,.86); color: #ffebae; padding: 11px 20px; font-size: 14px; font-weight: 680; z-index: 300; box-shadow: var(--shadow-deep), inset 0 1px 0 rgba(255,255,255,.08); animation: toastIn .3s; max-width: 90%; text-align: center; backdrop-filter: blur(22px) saturate(145%); -webkit-backdrop-filter: blur(22px) saturate(145%); }
   @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+  .toast.has-action { display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 20px; text-align: left; }
+  .toast.has-action .toast-msg { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .toast-action { flex: none; border: 1px solid rgba(255,235,173,.34); border-radius: 11px; background: rgba(255,235,173,.10); color: #ffe9a8; font: inherit; font-weight: 800; letter-spacing: .04em; padding: 7px 14px; min-height: 34px; cursor: pointer; transition: background .15s, border-color .15s; }
+  @media (hover: hover) { .toast-action:hover { background: rgba(255,235,173,.18); border-color: rgba(255,235,173,.5); } }
+  .toast-action:active { background: rgba(255,235,173,.24); }
   .modal-backdrop { position: fixed; left: 0; right: 0; top: var(--vvt, 0px); height: var(--vvh, 100dvh); background: rgba(0,0,0,.7); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 180; display: flex; align-items: center; justify-content: center; padding: 24px; animation: fadeIn .2s; }
   .modal { background: linear-gradient(180deg, rgba(40,42,55,.98), rgba(17,18,26,.99)); border: 1px solid var(--hair2); border-radius: 22px; padding: 22px; width: 100%; max-width: 380px; max-height: 100%; overflow-y: auto; overscroll-behavior: contain; box-shadow: var(--shadow-deep); backdrop-filter: blur(28px) saturate(145%); -webkit-backdrop-filter: blur(28px) saturate(145%); }
   .modal-title { font-size: 18px; font-weight: 790; letter-spacing: -.02em; color: var(--gold-bright); margin-bottom: 16px; text-align: center; }
@@ -529,14 +534,23 @@
   .decks-screen { padding: 14px 14px calc(30px + var(--sab-live)); }
   .new-deck-btn { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; min-height: 50px; margin-bottom: 14px; border: 1px dashed rgba(224,196,106,.5); border-radius: 16px; background: rgba(224,196,106,.07); color: var(--gold-bright); font-size: 13.5px; font-weight: 760; }
   .new-deck-btn:active { background: rgba(224,196,106,.15); }
-  .deck-card-item { display: flex; align-items: center; gap: 12px; padding: 11px 12px; min-height: 70px; border: 1px solid var(--hair); border-radius: 17px; background: var(--glass); margin-bottom: 9px; cursor: pointer; transition: transform .12s; }
+  .deck-grid { display: grid; grid-template-columns: 1fr; gap: 11px; }
+  .deck-card-item { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; min-height: 112px; padding: 12px 14px; border: 1px solid var(--hair); border-radius: 17px; background: var(--glass); cursor: pointer; transition: transform .12s, border-color .25s ease, box-shadow .25s ease; -webkit-tap-highlight-color: transparent; }
   .deck-card-item:active { transform: scale(.985); }
-  .deck-card-item.active-deck { border-color: rgba(224,196,106,.5); background: rgba(224,196,106,.07); box-shadow: 0 0 0 1px rgba(224,196,106,.25); }
-  .dci-art { width: 48px; height: 48px; border-radius: 11px; object-fit: cover; border: 1px solid var(--hair2); flex-shrink: 0; }
-  .dci-art.empty { background: var(--glass2); display: flex; align-items: center; justify-content: center; color: var(--gold-dim); font-size: 19px; }
-  .dci-info { flex: 1; min-width: 0; }
-  .dci-name { font-size: 15px; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .dci-meta { display: flex; align-items: center; gap: 9px; margin-top: 4px; font-size: 12px; color: var(--muted); }
+  .deck-card-item.active-deck { border-color: rgba(224,196,106,.55); box-shadow: 0 0 0 1px rgba(224,196,106,.28), 0 10px 26px rgba(0,0,0,.35); }
+  .dci-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 22%; z-index: -2; transition: transform .5s var(--fluid); }
+  .dci-scrim { position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(7,8,13,.16) 0%, rgba(7,8,13,.42) 46%, rgba(7,8,13,.88) 100%); }
+  .deck-card-item:not(.has-art) .dci-scrim { background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(7,8,13,.3)); }
+  .dci-mark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -58%); font-size: 30px; color: rgba(224,196,106,.3); z-index: -1; }
+  .dci-active { position: absolute; top: 10px; left: 12px; font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--gold-bright); background: rgba(10,11,17,.72); border: 1px solid rgba(224,196,106,.45); border-radius: 999px; padding: 3px 9px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .dci-del { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 10px; border: 1px solid transparent; background: rgba(10,11,17,.55); color: rgba(255,255,255,.55); cursor: pointer; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); transition: color .2s ease, border-color .2s ease; }
+  .dci-del:active { color: var(--red-bad); }
+  .dci-info { position: relative; min-width: 0; }
+  .dci-name { font-family: var(--display); font-size: 16.5px; font-weight: 700; letter-spacing: .02em; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 8px rgba(0,0,0,.65); }
+  .dci-meta { display: flex; align-items: center; gap: 9px; margin-top: 4px; font-size: 12px; color: rgba(233,236,245,.8); text-shadow: 0 1px 6px rgba(0,0,0,.6); }
+  .dci-cmdr { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-style: italic; color: rgba(240,218,137,.88); }
+  .dci-count { flex-shrink: 0; }
+  .dci-meta .ci-pips { flex-shrink: 0; margin-left: auto; }
 
   /* ===== Playtest ===== */
   .pt-overlay { position: fixed; left: 0; right: 0; top: var(--vvt, 0px); height: var(--vvh, 100dvh); z-index: 200; background: linear-gradient(180deg, #10111a 0%, #07080d 100%); display: flex; flex-direction: column; padding-top: var(--sat); animation: fadeIn .2s; }
@@ -731,6 +745,9 @@
     .card-img-wrap:hover img { transform: scale(1.025); }
     .card-img-wrap img { transition: transform .35s var(--fluid); }
     .cmdr-art:hover { box-shadow: 0 6px 18px rgba(0,0,0,.5), 0 0 0 1px rgba(224,196,106,.5); cursor: pointer; }
+    .deck-card-item:hover { border-color: rgba(224,196,106,.4); box-shadow: 0 12px 30px rgba(0,0,0,.45); }
+    .deck-card-item:hover .dci-bg { transform: scale(1.045); }
+    .dci-del:hover { color: var(--red-bad); border-color: rgba(216,82,63,.5); }
   }
 
 
@@ -763,9 +780,9 @@
     .deck-screen > div:has(> .deck-section-head) { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; align-items: start; }
     .deck-screen > div:has(> .deck-section-head) > .deck-section-head { grid-column: 1 / -1; }
 
-    /* My Decks: card grid instead of a stretched stack */
-    .decks-screen div:has(> .deck-card-item) { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 12px; }
-    .decks-screen .deck-card-item { margin-bottom: 0; }
+    /* My Decks: art-tile grid instead of a stretched stack */
+    .deck-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+    .deck-card-item { min-height: 152px; }
 
     /* Workshop panel earns the width too */
     .detail-overlay { width: min(1340px, calc(100% - 96px)); }
@@ -843,6 +860,101 @@
   .pip.tap { background: #cbc3b3; color: #1a1408; }
   .oracle-text .pip.tap, .detail-mana-row .pip.tap { font-size: 11px; font-weight: 700; }
 
+  /* ============ v4.18: What's New changelog ============ */
+  .topbar { position: relative; }
+  .build-badge { position: absolute; top: calc(var(--sat) + 13px); right: 12px; z-index: 2; display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; min-height: 0; border: 1px solid rgba(224,196,106,.24); border-radius: 999px; background: rgba(201,168,76,.09); color: rgba(240,222,168,.72); font-family: var(--ios-font); font-size: 10px; font-weight: 750; letter-spacing: .06em; cursor: pointer; transition: background .18s ease, color .18s ease, border-color .18s ease; -webkit-tap-highlight-color: transparent; }
+  .build-badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--gold-bright, #e0c46a); box-shadow: 0 0 6px rgba(224,196,106,.7); }
+  .build-badge:hover { background: rgba(201,168,76,.18); border-color: rgba(224,196,106,.45); color: #ffedaf; }
+  @media (min-width: 900px) {
+    .build-badge { position: static; margin-top: auto; align-self: center; padding: 6px 13px; font-size: 10.5px; }
+  }
+  .wn-modal { max-width: 460px; padding: 0; display: flex; flex-direction: column; }
+  .wn-head { flex-shrink: 0; padding: 20px 22px 14px; border-bottom: 1px solid var(--hair); display: flex; align-items: center; justify-content: space-between; }
+  .wn-head .modal-title { margin-bottom: 0; text-align: left; }
+  .wn-close { min-height: 0; padding: 7px 13px; border: 1px solid var(--hair); border-radius: 999px; background: rgba(255,255,255,.06); color: rgba(245,235,216,.75); font-family: var(--ios-font); font-size: 12px; font-weight: 700; cursor: pointer; }
+  .wn-scroll { overflow-y: auto; overscroll-behavior: contain; padding: 6px 22px 20px; }
+  .wn-entry { padding: 15px 0 16px; border-bottom: 1px solid var(--hair); }
+  .wn-entry:last-child { border-bottom: none; padding-bottom: 4px; }
+  .wn-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .wn-build { font-family: var(--display); font-size: 13px; font-weight: 700; letter-spacing: .08em; color: var(--gold-bright, #e0c46a); }
+  .wn-chip { padding: 2px 8px; border-radius: 999px; font-family: var(--ios-font); font-size: 9px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; border: 1px solid rgba(224,196,106,.32); background: rgba(201,168,76,.13); color: rgba(240,222,168,.85); }
+  .wn-chip.ui { border-color: rgba(96,150,214,.38); background: rgba(75,143,214,.14); color: rgba(168,204,246,.9); }
+  .wn-date { margin-left: auto; font-family: var(--ios-font); font-size: 10.5px; color: rgba(233,226,207,.4); }
+  .wn-cmdr { font-family: var(--serif); font-style: italic; font-size: 13px; color: rgba(236,208,140,.8); margin-bottom: 5px; }
+  .wn-sum { font-family: var(--ios-font); font-size: 13px; line-height: 1.5; color: rgba(238,229,211,.74); }
+
+
+  /* ============ v4.20 SKELETON LOADING ============ */
+  /* Placeholder cards shown while Scryfall responds. They live inside the real
+     grid/rail containers, so columns, gaps, and breakpoints match the content
+     that replaces them — no layout jump. Shimmer sweeps as a staggered wave
+     (negative delay = every card is mid-sweep immediately), with a faint gold
+     glint to keep the arcana identity. */
+  .sk-wrap { pointer-events: none; }
+  .sk-card { border: 1px solid rgba(255,255,255,.07); border-radius: var(--card-radius); overflow: hidden; background: linear-gradient(155deg, rgba(43,45,59,.5), rgba(22,23,32,.65)); animation: skIn .4s var(--fluid) both; animation-delay: calc(var(--i, 0) * 45ms); }
+  .synergy-rail .sk-card { border-radius: 14px; scroll-snap-align: start; }
+  .sim-grid .sk-card { border-radius: 15px; }
+  .sk-img { width: 100%; aspect-ratio: 488/680; background: linear-gradient(100deg, #14151f 32%, #1e1f2e 45%, rgba(224,196,106,.09) 50%, #1e1f2e 55%, #14151f 68%); background-size: 200% 100%; animation: shimmer 1.6s linear infinite; animation-delay: calc(var(--i, 0) * -130ms); }
+  .sk-foot { padding: 8px 8px 9px; border-top: 1px solid rgba(255,255,255,.05); display: flex; flex-direction: column; gap: 6px; }
+  .sk-line { height: 9px; width: 72%; border-radius: 5px; background: linear-gradient(100deg, #191a26 32%, #242536 50%, #191a26 68%); background-size: 200% 100%; animation: shimmer 1.6s linear infinite; animation-delay: calc(var(--i, 0) * -130ms); }
+  .sk-line.short { width: 44%; }
+  @keyframes skIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  /* ============ v4.22 HOVER CARD PEEK (desktop pointers) ============ */
+  /* Moxfield-style: hovering a text-only card row floats the full card image
+     beside the cursor. One singleton element, pointer-events:none, shown only
+     on hover-capable devices (CardPeek.show gates on matchMedia). Fades in
+     once the image has actually loaded — never a gray placeholder flash. */
+  .card-peek { position: fixed; left: 0; top: 0; width: 264px; z-index: 400; pointer-events: none; opacity: 0; transition: opacity .16s ease; will-change: transform; filter: drop-shadow(0 18px 42px rgba(0,0,0,.62)); }
+  .card-peek.on.ready { opacity: 1; }
+  .card-peek img { display: block; width: 100%; aspect-ratio: 488/680; border-radius: 12px; background: linear-gradient(160deg, #1a1c26, #0d0e14); border: 1px solid rgba(224,196,106,.28); }
+  @media (hover: hover) and (pointer: fine) {
+    .dl-name:hover { color: var(--gold-bright); }
+    .shop-name { cursor: pointer; }
+    .shop-name:hover { color: var(--gold-bright); }
+  }
+  @media (prefers-reduced-motion: reduce) { .card-peek { transition: none; } }
+
+  /* ============ v4.26 DESKTOP TWO-COLUMN CARD DETAIL ============ */
+  /* Scryfall/Moxfield-style: on desktop the card image + actions sit in a
+     sticky left column while type/text/prices read in a right column, instead
+     of a phone layout stretched across a 1300px panel. The wrappers are
+     display:contents by default so mobile layout is bit-for-bit unchanged. */
+  .dcol-left, .dcol-right { display: contents; }
+  @media (min-width: 900px) {
+    .detail-overlay.card-detail { width: min(1060px, calc(100% - 96px)); }
+    .card-detail .detail-scroll { display: flex; align-items: flex-start; justify-content: center; gap: 42px; padding: 30px 42px calc(48px + var(--sab-live)); }
+    .card-detail .dcol-left { display: block; flex: 0 0 320px; min-width: 0; position: sticky; top: 0; max-height: calc(100dvh - 176px); overflow-y: auto; scrollbar-width: none; overscroll-behavior: contain; padding: 0 14px 14px; margin: 0 -14px -14px; }
+    .card-detail .dcol-left::-webkit-scrollbar { display: none; }
+    .card-detail .dcol-right { display: block; flex: 1 1 auto; min-width: 0; max-width: 640px; }
+    .card-detail .detail-card-img { width: 100%; max-width: 300px; }
+  }
+
+  /* ============ v4.28 SEARCH LANDING ============ */
+  /* The empty Search screen is the app's front door: instead of one italic
+     sentence, show curated one-tap searches (VS Code welcome / Steam browse
+     energy). Tiles reuse the skIn keyframe for a staggered entrance. */
+  .search-landing { max-width: 1040px; margin: 0 auto; padding: 30px 4px 44px; }
+  .sl-head { text-align: center; margin-bottom: 20px; }
+  .sl-glyph { font-size: 30px; color: var(--gold-dim); opacity: .55; margin-bottom: 6px; }
+  .sl-title { font-family: var(--display); font-size: 19px; font-weight: 700; letter-spacing: .18em; color: var(--gold-bright); text-transform: uppercase; }
+  .sl-sub { margin-top: 7px; font-family: var(--serif); font-style: italic; font-size: 14px; color: var(--muted); line-height: 1.4; }
+  .sl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 10px; }
+  .sl-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: left; min-height: 64px; padding: 12px 14px 11px; border: 1px solid var(--hair); border-radius: 15px; background: var(--glass); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: border-color .2s ease, background .2s ease, transform .25s var(--spring); animation: skIn .4s var(--fluid) both; animation-delay: calc(var(--i, 0) * 40ms); }
+  .sl-tile:active { transform: scale(.96); }
+  .sl-tile-name { font-family: var(--ios-font); font-size: 13.5px; font-weight: 750; color: var(--text); transition: color .18s ease; }
+  .sl-tile-sub { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--muted); line-height: 1.3; }
+  .sl-foot { margin-top: 20px; text-align: center; font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .sl-foot em { color: var(--gold-dim); font-style: italic; }
+  @media (hover: hover) and (pointer: fine) {
+    .sl-tile:hover { border-color: rgba(224,196,106,.45); background: rgba(224,196,106,.07); }
+    .sl-tile:hover .sl-tile-name { color: var(--gold-bright); }
+  }
+  @media (min-width: 900px) {
+    .search-landing { padding-top: 44px; }
+    .sl-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+    .sl-tile { padding: 14px 16px 13px; }
+  }
 </style>
 </head>
 <body>
@@ -1106,6 +1218,74 @@ function cardMana(card) {
         return '';
     return card.mana_cost || (card.card_faces && card.card_faces[0] && card.card_faces[0].mana_cost) || '';
 }
+// v4.22: Hover card peek — one lazily-created singleton, desktop pointers only.
+// Wire onto any text row: onMouseEnter={e => CardPeek.show(e, card)},
+// onMouseMove={CardPeek.move}, onMouseLeave={CardPeek.hide} (+ hide on click).
+const CardPeek = (() => {
+    let el = null, img = null, timer = 0, lx = 0, ly = 0, curSrc = '';
+    const W = 264, H = Math.round(W * 680 / 488), M = 12, GAP = 20;
+    function fine() { return !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches); }
+    function ensure() {
+        if (el)
+            return;
+        el = document.createElement('div');
+        el.className = 'card-peek';
+        el.setAttribute('aria-hidden', 'true');
+        img = document.createElement('img');
+        img.alt = '';
+        img.decoding = 'async';
+        img.addEventListener('load', () => { if (el.dataset.on === '1' && img.src === curSrc) el.classList.add('ready'); });
+        el.appendChild(img);
+        document.body.appendChild(el);
+        // Wheel-scrolling under a still cursor moves rows beneath the pointer;
+        // the peek would go stale, so just dismiss it.
+        window.addEventListener('scroll', hide, { capture: true, passive: true });
+    }
+    function place() {
+        let left = lx + GAP;
+        if (left + W + M > window.innerWidth)
+            left = lx - W - GAP;
+        left = Math.max(M, Math.min(left, window.innerWidth - W - M));
+        const top = Math.max(M, Math.min(ly - H * 0.42, window.innerHeight - H - M));
+        el.style.transform = 'translate(' + Math.round(left) + 'px,' + Math.round(top) + 'px)';
+    }
+    function show(e, card) {
+        if (!fine())
+            return;
+        const src = cardImage(card, 'normal') || cardImage(card, 'large') || cardImage(card, 'small');
+        if (!src)
+            return;
+        ensure();
+        lx = e.clientX;
+        ly = e.clientY;
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            curSrc = src;
+            el.dataset.on = '1';
+            el.classList.remove('ready');
+            if (img.src !== src)
+                img.src = src;
+            if (img.complete && img.naturalWidth)
+                el.classList.add('ready');
+            place();
+            el.classList.add('on');
+        }, 90);
+    }
+    function move(e) {
+        lx = e.clientX;
+        ly = e.clientY;
+        if (el && el.dataset.on === '1')
+            place();
+    }
+    function hide() {
+        clearTimeout(timer);
+        if (el) {
+            el.dataset.on = '0';
+            el.classList.remove('on', 'ready');
+        }
+    }
+    return { show, move, hide };
+})();
 function priceValue(card) {
     const prices = (card && card.prices) || {};
     const candidates = [prices.usd, prices.usd_foil, prices.usd_etched]
@@ -1164,9 +1344,31 @@ function useEdgeGuard() {
     }, []);
     return { onTouchStart: onTouchStart, onTouchMove: onTouchMove };
 }
+// ---- Escape-to-close (desktop keyboards) ----
+// Overlays register their close handler on mount; Escape fires the most
+// recently mounted one (= topmost layer), so stacked overlays peel off
+// one at a time, exactly like Discord / VS Code. Mobile is unaffected.
+const EscStack = [];
+window.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' || !EscStack.length) return;
+    e.preventDefault();
+    const top = EscStack[EscStack.length - 1];
+    if (top && typeof top.current === 'function') top.current();
+});
+function useEscape(onClose) {
+    const ref = useRef(null);
+    ref.current = onClose; // always the freshest closure
+    useEffect(() => {
+        EscStack.push(ref);
+        return () => { const i = EscStack.indexOf(ref); if (i >= 0) EscStack.splice(i, 1); };
+    }, []);
+}
+// For overlays rendered inline (not as their own component).
+function EscClose({ onClose }) { useEscape(onClose); return null; }
 // Bottom sheet anchored to the VISUAL viewport (keyboard-aware).
 function Sheet({ title, onClose, left, right, head, children, footer, className, zClass }) {
     const guard = useEdgeGuard();
+    useEscape(onClose);
     return (React.createElement("div", { className: 'sheet-host ' + (zClass || '') },
         React.createElement("div", { className: "sheet-backdrop", onClick: onClose, onTouchMove: stopTouch }),
         React.createElement("div", { className: 'sheet ' + (className || '') },
@@ -1313,6 +1515,12 @@ const ATOMS = [
     { key: 'copytoken', w: 6, chip: 'Token copies', title: 'Token Copies & ETB Value', sub: 'Fresh triggers every time', test: /tokens? that (is a|are) cop(y|ies)|token that's a copy|token cop(y|ies)/, q: '((t:creature o:"enters,") OR o:populate OR o:"that\'s a copy")', oq: '(o:"token that\'s a copy" OR o:"tokens that are copies")', why: 'makes token copies \u2014 each one re-triggers "enters" abilities, and sacrificed copies feed death payoffs' },
     { key: 'copyperm', w: 6, chip: 'Clone', title: 'Clones & Copy Targets', sub: 'Copy the best body', sup: ['copytoken'], test: /becomes? a copy|as a copy of|cop(y|ies) of (target|another|each) (creature|permanent|artifact|enchantment)/, q: '(o:"becomes a copy" OR o:"a copy of target" OR (t:creature pow>=4 o:whenever))', oq: '(o:"becomes a copy" OR o:"copy of target creature")', why: 'copies creatures in place \u2014 "enters" abilities don\u2019t re-trigger, so prize statics, attack triggers, and big bodies' },
     { key: 'spellcopy', w: 6, chip: 'Spell copies', title: 'Copy Spells', sub: 'Fork everything', test: /cop(y|ies)[^.]{0,32}(instant|sorcery|spell)|when(ever)? you cast[^.]{0,40}copy/, q: '(o:"copy target instant" OR o:"copy target spell" OR o:magecraft OR (t:instant o:copy))', oq: '(o:copy o:spell)', why: 'copies spells \u2014 copies keep X, and each copy triggers magecraft' },
+    { key: 'trigamp', w: 8, chip: 'Trigger doubler', title: 'Trigger Doubling', sub: 'Everything fires twice', test: /triggers? an additional time/, q: '(o:"triggers an additional time")', oq: '(o:"triggers an additional time")', why: 'doubles a scoped class of your triggered abilities \u2014 the deck is whatever the scope doubles' },
+    // legendary-matters (Sisay study): "legendary" is a SUPERTYPE, not a creature type,
+    // so the tribe detector rightly ignores it (TRIBE_GENERIC) \u2014 but that left the whole
+    // legends archetype (Sisay, Kethis, Reki, Captain Sisay, Yoshimaru) atomically
+    // invisible. \b keeps "nonlegendary" (one word, no boundary) from matching.
+    { key: 'legendary', w: 7, chip: 'Legends', title: 'Legendary Matters', sub: 'A hall of heroes', test: /\blegendary (creature|permanent|spell|card)s?\b/, q: '(t:legendary -t:land)', oq: '(o:"legendary creature" OR o:"legendary permanent" OR o:"legendary spell")', why: 'cares about legendary permanents \u2014 the deck is a hall of legends' },
     { key: 'food', w: 7, chip: 'Food', title: 'Food Chain', sub: 'Snacks that matter', test: /\bfoods?\b/, q: 'o:food', oq: 'o:food', why: 'cares about Food' },
     { key: 'treasure', w: 6, chip: 'Treasure', title: 'Treasure Payoffs', sub: 'Turn gold into wins', test: /\btreasures?\b/, q: 'o:treasure', oq: 'o:treasure', why: 'makes or spends Treasure' },
     { key: 'clues', w: 6, chip: 'Clues', title: 'Clues & Investigate', sub: 'Draw it out', test: /\bclues?\b|investigate/, q: '(o:clue OR o:investigate)', oq: '(o:clue OR o:investigate)', why: 'investigates for value' },
@@ -1336,7 +1544,7 @@ const ATOMS = [
     { key: 'mill', w: 5, chip: 'Mill', title: 'Mill & Self-Mill', sub: 'Feed the yard', test: /\bmills?\b|surveil|put into your graveyard from your library|from your library into your graveyard/, q: '(o:mill OR o:surveil)', oq: 'o:mill', why: 'mills cards' },
     { key: 'oppdiscard', w: 5, chip: 'Discard (them)', title: 'Opponent Discard', sub: 'Empty their hands', test: /each opponent discards|opponents? discards?|target (player|opponent) discards|that player discards|each player discards/, q: '(o:"each opponent discards" OR o:"target player discards" OR o:"whenever an opponent discards")', oq: '(o:"each opponent discards" OR o:"opponent discards")', why: 'attacks opposing hands' },
     { key: 'discard', w: 5, chip: 'Loot & Madness', title: 'Looting & Madness', sub: 'Your yard is a resource', sup: ['oppdiscard', 'wheels'], test: /you (may )?discard|discard your hand|madness|discards? [^.]{0,24}, then draw|draw [^.]{0,24}, then discard/, q: '(o:madness OR o:"draw a card, then discard" OR o:"discard a card:")', oq: '(o:madness OR o:"you may discard")', why: 'profits from your own discards' },
-    { key: 'exileplay', w: 5, chip: 'Impulse', title: 'Impulse & Exile Play', sub: 'Cast from beyond', test: /exile the top|you may (play|cast) (it|that|them|those|a spell)|from exile|becomes? plotted|\bplot\b|foretell|foretold|suspend/, q: '((o:"exile the top" (o:play OR o:cast)) OR o:"from exile" OR o:foretell)', oq: 'o:"exile the top"', why: 'plays cards from exile' },
+    { key: 'exileplay', w: 7, chip: 'Impulse', title: 'Impulse & Exile Play', sub: 'Cast from beyond', test: /exile the top|you may (play|cast) (it|that|them|those|a spell)|from exile|becomes? plotted|\bplot\b|foretell|foretold|suspend/, q: '((o:"exile the top" (o:play OR o:cast)) OR o:"from exile" OR o:foretell)', oq: 'o:"exile the top"', why: 'plays cards from exile' },
     { key: 'leavesbf', w: 5, chip: 'Leaves play', title: 'Departure Triggers', sub: 'Every exit pays', test: /(creature|permanent)s? (you control )?leaves the battlefield/, q: '(o:"leaves the battlefield" OR o:exile o:return)', oq: 'o:"leaves the battlefield"', why: 'profits every time something leaves' },
     { key: 'donate', w: 7, chip: 'Gifts', title: 'Gifts & Donations', sub: 'Generosity with teeth', test: /opponent gains control of [^.]{0,36}you (own|control)/, q: '(o:"target opponent gains control" OR o:"an opponent gains control" OR o:"exchange control")', oq: 'o:"gains control"', why: 'gives things away on purpose' },
     { key: 'flash', w: 5, chip: 'Flash', title: 'Flash & Instant Speed', sub: 'Their end step, your turn', test: /as though (it|they) had flash/, q: '(keyword:flash -t:land)', oq: 'o:flash', why: 'plays at instant speed' },
@@ -1352,8 +1560,8 @@ const ATOMS = [
     { key: 'extraturn', w: 6, chip: 'Extra turns', title: 'Extra Turns', sub: 'Time is a resource', test: /take (an|two) extra turns?|extra turn after this one/, q: '(o:"extra turn")', oq: 'o:"extra turn"', why: 'bends the turn structure' },
     { key: 'ninjutsu', w: 6, chip: 'Ninjutsu', title: 'Unblockable Enablers', sub: 'Slip through', test: /ninjutsu/, q: '(keyword:ninjutsu OR o:"can\'t be blocked")', oq: 'o:ninjutsu', why: 'sneaks in through open lanes' },
     { key: 'domain', w: 5, chip: 'Domain', title: 'Domain & Land Types', sub: 'All five basics', test: /\bdomain\b|basic land types? among/, q: '(o:domain OR o:"basic land type")', oq: 'o:domain', why: 'counts basic land types' },
-    { key: 'costdown', w: 6, chip: 'Cost reducer', title: 'Big Spells Cheap', sub: 'Discount engine', test: /(instant|sorcery)[^.]{0,40}spells you cast[^.]{0,40}cost [^.]{0,14}less/, q: '((t:instant OR t:sorcery) mv>=4)', oq: '(o:"spells you cast" o:"less")', why: 'discounts big spells' },
-    { key: 'massdeploy', w: 7, chip: 'Mass deploy', title: 'Cheat Into Play', sub: 'Skip the mana', test: /creature cards? from your hand onto the battlefield/, q: '(t:creature (pow>=7 OR mv>=7))', oq: 'o:"from your hand onto the battlefield"', why: 'deploys creatures without paying' },
+    { key: 'costdown', w: 6, chip: 'Cost reducer', title: 'Big Spells Cheap', sub: 'Discount engine', test: /(instant|sorcery|creature|artifact|enchantment)[^.]{0,40}spells you cast[^.]{0,40}cost [^.]{0,14}less/, q: '((t:instant OR t:sorcery) mv>=4)', oq: '(o:"spells you cast" o:"less")', why: 'discounts big spells' },
+    { key: 'massdeploy', w: 7, chip: 'Mass deploy', title: 'Cheat Into Play', sub: 'Skip the mana', test: /(creature|permanent) cards? from your hand onto the battlefield/, q: '(t:creature (pow>=7 OR mv>=7))', oq: 'o:"from your hand onto the battlefield"', why: 'deploys creatures without paying' },
     { key: 'selftap', w: 6, chip: 'Tap engine', title: 'Tap Triggers', sub: 'Value every tap', test: /whenever [^.]{0,30}becomes tapped/, q: '(t:vehicle OR keyword:convoke OR o:"tap an untapped creature you control")', oq: 'o:"becomes tapped"', why: 'triggers whenever it becomes tapped' },
     { key: 'discover', w: 5, chip: 'Discover', title: 'Discover & Impulse', sub: 'Free casts off the top', test: /\bdiscover \d|\bdiscover x\b/, q: '(o:discover)', oq: 'o:discover', why: 'discovers off the top' },
     { key: 'xspells', w: 5, chip: 'Big X', title: 'X Spells & Big Mana', sub: 'Go over the top', test: /\{x\}/, q: '(m:{X})', oq: 'o:"{x}"', why: 'scales with big mana' },
@@ -1364,8 +1572,8 @@ const ATOMS = [
     { key: 'death', w: 4, chip: 'Death triggers', title: 'Death Triggers', sub: 'Profit from the fallen', test: /(whenever|when) (a|an|another|each|one or more)[^.]{0,44}dies|or another [^.]{0,34}dies|creatures? (you control )?die\b|died this turn|is put into a graveyard from the battlefield/, q: '(o:"you control dies" OR o:"another creature dies" OR o:"a creature dies")', oq: 'o:dies', why: 'triggers when creatures die' },
     { key: 'drain', w: 4, chip: 'Drain', title: 'Drain the Table', sub: 'Aristocrat finishers', test: /each opponent loses|that player loses \d+ life|opponents? loses? .{0,12}life/, q: '(o:"each opponent loses" OR o:"opponents lose")', oq: '(o:"each opponent loses" OR o:"opponents lose")', why: 'drains every opponent' },
     { key: 'spellslinger', w: 4, chip: 'Spells', title: 'Spellslinger', sub: 'Cast, copy, repeat', test: /instant or sorcery|noncreature spell|magecraft|prowess/, q: '(o:"whenever you cast an instant or sorcery" OR o:magecraft OR keyword:prowess)', oq: '(o:"instant or sorcery" OR o:magecraft)', why: 'rewards casting spells' },
-    { key: 'attack', w: 4, chip: 'Attack triggers', title: 'Attack Triggers', sub: 'Reward the red zone', test: /whenever .{0,30}attacks|whenever you attack\b|deals combat damage to (a player|an opponent|each|one of your opponents)|can.t be blocked/, q: '(o:whenever o:attacks)', oq: '(o:whenever o:attacks)', why: 'triggers on attacks' },
-    { key: 'deathtouchkw', w: 4, chip: 'Deathtouch', title: 'Deathtouch Matters', sub: 'Every point is lethal', test: /deathtouch/, q: '((t:creature keyword:deathtouch) OR o:"gains deathtouch" OR o:"have deathtouch")', oq: 'o:deathtouch', why: 'cares about deathtouch \u2014 granters multiply the trigger pool' },
+    { key: 'attack', w: 4, chip: 'Attack triggers', title: 'Attack Triggers', sub: 'Reward the red zone', test: /whenever .{0,30}attacks|whenever you attack\b|whenever one or more .{0,36}attack\b|deals? combat damage to (a player|an opponent|each|one of your opponents)|can.t be blocked/, q: '(o:whenever o:attacks)', oq: '(o:whenever o:attacks)', why: 'triggers on attacks' },
+    { key: 'deathtouchkw', w: 4, chip: 'Deathtouch', title: 'Deathtouch Matters', sub: 'Every point is lethal', test: /gains? deathtouch|ha(ve|s) deathtouch|with deathtouch|deathtouch creature/, q: '((t:creature keyword:deathtouch) OR o:"gains deathtouch" OR o:"have deathtouch")', oq: 'o:deathtouch', why: 'cares about deathtouch \u2014 granters multiply the trigger pool' },
     { key: 'casttrigger', w: 3, chip: 'Cast triggers', title: 'Cast Triggers', sub: 'Every spell counts', test: /whenever you cast/, q: 'o:"whenever you cast"', oq: 'o:"whenever you cast"', why: 'triggers on your casts' },
     { key: 'tokens', w: 3, chip: 'Tokens', title: 'Tokens & Go Wide', sub: 'Build an army', test: /creates? .{0,40}token|tokens? (would be |are )?created|plus an additional [^.]{0,24}token|\bamass\b/, q: '(o:create o:token)', oq: '(o:create o:token)', why: 'creates tokens' },
     { key: 'counters', w: 3, chip: '+1/+1 counters', title: '+1/+1 Counters', sub: 'Grow the board', test: /\+1\/\+1 counter/, q: 'o:"+1/+1 counter"', oq: 'o:"+1/+1 counter"', why: 'stacks +1/+1 counters' },
@@ -1404,7 +1612,10 @@ function tribalAtom(tribe) {
 // Read a card and return its ranked atoms: [{atom, snippet, tribe?}]
 function extractAtoms(card) {
     if (!card) return [];
-    const o = oracleOf(card).toLowerCase().replace(/\([^)]*\)/g, ' ');
+    const o = oracleOf(card).toLowerCase().replace(/\([^)]*\)/g, ' ')
+        // graveyard-BYPASS clauses ("exile it instead of putting it into your graveyard",
+        // Feather/Lilah-class) are a negation, not a graveyard theme — strip before matching
+        .replace(/instead of putting (it|that card|them) into (your|a|an?y opponent's|its owner's|their owners?') graveyards?[^.]*/g, ' ');
     const kws = (card.keywords || []).map(k => String(k).toLowerCase());
     const found = [];
     const tribe = detectTribe(o);
@@ -1418,8 +1629,12 @@ function extractAtoms(card) {
         .replace(/(whenever|when) [^,.]{0,40}under an opponent's control[^.]*/g, ' ')
         .replace(/(each|an) opponent sacrifices[^.]*/g, ' ');
     const POLAR = { death: 1, etb: 1, sac: 1, lifegain: 1, spellslinger: 1, casttrigger: 1 };
+    // artifact-token creation (Treasure/Food/Clue/Blood…, Prosper study) is NOT a
+    // go-wide creature-token theme — neutralize the token noun so the tokens atom
+    // can't fire on it; creature tokens in the same sentence still match.
+    const oTok = o.replace(/(treasure|food|clue|blood|gold|junk|map|powerstone|incubator) tokens?/g, 'artifact');
     ATOMS.forEach(a => {
-        const m = (POLAR[a.key] ? oPol : o).match(a.test);
+        const m = (a.key === 'tokens' ? oTok : POLAR[a.key] ? oPol : o).match(a.test);
         if (m) found.push({ atom: a, snippet: m[0] || '' });
     });
     const hasGear = found.some(f => f.atom.key === 'equipment' || f.atom.key === 'auras');
@@ -1449,7 +1664,7 @@ function trimSnippet(s) {
     return s;
 }
 // Distilled from COMMANDER_STUDY_LEDGER.json (55 verified teardowns)
-const STUDY_DB = {"a7043fbd-1dfd-42cf-be4b-cc343d0949e5":{"traps":["pump/anthems on the ninjas — the payoff scales with the REVEALED CARD'S mana value, not damage dealt; a 1/1 connecting hits exactly as hard as a 9/9, so cheap evasive bodies beat big ones.","attack triggers on ninjutsu'd ninjas — a ninja put onto the battlefield attacking was never DECLARED an attacker (same ruling as Kaalia's deploys), so its own 'whenever this creature attacks' abilities don't fire that combat; Yuriko's trigger is combat DAMAGE, which does fire.","{X} bombs in the library — X is 0 everywhere except the stack (official ruling), so an {X}{B}{B}{B} spell reveals for 3, not 7+; delve/MDFC/alternative-cost cards keep their full printed mana value.","damage to a planeswalker or creature — 'deals combat damage to a PLAYER' only; and stacking generic 'each opponent loses' drain cards misreads her OUTPUT as a theme — the real amplifiers are topdeck control and castable high-MV density."],"insight":"Yuriko opens the reveal_mv_payoff family (P.revealMV): a tribe-scoped combat-damage trigger converts the TOP CARD'S mana value into table-wide drain, so the deck warps around two rails no keyword matcher can see — topdeck control (Brainstorm/Vampiric effects aim the reveal) and high-MV-but-castable density (delve, MDFCs, alternative costs, extra-turn spells that also re-trigger the whole ninja team)."},"cb8d80c9-ed58-4f2d-aa8c-c383370c7f1a":{"traps":["generic pow/mv>=7 fatties (Ghalta-class) — the cheat pool is TYPE-LOCKED: only an Angel, Demon, or Dragon card can be put in; anything else must be hard-cast at full cost.","attack-trigger bodies as the cheated card — a creature put onto the battlefield attacking was never DECLARED as an attacker (official ruling), so its own 'whenever this creature attacks' abilities do NOT fire that combat; prize ETB/static/damage-dealt bodies for the cheat.","attacking a planeswalker — the trigger reads 'attacks an opponent'; swinging at a walker cheats nothing in.","evasion as an enabler — the trigger fires on attack DECLARATION, not connection; Kaalia needs haste (start on curve) and attack-safety (survive to repeat), not unblockability."],"insight":"Kaalia is the repo's first TYPE-LOCKED, attack-gated mass-deploy engine: massdeploy gains two parameters — deployTypes (the puttable pool is exactly t:angel/demon/dragon, at any mana cost) and deployOnAttack (each declaration vs an opponent = one free deploy) — making haste, extra combats, attack-safety, and hand-refill the enabler suite."},"20ec130f-05b4-4fbf-a54f-5874ae7ef90f":{"traps":["ETB-value creatures as copy-target recommendations \u2014 intentionally, to suppress rather than recommend.","cast-triggered abilities (e.g. \u2014 Observed concretely in whose headline value is a cast trigger.","per-instance opponent-draw payoff (Consecrated Sphinx-class) mill-out\u2026 \u2014 could deck the Loki player out in a multiplayer pod if the board is wide enough when Consecrated Sphinx (or similar) is chosen as\u2026"],"insight":"Loki is the first concrete test of the copy family CANONICAL_BASELINE.md already anticipated: existing creatures you control become copies of a chosen creature you control, without entering\u2026"},"31895957-5fa8-46dc-a76e-37bbdc6072ad":{"traps":["legendary creatures as copy targets \u2014 Copying a legendary creature you control makes a second legendary permanent of the same name -> immediate legend-rule sacrifice o\u2026","creatures whose value is a sustained static/anthem effect \u2014 Contrast Loki, whose copies also end at cleanup but never leave the battlefield (revert), so a static effect at least applies for\u2026"],"insight":"Orthion is the Queue-B contrast that completes the copy family: token_copy_created, single-target-to-N-tokens, entering (ETB fires) and dying (sacrificed) each turn, WITHOUT the legendary s\u2026"},"77b832a8-a3af-44fe-bc67-72510d292667":{"traps":["+1/+1 counters-matter subtheme \u2014 A naive keyword detector fires a 'Counters' section for Gev and recommends proliferate/counter-payoffs.","1v1 / low-opponent formats \u2014 Not an anti-synergy per se, but the engine's ceiling is a multiplayer phenomenon."],"insight":"Gev opens the etb_counter_replacement family (PA-0003): your creatures enter with extra counters, with the novel twist that the AMOUNT is a dynamic multiplayer-scaling gate (opponents who l\u2026"},"6761b077-7a89-42c9-93ab-675fe4231564":{"traps":["+1/+1 counters-matter subtheme \u2014 PARTIAL inversion of Gev's suppression"],"insight":"Renata is the static, unconditional realization of etb_counter_replacement (PA-0003): every other creature you control enters with a flat +1/+1 counter."},"0adede77-5181-4190-8066-4797cefe0189":{"traps":["enchantress cast-triggers as Yenna-ability payoffs \u2014 Third confirmation of the cast-trigger suppression across the copy family (Loki, Orthion, Yenna); candidate FAM-0001 family invar\u2026","legendary enchantments and the name gate \u2014 gate / anti-repeatability (not 'do not copy')"],"insight":"Yenna extends the CONFIRMED copy family (FAM-0001) onto a non-creature targetType (enchantment) with a new copyDuration (permanent), using Orthion's token_copy_created realization."},"6a448862-e8d8-4a08-8e3d-5460afa29b4d":{"traps":["legendary artifacts as copy targets \u2014 Copying a legendary artifact makes a same-name legendary token -> sacrifice one.","token has no haste and (as a token) can't be a copy target next turn \u2026 \u2014 The 1/1 Soldier token can't attack the turn it's made."],"insight":"Urza extends confirmed FAM-0001 onto targetType=artifact with copyDuration=permanent (n=2 with Yenna) and a new copyTypeAddition parameter (the copy is re-typed to a 1/1 Soldier creature)."},"5aa76c5d-8046-42ce-b61d-cc9b4806c11a":{"traps":["legendary creatures/artifacts as copy targets \u2014 copyLegendaryOverride=false \u2014 the contrast value (also Orthion, Urza)."],"insight":"Saheeli is Orthion-in-Izzet: token_copy_created, sacrifice-at-end-step duration, haste, no legendary strip, plus a copyTypeAddition (re-type to artifact) and creature-or-artifact targeting."},"84be8354-0bfa-4df1-868a-13197bd49191":{"traps":["+1/+1-counters-matter subtheme \u2014 context-dependent (not a Tayam payoff)","creatures entering in the same batch as Tayam \u2014 Establish Tayam first (shared FAM-0002 behavior)."],"insight":"Tayam pairs a FAM-0002 etb-counter replacement (counterType=vigilance, NEW) with a new counter-fueled recursion engine: the vigilance counters are FUEL for a repeatable mill-then-reanimate \u2026"},"c0891157-f3dd-4866-866f-fd13e9be9633":{"traps":["creatures entering in the same batch as Arwen \u2014 Establish Arwen (and her toughness) first.","1/-1 / toughness-reduction on Arwen \u2014 Fragile source \u2014 protect and grow it."],"insight":"Arwen is the self-referential dynamic realization of FAM-0002: each creature enters with +1/+1 counters equal to Arwen's (grown) toughness."},"f4e0b557-4f80-4b7c-bfcc-6d4c468faf2e":{"traps":["vote-matters as a build-around subtheme \u2014 The tokens are the payoff; do not chase a thin vote-matters theme."],"insight":"Tivit opens the voting_payoff family (council's dilemma): a guaranteed per-vote token yield (Clues + Treasures) on ETB and combat damage, robust to opponents' choices."},"ae9f5c80-bc96-4ab3-bb5b-e8bd470e9eab":{"traps":["permanent-copy (Clone) targets \u2014 Do NOT feed Magus FAM-0001 permanent-copy targets; only X-cost spells/abilities trigger it.","cast-triggered payoffs expecting the copy to re-trigger \u2014 storm/magecraft count the original cast, not the copy."],"insight":"Magus opens the spell_copy family (CR 707.10), the axis the baseline mandates keeping separate from FAM-0001."},"5232fcc0-5dba-4569-8e99-c0b2c230e9f0":{"traps":["single big-Voltron plan \u2014 breadth beats a single stacked threat for Junk output.","land/utility Auras as 'enchanted' enablers \u2014 creature-enchanting Auras only."],"insight":"Dogmeat rewards a go-wide Aura/Equipment board: each enchanted/equipped attacker mints a Junk (impulse advantage), and the ETB recurs your best Aura/Equipment after self-milling."},"ee524e82-35c4-4cae-b65e-3e147eac2927":{"traps":["expecting the targeted-draw to be deck-buildable \u2014 note (rail-ability limitation)"],"insight":"Mila // Lukka is a flexible R/W superfriends/value modal DFC."},"1f139012-fa71-4f5f-8c57-6847bff95678":{"traps":["reading amass as a tokens/Army payoff theme \u2014 Army growth matters to raise the steal cap, not (mainly) as attackers."],"insight":"Grishn\u00e1kh is a threaten + aristocrats commander: amass sizes a steal cap, you take an opponent's creature (haste) and sac it to keep it."},"8c1c0117-6fc0-43c5-a4c8-6472de6503d9":{"traps":["reading Toph as a lands-matter or counters-matter deck \u2014 build cheap-spell density, not a landfall/counters engine.","over-weighting the Lesson subtheme \u2014 Lessons are a minor amplifier."],"insight":"Toph is a spellslinger whose payoff is a resilient land-creature board: each cast earthbends (animates/grows a land with counters), and the ETB rebuys instants/sorceries."},"28fcf855-6372-4d6b-b3fd-76f85247f309":{"traps":["expecting a persistent land-creature board \u2014 one big trampler per combat, not a growing board of manlands."],"insight":"Obuun is a lands+counters self-scaling commander: landfall grows Obuun, and Obuun's power sizes an until-EOT X/X animated land."},"cbcb6d9a-6ae5-4bcd-8013-2b657553764a":{"traps":["trying to build toward the reactive draw \u2014 note (rail-ability limitation)","hard attack-prevention \u2014 prefer soft taxes over absolute prevention."],"insight":"Mangara is a mono-W political control commander: reactive card draw off opponents' attacks and 2nd spells, in a pillowfort/lifelink shell."},"77212081-0b49-4d92-9c5a-1f21e6907fce":{"traps":["treating the opponent mill as a mill wincon \u2014 the value is the drain + your scry, not decking opponents."],"insight":"Krydle is a connect-for-value Dimir commander: evasion + combat-damage triggers = repeatable drain/card-selection."},"0757c5a7-e51b-4c39-bb4d-b32657c10cb4":{"traps":["mono-color instants/sorceries as Lilah payoffs \u2014 still fine spells, but they don't trigger the free-recast engine.","reading Lilah as pure prowess aggro \u2014 grindy tempo/value, not a one-shot combat plan."],"insight":"Lilah is an Izzet spellslinger whose payoff is free recasts (plot) of multicolored instants/sorceries \u2014 each casts twice, doubling prowess/magecraft value."},"a800bec4-bacc-43f9-a773-dd795959935b":{"traps":["helping opponents via symmetric mill \u2014 the mill is symmetric but the impulse-cast is yours only \u2014 asymmetric in your favor."],"insight":"Locke is a Rakdos attack-value commander: connect/attack -> mill everyone -> impulse-cast from the pile + Treasures."},"09f99b5a-66cf-4178-ae64-29f2004fe899":{"traps":["Grandeur as a live engine \u2014 the engine must NOT credit Grandeur in EDH \u2014 a schema gotcha."],"insight":"Korlash is a mono-B Swamps-matter beater: P/T = Swamp count, sharing that scaling source with Corrupt/Cabal Coffers."},"e2c141af-925e-42bd-8d83-e1a71f4c9794":{"traps":["sacrificing only 0-MV tokens for the impulse \u2014 tokens are for death payoffs; use high-MV creatures for the impulse."],"insight":"Rakdos is an aristocrats + impulse commander: sac creatures (high-MV best) to impulse off libraries (yours or opponents') while cashing death payoffs."},"5ac65688-0a74-4dc4-b6cb-12bdf8aed01e":{"traps":["command-zone casting \u2014 shared command_zone_interaction with Korlash's Grandeur (CS-0021).","hellbent / your-empty-hand payoffs \u2014 if building discard, use opponent-empty-hand punishers, not hellbent."],"insight":"Myojin's headline is a command-zone anti-synergy: its divinity counter (and thus indestructibility + mass-discard activation) requires a HAND cast, which the command zone is not."},"d8e6294d-51cc-44ff-8bc6-b0a168e4f423":{"insight":"Faldorn is an impulse + cast-from-exile-tokens commander: impulse off the top, and every cast-from-exile (its own included) makes a Wolf."},"cd6018de-5791-4c13-b134-38c410f04872":{"traps":["dropping the gate \u2014 run redundant/durable type-holders."],"insight":"Naomi is a go-wide Orzhov commander gated on permanent-type diversity (artifact + enchantment)."},"aee473c7-c659-421c-96b5-05f57ca2ed97":{"traps":["single-target/untargeted spells as the payoff \u2014 the payoff is specifically MULTI-target spells."],"insight":"Hinata is a multi-target payoff + soft-stax Jeskai commander: your multi-target spells are cheap ({1} less per target), opponents' targeted spells are taxed."},"31b990e3-9bad-4b0a-a9d5-f5b9ed2ad0b0":{"traps":["treating Fain as a single-axis payoff \u2014 value comes from chaining conversions + external payoffs."],"insight":"Fain is a resource-conversion aristocrats engine: fodder -> counters/Treasure/flyers, looping via self-untap, with death payoffs."},"c6040e8d-dac3-4bed-8d1d-d7d44aa10c86":{"traps":["copying spells that also help opponents \u2014 prefer copying spells targeted at you / symmetric-safe so the opponent's copy is low-value.","plain 'cast'-trigger payoffs expecting copies to trigger them \u2014 use magecraft (cast OR copy) payoffs instead."],"insight":"Parnesse is a Grixis spellslinger/copy control commander whose standout is a reactive targeted-tax protecting you and your board."},"62511d43-8eaf-405a-9c81-7bd593d3a01e":{"traps":["symmetric board wipes without protecting Ygra \u2014 one-sided (In Garruk's Wake) or protected Ygra required."],"insight":"Ygra is a Food + aristocrats + counters commander built on a mass type-addition (all other creatures are Food)."},"3688ad0d-653b-4d5d-a57e-444db679d83e":{"traps":["non-deathtouch fodder without a grant \u2014 grant deathtouch board-wide to make all deaths count.","token-only opponents dodging the edict \u2014 the edict hits nontoken creatures."],"insight":"The Serpent Society is a deathtouch-matters aristocrats edict commander: deathtouch creatures dying strip opponents' boards, behind a punishing poison ward."},"0613a0d8-f6bc-41ca-8070-b2506f756fc8":{"insight":"Vihaan is a Treasure-animation + outlaw tribal commander: Treasures become recurring 3/3 vigilant hasty attackers (Assassins) that convert back to mana."},"c8cbf0ec-ec98-4cb3-8068-60e92bbd740d":{"traps":["one big mass-reanimation as the payoff \u2014 prefer frequent small departures for more Zombies."],"insight":"Teval is a Sultai self-mill + graveyard-departure go-wide commander: fill the GY, then many SEPARATE leave-events each make a Zombie (per-batch)."},"6dbcd542-ddb0-434e-b8ee-3e31e1a8b051":{"traps":["cast-gated enchantress payoffs on the tokens \u2014 prefer ENTER-triggered constellation.","deckbuilding by cast cost \u2014 cheap 5-color commander."],"insight":"Go-Shintai is a 5-color Shrine/enchantress commander: nontoken Shrines make Shrine tokens -> constellation + Shrine payoffs -> recur enchantments to loop."},"06e9287b-56d4-443e-97ba-b5dcdc4fa989":{"traps":["granting flying to opponents' creatures \u2014 polarity caveat"],"insight":"Storm is a Selesnya evasion + pillowfort commander: grant flying to your team via targeted spells while a static shields you from flyers and makes your flyers unblockable-by-flyers."},"422a76e1-97a2-4a90-b07d-f487a2d8c236":{"traps":["railing the enter-tapped static \u2014 document it; the buildable engine is the lands loop."],"insight":"Thalia and The Gitrog Monster is an Abzan lands + stax + value commander: sac lands to draw and replay them (recursion + extra drops + landfall) while opponents' permanents enter tapped and\u2026"},"8ecdaf4b-4442-42da-9714-4257a83faf50":{"traps":["cast-trigger creatures as clone targets \u2014 copying is not casting; cast triggers don't fire on a clone."],"insight":"Sakashima is the Loki converse: a permanent nontoken clone that enters as a copy (ETB fires), wants ETB creatures (inverts Loki's suppression), and disables the legend rule rather than stri\u2026"},"a7ac5d98-805e-4212-be94-333a0c0c44a7":{"traps":["ETB-value / cast-trigger token bodies \u2014 attack-trigger/static bodies are the payoff ; permanent copies also keep sustained statics."],"insight":"Brudiclad is the duration-converse of Loki: same in-place, no-ETB realization, but PERMANENT and token-scoped."},"a8ddea1c-8d80-49c1-a5b4-630d5e51d66e":{"traps":["+1/+1 counter subtheme sharing the board \u2014 a Hardened-Scales-style +1/+1 shell cannibalizes the -1/-1 engine.","Hapatra as an attacker \u2014 value her as the token ENGINE, not a combat threat; evasion on her is a minor enabler for T1 only."],"insight":"Hapatra is a Golgari -1/-1-counters engine: every -1/-1 counter YOU place on a creature (direct, mass, wither, proliferate) mints a 1/1 deathtouch Snake."},"40eacdae-fae5-46b9-a9e5-9211469f74fc":{"traps":["anthems / over-pumping small creatures \u2014 value go-wide-small; deploy anthems AFTER accumulation, or avoid team +2/+2 statics.","1/-1 counter subtheme sharing the board \u2014 do not pair Ezuri's dump with a -1/-1 shell on the same creatures.","T2 needs another legal target \u2014 keep a second creature on board at combat."],"insight":"Ezuri is a Simic experience-counter snowball: every power<=2 creature you land (go-wide tokens especially) banks a permanent experience counter, and each combat converts the running total i\u2026"},"7cf1fa2e-1572-4d9d-8e93-e49016b34458":{"traps":["'enchanted permanent' means an AURA is attached, not enchantment-TYPE\u2026 \u2014 +2 untaps ONLY permanents with Auras on them.","umbra armor is creature-facing 'destroy' protection only \u2014 Mask can attach to any permanent, but its umbra armor only saves a CREATURE from destruction.","planeswalker loyalty cadence \u2014 one ability per turn \u2014 You cannot both make an Aura (-1) AND untap enchanted permanents (+2) the same turn; the engine ramps by alternating/building loy\u2026"],"insight":"Estrid is a Bant Auras/enchantments PLANESWALKER commander with three engines: +2 untaps every AURA-enchanted permanent you control (enchant your lands/rocks -> ramp/reuse); -1 makes a recu\u2026"},"add020f8-a6ae-4ce1-8d4e-f48f3fd14767":{"traps":["legendary artifacts as copy targets \u2014 the ETB may still double before a body is culled -> a discount, not always a hard skip.","token artifacts as fodder/source \u2014 the copy loop must run on nontoken artifact CARDS.","LTB/attack-value artifacts \u2014 still copyable, lower priority than ETB artifacts."],"insight":"Osgir is the 8th copy-family commander but the FIRST to copy a CARD from the graveyard (exiled as a cost) rather than a battlefield permanent \u2014 exposing a new FAM-0001 parameter, copySource."},"f697c78d-7e4f-4320-bfc6-2a25e6d7dc94":{"traps":["legendary creatures as creature-copy targets \u2014 the ETB may still fire once before the cull -> a discount, not always a hard skip.","TOKEN creatures do not trigger the creature copy \u2014 on the creature side Riku wants NONTOKEN bodies; token strategies only help the spell side indirectly.","{X}-cost creatures as creature-copy targets \u2014 distinct from the spell copy, where X IS copied."],"insight":"Riku is the 9th copy-family commander and the FIRST to carry BOTH copy mechanisms in one card: a spell-copy generation ability (CR 707.10, on each instant/sorcery cast) and a permanent toke\u2026"},"7e6b9b59-cd68-4e3c-827b-38833c92d6eb":{"traps":["no counters on board = dead \u2014 the hard dependency gate; a 'counters matter' shell with no counter SOURCE is a trap.","detrimental / countdown counters \u2014 you can't cherry-pick a KIND on a chosen bearer (WotC ruling) -> skip these bearers entirely; a naive 'proliferate all' line self\u2026","+1/+1 and -1/-1 on the same bearer annihilate \u2014 proliferating a bearer carrying both kinds is churn; keep +1/+1 and -1/-1 themes on DIFFERENT bearers (opponents for -1/-1)."],"insight":"Atraxa is the counter-SUPPLY-BY-AMPLIFICATION discovery: her free end-step proliferate ADDS one of every counter kind already present to any number of chosen permanents AND players (incl."},"fae87115-8749-4d25-a594-7139dd01a034":{"traps":["blink / flicker / reanimation is ANTI-synergy \u2014 inverts the usual 'blink your ETB commander' heuristic; a blinked/reanimated Marath is a 0/0 that dies unless something raises it\u2026","counters are permanent-bound (removal = full reset) \u2014 removal is a hard reset of the whole engine; protect Marath rather than rebuild.","the sink eats its own fuel \u2014 resolve with refuel (proliferate ; without refuel the engine is self-limiting."],"insight":"Marath is a self-fuelled counter BATTERY: ability A (PA-0035, NEW) enters it with +1/+1 counters equal to the mana spent to cast it (self, cost-scaled, base 0/0 so the counters ARE the body\u2026"},"d7ac4be1-dcca-49b6-8ddb-d1b0e6cf2dcf":{"traps":["The assassin engine is SELF-SUPPRESSING: once you reclaim the crown it stops making tokens (only fires while an opponent is monarch) \u2014 it is a reclai\u2026","'Damage doesn't cause you to lose life' fortress payoffs (Archon of Coronation) do NOT stop the crown transferring \u2014 combat damage to you still hands\u2026","Pillowfort deterrents (can't-attack-you) protect the crown but do NOT help you RECLAIM it when behind \u2014 reclaiming needs your OWN attackers to connec\u2026"],"insight":"Queen Marchesa is a held-designation (monarch) commander: a game-state resource with an inherent card-draw payoff, a combat-damage transfer rule, and a self-limiting reclaim engine (deathto\u2026"},"b8501a37-23e4-4873-80cb-d1c0f6c95155":{"traps":["SORCERIES get no first-ability copy \u2014 the common Riku/Magus-style misread ('copies instants and sorceries').","copies are not cast \u2014 magecraft / storm / 'whenever you cast an instant' payoffs do NOT see Kalamax's copies \u2014 do not credit cast-count synergies to th\u2026","copy-a-CARD does not trigger the +1/+1 \u2014 the copy-matters payoff keys on copying a SPELL on the stack, not copy-a-card-in-hand effects."],"insight":"Kalamax is the 11th copy-family commander and the FIRST to carry BOTH spell_copy sub-axes on one card: copy-GENERATION (CR 707.10 \u2014 copy your first instant each turn if tapped) and copy-MAT\u2026"},"4308a020-48cf-45fe-8074-dd5d0ac6d12d":{"traps":["mass removal / edicts / -X/-X / sacrifice \u2014 down-weight glass-cannon single-Aura-per-turn lines; up-weight totem-armor/umbra protection , bestow (falls off, not lost), and A\u2026","2-for-1 card disadvantage \u2014 bestow and self-returning Auras mitigate; totem-armor redirects destruction to the Aura.","blink / flicker of Uril \u2014 contrast PA-0035 (blink is fatal for a different reason); Uril's static itself is not counter/ETB-based, so it recomputes live \u2014 \u2026"],"insight":"Uril is the 2nd commander on the count-scaled-value shape and the piece that forces PA-0019 off its land-specific framing: it supplies a new countedSet (auras_attached_to_self), a new scali\u2026"},"c6e17443-2379-419d-8c32-13ea9bf52993":{"traps":["go-wide / token swarms \u2014 Rafiq is a Voltron/single-attacker commander, NOT a go-wide one; down-weight token anthems and mass-attack payoffs (the classic m\u2026","forced-attack creatures \u2014 soft: a single forced attacker is fine if IT is the one attacking alone; the trap is forcing MULTIPLE of your creatures to attack.","removal on the lone attacker \u2014 Rafiq has NO built-in protection (unlike Uril's hexproof); up-weight hexproof/protection/indestructible on the finisher and cheap\u2026"],"insight":"Rafiq exposes a reusable family the repo lacked: solo_attack_payoff, keyed on the 'attacks alone' declare-attackers condition (the exalted archetype)."},"514179c0-a50b-4565-8e71-9dad256edd85":{"traps":["Donating USEFUL permanents (ramp/card advantage) empowers an opponent \u2014 a trap; payload must be detrimental.","Self-cast symmetric boardwipes destroy your donated (owned) permanents and zero out X.","A single opponent left (or you leaving) reverts ownership (CR 800.4a) \u2014 donated permanents return to you / leave with you."],"insight":"Zedruu is the repo's first DONATE / give-to-opponent commander and the first to exploit ownership\u2260control as a resource."},"1816eede-c5bd-49df-958f-a3af64cb2932":{"traps":["Land destruction / Armageddon symmetrically starves the token half (you depend on YOUR lands entering).","Sacrificing NON-Elemental creatures yields no death burn \u2014 the death trigger is subtype-scoped.","Omnath is slow (MV 7) and does nothing the turn it lands unless a land follows; removal-before-value is a tempo risk."],"insight":"Omnath, Locus of Rage is the repo's first LANDFALL commander and first SUBTYPE-SCOPED aristocrats death-payoff commander."},"d0ade00d-a496-441d-9b7e-7dc033d3292c":{"traps":["A land MILLED from the library or DISCARDED from hand does NOT trigger ability 2 \u2014 the source zone must be the BATTLEFIELD ('put into a graveyard FRO\u2026","Landfall payoffs are a TRAP as a mental model here: Titania rewards lands DYING, not lands ENTERING (opposite of Omnath CS-0050).","Opponents' land destruction aimed at YOUR lands DOES trigger ability 2 (a land you control is put into a graveyard) \u2014 a land-destruction meta is part\u2026"],"insight":"Titania, Protector of Argoth is a mono-green LANDS-DYING engine \u2014 the exact LEAVE-to-graveyard MIRROR of Omnath's landfall (CS-0050)."},"8a5e3c8e-8e22-49b9-8ee5-4a36361f0da6":{"traps":["GROUP-HUG LIABILITY: ability 1 + your symmetric enablers also FILL OPPONENTS' hands (gas).","SELF-DAMAGE: SYMMETRIC punishers you add (Spiteful Visions, Phyrexian Tyranny) + your own wheels damage YOU \u2014 require lifegain support (contrast Unde\u2026","Notion Thief / Alms Collector (yours) turns the burn OFF by stealing opponents' extra draws (you draw them instead \u2192 no opponent draw \u2192 no ability-2 \u2026"],"insight":"Nekusar is the archetypal ENABLER+PAYOFF single card: a symmetric forced-draw engine (ability 1, PA-0041) welded to an opponent-only per-draw damage punisher (ability 2, PA-0042)."},"33666a98-812f-4892-9f8d-33e0cbecc340":{"traps":["SYMMETRY of ability 4 (casterScope=any_player) is pure UPSIDE here (you draw off opponents' spells) \u2014 but it makes Niv a MAGNET: opponents' removal-h\u2026","TARGETED ability 3 needs a legal target: under a board of hexproof creatures + hexproof/'can't be targeted' opponents (rare), pings can be blanked; n\u2026","Ability 3 fires on YOUR draws too (drawerScope=you) \u2014 with a symmetric wheel it does NOT hurt you (you choose targets), but it can force you to deal \u2026"],"insight":"Niv-Mizzet, Parun is a two-family Izzet engine: ability 4 is a spellcast_payoff (NEW PA-0043 \u2014 cast an instant/sorcery -> you draw) that FEEDS ability 3, a player_draw_payoff (PA-0042, EXTE\u2026"},"0a69c3dd-52a3-4ef6-b53f-b0780e0dc5f8":{"traps":["Discard / symmetric wheels SHRINK Alrund (empties your hand) \u2014 the OPPOSITE of Nekusar, where wheels are upside.","Empty-hand combat: Alrund can be a 1/1 if you dump your hand; time attacks to a full hand + foretell pile.","Base 1/1 is fragile; the +1/+1s vanish off the battlefield (rule) \u2014 any wipe/removal with no banked cards kills it."],"insight":"Alrund is a mono-U hand-size / foretell payoff: ability 2 (a NEW reveal_filter_advantage engine) fills your hand each end step, and ability 1 (count_scaled_value) converts hand + foretold-e\u2026"},"e4625704-1d52-44e4-804f-2f45644d76ac":{"traps":["Graveyard exile (opponents' hate OR your own accidental self-exile) strips the resource \u2014 the engine's hard off-switch.","Instants/sorceries CANNOT be recast (not permanents) \u2014 a deckbuilding suppression (bias toward permanent-based interaction: Beast Within, permanent r\u2026","Expensive fatties are better REANIMATED free (PA-0033) than hard-cast at full cost via Muldrotha \u2014 reanimate-others is a suppression signal for Muldr\u2026"],"insight":"Muldrotha opens a NEW reusable family \u2014 a standing permission to CAST/PLAY cards from a zone where they already reside (the graveyard), quota-gated by permanent type, at full/alternative co\u2026"}};
+const STUDY_DB = {"a7043fbd-1dfd-42cf-be4b-cc343d0949e5":{"traps":["pump/anthems on the ninjas — the payoff scales with the REVEALED CARD'S mana value, not damage dealt; a 1/1 connecting hits exactly as hard as a 9/9, so cheap evasive bodies beat big ones.","attack triggers on ninjutsu'd ninjas — a ninja put onto the battlefield attacking was never DECLARED an attacker (same ruling as Kaalia's deploys), so its own 'whenever this creature attacks' abilities don't fire that combat; Yuriko's trigger is combat DAMAGE, which does fire.","{X} bombs in the library — X is 0 everywhere except the stack (official ruling), so an {X}{B}{B}{B} spell reveals for 3, not 7+; delve/MDFC/alternative-cost cards keep their full printed mana value.","damage to a planeswalker or creature — 'deals combat damage to a PLAYER' only; and stacking generic 'each opponent loses' drain cards misreads her OUTPUT as a theme — the real amplifiers are topdeck control and castable high-MV density."],"insight":"Yuriko opens the reveal_mv_payoff family (P.revealMV): a tribe-scoped combat-damage trigger converts the TOP CARD'S mana value into table-wide drain, so the deck warps around two rails no keyword matcher can see — topdeck control (Brainstorm/Vampiric effects aim the reveal) and high-MV-but-castable density (delve, MDFCs, alternative costs, extra-turn spells that also re-trigger the whole ninja team)."},"cb8d80c9-ed58-4f2d-aa8c-c383370c7f1a":{"traps":["generic pow/mv>=7 fatties (Ghalta-class) — the cheat pool is TYPE-LOCKED: only an Angel, Demon, or Dragon card can be put in; anything else must be hard-cast at full cost.","attack-trigger bodies as the cheated card — a creature put onto the battlefield attacking was never DECLARED as an attacker (official ruling), so its own 'whenever this creature attacks' abilities do NOT fire that combat; prize ETB/static/damage-dealt bodies for the cheat.","attacking a planeswalker — the trigger reads 'attacks an opponent'; swinging at a walker cheats nothing in.","evasion as an enabler — the trigger fires on attack DECLARATION, not connection; Kaalia needs haste (start on curve) and attack-safety (survive to repeat), not unblockability."],"insight":"Kaalia is the repo's first TYPE-LOCKED, attack-gated mass-deploy engine: massdeploy gains two parameters — deployTypes (the puttable pool is exactly t:angel/demon/dragon, at any mana cost) and deployOnAttack (each declaration vs an opponent = one free deploy) — making haste, extra combats, attack-safety, and hand-refill the enabler suite."},"20ec130f-05b4-4fbf-a54f-5874ae7ef90f":{"traps":["ETB-value creatures as copy-target recommendations \u2014 intentionally, to suppress rather than recommend.","cast-triggered abilities (e.g. \u2014 Observed concretely in whose headline value is a cast trigger.","per-instance opponent-draw payoff (Consecrated Sphinx-class) mill-out\u2026 \u2014 could deck the Loki player out in a multiplayer pod if the board is wide enough when Consecrated Sphinx (or similar) is chosen as\u2026"],"insight":"Loki is the first concrete test of the copy family CANONICAL_BASELINE.md already anticipated: existing creatures you control become copies of a chosen creature you control, without entering\u2026"},"31895957-5fa8-46dc-a76e-37bbdc6072ad":{"traps":["legendary creatures as copy targets \u2014 Copying a legendary creature you control makes a second legendary permanent of the same name -> immediate legend-rule sacrifice o\u2026","creatures whose value is a sustained static/anthem effect \u2014 Contrast Loki, whose copies also end at cleanup but never leave the battlefield (revert), so a static effect at least applies for\u2026"],"insight":"Orthion is the Queue-B contrast that completes the copy family: token_copy_created, single-target-to-N-tokens, entering (ETB fires) and dying (sacrificed) each turn, WITHOUT the legendary s\u2026"},"77b832a8-a3af-44fe-bc67-72510d292667":{"traps":["+1/+1 counters-matter subtheme \u2014 A naive keyword detector fires a 'Counters' section for Gev and recommends proliferate/counter-payoffs.","1v1 / low-opponent formats \u2014 Not an anti-synergy per se, but the engine's ceiling is a multiplayer phenomenon."],"insight":"Gev opens the etb_counter_replacement family (PA-0003): your creatures enter with extra counters, with the novel twist that the AMOUNT is a dynamic multiplayer-scaling gate (opponents who l\u2026"},"6761b077-7a89-42c9-93ab-675fe4231564":{"traps":["+1/+1 counters-matter subtheme \u2014 PARTIAL inversion of Gev's suppression"],"insight":"Renata is the static, unconditional realization of etb_counter_replacement (PA-0003): every other creature you control enters with a flat +1/+1 counter."},"0adede77-5181-4190-8066-4797cefe0189":{"traps":["enchantress cast-triggers as Yenna-ability payoffs \u2014 Third confirmation of the cast-trigger suppression across the copy family (Loki, Orthion, Yenna); candidate FAM-0001 family invar\u2026","legendary enchantments and the name gate \u2014 gate / anti-repeatability (not 'do not copy')"],"insight":"Yenna extends the CONFIRMED copy family (FAM-0001) onto a non-creature targetType (enchantment) with a new copyDuration (permanent), using Orthion's token_copy_created realization."},"6a448862-e8d8-4a08-8e3d-5460afa29b4d":{"traps":["legendary artifacts as copy targets \u2014 Copying a legendary artifact makes a same-name legendary token -> sacrifice one.","token has no haste and (as a token) can't be a copy target next turn \u2026 \u2014 The 1/1 Soldier token can't attack the turn it's made."],"insight":"Urza extends confirmed FAM-0001 onto targetType=artifact with copyDuration=permanent (n=2 with Yenna) and a new copyTypeAddition parameter (the copy is re-typed to a 1/1 Soldier creature)."},"5aa76c5d-8046-42ce-b61d-cc9b4806c11a":{"traps":["legendary creatures/artifacts as copy targets \u2014 copyLegendaryOverride=false \u2014 the contrast value (also Orthion, Urza)."],"insight":"Saheeli is Orthion-in-Izzet: token_copy_created, sacrifice-at-end-step duration, haste, no legendary strip, plus a copyTypeAddition (re-type to artifact) and creature-or-artifact targeting."},"84be8354-0bfa-4df1-868a-13197bd49191":{"traps":["+1/+1-counters-matter subtheme \u2014 context-dependent (not a Tayam payoff)","creatures entering in the same batch as Tayam \u2014 Establish Tayam first (shared FAM-0002 behavior)."],"insight":"Tayam pairs a FAM-0002 etb-counter replacement (counterType=vigilance, NEW) with a new counter-fueled recursion engine: the vigilance counters are FUEL for a repeatable mill-then-reanimate \u2026"},"c0891157-f3dd-4866-866f-fd13e9be9633":{"traps":["creatures entering in the same batch as Arwen \u2014 Establish Arwen (and her toughness) first.","1/-1 / toughness-reduction on Arwen \u2014 Fragile source \u2014 protect and grow it."],"insight":"Arwen is the self-referential dynamic realization of FAM-0002: each creature enters with +1/+1 counters equal to Arwen's (grown) toughness."},"f4e0b557-4f80-4b7c-bfcc-6d4c468faf2e":{"traps":["vote-matters as a build-around subtheme \u2014 The tokens are the payoff; do not chase a thin vote-matters theme."],"insight":"Tivit opens the voting_payoff family (council's dilemma): a guaranteed per-vote token yield (Clues + Treasures) on ETB and combat damage, robust to opponents' choices."},"ae9f5c80-bc96-4ab3-bb5b-e8bd470e9eab":{"traps":["permanent-copy (Clone) targets \u2014 Do NOT feed Magus FAM-0001 permanent-copy targets; only X-cost spells/abilities trigger it.","cast-triggered payoffs expecting the copy to re-trigger \u2014 storm/magecraft count the original cast, not the copy."],"insight":"Magus opens the spell_copy family (CR 707.10), the axis the baseline mandates keeping separate from FAM-0001."},"5232fcc0-5dba-4569-8e99-c0b2c230e9f0":{"traps":["single big-Voltron plan \u2014 breadth beats a single stacked threat for Junk output.","land/utility Auras as 'enchanted' enablers \u2014 creature-enchanting Auras only."],"insight":"Dogmeat rewards a go-wide Aura/Equipment board: each enchanted/equipped attacker mints a Junk (impulse advantage), and the ETB recurs your best Aura/Equipment after self-milling."},"ee524e82-35c4-4cae-b65e-3e147eac2927":{"traps":["expecting the targeted-draw to be deck-buildable \u2014 note (rail-ability limitation)"],"insight":"Mila // Lukka is a flexible R/W superfriends/value modal DFC."},"1f139012-fa71-4f5f-8c57-6847bff95678":{"traps":["reading amass as a tokens/Army payoff theme \u2014 Army growth matters to raise the steal cap, not (mainly) as attackers."],"insight":"Grishn\u00e1kh is a threaten + aristocrats commander: amass sizes a steal cap, you take an opponent's creature (haste) and sac it to keep it."},"8c1c0117-6fc0-43c5-a4c8-6472de6503d9":{"traps":["reading Toph as a lands-matter or counters-matter deck \u2014 build cheap-spell density, not a landfall/counters engine.","over-weighting the Lesson subtheme \u2014 Lessons are a minor amplifier."],"insight":"Toph is a spellslinger whose payoff is a resilient land-creature board: each cast earthbends (animates/grows a land with counters), and the ETB rebuys instants/sorceries."},"28fcf855-6372-4d6b-b3fd-76f85247f309":{"traps":["expecting a persistent land-creature board \u2014 one big trampler per combat, not a growing board of manlands."],"insight":"Obuun is a lands+counters self-scaling commander: landfall grows Obuun, and Obuun's power sizes an until-EOT X/X animated land."},"cbcb6d9a-6ae5-4bcd-8013-2b657553764a":{"traps":["trying to build toward the reactive draw \u2014 note (rail-ability limitation)","hard attack-prevention \u2014 prefer soft taxes over absolute prevention."],"insight":"Mangara is a mono-W political control commander: reactive card draw off opponents' attacks and 2nd spells, in a pillowfort/lifelink shell."},"77212081-0b49-4d92-9c5a-1f21e6907fce":{"traps":["treating the opponent mill as a mill wincon \u2014 the value is the drain + your scry, not decking opponents."],"insight":"Krydle is a connect-for-value Dimir commander: evasion + combat-damage triggers = repeatable drain/card-selection."},"0757c5a7-e51b-4c39-bb4d-b32657c10cb4":{"traps":["mono-color instants/sorceries as Lilah payoffs \u2014 still fine spells, but they don't trigger the free-recast engine.","reading Lilah as pure prowess aggro \u2014 grindy tempo/value, not a one-shot combat plan."],"insight":"Lilah is an Izzet spellslinger whose payoff is free recasts (plot) of multicolored instants/sorceries \u2014 each casts twice, doubling prowess/magecraft value."},"a800bec4-bacc-43f9-a773-dd795959935b":{"traps":["helping opponents via symmetric mill \u2014 the mill is symmetric but the impulse-cast is yours only \u2014 asymmetric in your favor."],"insight":"Locke is a Rakdos attack-value commander: connect/attack -> mill everyone -> impulse-cast from the pile + Treasures."},"09f99b5a-66cf-4178-ae64-29f2004fe899":{"traps":["Grandeur as a live engine \u2014 the engine must NOT credit Grandeur in EDH \u2014 a schema gotcha."],"insight":"Korlash is a mono-B Swamps-matter beater: P/T = Swamp count, sharing that scaling source with Corrupt/Cabal Coffers."},"e2c141af-925e-42bd-8d83-e1a71f4c9794":{"traps":["sacrificing only 0-MV tokens for the impulse \u2014 tokens are for death payoffs; use high-MV creatures for the impulse."],"insight":"Rakdos is an aristocrats + impulse commander: sac creatures (high-MV best) to impulse off libraries (yours or opponents') while cashing death payoffs."},"5ac65688-0a74-4dc4-b6cb-12bdf8aed01e":{"traps":["command-zone casting \u2014 shared command_zone_interaction with Korlash's Grandeur (CS-0021).","hellbent / your-empty-hand payoffs \u2014 if building discard, use opponent-empty-hand punishers, not hellbent."],"insight":"Myojin's headline is a command-zone anti-synergy: its divinity counter (and thus indestructibility + mass-discard activation) requires a HAND cast, which the command zone is not."},"d8e6294d-51cc-44ff-8bc6-b0a168e4f423":{"insight":"Faldorn is an impulse + cast-from-exile-tokens commander: impulse off the top, and every cast-from-exile (its own included) makes a Wolf."},"cd6018de-5791-4c13-b134-38c410f04872":{"traps":["dropping the gate \u2014 run redundant/durable type-holders."],"insight":"Naomi is a go-wide Orzhov commander gated on permanent-type diversity (artifact + enchantment)."},"aee473c7-c659-421c-96b5-05f57ca2ed97":{"traps":["single-target/untargeted spells as the payoff \u2014 the payoff is specifically MULTI-target spells."],"insight":"Hinata is a multi-target payoff + soft-stax Jeskai commander: your multi-target spells are cheap ({1} less per target), opponents' targeted spells are taxed."},"31b990e3-9bad-4b0a-a9d5-f5b9ed2ad0b0":{"traps":["treating Fain as a single-axis payoff \u2014 value comes from chaining conversions + external payoffs."],"insight":"Fain is a resource-conversion aristocrats engine: fodder -> counters/Treasure/flyers, looping via self-untap, with death payoffs."},"c6040e8d-dac3-4bed-8d1d-d7d44aa10c86":{"traps":["copying spells that also help opponents \u2014 prefer copying spells targeted at you / symmetric-safe so the opponent's copy is low-value.","plain 'cast'-trigger payoffs expecting copies to trigger them \u2014 use magecraft (cast OR copy) payoffs instead."],"insight":"Parnesse is a Grixis spellslinger/copy control commander whose standout is a reactive targeted-tax protecting you and your board."},"62511d43-8eaf-405a-9c81-7bd593d3a01e":{"traps":["symmetric board wipes without protecting Ygra \u2014 one-sided (In Garruk's Wake) or protected Ygra required."],"insight":"Ygra is a Food + aristocrats + counters commander built on a mass type-addition (all other creatures are Food)."},"3688ad0d-653b-4d5d-a57e-444db679d83e":{"traps":["non-deathtouch fodder without a grant \u2014 grant deathtouch board-wide to make all deaths count.","token-only opponents dodging the edict \u2014 the edict hits nontoken creatures."],"insight":"The Serpent Society is a deathtouch-matters aristocrats edict commander: deathtouch creatures dying strip opponents' boards, behind a punishing poison ward."},"0613a0d8-f6bc-41ca-8070-b2506f756fc8":{"insight":"Vihaan is a Treasure-animation + outlaw tribal commander: Treasures become recurring 3/3 vigilant hasty attackers (Assassins) that convert back to mana."},"c8cbf0ec-ec98-4cb3-8068-60e92bbd740d":{"traps":["one big mass-reanimation as the payoff \u2014 prefer frequent small departures for more Zombies."],"insight":"Teval is a Sultai self-mill + graveyard-departure go-wide commander: fill the GY, then many SEPARATE leave-events each make a Zombie (per-batch)."},"6dbcd542-ddb0-434e-b8ee-3e31e1a8b051":{"traps":["cast-gated enchantress payoffs on the tokens \u2014 prefer ENTER-triggered constellation.","deckbuilding by cast cost \u2014 cheap 5-color commander."],"insight":"Go-Shintai is a 5-color Shrine/enchantress commander: nontoken Shrines make Shrine tokens -> constellation + Shrine payoffs -> recur enchantments to loop."},"06e9287b-56d4-443e-97ba-b5dcdc4fa989":{"traps":["granting flying to opponents' creatures \u2014 polarity caveat"],"insight":"Storm is a Selesnya evasion + pillowfort commander: grant flying to your team via targeted spells while a static shields you from flyers and makes your flyers unblockable-by-flyers."},"422a76e1-97a2-4a90-b07d-f487a2d8c236":{"traps":["railing the enter-tapped static \u2014 document it; the buildable engine is the lands loop."],"insight":"Thalia and The Gitrog Monster is an Abzan lands + stax + value commander: sac lands to draw and replay them (recursion + extra drops + landfall) while opponents' permanents enter tapped and\u2026"},"8ecdaf4b-4442-42da-9714-4257a83faf50":{"traps":["cast-trigger creatures as clone targets \u2014 copying is not casting; cast triggers don't fire on a clone."],"insight":"Sakashima is the Loki converse: a permanent nontoken clone that enters as a copy (ETB fires), wants ETB creatures (inverts Loki's suppression), and disables the legend rule rather than stri\u2026"},"a7ac5d98-805e-4212-be94-333a0c0c44a7":{"traps":["ETB-value / cast-trigger token bodies \u2014 attack-trigger/static bodies are the payoff ; permanent copies also keep sustained statics."],"insight":"Brudiclad is the duration-converse of Loki: same in-place, no-ETB realization, but PERMANENT and token-scoped."},"a8ddea1c-8d80-49c1-a5b4-630d5e51d66e":{"traps":["+1/+1 counter subtheme sharing the board \u2014 a Hardened-Scales-style +1/+1 shell cannibalizes the -1/-1 engine.","Hapatra as an attacker \u2014 value her as the token ENGINE, not a combat threat; evasion on her is a minor enabler for T1 only."],"insight":"Hapatra is a Golgari -1/-1-counters engine: every -1/-1 counter YOU place on a creature (direct, mass, wither, proliferate) mints a 1/1 deathtouch Snake."},"40eacdae-fae5-46b9-a9e5-9211469f74fc":{"traps":["anthems / over-pumping small creatures \u2014 value go-wide-small; deploy anthems AFTER accumulation, or avoid team +2/+2 statics.","1/-1 counter subtheme sharing the board \u2014 do not pair Ezuri's dump with a -1/-1 shell on the same creatures.","T2 needs another legal target \u2014 keep a second creature on board at combat."],"insight":"Ezuri is a Simic experience-counter snowball: every power<=2 creature you land (go-wide tokens especially) banks a permanent experience counter, and each combat converts the running total i\u2026"},"7cf1fa2e-1572-4d9d-8e93-e49016b34458":{"traps":["'enchanted permanent' means an AURA is attached, not enchantment-TYPE\u2026 \u2014 +2 untaps ONLY permanents with Auras on them.","umbra armor is creature-facing 'destroy' protection only \u2014 Mask can attach to any permanent, but its umbra armor only saves a CREATURE from destruction.","planeswalker loyalty cadence \u2014 one ability per turn \u2014 You cannot both make an Aura (-1) AND untap enchanted permanents (+2) the same turn; the engine ramps by alternating/building loy\u2026"],"insight":"Estrid is a Bant Auras/enchantments PLANESWALKER commander with three engines: +2 untaps every AURA-enchanted permanent you control (enchant your lands/rocks -> ramp/reuse); -1 makes a recu\u2026"},"add020f8-a6ae-4ce1-8d4e-f48f3fd14767":{"traps":["legendary artifacts as copy targets \u2014 the ETB may still double before a body is culled -> a discount, not always a hard skip.","token artifacts as fodder/source \u2014 the copy loop must run on nontoken artifact CARDS.","LTB/attack-value artifacts \u2014 still copyable, lower priority than ETB artifacts."],"insight":"Osgir is the 8th copy-family commander but the FIRST to copy a CARD from the graveyard (exiled as a cost) rather than a battlefield permanent \u2014 exposing a new FAM-0001 parameter, copySource."},"f697c78d-7e4f-4320-bfc6-2a25e6d7dc94":{"traps":["legendary creatures as creature-copy targets \u2014 the ETB may still fire once before the cull -> a discount, not always a hard skip.","TOKEN creatures do not trigger the creature copy \u2014 on the creature side Riku wants NONTOKEN bodies; token strategies only help the spell side indirectly.","{X}-cost creatures as creature-copy targets \u2014 distinct from the spell copy, where X IS copied."],"insight":"Riku is the 9th copy-family commander and the FIRST to carry BOTH copy mechanisms in one card: a spell-copy generation ability (CR 707.10, on each instant/sorcery cast) and a permanent toke\u2026"},"7e6b9b59-cd68-4e3c-827b-38833c92d6eb":{"traps":["no counters on board = dead \u2014 the hard dependency gate; a 'counters matter' shell with no counter SOURCE is a trap.","detrimental / countdown counters \u2014 you can't cherry-pick a KIND on a chosen bearer (WotC ruling) -> skip these bearers entirely; a naive 'proliferate all' line self\u2026","+1/+1 and -1/-1 on the same bearer annihilate \u2014 proliferating a bearer carrying both kinds is churn; keep +1/+1 and -1/-1 themes on DIFFERENT bearers (opponents for -1/-1)."],"insight":"Atraxa is the counter-SUPPLY-BY-AMPLIFICATION discovery: her free end-step proliferate ADDS one of every counter kind already present to any number of chosen permanents AND players (incl."},"fae87115-8749-4d25-a594-7139dd01a034":{"traps":["blink / flicker / reanimation is ANTI-synergy \u2014 inverts the usual 'blink your ETB commander' heuristic; a blinked/reanimated Marath is a 0/0 that dies unless something raises it\u2026","counters are permanent-bound (removal = full reset) \u2014 removal is a hard reset of the whole engine; protect Marath rather than rebuild.","the sink eats its own fuel \u2014 resolve with refuel (proliferate ; without refuel the engine is self-limiting."],"insight":"Marath is a self-fuelled counter BATTERY: ability A (PA-0035, NEW) enters it with +1/+1 counters equal to the mana spent to cast it (self, cost-scaled, base 0/0 so the counters ARE the body\u2026"},"d7ac4be1-dcca-49b6-8ddb-d1b0e6cf2dcf":{"traps":["The assassin engine is SELF-SUPPRESSING: once you reclaim the crown it stops making tokens (only fires while an opponent is monarch) \u2014 it is a reclai\u2026","'Damage doesn't cause you to lose life' fortress payoffs (Archon of Coronation) do NOT stop the crown transferring \u2014 combat damage to you still hands\u2026","Pillowfort deterrents (can't-attack-you) protect the crown but do NOT help you RECLAIM it when behind \u2014 reclaiming needs your OWN attackers to connec\u2026"],"insight":"Queen Marchesa is a held-designation (monarch) commander: a game-state resource with an inherent card-draw payoff, a combat-damage transfer rule, and a self-limiting reclaim engine (deathto\u2026"},"b8501a37-23e4-4873-80cb-d1c0f6c95155":{"traps":["SORCERIES get no first-ability copy \u2014 the common Riku/Magus-style misread ('copies instants and sorceries').","copies are not cast \u2014 magecraft / storm / 'whenever you cast an instant' payoffs do NOT see Kalamax's copies \u2014 do not credit cast-count synergies to th\u2026","copy-a-CARD does not trigger the +1/+1 \u2014 the copy-matters payoff keys on copying a SPELL on the stack, not copy-a-card-in-hand effects."],"insight":"Kalamax is the 11th copy-family commander and the FIRST to carry BOTH spell_copy sub-axes on one card: copy-GENERATION (CR 707.10 \u2014 copy your first instant each turn if tapped) and copy-MAT\u2026"},"4308a020-48cf-45fe-8074-dd5d0ac6d12d":{"traps":["mass removal / edicts / -X/-X / sacrifice \u2014 down-weight glass-cannon single-Aura-per-turn lines; up-weight totem-armor/umbra protection , bestow (falls off, not lost), and A\u2026","2-for-1 card disadvantage \u2014 bestow and self-returning Auras mitigate; totem-armor redirects destruction to the Aura.","blink / flicker of Uril \u2014 contrast PA-0035 (blink is fatal for a different reason); Uril's static itself is not counter/ETB-based, so it recomputes live \u2014 \u2026"],"insight":"Uril is the 2nd commander on the count-scaled-value shape and the piece that forces PA-0019 off its land-specific framing: it supplies a new countedSet (auras_attached_to_self), a new scali\u2026"},"c6e17443-2379-419d-8c32-13ea9bf52993":{"traps":["go-wide / token swarms \u2014 Rafiq is a Voltron/single-attacker commander, NOT a go-wide one; down-weight token anthems and mass-attack payoffs (the classic m\u2026","forced-attack creatures \u2014 soft: a single forced attacker is fine if IT is the one attacking alone; the trap is forcing MULTIPLE of your creatures to attack.","removal on the lone attacker \u2014 Rafiq has NO built-in protection (unlike Uril's hexproof); up-weight hexproof/protection/indestructible on the finisher and cheap\u2026"],"insight":"Rafiq exposes a reusable family the repo lacked: solo_attack_payoff, keyed on the 'attacks alone' declare-attackers condition (the exalted archetype)."},"514179c0-a50b-4565-8e71-9dad256edd85":{"traps":["Donating USEFUL permanents (ramp/card advantage) empowers an opponent \u2014 a trap; payload must be detrimental.","Self-cast symmetric boardwipes destroy your donated (owned) permanents and zero out X.","A single opponent left (or you leaving) reverts ownership (CR 800.4a) \u2014 donated permanents return to you / leave with you."],"insight":"Zedruu is the repo's first DONATE / give-to-opponent commander and the first to exploit ownership\u2260control as a resource."},"1816eede-c5bd-49df-958f-a3af64cb2932":{"traps":["Land destruction / Armageddon symmetrically starves the token half (you depend on YOUR lands entering).","Sacrificing NON-Elemental creatures yields no death burn \u2014 the death trigger is subtype-scoped.","Omnath is slow (MV 7) and does nothing the turn it lands unless a land follows; removal-before-value is a tempo risk."],"insight":"Omnath, Locus of Rage is the repo's first LANDFALL commander and first SUBTYPE-SCOPED aristocrats death-payoff commander."},"d0ade00d-a496-441d-9b7e-7dc033d3292c":{"traps":["A land MILLED from the library or DISCARDED from hand does NOT trigger ability 2 \u2014 the source zone must be the BATTLEFIELD ('put into a graveyard FRO\u2026","Landfall payoffs are a TRAP as a mental model here: Titania rewards lands DYING, not lands ENTERING (opposite of Omnath CS-0050).","Opponents' land destruction aimed at YOUR lands DOES trigger ability 2 (a land you control is put into a graveyard) \u2014 a land-destruction meta is part\u2026"],"insight":"Titania, Protector of Argoth is a mono-green LANDS-DYING engine \u2014 the exact LEAVE-to-graveyard MIRROR of Omnath's landfall (CS-0050)."},"8a5e3c8e-8e22-49b9-8ee5-4a36361f0da6":{"traps":["GROUP-HUG LIABILITY: ability 1 + your symmetric enablers also FILL OPPONENTS' hands (gas).","SELF-DAMAGE: SYMMETRIC punishers you add (Spiteful Visions, Phyrexian Tyranny) + your own wheels damage YOU \u2014 require lifegain support (contrast Unde\u2026","Notion Thief / Alms Collector (yours) turns the burn OFF by stealing opponents' extra draws (you draw them instead \u2192 no opponent draw \u2192 no ability-2 \u2026"],"insight":"Nekusar is the archetypal ENABLER+PAYOFF single card: a symmetric forced-draw engine (ability 1, PA-0041) welded to an opponent-only per-draw damage punisher (ability 2, PA-0042)."},"33666a98-812f-4892-9f8d-33e0cbecc340":{"traps":["SYMMETRY of ability 4 (casterScope=any_player) is pure UPSIDE here (you draw off opponents' spells) \u2014 but it makes Niv a MAGNET: opponents' removal-h\u2026","TARGETED ability 3 needs a legal target: under a board of hexproof creatures + hexproof/'can't be targeted' opponents (rare), pings can be blanked; n\u2026","Ability 3 fires on YOUR draws too (drawerScope=you) \u2014 with a symmetric wheel it does NOT hurt you (you choose targets), but it can force you to deal \u2026"],"insight":"Niv-Mizzet, Parun is a two-family Izzet engine: ability 4 is a spellcast_payoff (NEW PA-0043 \u2014 cast an instant/sorcery -> you draw) that FEEDS ability 3, a player_draw_payoff (PA-0042, EXTE\u2026"},"0a69c3dd-52a3-4ef6-b53f-b0780e0dc5f8":{"traps":["Discard / symmetric wheels SHRINK Alrund (empties your hand) \u2014 the OPPOSITE of Nekusar, where wheels are upside.","Empty-hand combat: Alrund can be a 1/1 if you dump your hand; time attacks to a full hand + foretell pile.","Base 1/1 is fragile; the +1/+1s vanish off the battlefield (rule) \u2014 any wipe/removal with no banked cards kills it."],"insight":"Alrund is a mono-U hand-size / foretell payoff: ability 2 (a NEW reveal_filter_advantage engine) fills your hand each end step, and ability 1 (count_scaled_value) converts hand + foretold-e\u2026"},"e4625704-1d52-44e4-804f-2f45644d76ac":{"traps":["Graveyard exile (opponents' hate OR your own accidental self-exile) strips the resource \u2014 the engine's hard off-switch.","Instants/sorceries CANNOT be recast (not permanents) \u2014 a deckbuilding suppression (bias toward permanent-based interaction: Beast Within, permanent r\u2026","Expensive fatties are better REANIMATED free (PA-0033) than hard-cast at full cost via Muldrotha \u2014 reanimate-others is a suppression signal for Muldr\u2026"],"insight":"Muldrotha opens a NEW reusable family \u2014 a standing permission to CAST/PLAY cards from a zone where they already reside (the graveyard), quota-gated by permanent type, at full/alternative co\u2026"},"name:isshin, two heavens as one":{"traps":["combat-damage payoffs as the doubled pool — Isshin doubles abilities whose trigger condition is ATTACKING (declaration); 'deals combat damage to a player' triggers on damage and is NOT doubled (official ruling: only conditions directly related to attacking — 'becomes tapped' isn't doubled either).","creatures put onto the battlefield attacking (myriad tokens, enters-tapped-and-attacking) were never DECLARED as attackers — their own attack triggers stay silent (same ruling family as Kaalia/Yuriko); the doubled value is the CREATING trigger on the real attacker.","reading him as a Panharmonicon — ETB, death, and cast triggers are untouched; only attack-caused triggers double, so ETB-value creatures without attack triggers add nothing to the engine.","only counting YOUR attackers — ANY creature attacking can cause your permanents' abilities to trigger (you need only control the permanent with the ability); goad and 'attacks one of your opponents' payoffs turn the whole table's combats into doubled value."],"insight":"Isshin opens the trigger_amplifier family (P.trigAmpScope): 'that ability triggers an additional time' is a payoff MULTIPLIER whose scope clause picks the entire deck — attacking (Isshin), a permanent entering (Yarok/Panharmonicon), a creature dying (Teysa Karlov), casting/copying (Veyran). The engine now reads the template and swaps in scope-matched rails; for Isshin: declaration-trigger density, enters-attacking token makers, extra combats. (Name-keyed: swap to his oracle_id when Scryfall access returns.)"},"name:feather, the redeemed":{"traps":["generic spellslinger fuel — counterspells, face burn, and look-at-the-top cantrips (Opt-class) never target your creatures, so they cast once and are gone like in any other deck; the engine only pays on spells aimed at your own team.","countered or fizzled spells are NOT returned — the exile is a replacement that applies 'as it resolves' (official ruling): a spell that's countered, or whose every target is illegal, goes to the graveyard as normal.","removal that targets only THEIR permanents never comes back — prize double-target interaction (Reckless Rage-class) and own-team spells with splash damage (Chandra's Ignition) so removal rides the engine too.","copies are not casts and are not cards — Zada/Mirrorwing/storm copies don't re-trigger Feather; and every recast still costs full mana, so the engine is repeatable, not free — the reason mv 1–2 fuel is the build rule."],"insight":"Feather opens the cast_target_scope family (P.castTargetsOwn): a cast trigger gated on targeting your OWN creatures turns one-shot cantrips into a standing engine — fuel is cheap own-targeting tricks (Defiant Strike/Gods Willing class), payoffs are target-multipliers (heroic, Zada, Mirrorwing, Leyline of Resonance) plus ordinary cast-trigger engines that see the same casts. Her 'instead of putting it into your graveyard' clause is a BYPASS, not a graveyard theme — the graveyard atom now strips that template before matching. (Name-keyed: swap to her oracle_id when Scryfall access returns.)"},"name:krenko, mob boss":{"traps":["reading him as attack/combat typal — Krenko's engine is an activated {T} ability: no attack, no combat, no trigger needed; the deck maximizes ACTIVATIONS (untappers, haste), not attack triggers or combat payoffs.","untappers as pseudo-haste — an untapped but summoning-sick Krenko still can't pay {T} (you must have controlled him since your turn began); haste enablers (Goblin Chieftain, Goblin Warchief, Thousand-Year Elixir's as-though-haste) start the engine the turn he lands — the removal-magnet turn — while untappers only multiply activations AFTER that.","anthems before bodies — X counts the NUMBER of Goblins at resolution, not their stats, and tokens count themselves next activation (each tap roughly doubles the board); token count compounds, pump does not — anthems are the finisher, not the engine.","treating his ability like a mana ability — it isn't one, which is exactly why Rings of Brighthearth and Illusionist's Bracers CAN copy it (both exclude mana abilities); the same copy rail on a Selvala-class mana-tap commander would be dead cardboard."],"insight":"Krenko opens the tap_activated_engine family (P.tapActivated): every atom in the engine reads TRIGGERED wording, so the #5 commander on EDHREC — whose entire deck hangs off '{T}: Create X 1/1 Goblins' — was invisible beyond generic typal/token rails. The parameter reads the commander's own un-quoted '{T} … :' costs (granted-ability quotes and reminder text stripped) and injects Untappers (more activations per turn), Haste Enablers (summoning sickness gates {T} — the real reason Chieftain/Warchief/Elixir headline his EDHREC page), and, only when an effect isn't a mana ability, Ability Copiers (Rings/Bracers class). Mana-tap commanders like Selvala get untap + haste but no copy rail. (Name-keyed: swap to his oracle_id when Scryfall access returns.)"},"name:prosper, tome-bound":{"traps":["go-wide token payoffs — the tokens Prosper makes are TREASURES: artifacts, not creatures, so anthems and 'for each creature you control' payoffs whiff entirely; the real pool is Treasure counts, artifact synergies, and sacrifice value (the reason the tokens atom now ignores artifact-token creation).","deathtouch-matters packages — his deathtouch is incidental deterrence on a 1/4 body, not a theme; granters and ping-payoffs add nothing to the exile engine (the reason the deathtouch atom now requires matters-wording, not a bare keyword).","counting only his own end-step exile — the Treasure trigger fires on EVERY play from exile: foretell, suspend, plot, madness, adventures, cascade (rulings-verified — cascade casts from exile), and even opponents' cards played from theft-exile; one Treasure per CARD played, and lands played from exile count too.","treating the impulse as draw-now — the Mystic Arcanum card is playable until the end of your NEXT turn, spanning a whole table cycle, so instants and flash are worth extra; but a LAND exiled this way needs your own turn and an unused land drop, and a card left unplayed is simply lost."],"insight":"Prosper forced the exileplay atom into full RAILS membership: it was the only major atom still emitting a generic one-query synergy rail, with no enabler/payoff split — so the #1 impulse commander got neither impulse-draw density (Light Up the Stage/Reckless Impulse class, 68% inclusion, plus foretell/plot) nor cast-from-exile rewards (Wild-Magic Sorcerer's cascade grant, Passionate Archaeologist) as distinct rails. Payoff queries use exact templates ('spell from exile', 'card from exile') so adventure/foretell reminder text can't flood the rail. He also exposed two matcher traps fixed this run: 'create a Treasure token' false-firing the go-wide tokens atom, and bare-keyword deathtouch firing Deathtouch Matters. (Name-keyed: swap to his oracle_id when Scryfall access returns.)"},"name:animar, soul of elements":{"traps": ["a +1/+1 counters shell — counter supply and 'remove a counter' payoffs whiff: the counters land only on ANIMAR HIMSELF as a cost dial, so board-wide counter payoffs see nothing and removal payoffs literally raise your curve; the exception is doublers (Branching Evolution-class, 26% of EDHREC lists) — a doubled counter is a deeper discount.", "pip-heavy fatties as the top end — the discount is generic-only: {1} less per counter can never shrink colored pips (cost rules: reductions eat the generic component), so colorless Eldrazi-class haymakers with all-generic costs are the ones that end up free; and morph is a colorless {3} creature spell — free at three counters, castable face-down from any hand.", "instant/sorcery slots — noncreature spells are neither discounted nor grow him, so every one is off-engine; run the creature-shaped versions of the same jobs (Man-o'-War bounce, Reclamation Sage removal, Beast Whisperer draw) so even interaction feeds the counter engine.", "reading protection from white and black as unkillable — wraths, edicts, and -X/-X don't target and kill him fine; the counters vanish when he leaves and he re-enters at zero, and (official ruling) the counter from a cast never discounts the spell that banked it — the engine is always one cast behind, so rebuild via cheap-creature density, not pump."], "insight": "Animar opens the self_counter_discount family (P.counterFuel + P.costDownType): a cast trigger banks +1/+1 counters on the commander itself while a static converts each one into a type-scoped cost reduction — a shape the engine was structurally blind to, because the costdown atom read only instant/sorcery wording. The real deck is recast DENSITY: self-bounce loops (Shrieking Drake, Ancestral Statue, Cloudstone Curio — the headline EDHREC synergies, and the classic infinite once casts are free) ratchet the discount, creature-cast payoffs (Guardian Project class) pay per loop, and the discounted top end is generic-heavy colorless. He also exposed the dead FAM.cast key that had been silently denying every spellslinger commander its Synergy Ramp rail. (Name-keyed: swap to his oracle_id when Scryfall access returns.)"},"name:the ur-dragon":{"traps":["reading the put as Kaalia — the permanent enters AFTER attackers are declared: it is not attacking, it can't be moved into the attack even with haste (official ruling), and its own attack triggers stay silent this combat; ETB-value payoffs already on board (Terror of the Peaks, Scourge of Valkas class) are what convert the free drop into damage.","one put per combat, not per Dragon — the trigger is a single batch: the draw scales with how many Dragons attacked, but you put exactly ONE permanent no matter how wide the swing or how many players were attacked (official ruling); extra combats multiply the put, extra bodies only multiply the draw.","enters-attacking Dragons don't count — a Dragon put onto the battlefield attacking was never DECLARED an attacker, so it neither triggers the eminence draw nor its own attack abilities (official ruling — the Kaalia/Yuriko/Isshin family again, from the other side).","building as if he must resolve — eminence runs from the command zone: every OTHER Dragon spell costs {1} less all game, so the deck functions before the 9-drop ever lands; but the discount never touches his own cost or colored pips, so ramp and redundant reducers (Urza's Incubator 46% inclusion, Herald's Horn 43%) still carry the five-color curve."],"insight":"The Ur-Dragon opens the typal_cost_discount family (P.tribeCostDown) and exposed a wording blind spot: batch attack triggers ('whenever one or more … attack') dodge every singular 'attacks' regex, and his 'permanent card' put dodged the creature-only massdeploy test — so the #1 commander on EDHREC read as bare Dragon typal. The engine now parses plural batch attacks (attack atom + deployOnAttack — haste, attack safety, extra combats), 'permanent card' mass-deploys, and stacks redundant typal reducers: an eminence discount is an engine half the command zone provides for free. (Name-keyed: swap to his oracle_id when Scryfall access returns.)"},"name:sisay, weatherlight captain":{"traps":["a +1/+1 counters or pump-matters shell — she grows by COLOR COUNT among your OTHER legendary permanents (no counters involved, ceiling +5/+5): five mono-white legends add exactly one color, while a single five-color legend (Jegantha) maxes her alone — color diversity, not legend count, sets her power.","misreading the fetch ceiling — 'mana value LESS THAN Sisay's power' is strict: at 7 power she finds MV 6 and below; an {X} cost counts X as 0 in the library, and legendary lands are MV 0 so they're always legal finds (official rulings) — though a fetched land adds no colors to her count and doesn't use your land drop.","treating the activation as once-a-turn — it is NOT a {T} ability: with WUBRG available again you can chain fetches in one turn, and because her power updates continuously, finding a color-heavy legend (Jegantha, Faeburrow Elder) mid-chain unlocks a bigger next fetch — the reason rainbow mana, not untappers, is the enabler suite.","generic five-color goodstuff — nonlegendary cards are invisible to both halves of her engine: they add no power and can't be fetched, so every slot wants to be a legend or find/protect one — even the rocks (Mox Amber is legendary and feeds the count) and lands (legendary lands are fetchable) can stay on-engine."],"insight":"Sisay opens the legendary_matters family: 'legendary' is a SUPERTYPE, so the tribe detector rightly ignores it and no triggered-wording atom could see her — an 18,000-deck toolbox commander read as a blank. The new legendary atom (density enabler + Mox Amber/Heroes' Podium-class payoff rails) also wakes Kethis, Reki, Captain Sisay, and Yoshimaru, and she contributes P.wubrgCost: an ability priced {W}{U}{B}{R}{G} (Sisay, Najeela, Golos, Jodah's alternative cost) demands one pip of EACH color on demand, so Chromatic Lantern / Faeburrow Elder / Bloom Tender / Jegantha-class rainbow producers are the ramp suite — while Ramos-style 'Add {W}{U}{B}{R}{G}' PRODUCERS correctly don't fire it. (Name-keyed: swap to her oracle_id when Scryfall access returns.)"}};
 const ROLE_LABEL = { enabler: 'Enabler', payoff: 'Payoff', amplifier: 'Amplifier', gate: 'Gate', staple: 'Staple', synergy: 'Synergy' };
 // ============================================================
 // ENGINE v3 — role-based rails (from the commander study ledger).
@@ -1461,6 +1676,17 @@ const ROLE_LABEL = { enabler: 'Enabler', payoff: 'Payoff', amplifier: 'Amplifier
 // generate their own enabler rails.
 // ============================================================
 const RAILS = {
+    legendary: {
+        // eTest: the commander SUPPLIES legends (tutors them out / recurs them);
+        // pTest: it COUNTS or rewards them (needs density). Sisay and Kethis fire
+        // both → default order keeps the density (enabler) rail first.
+        eTest: /search your library for a legendary|put[^.]{0,40}legendary [^.]{0,30}onto the battlefield|legendary cards? (in|from) your graveyard/,
+        pTest: /legendary spells you cast cost|whenever you cast a legendary|for each [^.]{0,24}legendary|legendary (creatures?|permanents?) you control/,
+        rails: [
+            { role: 'enabler', title: 'Legendary Density', sub: 'A hall of heroes', q: '(t:legendary -t:land)', why: 'the engine only sees legends — every slot that can be a legendary permanent should be one, and EDHREC ranking surfaces the best in these colors' },
+            { role: 'payoff', title: 'Legends Matter', sub: 'Support for the hall', q: '(o:"legendary creature" OR o:"legendary permanent" OR o:"legendary spell" OR o:"legendary card")', why: 'Mox Amber, Heroes’ Podium, and Time of Need-class support pays off the density the deck already runs' }
+        ]
+    },
     wheels: {
         eTest: /each player draws|draws an additional card|discards? (their|his or her) hand/,
         pTest: /whenever an opponent draws|whenever a player draws/,
@@ -1577,7 +1803,7 @@ const RAILS = {
     },
     attack: {
         eTest: /can't be blocked|unblockable|menace/,
-        pTest: /whenever .{0,30}attacks|deals combat damage/,
+        pTest: /whenever .{0,30}attacks|whenever one or more .{0,36}attack\b|deals? combat damage/,
         rails: [
             { role: 'enabler', title: 'Evasion Enablers', sub: 'Get through', q: '(o:"can\'t be blocked" OR keyword:menace OR keyword:shadow OR keyword:fear)', why: 'unblockable attackers keep the trigger landing' },
             { role: 'payoff', title: 'Combat Triggers', sub: 'Reward the hit', q: '((o:whenever o:attacks) OR o:"combat damage to a player")', why: 'more rewards for connecting' }
@@ -1603,6 +1829,18 @@ const RAILS = {
         rails: [
             { role: 'enabler', title: 'Lifegain Sources', sub: 'Fill the tank', q: '(keyword:lifelink OR o:"you gain" o:life)', why: 'steady incidental gain triggers everything' },
             { role: 'payoff', title: 'Lifegain Payoffs', sub: 'Health into power', q: '(o:"whenever you gain life" OR o:"if you gained life")', why: 'converts life into cards, counters, and damage' }
+        ]
+    },
+    exileplay: {
+        // Prosper study: the exile-play engine has two real halves — impulse-draw
+        // density (the trigger fuel) and standing cast-from-exile rewards. Payoff
+        // queries use exact templates ("spell from exile" etc.) so adventure/foretell
+        // REMINDER text ("cast the creature later from exile") can't flood the rail.
+        eTest: /exile the top/,
+        pTest: /(play|cast) a (card|spell|land) from exile/,
+        rails: [
+            { role: 'enabler', title: 'Impulse Draw', sub: 'Exile now, play later', q: '((o:"exile the top" (o:play OR o:cast)) OR keyword:foretell OR keyword:plot)', why: 'exile-and-play density is the trigger fuel — every card played from exile pays again' },
+            { role: 'payoff', title: 'Cast-from-Exile Payoffs', sub: 'Every exile cast pays', q: '(o:"spell from exile" OR o:"card from exile" OR o:"cards from exile" OR o:"land from exile")', why: 'standing rewards that see the same plays — cascade granters and per-cast payoffs stack on every impulse' }
         ]
     },
     mill: {
@@ -1644,12 +1882,15 @@ const ARCHETYPES = {
     voltron: { name: 'Voltron', win: '21 commander damage from one protected attacker' },
     equipment: { name: 'Voltron', win: '21 commander damage from one protected attacker' },
     auras: { name: 'Voltron', win: '21 commander damage from one protected attacker' },
-    cast: { name: 'Spellslinger', win: 'chain spells into storm-style or burn finishes' },
+    spellslinger: { name: 'Spellslinger', win: 'chain spells into storm-style or burn finishes' },
+    casttrigger: { name: 'Spellslinger', win: 'chain spells into storm-style or burn finishes' },
     spellcopy: { name: 'Spellslinger', win: 'chain spells into storm-style or burn finishes' },
     xspells: { name: 'Big Mana X', win: 'one lethal X spell after ramping past the table' },
     proliferate: { name: '+1/+1 Counters', win: 'go tall \u2014 a few huge threats plus proliferate' },
     costdown: { name: 'Spellslinger', win: 'chain spells into storm-style or burn finishes' },
     massdeploy: { name: 'Cheat Big Creatures', win: 'slam the hand onto the table and swing' },
+    legendary: { name: 'Legendary Toolbox', win: 'find the perfect legend for every board and out-value the table' },
+    trigamp: { name: 'Trigger Doubling', win: 'the same triggers, twice the value \u2014 every payoff in scope pays double' },
     copytoken: { name: 'Copy Value', win: 'clone the best thing in play, repeatedly' },
     artifacts: { name: 'Artifacts', win: 'artifact value engines snowball into combo finishes' },
     poison: { name: 'Poison', win: 'ten poison counters \u2014 a third of the usual damage job' },
@@ -1668,6 +1909,8 @@ const ARCHETYPES = {
     reanimate: { name: 'Graveyard', win: 'cheat cost by reanimating haymakers' },
     mill: { name: 'Graveyard', win: 'cheat cost by reanimating haymakers' },
     etb: { name: 'Blink & Value', win: 'out-value the table with looped ETBs' },
+    exileplay: { name: 'Impulse & Exile', win: 'out-card the table by playing everything from exile' },
+    treasure: { name: 'Treasure', win: 'Treasures compound into ramp, card advantage, and drain finishes' },
     attack: { name: 'Combat Aggro', win: 'pressure early, close with combat tricks' },
     theft: { name: 'Theft & Control', win: 'win with their stuff' }
 };
@@ -1684,7 +1927,8 @@ const BLENDS = {
     'Spellslinger|Go-Wide Tokens': ['warn', 'both want the whole deck \u2014 blend only via token-per-spell bridges'],
     'Spellslinger|Aristocrats': ['bad', 'competing card types \u2014 spells decks cannot afford fodder slots'],
     '+1/+1 Counters|Aristocrats': ['good', 'death triggers can feed counters, but watch slot competition'],
-    'Voltron|Aristocrats': ['bad', 'sacrificing bodies vs protecting one body \u2014 opposite instincts']
+    'Voltron|Aristocrats': ['bad', 'sacrificing bodies vs protecting one body \u2014 opposite instincts'],
+    'Impulse & Exile|Treasure': ['great', 'two halves of one engine \u2014 every card played from exile mints the mana to play the next one']
 };
 function buildGamePlans(found) {
     const seen = {}, plans = [];
@@ -1742,6 +1986,13 @@ function buildEngineModel(commander) {
         }
     });
     // ---- Parameter layer: read restrictions INSIDE triggers, transform rails ----
+    // tap-activated engine (Krenko study): every atom reads TRIGGERED wording, so a
+    // commander whose whole deck hangs off an activated {T} ability was invisible.
+    // Collect the commander's OWN "{T} … :" activation effects — reminder text and
+    // quoted GRANTED abilities stripped first, so "creatures you control have
+    // '{T}: …'" doesn't count. Effects are kept so the copy rail can respect the
+    // mana-ability exclusion printed on Rings of Brighthearth / Illusionist's Bracers.
+    const tapFx = (o.replace(/\([^)]*\)/g, ' ').replace(/"[^"]*"/g, ' ').match(/\{t\}[^:.]{0,40}:\s*[^.;\n]*/g) || []).map(s => s.replace(/^\{t\}[^:.]{0,40}:\s*/, ''));
     const P = {
         xRestricted: /spells? with \{x\}|\{x\} in (its|their) mana cost/.test(o),
         drawbackCounter: /with (a|an) (finality|stun) counters? on (it|them)/.test(o),
@@ -1762,6 +2013,31 @@ function buildEngineModel(commander) {
         negCounters: /-1\/-1 counters?/.test(o),
         theirYard: /opponents'? graveyards?|an opponent's graveyard/.test(o),
         castType: (o.match(/whenever you cast (?:a|an) (creature|enchantment|artifact|legendary|planeswalker) spell/) || [])[1],
+        // target-scoped cast trigger (Feather study): the trigger only sees spells
+        // aimed at YOUR OWN creatures — generic spellslinger fuel never fires it
+        castTargetsOwn: /whenever you cast an? (instant or sorcery )?spell that targets [^.]{0,40}you control/.test(o),
+        // type-scoped cost reduction (Animar study): "creature/artifact/enchantment
+        // spells you cast cost … less" — the payoff pool must buy the discounted TYPE
+        costDownType: (o.match(/(creature|artifact|enchantment)[^.]{0,40}spells you cast[^.]{0,40}cost [^.]{0,14}less/) || [])[1],
+        // TYPAL cost reduction (Ur-Dragon study): "<Tribe> spells you cast cost {1}
+        // less" — eminence-style typal discounts dodge the costdown atom (a tribe
+        // word isn't a card type), so the redundant-reducer package was invisible
+        tribeCostDown: (function () {
+            const m = o.match(/([a-z]+) spells (?:you cast )?cost \{\d\} less/);
+            if (!m || TRIBE_GENERIC[m[1]]) return null;
+            const t = normTribe(m[1]);
+            return TRIBES.indexOf(t) !== -1 ? t : null;
+        })(),
+        // WUBRG activation/alternative cost (Sisay study): "{W}{U}{B}{R}{G}:" as an
+        // activation cost (Sisay, Najeela, Golos) or "pay {W}{U}{B}{R}{G}" as an
+        // alternative cost (Jodah) — the deck must produce all five pips on demand,
+        // every turn. PRODUCING WUBRG (Ramos's "…: Add {W}{U}{B}{R}{G}") must NOT
+        // fire: the pips there sit after the colon, outside both patterns.
+        wubrgCost: /\{w\}\{u\}\{b\}\{r\}\{g\}[^:.]{0,40}:/.test(o) || /pay \{w\}\{u\}\{b\}\{r\}\{g\}/.test(o),
+        // self-counter discount engine (Animar study): the commander's own cast
+        // trigger banks +1/+1 counters on ITSELF and a static turns each one into a
+        // growing discount — the counters are a cost DIAL, not a board theme
+        counterFuel: /whenever you cast/.test(o) && /less to cast for each \+1\/\+1 counter/.test(o) && (o.indexOf('+1/+1 counter on ' + firstName.toLowerCase()) !== -1 || o.indexOf('+1/+1 counter on this creature') !== -1),
         // mass-deploy parameters (Kaalia study): which types can be put, and is the put attack-gated?
         deployTypes: (function () {
             const m = o.match(/put (?:an?|up to \w+|any number of)? ?([a-z, ]+?) creature cards? from your hand onto the battlefield/);
@@ -1773,9 +2049,20 @@ function buildEngineModel(commander) {
             });
             return dts;
         })(),
-        deployOnAttack: /whenever [^.]{0,40}attacks[^.]{0,120}from your hand onto the battlefield/.test(o),
+        deployOnAttack: /whenever [^.]{0,40}attacks?[^.]{0,120}from your hand onto the battlefield/.test(o),
         // reveal-top-MV payoff (Yuriko study): the revealed top card's mana value converts to life loss/damage
-        revealMV: /reveal the top card of your library/.test(o) && /equal to (that card's|its) mana value/.test(o)
+        revealMV: /reveal the top card of your library/.test(o) && /equal to (that card's|its) mana value/.test(o),
+        // trigger amplifier (Isshin study): "that ability triggers an additional time"
+        // is a payoff DOUBLER; the clause before it names the scope that gets doubled.
+        trigAmpScope: /triggers? an additional time/.test(o) ? (
+            /creature attacking causes/.test(o) ? 'attack'
+            : /entering( the battlefield)? causes/.test(o) ? 'etb'
+            : /creature dying causes/.test(o) ? 'death'
+            : /casting or copying/.test(o) ? 'cast'
+            : 'any') : null,
+        // tap-activated engine (Krenko study): see tapFx above
+        tapActivated: tapFx.length > 0,
+        tapNonMana: tapFx.some(fx => !/^add\b/.test(fx))
     };
     let foundForPlans = found;
     if (P.xRestricted) {
@@ -1849,7 +2136,66 @@ function buildEngineModel(commander) {
             if (/^casttrigger/.test(s.key || '')) { s.title = P.castType.charAt(0).toUpperCase() + P.castType.slice(1) + ' Cast Payoffs'; s.q = base + ' ' + TQ[P.castType]; s.why = firstName + ' only counts ' + P.castType + ' spells \u2014 the payoffs must match.'; }
             if (/^spellcopy/.test(s.key || '') && s.title === 'Worth Copying') { s.q = base + ' ' + TC[P.castType]; s.sub = 'Copy the right type'; s.why = 'copy targets scoped to ' + P.castType + ' spells.'; }
         });
-        if (P.castType === 'legendary') out.push({ key: 'legends', role: 'enabler', title: 'Legendary Density', sub: 'A hall of heroes', q: base + ' (t:legendary -t:land)', why: 'the trigger needs legendary spells \u2014 pack the deck with them.' });
+        // the legendary ATOM (Sisay study) now emits this rail itself whenever it made
+        // the top six \u2014 only backfill density if it didn't, to avoid a duplicate rail
+        if (P.castType === 'legendary' && !seen['legendary']) out.push({ key: 'legends', role: 'enabler', title: 'Legendary Density', sub: 'A hall of heroes', q: base + ' (t:legendary -t:land)', why: 'the trigger needs legendary spells \u2014 pack the deck with them.' });
+    }
+    // TARGET-SCOPED CAST TRIGGER (Feather study): "whenever you cast an instant or
+    // sorcery spell that targets a creature you control" \u2014 only spells aimed at your
+    // OWN creatures fire it. Generic spellslinger fuel (counterspells, face burn,
+    // storm) never triggers it; the real fuel is cheap own-targeting tricks, and the
+    // real payoffs are heroic/Zada-class cards that fire on the SAME casts.
+    if (P.castTargetsOwn) {
+        for (let i = out.length - 1; i >= 0; i--) if (/^casttrigger/.test(out[i].key || '')) out.splice(i, 1);
+        out.unshift(
+            { key: 'cto-fuel', role: 'enabler', title: 'Targeted Cantrips & Tricks', sub: 'Aim at your own team', q: base + ' ((t:instant OR t:sorcery) mv<=2 (o:"target creature you control" OR (o:"target creature" (o:"draw a card" OR o:scry OR o:hexproof OR o:indestructible OR o:protection)) OR o:"target creature gets"))', why: firstName + ' only triggers on spells that target your own creatures \u2014 cheap cantrips, protection, and pump are the fuel, and at one or two mana the recast engine runs every turn.' },
+            { key: 'cto-multi', role: 'payoff', title: 'Target Multipliers & Heroic', sub: 'One cast, many triggers', q: base + ' (o:"whenever you cast a spell that targets" OR o:"spell that targets only" OR o:"targets one or more creatures you control")', why: 'heroic bodies and Zada-class copy engines fire on the same own-targeting casts \u2014 every trick becomes board-wide value.' }
+        );
+    }
+    // SELF-COUNTER DISCOUNT ENGINE (Animar study): the cast trigger banks +1/+1
+    // counters on the COMMANDER ITSELF, and each counter deepens a static discount on
+    // a scoped spell type. The counters are a cost DIAL, not a board theme: external
+    // counter supply is win-more and "remove a counter" payoffs actively raise your
+    // curve — but counter DOUBLERS are real (a doubled counter is a deeper discount),
+    // and the true engine is recast density: bounce loops recast one cheap body over
+    // and over, ratcheting the discount with every loop.
+    if (P.counterFuel) {
+        for (let i = out.length - 1; i >= 0; i--) if (out[i].title === 'Counter Supply' || out[i].title === 'Counter Payoffs') out.splice(i, 1);
+        out.forEach(s => { if (s.title === 'Counter Amplifiers') { s.sub = 'Deepen the discount'; s.why = firstName + '\u2019s counters are a cost dial, not a board theme \u2014 doublers and proliferate grow the discount twice as fast.'; } });
+        foundForPlans = foundForPlans.filter(f => f.atom.key !== 'counters' && f.atom.key !== 'countersgen');
+        out.unshift({ key: 'cf-loop', role: 'enabler', title: 'Bounce & Recast Loops', sub: 'The same cast, again', q: base + ' (o:"creature you control to its owner\'s hand" OR o:"permanent you control to its owner\'s hand" OR o:"return another permanent you control")', why: firstName + ' grows on every creature CAST, not entry \u2014 self-bounce loops (Shrieking Drake, Ancestral Statue, Cloudstone Curio class) recast one cheap body over and over, and each loop makes the next cast cheaper.' });
+    }
+    // TYPE-SCOPED COST REDUCTION (Animar study): the costdown atom read only
+    // instant/sorcery wording, so creature/artifact/enchantment discount engines were
+    // invisible; the payoff rail must buy what the discount actually touches. A
+    // per-counter {1} discount only eats the GENERIC part of a cost — colored pips
+    // never get cheaper — so the creature pool prizes colorless / generic-heavy tops.
+    if (P.costDownType) {
+        const CD = {
+            creature: { t: 'Big Creatures, Discounted', q: '(t:creature (mv>=7 OR (mv>=6 c:c)))', w: 'the discount only eats generic mana, so colorless and generic-heavy haymakers (Eldrazi-class) are the ones that end up free.' },
+            artifact: { t: 'Big Artifacts, Discounted', q: '(t:artifact -t:land mv>=4)', w: 'the discount buys expensive artifacts.' },
+            enchantment: { t: 'Big Enchantments, Discounted', q: '(t:enchantment mv>=4)', w: 'the discount buys expensive enchantments.' }
+        }[P.costDownType];
+        out.forEach(s => {
+            if (s.title === 'Big Instants & Sorceries') { s.title = CD.t; s.sub = 'What the discount buys'; s.q = base + ' ' + CD.q; s.why = firstName + ' discounts ' + P.costDownType + ' spells \u2014 ' + CD.w; }
+        });
+    }
+    // TYPAL COST REDUCTION (Ur-Dragon study): the commander already discounts a
+    // tribe's spells \u2014 an engine half the command zone can even provide for free
+    // (eminence). The deck stacks REDUNDANT reducers (Herald's Horn, Urza's
+    // Incubator, Dragonspeaker Shaman class \u2014 43\u201356% inclusion on EDHREC) so a
+    // top-heavy typal curve arrives turns early. Reducers only eat generic mana.
+    if (P.tribeCostDown) {
+        const Tt = capWord(P.tribeCostDown);
+        out.push({ key: 'tcd', role: 'enabler', title: Tt + ' Discounts', sub: 'Stack the reducers', q: base + ' ((o:"' + P.tribeCostDown + ' spells" o:"less to cast") OR (o:"chosen type" o:"less to cast") OR (o:"creature spells you cast" o:"less to cast"))', why: firstName + ' already discounts ' + Tt + ' spells \u2014 redundant typal reducers compound it, and every {1} shaved only ever eats generic mana, so the pip-heavy top end still wants ramp too.' });
+    }
+    // WUBRG COST (Sisay study): an ability priced at {W}{U}{B}{R}{G} needs one pip of
+    // EACH color every activation — rainbow producers, not generic ramp, are the
+    // enabler suite (Chromatic Lantern / Faeburrow Elder / Bloom Tender / Jegantha
+    // class — desk-checked: all four match a clause below). Not a tap ability on
+    // Sisay-class commanders, so activations CHAIN within a turn if the mana is there.
+    if (P.wubrgCost) {
+        out.push({ key: 'wubrg-fix', role: 'enabler', title: 'Five-Color Mana', sub: 'All five pips, on demand', q: base + ' (o:"add one mana of any color" OR o:"for each color among" OR o:"add {w}{u}{b}{r}{g}")', why: firstName + '’s ability costs {W}{U}{B}{R}{G} — one pip of each color, every activation — so rainbow rocks, dorks, and Jegantha-class batteries are the real ramp suite here.' });
     }
     // copy trigger scoped to nontoken artifacts: re-aim the copy rails, drop token-input rails
     if (P.artifactCopy) {
@@ -1888,6 +2234,18 @@ function buildEngineModel(commander) {
         out.push({ key: 'dep-haste', role: 'enabler', title: 'Haste Enablers', sub: 'Swing the turn it lands', q: base + ' ((o:haste -keyword:haste) OR o:"creatures you control have haste")', why: firstName + '’s deploy is attack-gated — haste turns a telegraphed next-turn swing into immediate value.' });
         out.push({ key: 'dep-combat', role: 'amplifier', title: 'Extra Combats', sub: 'Attack again, deploy again', q: base + ' (o:"additional combat" OR o:"extra combat")', why: 'every extra combat is another attack trigger — another free card onto the battlefield.' });
     }
+    // TAP-ACTIVATED ENGINE (Krenko study): a repeatable {T} ability IS the deck for
+    // Krenko/Selvala/Arcanis-class commanders, and no triggered-wording atom can see
+    // it. Untappers multiply activations per turn — but do NOT beat summoning
+    // sickness (an untapped, summoning-sick creature still can't pay {T}); haste
+    // and Thousand-Year Elixir's as-though-haste start the engine the turn the
+    // commander lands. Ability copiers double each activation, but Rings/Bracers
+    // exclude mana abilities — so the copy rail requires a non-mana {T} effect.
+    if (P.tapActivated) {
+        out.push({ key: 'tap-untap', role: 'amplifier', title: 'Untappers', sub: 'Activate, untap, repeat', q: base + ' (o:"untap target creature" OR o:"untap all creatures" OR o:"untap another target" OR o:"untap equipped creature")', why: firstName + '’s {T} ability is the engine — every untap effect is another activation this turn.' });
+        if (!P.deployOnAttack) out.push({ key: 'tap-haste', role: 'enabler', title: 'Haste Enablers', sub: 'Activate the turn it lands', q: base + ' ((o:haste -keyword:haste) OR o:"creatures you control have haste")', why: 'summoning sickness gates {T} abilities — haste (or an as-though-haste activator) lets ' + firstName + ' tap the turn it lands, before removal can answer.' });
+        if (P.tapNonMana) out.push({ key: 'tap-copy', role: 'amplifier', title: 'Ability Copiers', sub: 'Activate once, resolve twice', q: base + ' (o:"copy that ability" OR o:"copy target activated")', why: 'Rings of Brighthearth and Illusionist’s Bracers copy the activation — legal here because the ability isn’t a mana ability, the one thing those copiers can’t touch.' });
+    }
     // REVEAL-MV (Yuriko-class): the top card's mana value IS the payoff. The keyword
     // layer can't see either half of the real engine: topdeck control (put the big
     // number there on demand) and high-MV cards that still get cast (delve, MDFC
@@ -1895,6 +2253,40 @@ function buildEngineModel(commander) {
     if (P.revealMV) {
         out.push({ key: 'top-ctrl', role: 'enabler', title: 'Topdeck Control', sub: 'Stack the reveal', q: base + ' ((o:"on top of your library" OR (o:"of your library" o:"put them back") OR (o:"from the top of your library" o:exchange) OR (o:shuffle o:"on top")) -t:land)', why: firstName + ' converts the revealed card’s mana value into loss — Brainstorm and Vampiric Tutor effects put the biggest number on top on demand.' });
         out.push({ key: 'top-bombs', role: 'payoff', title: 'Sky-High Mana Values', sub: 'Castable haymakers', q: base + ' (mv>=7 (keyword:delve OR is:mdfc OR o:"rather than pay" OR o:"extra turn" OR keyword:affinity OR keyword:miracle))', why: 'huge mana values that still get cast — delve, MDFC lands, alternative costs, and extra-turn spells hit for 7+ when revealed.' });
+    }
+    // TRIGGER AMPLIFIER (Isshin study): “triggers an additional time” doubles a
+    // scoped class of your triggered abilities — the deck is whatever the scope
+    // doubles: attack declaration (Isshin), permanents entering (Yarok/Panharmonicon),
+    // creatures dying (Teysa Karlov), casting/copying spells (Veyran).
+    if (P.trigAmpScope) {
+        for (let i = out.length - 1; i >= 0; i--) if (/^trigamp/.test(out[i].key || '')) out.splice(i, 1);
+        const ta = [];
+        if (P.trigAmpScope === 'attack') {
+            ta.push(
+                { key: 'ta-pay', role: 'payoff', title: 'Attack Triggers', sub: 'Doubled on declaration', q: base + ' ((o:"whenever you attack" OR (o:whenever o:attacks)) -o:"combat damage to a player")', why: firstName + ' doubles abilities that trigger on ATTACKING — declaration triggers, not combat-damage triggers, are the pool to stack.' },
+                { key: 'ta-wide', role: 'enabler', title: 'Enters-Attacking & Myriad', sub: 'Tokens mid-swing', q: base + ' (keyword:myriad OR o:"tapped and attacking" OR o:"battle cry")', why: 'myriad and enters-attacking token makers are themselves attack triggers — doubled, they flood the board twice as fast.' },
+                { key: 'ta-combat', role: 'amplifier', title: 'Extra Combats', sub: 'Trigger it all again', q: base + ' (o:"additional combat" OR o:"extra combat")', why: 'every extra combat re-fires every attack trigger — each one doubled.' }
+            );
+        } else if (P.trigAmpScope === 'etb') {
+            ta.push(
+                { key: 'ta-etb', role: 'payoff', title: 'ETB Value Creatures', sub: 'Twice the welcome', q: base + ' (t:creature o:"enters,")', why: firstName + ' doubles abilities triggered by permanents entering — every "enters" ability pays twice.' },
+                { key: 'ta-blink', role: 'enabler', title: 'Blink & Flicker', sub: 'Re-enter, re-double', q: base + ' (o:flicker OR (o:exile o:return o:battlefield))', why: 'each flicker is another doubled "enters" trigger.' }
+            );
+        } else if (P.trigAmpScope === 'death') {
+            ta.push(
+                { key: 'ta-death', role: 'payoff', title: 'Death Triggers', sub: 'Doubled on the way down', q: base + ' (o:"you control dies" OR o:"another creature dies" OR o:"whenever a creature dies")', why: firstName + ' doubles abilities triggered by creatures dying — every death payoff pays twice.' },
+                { key: 'ta-fodder', role: 'enabler', title: 'Sac Outlets & Fodder', sub: 'Keep the deaths coming', q: base + ' (o:"sacrifice a creature:" OR o:"sacrifice another creature" OR (o:create o:token o:creature))', why: 'free outlets and token fodder keep the doubled trigger flowing.' }
+            );
+        } else if (P.trigAmpScope === 'cast') {
+            ta.push(
+                { key: 'ta-cast', role: 'payoff', title: 'Magecraft Engines', sub: 'Cast once, trigger twice', q: base + ' (o:magecraft OR o:"whenever you cast or copy")', why: firstName + ' doubles abilities triggered by casting or copying spells — magecraft permanents pay twice per spell.' }
+            );
+        } else {
+            ta.push(
+                { key: 'ta-any', role: 'payoff', title: 'Triggered-Ability Density', sub: 'Everything fires twice', q: base + ' (t:creature o:"enters,")', why: firstName + ' doubles triggered abilities in its scope — prize permanents whose value is a trigger, starting with "enters" abilities.' }
+            );
+        }
+        out.unshift(...ta);
     }
     // counted-stat parameters: "where X is ..." tells you what to maximize
     if (P.countToughness) {
@@ -1947,7 +2339,11 @@ function buildEngineModel(commander) {
         }
     });
     const FAM = {}; found.forEach(fx => { FAM[fx.atom.key] = 1; });
-    const sacish = FAM.sac || FAM.death, castish = FAM.cast || FAM.spellcopy || FAM.xspells;
+    // FAM.cast was a dead key (no atom is keyed 'cast' — same family as the Feather
+    // run's ARCHETYPES bug): spellslinger/casttrigger decks never got Synergy Ramp.
+    // Type-scoped (Animar-class) and tribal cast triggers are excluded — the
+    // instant/sorcery cost-reducer ramp would be off-type for them.
+    const sacish = FAM.sac || FAM.death, castish = FAM.spellcopy || FAM.xspells || (FAM.spellslinger && !P.castType) || (FAM.casttrigger && !P.castType && !tribeF);
     if (sacish || FAM.tokens || castish) {
         const rq = sacish ? '((o:"treasure token" (o:dies OR o:sacrific)) OR o:"sacrifice a creature: add")'
             : FAM.tokens ? '(o:"creatures you control have" o:"add one mana")'
@@ -1975,12 +2371,16 @@ function buildEngineModel(commander) {
         out.push({ key: 'tutor', role: 'staple', title: 'Tutors', sub: 'Find your key pieces', q: base + ' (otag:tutor -t:land -o:"basic land")', why: 'Consistency for your engine pieces.' });
     }
     if (ciArr.indexOf('U') !== -1) out.push({ key: 'counter', role: 'staple', title: 'Counterspells', sub: 'Protect your plan', q: base + ' otag:counterspell', why: 'Blue gets to say no.' });
-    const studied = commander.oracle_id && (typeof STUDY_DB !== 'undefined') ? STUDY_DB[commander.oracle_id] : null;
+    const studied = (typeof STUDY_DB !== 'undefined') ? (STUDY_DB[commander.oracle_id] || STUDY_DB['name:' + String(commander.name || '').toLowerCase()] || null) : null;
     const traps = ((studied && studied.traps) || []).concat(genericTraps(commander, found));
+    const gamePlans = buildGamePlans(foundForPlans);
+    // a creature-scoped cast engine is not an instant/sorcery deck (Animar study):
+    // the storm chain is bodies — rename the plan the cast atoms mapped to.
+    if (P.castType === 'creature') gamePlans.plans.forEach(p => { if (p.name === 'Spellslinger') { p.name = 'Creature Storm'; p.win = 'chain cheap creature casts into a flood of bodies, triggers, and discounted haymakers'; } });
     return {
         sections: out,
         traps: traps.slice(0, 5),
-        gamePlans: buildGamePlans(foundForPlans),
+        gamePlans: gamePlans,
         novel: coreRails === 0,
         insight: studied ? studied.insight : '',
         verified: !!studied
@@ -2164,7 +2564,47 @@ function OracleText({ text }) {
             : React.createElement(React.Fragment, { key: si }, parts);
     })));
 }
+// ============ SKELETON LOADING ============
+// Shimmer placeholders rendered inside the REAL container class (card-grid /
+// synergy-rail / sim-grid) so responsive column CSS is inherited and content
+// swaps in without a layout jump. `--i` staggers the shimmer into a wave.
+function Skeletons({ n, wrap, lines }) {
+    const items = [];
+    for (let i = 0; i < n; i++) {
+        items.push(React.createElement("div", { key: i, className: "sk-card", style: { '--i': i } },
+            React.createElement("div", { className: "sk-img" }),
+            React.createElement("div", { className: "sk-foot" },
+                React.createElement("div", { className: "sk-line" }),
+                lines > 1 ? React.createElement("div", { className: "sk-line short" }) : null)));
+    }
+    return React.createElement("div", { className: wrap + " sk-wrap", role: "status", "aria-label": "Loading cards…" }, items);
+}
 // ============ MAIN APP ============
+// ============ WHAT'S NEW (in-app changelog) ============
+// Newest first. One entry per improvement run. The badge in the topbar shows
+// CHANGELOG[0].build and must always match <meta name="oracle-build">.
+const CHANGELOG = [
+    { build: 'v4.32', date: '2026-07-17', focus: 'ui', commander: null, summary: "My Decks got the Steam-library treatment: each deck is now an art tile — your commander's full art fills the card behind a dark scrim, with the deck name in gold serif, the commander's name, card count, and color pips along the bottom, an Active badge on the current deck, and a gentle art zoom on hover. This also fixes a bug where the desktop deck grid never kicked in, leaving decks as one stretched stack on big screens." },
+    { build: 'v4.31', date: '2026-07-17', focus: 'logic', commander: 'Sisay, Weatherlight Captain', summary: "The engine can now see legendary-matters decks: 'legendary' is a supertype, not a creature type, so Sisay — an 18,000-deck toolbox commander — previously matched nothing at all. She (plus Kethis, Reki, Captain Sisay, Yoshimaru) now gets Legendary Density and Legends Matter rails, and any commander whose ability costs {W}{U}{B}{R}{G} — Sisay, Najeela, Golos, Jodah — gets a Five-Color Mana rail (Chromatic Lantern, Faeburrow Elder, Jegantha class), while Ramos-style WUBRG producers correctly don't." },
+    { build: 'v4.30', date: '2026-07-17', focus: 'ui', commander: null, summary: "Mistakes are no longer forever: removing a card, ticking its count to zero, clearing your commander, or deleting a whole deck now shows an Undo button right in the toast — one tap puts everything back exactly as it was, quantities and owned marks included. Deleted decks even return to their old spot in the list." },
+    { build: 'v4.29', date: '2026-07-17', focus: 'logic', commander: 'The Ur-Dragon', summary: "The engine can finally read the most popular commander on EDHREC: batch attack triggers ('whenever one or more Dragons you control attack') and 'permanent card' cheat-into-play wording were both invisible to it, so The Ur-Dragon showed as plain Dragon typal. He now gets the real deck — haste enablers, attack safety, extra combats, hand refill, haymakers — plus a new Dragon Discounts rail (Herald's Horn / Urza's Incubator class) for any commander whose text discounts a tribe's spells." },
+    { build: 'v4.28', date: '2026-07-17', focus: 'ui', commander: null, summary: "The Search screen now greets you properly: instead of a single italic sentence, the empty state is a landing with eight one-tap curated searches — Find a Commander, Board Wipes, Mana Rocks, Cheap Removal, Counterspells, Reanimation, Extra Turns, Legendary Dragons. Each tap fills the search box with the real Scryfall query it runs, so the landing quietly teaches search syntax as you use it." },
+    { build: 'v4.27', date: '2026-07-17', focus: 'logic', commander: 'Animar, Soul of Elements', summary: "The engine now reads type-scoped cost reduction: Animar-class commanders get Bounce & Recast Loops (Shrieking Drake, Cloudstone Curio), Big Creatures Discounted (the generic-only discount prizes Eldrazi-class tops), and honest counter rails — counter supply and remove-a-counter payoffs were traps and are gone, doublers stay. Also fixed a dead key that had been denying every spellslinger deck its cost-reducer Synergy Ramp rail." },
+    { build: 'v4.26', date: '2026-07-17', focus: 'ui', commander: null, summary: "Card details finally use your monitor: on desktop the detail view is now two columns — card image, mana, and actions pinned on the left while rules text, prices, and printings info read comfortably on the right (Scryfall-style) — instead of a phone layout stretched across the whole panel. Mobile is untouched." },
+    { build: 'v4.25', date: '2026-07-17', focus: 'logic', commander: 'Prosper, Tome-Bound', summary: "The engine now understands exile-play decks: impulse commanders like Prosper get real Impulse Draw and Cast-from-Exile Payoffs rails (Light Up the Stage, Wild-Magic Sorcerer, Passionate Archaeologist…) instead of one generic rail. Two matcher traps fixed too: 'create a Treasure token' no longer recommends creature anthems, and a bare deathtouch keyword no longer drags in a Deathtouch Matters rail." },
+    { build: 'v4.24', date: '2026-07-17', focus: 'ui', commander: null, summary: "The keyboard works like you'd expect on desktop: Escape now closes any overlay — card details, Workshop, sheets, modals, even the playtest board — peeling stacked layers off one at a time, and pressing / anywhere jumps straight to the search box." },
+    { build: 'v4.23', date: '2026-07-17', focus: 'logic', commander: 'Krenko, Mob Boss', summary: "The engine now reads activated {T} abilities: tap-engine commanders like Krenko, Selvala, and Arcanis get Untappers, Haste Enablers (summoning sickness gates {T} — untappers alone don't fix that), and Ability Copiers (Rings of Brighthearth / Illusionist's Bracers) rails — with the copy rail correctly withheld from mana-tap commanders, whose abilities those copiers can't copy." },
+    { build: 'v4.22', date: '2026-07-17', focus: 'ui', commander: null, summary: "Hover a card name to see the card: deck-list lines and Shop rows now float a full card image beside the cursor on desktop (Moxfield-style), so you don't have to open the detail view just to remember what a card does. Shop card names are now clickable, too." },
+    { build: 'v4.21', date: '2026-07-17', focus: 'logic', commander: 'Feather, the Redeemed', summary: "The engine now reads target-scoped cast triggers: Feather decks get Targeted Cantrips & Tricks (Defiant Strike, Gods Willing…) and Target Multipliers & Heroic (Zada, Mirrorwing) rails instead of generic spellslinger noise, her graveyard-bypass clause no longer trips a wrong Graveyard rail, and spellslinger commanders finally show their Game Plan (a dead archetype key hid it)." },
+    { build: 'v4.20', date: '2026-07-17', focus: 'ui', commander: null, summary: "Loading feels like arriving, not waiting: search results, Workshop rails, and Similar Commanders now show shimmering card-shaped skeletons in the exact grid the real cards fill — no more spinner-then-jump." },
+    { build: 'v4.19', date: '2026-07-17', focus: 'logic', commander: 'Isshin, Two Heavens as One', summary: "The engine now reads trigger doublers: 'triggers an additional time' swaps in rails scoped to what actually gets doubled — attack triggers, enters-attacking tokens, and extra combats for Isshin; blink and ETB value for Yarok; death triggers for Teysa Karlov; magecraft for Veyran. Combat-damage triggers are correctly left out of Isshin's pool." },
+    { build: 'v4.18', date: '2026-07-17', focus: 'ui', commander: null, summary: "Oracle now keeps a changelog. Tap the version badge (this button!) any time to see what changed in each update, right here in the app." },
+    { build: 'v4.17', date: '2026-07-17', focus: 'logic', commander: 'Yuriko, the Tiger’s Shadow', summary: "The engine now understands reveal-the-top damage: Yuriko decks get Topdeck Control (Brainstorm, Vampiric Tutor…) and Sky-High Mana Values (delve, MDFCs, extra turns) rails, plus study notes on ninjutsu’s hidden rulings." },
+    { build: 'v4.16', date: '2026-07-17', focus: 'ui', commander: null, summary: "Card text reads like a card: rules text renders inline mana-symbol pips instead of raw {G} braces, only reminder text is italic (like real frames), and hybrid pips show their true color pairs." },
+    { build: 'v4.15', date: '2026-07-17', focus: 'logic', commander: 'Kaalia of the Vast', summary: "Kaalia’s cheat pool is now type-locked to Angels, Demons, and Dragons at any cost, and attack-declaration deployers get the right enablers: haste, extra combats, and attack-safety instead of evasion." },
+    { build: 'v4.14', date: '2026-07-16', focus: 'ui', commander: null, summary: "Baseline: rails recommendation engine with parameter layer, ~55 studied commanders, desktop sidebar mode, playtest board, and deck import/export." },
+];
+const BUILD = CHANGELOG[0].build;
 function App() {
     // Mark startup complete only after React has committed the first render.
     // This avoids a false “loaded” signal on Safari if rendering throws later.
@@ -2185,15 +2625,34 @@ function App() {
     const [similarFor, setSimilarFor] = useState(null);
     const [randomOn, setRandomOn] = useState(false);
     const [basicsOn, setBasicsOn] = useState(false);
+    const [whatsNewOn, setWhatsNewOn] = useState(false);
     const upgradesRef = useRef({});
     useEffect(() => { upgradesRef.current = upgrades; }, [upgrades]);
     const toastTimer = useRef(null);
-    const showToast = useCallback((msg) => {
+    // showToast('msg') or showToast('msg', { label: 'Undo', fn }) — an action
+    // extends the linger time, and any newer toast replaces the pending action,
+    // so a stale Undo can never fire against state it no longer describes.
+    const showToast = useCallback((msg, action) => {
         clearTimeout(toastTimer.current);
-        setToast(msg);
-        toastTimer.current = setTimeout(() => setToast(''), 2400);
+        setToast(action ? { msg, action } : msg);
+        toastTimer.current = setTimeout(() => setToast(''), action ? 5200 : 2400);
     }, []);
     useEffect(() => () => clearTimeout(toastTimer.current), []);
+    // "/" jumps to search from anywhere (GitHub/Moxfield-style). Ignored while
+    // typing in a field or while any overlay is open (EscStack non-empty).
+    useEffect(() => {
+        const onKey = (e) => {
+            if (e.key !== '/' || e.ctrlKey || e.metaKey || e.altKey) return;
+            const t = e.target;
+            if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+            if (EscStack.length) return;
+            e.preventDefault();
+            setTab('search');
+            setTimeout(() => { const el = document.querySelector('input.search-input'); if (el) { el.focus(); if (el.select) el.select(); } }, 50);
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, []);
     // persist decks
     useEffect(() => {
         const ok = saveDecks(decks);
@@ -2212,12 +2671,23 @@ function App() {
         showToast('Deck created');
     }
     function deleteDeck(id) {
+        const idx = decks.findIndex(d => d.id === id);
+        const deck = idx >= 0 ? decks[idx] : null;
+        const wasActive = activeDeckId === id;
         setDecks(p => p.filter(d => d.id !== id));
-        if (activeDeckId === id) {
+        if (wasActive) {
             const rest = decks.filter(d => d.id !== id);
             setActiveDeckId(rest.length ? rest[0].id : null);
         }
-        showToast('Deck deleted');
+        if (deck)
+            showToast('Deleted “' + deck.name + '”', { label: 'Undo', fn: () => {
+                // Re-insert at its old spot; no-op if a deck with this id somehow exists.
+                setDecks(p => p.some(d => d.id === id) ? p : (() => { const arr = p.slice(); arr.splice(Math.min(idx, arr.length), 0, deck); return arr; })());
+                if (wasActive)
+                    setActiveDeckId(id);
+            } });
+        else
+            showToast('Deck deleted');
     }
     function updateActiveDeck(updater) {
         setDecks(p => p.map(d => d.id === activeDeckId ? updater(d) : d));
@@ -2285,6 +2755,8 @@ function App() {
     }
     function updateActiveDeckById(id, updater) { setDecks(p => p.map(d => d.id === id ? updater(d) : d)); }
     function changeQty(cardId, delta) {
+        const deckBefore = activeDeck;
+        const entryBefore = deckBefore ? deckBefore.cards[cardId] : null;
         updateActiveDeck(d => {
             const cards = Object.assign({}, d.cards);
             const e = cards[cardId];
@@ -2304,9 +2776,24 @@ function App() {
             }
             return Object.assign(Object.assign({}, d), { cards });
         });
+        if (entryBefore && entryBefore.qty + delta <= 0)
+            showToast('Removed ' + entryBefore.card.name, { label: 'Undo', fn: () => restoreEntry(deckBefore.id, cardId, entryBefore) });
         haptic();
     }
-    function removeCard(cardId) { updateActiveDeck(d => { const cards = Object.assign({}, d.cards); delete cards[cardId]; return Object.assign(Object.assign({}, d), { cards }); }); haptic(); }
+    // Put a removed entry back exactly as it was (qty preserved). Owned marks
+    // live in deck.owned keyed separately and are never cleared on remove, so
+    // they simply reattach when the entry returns.
+    function restoreEntry(deckId, cardId, entry) {
+        setDecks(p => p.map(d => d.id === deckId ? Object.assign(Object.assign({}, d), { cards: Object.assign(Object.assign({}, d.cards), { [cardId]: entry }) }) : d));
+    }
+    function removeCard(cardId) {
+        const deck = activeDeck;
+        const entry = deck ? deck.cards[cardId] : null;
+        updateActiveDeck(d => { const cards = Object.assign({}, d.cards); delete cards[cardId]; return Object.assign(Object.assign({}, d), { cards }); });
+        if (entry)
+            showToast('Removed ' + entry.card.name, { label: 'Undo', fn: () => restoreEntry(deck.id, cardId, entry) });
+        haptic();
+    }
     function setCommander(card) {
         ensureDeck(deck => updateActiveDeckById(deck.id, d => {
             const cards = Object.assign({}, d.cards);
@@ -2316,7 +2803,13 @@ function App() {
         showToast('Commander set');
         haptic();
     }
-    function clearCommander() { updateActiveDeck(d => (Object.assign(Object.assign({}, d), { commander: null }))); }
+    function clearCommander() {
+        const deck = activeDeck;
+        const cmdr = deck ? deck.commander : null;
+        updateActiveDeck(d => (Object.assign(Object.assign({}, d), { commander: null })));
+        if (cmdr)
+            showToast('Commander removed', { label: 'Undo', fn: () => updateActiveDeckById(deck.id, d => Object.assign(Object.assign({}, d), { commander: cmdr })) });
+    }
     // deck stats
     const deckList = activeDeck ? Object.values(activeDeck.cards) : [];
     const deckTotal = deckList.reduce((s, e) => s + e.qty, 0) + (activeDeck && activeDeck.commander ? 1 : 0);
@@ -2521,7 +3014,8 @@ function App() {
                     deckTotal > 0 && React.createElement("span", { className: "badge" }, deckTotal)),
                 React.createElement("div", { className: 'tab ' + (tab === 'decks' ? 'active' : ''), onClick: () => { setTab('decks'); haptic(); } },
                     "My Decks",
-                    decks.length > 0 && React.createElement("span", { className: "badge" }, decks.length)))),
+                    decks.length > 0 && React.createElement("span", { className: "badge" }, decks.length))),
+            React.createElement("button", { className: "build-badge", "aria-label": "What's new in Oracle", onClick: () => { setWhatsNewOn(true); haptic(); } }, BUILD)),
         tab === 'search' && (React.createElement(SearchScreen, { injectQuery: searchInject, onInjectConsumed: () => setSearchInject(null), activeDeck: activeDeck, onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onAdd: addCard, ciViolation: ciViolation, commanderCI: commanderCI, upgrades: upgrades, onOpenRandom: () => { setRandomOn(true); haptic(); } })),
         tab === 'deck' && (React.createElement(DeckScreen, { deck: activeDeck, deckList: deckList, deckTotal: deckTotal, onChangeQty: changeQty, onRemove: removeCard, onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onClearCommander: clearCommander, onDrawHand: startPlaytest, onGoSearch: () => setTab('search'), onOpenSynergy: () => { setSynergyOn(true); haptic(); }, onOpenSimilar: () => { if (activeDeck && activeDeck.commander) { setSimilarFor(activeDeck.commander); haptic(); } }, onOpenBasics: () => { setBasicsOn(true); haptic(); }, onOpenRandom: () => { setRandomOn(true); haptic(); }, onToggleOwned: toggleOwned, onSetOwnedAll: setOwnedAll, ciViolation: ciViolation, showToast: showToast, upgrades: upgrades })),
         tab === 'decks' && (React.createElement(DecksScreen, { decks: decks, activeDeckId: activeDeckId, onSelect: (id) => { setActiveDeckId(id); setTab('deck'); haptic(); }, onCreate: createDeck, onDelete: deleteDeck, onImport: importDeckList, onRandom: () => { setRandomOn(true); haptic(); } })),
@@ -2532,9 +3026,25 @@ function App() {
         printingsCard && (React.createElement(PrintingsSheet, { card: printingsCard, deck: activeDeck, onClose: () => setPrintingsCard(null), onChoose: choosePrinting })),
         basicsOn && activeDeck && React.createElement(BasicsSheet, { deck: activeDeck, commanderCI: commanderCI, onAddQty: addCardQty, onClose: () => setBasicsOn(false), showToast: showToast }),
         playtesting && React.createElement(PlaytestBoard, { deck: activeDeck, deckList: deckList, onClose: () => setPlaytesting(false) }),
-        toast && React.createElement("div", { className: "toast" }, toast)));
+        whatsNewOn && React.createElement(WhatsNewModal, { onClose: () => setWhatsNewOn(false) }),
+        toast && React.createElement("div", { className: 'toast' + (toast.action ? ' has-action' : '') },
+            React.createElement("span", { className: "toast-msg" }, toast.msg || toast),
+            toast.action && React.createElement("button", { className: "toast-action", onClick: () => { const fn = toast.action.fn; clearTimeout(toastTimer.current); setToast(''); fn(); } }, toast.action.label))));
 }
 // ============ SEARCH SCREEN ============
+// v4.28: curated one-tap searches for the empty Search landing. Each q uses
+// only Scryfall syntax already proven elsewhere in this file; the tap fills
+// the search box with the real query, so the landing quietly teaches syntax.
+const SEEKER_PATHS = [
+    { label: 'Find a Commander', sub: 'Every legend fit to lead', q: 'is:commander legal:commander' },
+    { label: 'Board Wipes', sub: 'When the board must burn', q: 'o:"destroy all creatures"' },
+    { label: 'Mana Rocks', sub: 'Power from cold stone', q: 't:artifact o:"{t}: add"' },
+    { label: 'Cheap Removal', sub: 'Answers at two mana or less', q: 'o:"destroy target" mv<=2' },
+    { label: 'Counterspells', sub: 'The quiet word: no', q: 'o:"counter target spell"' },
+    { label: 'Reanimation', sub: 'Death is negotiable', q: 'o:"graveyard to the battlefield"' },
+    { label: 'Extra Turns', sub: 'Steal a little time', q: 'o:"extra turn"' },
+    { label: 'Legendary Dragons', sub: 'Wings worthy of a throne', q: 't:legendary t:dragon' },
+];
 function SearchScreen({ injectQuery, onInjectConsumed, activeDeck, onOpenDetail, onOpenPrintings, onAdd, ciViolation, commanderCI, upgrades, onOpenRandom }) {
     const [query, setQuery] = useState('');
     const [activeChip, setActiveChip] = useState('');
@@ -2788,7 +3298,7 @@ function SearchScreen({ injectQuery, onInjectConsumed, activeDeck, onOpenDetail,
                     React.createElement("svg", { className: "search-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" },
                         React.createElement("circle", { cx: "11", cy: "11", r: "8" }),
                         React.createElement("path", { d: "m21 21-4.35-4.35" })),
-                    React.createElement("input", { className: "search-input", type: "text", value: query, placeholder: "Card name or syntax...", autoComplete: "off", autoCorrect: "off", autoCapitalize: "off", spellCheck: "false", onChange: e => onInput(e.target.value), onKeyDown: e => { if (e.key === 'Enter') {
+                    React.createElement("input", { className: "search-input", type: "text", value: query, placeholder: "Card name or syntax...", title: "Shortcut: press / anywhere to search", autoComplete: "off", autoCorrect: "off", autoCapitalize: "off", spellCheck: "false", onChange: e => onInput(e.target.value), onKeyDown: e => { if (e.key === 'Enter') {
                             e.target.blur();
                             setAc([]);
                             doSearch();
@@ -2824,17 +3334,21 @@ function SearchScreen({ injectQuery, onInjectConsumed, activeDeck, onOpenDetail,
                         } } }, "Printings")),
                 React.createElement("span", { className: "result-mode-note" }, resultMode === 'prints' ? 'Every version' : 'One per card'))),
         React.createElement("div", { className: "results-pad" },
-            status === 'empty' && (React.createElement("div", { className: "state-msg" },
-                React.createElement("div", { className: "symbol" }, "\u2726"),
-                React.createElement("div", null,
-                    "Search any card, then tap ",
+            status === 'empty' && (React.createElement("div", { className: "search-landing" },
+                React.createElement("div", { className: "sl-head" },
+                    React.createElement("div", { className: "sl-glyph" }, "\u2726"),
+                    React.createElement("div", { className: "sl-title" }, "Ask the Oracle"),
+                    React.createElement("div", { className: "sl-sub" }, "Search any card by name \u2014 or walk one of the well-worn paths.")),
+                React.createElement("div", { className: "sl-grid" }, SEEKER_PATHS.map((s, i) => (React.createElement("button", { key: s.label, className: "sl-tile", style: { '--i': i }, onClick: () => { setQuery(s.q); setActiveChip(''); setAc([]); haptic(); doSearch({ queryOverride: s.q, chipOverride: '' }); } },
+                    React.createElement("span", { className: "sl-tile-name" }, s.label),
+                    React.createElement("span", { className: "sl-tile-sub" }, s.sub))))),
+                React.createElement("div", { className: "sl-foot" },
+                    "Tap ",
                     React.createElement("em", null, "+"),
-                    " to add it to your deck. Use the ",
+                    " on any result to add it to your deck \u00b7 the ",
                     React.createElement("em", null, "filter"),
-                    " for colors, types, mana value & more."))),
-            status === 'loading' && React.createElement("div", { className: "state-msg" },
-                React.createElement("div", { className: "spinner" }),
-                React.createElement("div", null, "Searching\u2026")),
+                    " refines colors, types, mana value & price."))),
+            status === 'loading' && React.createElement(Skeletons, { n: 10, wrap: "card-grid", lines: 2 }),
             status === 'error' && React.createElement("div", { className: "state-msg" },
                 React.createElement("div", { className: "symbol" }, "\u26A0"),
                 React.createElement("div", null, errMsg)),
@@ -3162,7 +3676,7 @@ function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, o
                             React.createElement("button", { className: 'own-check' + (r.owned ? ' on' : ''), "aria-label": (r.owned ? 'Owned: ' : 'Mark owned: ') + r.card.name, onClick: () => onToggleOwned(r.key) }, "\u2713"),
                             img ? React.createElement("img", { className: "shop-thumb", src: img, alt: "", onClick: () => onOpenDetail(r.card) }) : React.createElement("div", { className: "shop-thumb", onClick: () => onOpenDetail(r.card) }),
                             React.createElement("div", { className: "shop-info" },
-                                React.createElement("div", { className: "shop-name" },
+                                React.createElement("div", { className: "shop-name", onClick: () => { CardPeek.hide(); onOpenDetail(r.card); }, onMouseEnter: (e) => CardPeek.show(e, r.card), onMouseMove: CardPeek.move, onMouseLeave: CardPeek.hide },
                                     r.isCmdr ? '\u2694 ' : '',
                                     r.card.name),
                                 React.createElement("div", { className: "shop-meta" },
@@ -3205,7 +3719,7 @@ function DeckLine({ entry, isCommander, onOpenDetail, onChangeQty, onRemove, ciV
         React.createElement("span", { className: "dl-qty" },
             qty,
             multi ? '×' : ''),
-        React.createElement("span", { className: "dl-name", onClick: () => onOpenDetail(card), style: violation ? { color: 'var(--red-bad)' } : {} },
+        React.createElement("span", { className: "dl-name", onClick: () => { CardPeek.hide(); onOpenDetail(card); }, onMouseEnter: (e) => CardPeek.show(e, card), onMouseMove: CardPeek.move, onMouseLeave: CardPeek.hide, style: violation ? { color: 'var(--red-bad)' } : {} },
             violation ? '⚠ ' : '',
             card.name),
         React.createElement("span", { className: "dl-mana" },
@@ -3251,30 +3765,36 @@ function DecksScreen({ decks, activeDeckId, onSelect, onCreate, onDelete, onImpo
                 React.createElement("button", { className: "icon-btn", style: { width: '50px', height: '50px', borderRadius: '16px', flex: '0 0 auto' }, "aria-label": "Random commander", onClick: () => { onRandom && onRandom(); } }, DieIcon())),
             decks.length === 0 ? (React.createElement("div", { className: "state-msg" },
                 React.createElement("div", { className: "symbol" }, "\u2694"),
-                React.createElement("div", null, "No decks yet. Create one to start brewing."))) : (decks.map(d => {
+                React.createElement("div", null, "No decks yet. Create one to start brewing."))) : (React.createElement("div", { className: "deck-grid" }, decks.map(d => {
                 const m = deckMeta(d);
-                return (React.createElement("div", { key: d.id, className: 'deck-card-item ' + (d.id === activeDeckId ? 'active-deck' : ''), onClick: () => onSelect(d.id) },
-                    d.commander ? (React.createElement("img", { className: "dci-art", src: cardImage(d.commander, 'art_crop') || cardImage(d.commander, 'small'), alt: "" })) : React.createElement("div", { className: "dci-art empty" }, "\u2694"),
+                const art = d.commander ? (cardImage(d.commander, 'art_crop') || cardImage(d.commander, 'small')) : null;
+                return (React.createElement("div", { key: d.id, className: 'deck-card-item' + (art ? ' has-art' : '') + (d.id === activeDeckId ? ' active-deck' : ''), role: "button", tabIndex: 0, onClick: () => onSelect(d.id), onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(d.id); } } },
+                    art && React.createElement("img", { className: "dci-bg", src: art, alt: "", loading: "lazy" }),
+                    React.createElement("div", { className: "dci-scrim" }),
+                    !art && React.createElement("div", { className: "dci-mark" }, "\u2694"),
+                    d.id === activeDeckId && React.createElement("span", { className: "dci-active" }, "Active"),
+                    React.createElement("button", { className: "dci-del", "aria-label": 'Delete ' + d.name, onClick: (e) => { e.stopPropagation(); setConfirmDel(d); } },
+                        React.createElement("svg", { viewBox: "0 0 24 24", width: "15", height: "15", fill: "none", stroke: "currentColor", strokeWidth: "2" },
+                            React.createElement("path", { d: "M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" }))),
                     React.createElement("div", { className: "dci-info" },
                         React.createElement("div", { className: "dci-name" }, d.name),
                         React.createElement("div", { className: "dci-meta" },
-                            React.createElement("span", null,
+                            d.commander && React.createElement("span", { className: "dci-cmdr" }, d.commander.name),
+                            React.createElement("span", { className: "dci-count" },
                                 m.total,
-                                " cards"),
-                            d.commander && React.createElement("span", { className: "ci-pips" }, m.ci.length ? m.ci.map(c => React.createElement("span", { key: c, className: 'pip ' + c }, c)) : React.createElement("span", { className: "pip C" }, "\u25C7")))),
-                    React.createElement("button", { className: "dl-btn", style: { color: 'var(--red-bad)', width: '32px', height: '32px' }, onClick: (e) => { e.stopPropagation(); setConfirmDel(d); } },
-                        React.createElement("svg", { viewBox: "0 0 24 24", width: "15", height: "15", fill: "none", stroke: "currentColor", strokeWidth: "2" },
-                            React.createElement("path", { d: "M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" })))));
-            }))),
+                                m.total === 1 ? " card" : " cards"),
+                            d.commander && React.createElement("span", { className: "ci-pips" }, m.ci.length ? m.ci.map(c => React.createElement("span", { key: c, className: 'pip ' + c }, c)) : React.createElement("span", { className: "pip C" }, "\u25C7"))))));
+            })))),
         showNew && React.createElement(NameModal, { title: "Name Your Deck", placeholder: "e.g. Atraxa Superfriends", onSave: (name) => { onCreate(name); setShowNew(false); }, onClose: () => setShowNew(false) }),
         showImport && React.createElement(ImportModal, { onImport: onImport, onClose: () => setShowImport(false), onSelectNew: () => setShowImport(false) }),
         confirmDel && (React.createElement("div", { className: "modal-backdrop", onClick: () => setConfirmDel(null) },
+            React.createElement(EscClose, { onClose: () => setConfirmDel(null) }),
             React.createElement("div", { className: "modal", onClick: e => e.stopPropagation() },
                 React.createElement("div", { className: "modal-title" },
                     "Delete \"",
                     confirmDel.name,
                     "\"?"),
-                React.createElement("div", { style: { textAlign: 'center', color: 'var(--muted)', marginBottom: '18px', fontSize: '14px' } }, "This can't be undone."),
+                React.createElement("div", { style: { textAlign: 'center', color: 'var(--muted)', marginBottom: '18px', fontSize: '14px' } }, "You'll get a moment to undo."),
                 React.createElement("div", { className: "modal-btns" },
                     React.createElement("button", { className: "modal-btn secondary", onClick: () => setConfirmDel(null) }, "Cancel"),
                     React.createElement("button", { className: "modal-btn primary", style: { background: 'var(--red-bad)', borderColor: 'var(--red-bad)', color: '#fff' }, onClick: () => { onDelete(confirmDel.id); setConfirmDel(null); } }, "Delete")))))));
@@ -3284,6 +3804,7 @@ function DecksScreen({ decks, activeDeckId, onSelect, onCreate, onDelete, onImpo
 // engine, each with a plain-English "why", plus staple packages.
 // The Deck Doctor bar tracks package coverage against EDH targets.
 function SynergyOverlay({ onViewAll, commander, deck, deckList, onClose, onAdd, onOpenDetail, onOpenPrintings, onOpenSimilar, onOpenRandom }) {
+    useEscape(onClose);
     const model = useMemo(() => buildEngineModel(commander), [commander]);
     const [sections, setSections] = useState(() => model.sections.map(s => Object.assign({}, s, { status: 'loading', cards: [] })));
     const [hideInDeck, setHideInDeck] = useState(true);
@@ -3415,9 +3936,7 @@ function SynergyOverlay({ onViewAll, commander, deck, deckList, onClose, onAdd, 
                                 sec.title),
                             React.createElement("span", { className: "synergy-section-sub" }, sec.sub)),
                         sec.why && React.createElement("div", { className: "ws-why" }, sec.why),
-                        React.createElement("div", { className: "syn-rail-msg" },
-                            React.createElement("div", { className: "spinner" }),
-                            "Consulting the oracle\u2026")));
+                        React.createElement(Skeletons, { n: 6, wrap: "synergy-rail", lines: 1 })));
                 }
                 if (!visible.length) return null;
                 return (React.createElement("div", { key: sec.key, className: "synergy-section rail-in", style: { animationDelay: Math.min(si, 8) * 45 + 'ms' } },
@@ -3446,6 +3965,7 @@ function SynergyOverlay({ onViewAll, commander, deck, deckList, onClose, onAdd, 
 
 // ============ DETAIL OVERLAY ============
 function DetailOverlay({ card, onClose, onAdd, onSetCommander, onViewPrintings, onSimilar, inDeck, isCommander, ciViolation, upgrade }) {
+    useEscape(onClose);
     const [faceIdx, setFaceIdx] = useState(0);
     const startX = useRef(0), startY = useRef(0);
     const faces = (card.card_faces && card.card_faces.length > 1 && card.card_faces[0].oracle_text !== undefined) ? card.card_faces : null;
@@ -3472,7 +3992,7 @@ function DetailOverlay({ card, onClose, onAdd, onSetCommander, onViewPrintings, 
         if (startX.current < 50 && dx > 90 && Math.abs(dy) < 60)
             onClose();
     }
-    return (React.createElement("div", { className: "detail-overlay", onTouchStart: e => { startX.current = e.touches[0].clientX; startY.current = e.touches[0].clientY; }, onTouchEnd: touchEnd },
+    return (React.createElement("div", { className: "detail-overlay card-detail", onTouchStart: e => { startX.current = e.touches[0].clientX; startY.current = e.touches[0].clientY; }, onTouchEnd: touchEnd },
         React.createElement("div", { className: "detail-header" },
             React.createElement("button", { className: "back-btn", onClick: onClose },
                 React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5" },
@@ -3480,6 +4000,7 @@ function DetailOverlay({ card, onClose, onAdd, onSetCommander, onViewPrintings, 
                 " Back"),
             React.createElement("div", { className: "detail-title" }, card.name)),
         React.createElement("div", { className: "detail-scroll" },
+            React.createElement("div", { className: "dcol-left" },
             faces && (React.createElement("div", { className: "detail-face-toggle" }, faces.map((f, i) => React.createElement("button", { key: i, className: 'face-btn ' + (i === faceIdx ? 'active' : ''), onClick: () => setFaceIdx(i) }, f.name)))),
             faceImg && React.createElement("img", { className: "detail-card-img", src: faceImg, alt: card.name }),
             React.createElement("div", { className: "detail-name" }, face ? face.name : card.name),
@@ -3502,7 +4023,8 @@ function DetailOverlay({ card, onClose, onAdd, onSetCommander, onViewPrintings, 
                 React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" },
                     React.createElement("rect", { x: "6", y: "3", width: "12", height: "14", rx: "2" }),
                     React.createElement("path", { d: "M4 7v12a2 2 0 002 2h10" })),
-                "View printings & variants"),
+                "View printings & variants")),
+            React.createElement("div", { className: "dcol-right" },
             React.createElement("div", { className: "detail-info" },
                 React.createElement("div", { className: "info-row" },
                     React.createElement("div", { className: "info-label" }, "Type"),
@@ -3559,7 +4081,7 @@ function DetailOverlay({ card, onClose, onAdd, onSetCommander, onViewPrintings, 
                     React.createElement("div", { className: "info-val", style: { fontSize: '13px' } }, legal.map(f => f.charAt(0).toUpperCase() + f.slice(1)).join(', ')))),
             React.createElement("a", { className: "detail-action-link edhrec", href: 'https://edhrec.com/cards/' + edhrecSlug(card.name), target: "_blank", rel: "noopener" }, "View on EDHREC \u2197"),
             card.scryfall_uri && React.createElement("a", { className: "detail-action-link", href: card.scryfall_uri, target: "_blank", rel: "noopener" }, "View on Scryfall \u2197"),
-            card.purchase_uris && card.purchase_uris.tcgplayer && React.createElement("a", { className: "detail-action-link", href: card.purchase_uris.tcgplayer, target: "_blank", rel: "noopener" }, "Buy on TCGplayer \u2197"))));
+            card.purchase_uris && card.purchase_uris.tcgplayer && React.createElement("a", { className: "detail-action-link", href: card.purchase_uris.tcgplayer, target: "_blank", rel: "noopener" }, "Buy on TCGplayer \u2197")))));
 }
 // ============ PRINTINGS / VARIANTS SHEET ============
 function PrintingsSheet({ card, deck, onClose, onChoose }) {
@@ -3670,6 +4192,9 @@ function PlaytestBoard({ deck, deckList, onClose }) {
     const [life, setLife] = useState(40);
     const [menuCard, setMenuCard] = useState(null); // { inst, zone }
     const [viewZone, setViewZone] = useState(null); // 'graveyard' | 'exile' | 'library' | null
+    // Esc peels layers: card menu first, then zone viewer, then the board.
+    // (ZoneViewer itself doesn't register — the menu can sit above it.)
+    useEscape(() => { if (menuCard) setMenuCard(null); else if (viewZone) setViewZone(null); else onClose(); });
     const uidRef = useRef(0);
     function buildPool() {
         const pool = [];
@@ -3989,7 +4514,30 @@ function FilterSheet({ filters, setFilters, onApply, onClose, commanderCI }) {
 }
 
 // ============ MODALS ============
+function WhatsNewModal({ onClose }) {
+    useEscape(onClose);
+    function fmtDate(iso) {
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+        if (!m)
+            return iso || '';
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return months[parseInt(m[2], 10) - 1] + ' ' + parseInt(m[3], 10) + ', ' + m[1];
+    }
+    return (React.createElement("div", { className: "modal-backdrop", onClick: onClose },
+        React.createElement("div", { className: "modal wn-modal", onClick: e => e.stopPropagation() },
+            React.createElement("div", { className: "wn-head" },
+                React.createElement("div", { className: "modal-title" }, "What’s New"),
+                React.createElement("button", { className: "wn-close", onClick: onClose }, "Done")),
+            React.createElement("div", { className: "wn-scroll" }, CHANGELOG.map((e, i) => (React.createElement("div", { className: "wn-entry", key: e.build + i },
+                React.createElement("div", { className: "wn-meta" },
+                    React.createElement("span", { className: "wn-build" }, e.build),
+                    React.createElement("span", { className: 'wn-chip' + (e.focus === 'ui' ? ' ui' : '') }, e.focus === 'ui' ? 'Interface' : 'Engine'),
+                    React.createElement("span", { className: "wn-date" }, fmtDate(e.date))),
+                e.commander && React.createElement("div", { className: "wn-cmdr" }, "Studied: " + e.commander),
+                React.createElement("div", { className: "wn-sum" }, e.summary))))))));
+}
 function NameModal({ title, placeholder, onSave, onClose }) {
+    useEscape(onClose);
     const [val, setVal] = useState('');
     const ref = useRef(null);
     useEffect(() => { if (ref.current)
@@ -4004,6 +4552,7 @@ function NameModal({ title, placeholder, onSave, onClose }) {
                 React.createElement("button", { className: "modal-btn primary", onClick: () => onSave(val.trim() || 'Untitled Deck') }, "Create")))));
 }
 function ExportModal({ text, onCopy, onClose }) {
+    useEscape(onClose);
     return (React.createElement("div", { className: "modal-backdrop", onClick: onClose },
         React.createElement("div", { className: "modal", onClick: e => e.stopPropagation() },
             React.createElement("div", { className: "modal-title" }, "Export Deck"),
@@ -4017,6 +4566,7 @@ function ImportModal({ onImport, onClose }) {
     const [text, setText] = useState('');
     const [status, setStatus] = useState({ kind: '', msg: '' });
     const [busy, setBusy] = useState(false);
+    useEscape(() => { if (!busy) onClose(); });
     function run() {
         if (!text.trim() || busy)
             return;
@@ -4050,6 +4600,7 @@ function ImportModal({ onImport, onClose }) {
 // Finds legends that share the source commander's mechanical atoms,
 // scores by trait overlap + color-identity similarity.
 function SimilarOverlay({ source, onClose, onOpenDetail, onBuild }) {
+    useEscape(onClose);
     const [state, setState] = useState('loading');
     const [cands, setCands] = useState([]);
     const guard = useEdgeGuard();
@@ -4129,9 +4680,7 @@ function SimilarOverlay({ source, onClose, onOpenDetail, onBuild }) {
                     React.createElement("div", { className: "shc-name" }, source.name))),
             srcChips.length > 0 && React.createElement("div", { className: "trait-wrap" },
                 srcChips.map(c => React.createElement("span", { key: c, className: "trait-chip" }, c))),
-            state === 'loading' && React.createElement("div", { className: "syn-rail-msg" },
-                React.createElement("div", { className: "spinner" }),
-                "Reading the multiverse\u2026"),
+            state === 'loading' && React.createElement(Skeletons, { n: 6, wrap: "sim-grid", lines: 2 }),
             state === 'empty' && React.createElement("div", { className: "state-msg" },
                 React.createElement("div", { className: "symbol" }, "\u2726"),
                 React.createElement("div", null, "No close matches surfaced. This one may be truly unique.")),
@@ -4155,6 +4704,7 @@ function SimilarOverlay({ source, onClose, onOpenDetail, onBuild }) {
 // Keeps the current card on screen (dimmed) while rerolling, so the
 // experience is a shuffle rather than a blank flash.
 function RandomOverlay({ onClose, commanderCI, onOpenDetail, onBuild, onSetCommander }) {
+    useEscape(onClose);
     const [card, setCard] = useState(null);
     const [state, setState] = useState('loading');
     const [inColors, setInColors] = useState(false);
