@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.40 · 2026-07-17">
+<meta name="oracle-build" content="v4.41 · 2026-07-17">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -121,7 +121,7 @@
   .sort-btn svg { width: 13px; height: 13px; }
 
   .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .card-tile { background: var(--surface); border: 1px solid var(--hair); border-radius: var(--card-radius); overflow: hidden; position: relative; transition: transform .12s, box-shadow .15s; }
+  .card-tile { background: var(--surface); border: 1px solid var(--hair); border-radius: var(--card-radius); overflow: hidden; position: relative; transition: transform .3s var(--spring), box-shadow .3s ease, border-color .2s ease; }
   .card-tile:active { transform: scale(.97); }
   .card-tile.in-deck { border-color: rgba(224,196,106,.55); box-shadow: 0 0 0 1px rgba(224,196,106,.4); }
   .card-img-wrap { width: 100%; aspect-ratio: 488/680; background: #10111a; overflow: hidden; position: relative; cursor: pointer; }
@@ -460,7 +460,9 @@
   .trait-chip.dim { border-color: var(--hair); background: var(--glass); color: var(--text-dim); }
   .trait-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 2px 16px; }
   .sim-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .sim-card { border: 1px solid var(--hair); border-radius: 15px; overflow: hidden; background: var(--surface); position: relative; }
+  .sim-card { border: 1px solid var(--hair); border-radius: 15px; overflow: hidden; background: var(--surface); position: relative; transition: transform .3s var(--spring), box-shadow .3s ease, border-color .2s ease; }
+  .sim-card:active { transform: scale(.97); }
+  .sim-img img { transition: transform .35s var(--fluid); }
   .sim-img { width: 100%; aspect-ratio: 488/680; background: #10111a; position: relative; cursor: pointer; }
   .sim-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .sim-foot { padding: 7px 8px 8px; border-top: 1px solid rgba(255,255,255,.065); }
@@ -764,6 +766,10 @@
     .sheet-action:hover, .back-btn:hover { color: var(--gold-hi); }
     .card-img-wrap:hover img { transform: scale(1.025); }
     .card-img-wrap img { transition: transform .35s var(--fluid); }
+    .card-tile:hover { transform: translateY(-4px); box-shadow: 0 16px 32px rgba(0,0,0,.5); border-color: rgba(224,196,106,.42); }
+    .card-tile.in-deck:hover { box-shadow: 0 16px 32px rgba(0,0,0,.5), 0 0 0 1px rgba(224,196,106,.45); border-color: rgba(224,196,106,.6); }
+    .sim-card:hover { transform: translateY(-4px); box-shadow: 0 16px 32px rgba(0,0,0,.5); border-color: rgba(224,196,106,.42); }
+    .sim-card:hover .sim-img img { transform: scale(1.03); }
     .cmdr-art:hover { box-shadow: 0 6px 18px rgba(0,0,0,.5), 0 0 0 1px rgba(224,196,106,.5); cursor: pointer; }
     .deck-card-item:hover { border-color: rgba(224,196,106,.4); box-shadow: 0 12px 30px rgba(0,0,0,.45); }
     .deck-card-item:hover .dci-bg { transform: scale(1.045); }
@@ -2657,6 +2663,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v4.41', date: '2026-07-17', focus: 'ui', commander: null, summary: "The card grids now feel alive under the cursor. On desktop, the Workshop's synergy cards already lifted and cast a shadow when you hovered them, but the main search results and the Similar-commanders grid — the surfaces you browse most — stayed flat and lifeless. Those tiles now share the same tactile motion: a gentle lift, a soft shadow, a faint gold-lit edge, and a slow Ken-Burns zoom on the art, so every browsable card reacts consistently. GPU-cheap transforms only, desktop-pointer-gated, and completely off on touch and reduced-motion — nothing added to the page weight, nothing changed about what any card does." },
     { build: 'v4.40', date: '2026-07-17', focus: 'ui', commander: null, summary: "Tidied the deck action bar's wrapping. On tablet and mid-size windows the demoted “More” overflow button was stretching to the full width of the row while Add Cards, Workshop and Playtest sat small above it — so the least-important control was visually the loudest. The bar is now a clean grid: it lays out as four equal buttons in one row where there's room, and wraps to a tidy 2×2 on phones, so “More” always matches its neighbors instead of dominating. Layout-only; every button works exactly as before." },
     { build: 'v4.39', date: '2026-07-17', focus: 'ui', commander: null, summary: "The color filter now reads at a glance. In the Filters sheet, the six color swatches (White, Blue, Black, Red, Green, Colorless) used to be near-identical dark pills, so you had to squint at the tiny center glyph to tell them apart. Each swatch now carries a subtle tint of its own mana color — like Scryfall and Moxfield — so green looks green and red looks red instantly, while a selected swatch keeps the app's gold ring layered over its color. Purely visual: same taps, same behavior, no extra weight." },
     { build: 'v4.38', date: '2026-07-17', focus: 'ui', commander: null, summary: "Fixed an oversized-icon bug in the Workshop: the “Similar commanders” and “Surprise me” buttons had unconstrained SVG icons, so each ballooned into a ~250px-tall tile that dwarfed everything and shoved the real card recommendations far down the page. Their icons are now sized to match the EDHREC/Moxfield buttons beside them, so all four read as one tidy row of chips — the synergy card rails now appear roughly two buttons' worth of height sooner. Nothing removed; both buttons work exactly as before, just correctly sized." },
