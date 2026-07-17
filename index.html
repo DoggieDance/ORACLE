@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.39 · 2026-07-17">
+<meta name="oracle-build" content="v4.40 · 2026-07-17">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -268,7 +268,8 @@
   .deck-count-num.over { color: var(--red-bad); }
   .deck-count-target { font-family: var(--display); font-size: 19px; color: var(--muted); }
   .deck-count-label { font-size: 12.5px; font-weight: 620; color: var(--muted); }
-  .deck-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+  .deck-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin: 16px 0; }
+  .deck-actions .deck-action { min-width: 0; }
   .deck-action { flex: 1; min-width: calc(33% - 8px); min-height: 46px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--hair); border-radius: 14px; background: var(--glass2); color: var(--gold-bright); font-size: 12px; font-weight: 740; text-decoration: none; }
   .deck-action:active { background: rgba(224,196,106,.14); transform: scale(.98); }
   .deck-action svg { width: 15px; height: 15px; }
@@ -2656,6 +2657,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v4.40', date: '2026-07-17', focus: 'ui', commander: null, summary: "Tidied the deck action bar's wrapping. On tablet and mid-size windows the demoted “More” overflow button was stretching to the full width of the row while Add Cards, Workshop and Playtest sat small above it — so the least-important control was visually the loudest. The bar is now a clean grid: it lays out as four equal buttons in one row where there's room, and wraps to a tidy 2×2 on phones, so “More” always matches its neighbors instead of dominating. Layout-only; every button works exactly as before." },
     { build: 'v4.39', date: '2026-07-17', focus: 'ui', commander: null, summary: "The color filter now reads at a glance. In the Filters sheet, the six color swatches (White, Blue, Black, Red, Green, Colorless) used to be near-identical dark pills, so you had to squint at the tiny center glyph to tell them apart. Each swatch now carries a subtle tint of its own mana color — like Scryfall and Moxfield — so green looks green and red looks red instantly, while a selected swatch keeps the app's gold ring layered over its color. Purely visual: same taps, same behavior, no extra weight." },
     { build: 'v4.38', date: '2026-07-17', focus: 'ui', commander: null, summary: "Fixed an oversized-icon bug in the Workshop: the “Similar commanders” and “Surprise me” buttons had unconstrained SVG icons, so each ballooned into a ~250px-tall tile that dwarfed everything and shoved the real card recommendations far down the page. Their icons are now sized to match the EDHREC/Moxfield buttons beside them, so all four read as one tidy row of chips — the synergy card rails now appear roughly two buttons' worth of height sooner. Nothing removed; both buttons work exactly as before, just correctly sized." },
     { build: 'v4.37', date: '2026-07-17', focus: 'ui', commander: null, summary: "Decluttered the deck action bar. It used to show seven equal-weight buttons at once (Add Cards, Playtest, Export, Workshop, Similar, EDHREC, Moxfield). Now the primary actions stay up front — Add Cards, Workshop, Playtest — and the rest tuck into a tidy “More” menu (Export, Similar commanders, EDHREC, Moxfield; Random when there's no commander). Nothing was removed — every action is one tap away, the bar just reads cleaner and gives the signature Workshop button more prominence." },
