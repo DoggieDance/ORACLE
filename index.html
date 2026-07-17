@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.42 · 2026-07-17">
+<meta name="oracle-build" content="v4.43 · 2026-07-17">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -423,6 +423,10 @@
   .syn-count { display: inline-flex; align-items: center; margin-left: 7px; padding: 1px 7px; border: 1px solid rgba(224,196,106,.35); border-radius: 8px; background: rgba(224,196,106,.1); color: #f0d580; font-size: 10px; font-weight: 800; vertical-align: 2px; }
   .synergy-rail { display: grid; grid-auto-flow: column; grid-auto-columns: 118px; gap: 10px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: none; scroll-snap-type: x proximity; }
   .synergy-rail::-webkit-scrollbar { display: none; }
+  /* Scroll-cue edge fade — hints the rail keeps going; data-ef set by JS only while it overflows (mobile). Horizontal-only mask, so it never clips card footers. */
+  .synergy-rail[data-ef="s"] { -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 26px), transparent 100%); mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 26px), transparent 100%); }
+  .synergy-rail[data-ef="m"] { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 26px, #000 calc(100% - 26px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 26px, #000 calc(100% - 26px), transparent 100%); }
+  .synergy-rail[data-ef="e"] { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 26px, #000 100%); mask-image: linear-gradient(90deg, transparent 0, #000 26px, #000 100%); }
   .syn-card { scroll-snap-align: start; position: relative; border: 1px solid rgba(255,255,255,.1); border-radius: 14px; overflow: hidden; background: linear-gradient(155deg, rgba(43,45,59,.94), rgba(22,23,32,.98)); }
   .syn-card.in { border-color: rgba(224,196,106,.52); box-shadow: 0 0 0 1px rgba(224,196,106,.2); }
   .syn-img { width: 100%; aspect-ratio: 488/680; background: #10111a; cursor: pointer; display: block; position: relative; }
@@ -2667,6 +2671,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v4.43', date: '2026-07-17', focus: 'ui', commander: null, summary: "The Workshop's card rails now show when they keep scrolling. Each synergy row (Sac Outlets & Fodder, Aristocrat Drains, and the rest) scrolls sideways on phones but hid its scrollbar, so the last card sat cut off flat at the edge with no hint more was there. Each rail now softly fades at whichever edge still hides cards — right at the start, both sides in the middle, left once you reach the end — the same shelf cue Apple Music and Spotify use, and matching the fade the Search filter row got last build. Nothing was added or moved; every card and the View-all link are exactly where they were. The effect turns itself off on desktop, where the rails already wrap into a full grid, and it's pure GPU-composited masking driven only when you actually scroll or resize." },
     { build: 'v4.42', date: '2026-07-17', focus: 'ui', commander: null, summary: "The filter chip row now shows when it has more to scroll. The row of type filters at the top of Search (All, Legendaries, Creatures … Lands) scrolls sideways but hid its scrollbar, so the last chips just got cut off flat at the edge and looked like they might be all there was. The row now softly fades at whichever edge still has hidden chips — right when you're at the start, both sides in the middle, left once you reach the end — the same shelf cue Apple Music and Spotify use. Nothing was added or moved; every filter is exactly where it was, just with a clearer hint that the row keeps going. Pure GPU-composited masking, driven only when you actually scroll or resize." },
     { build: 'v4.41', date: '2026-07-17', focus: 'ui', commander: null, summary: "The card grids now feel alive under the cursor. On desktop, the Workshop's synergy cards already lifted and cast a shadow when you hovered them, but the main search results and the Similar-commanders grid — the surfaces you browse most — stayed flat and lifeless. Those tiles now share the same tactile motion: a gentle lift, a soft shadow, a faint gold-lit edge, and a slow Ken-Burns zoom on the art, so every browsable card reacts consistently. GPU-cheap transforms only, desktop-pointer-gated, and completely off on touch and reduced-motion — nothing added to the page weight, nothing changed about what any card does." },
     { build: 'v4.40', date: '2026-07-17', focus: 'ui', commander: null, summary: "Tidied the deck action bar's wrapping. On tablet and mid-size windows the demoted “More” overflow button was stretching to the full width of the row while Add Cards, Workshop and Playtest sat small above it — so the least-important control was visually the loudest. The bar is now a clean grid: it lays out as four equal buttons in one row where there's room, and wraps to a tidy 2×2 on phones, so “More” always matches its neighbors instead of dominating. Layout-only; every button works exactly as before." },
@@ -3980,6 +3985,30 @@ function SynergyOverlay({ onViewAll, commander, deck, deckList, onClose, onAdd, 
         run();
         return () => { alive = false; };
     }, [commander]);
+    // Scroll-cue edge fade for the horizontally-scrolling synergy rails (mobile).
+    // Self-disables on desktop, where rails wrap into a grid with no overflow.
+    useEffect(() => {
+        let raf = 0;
+        const applyAll = () => {
+            raf = 0;
+            document.querySelectorAll('.synergy-overlay .synergy-rail').forEach((rail) => {
+                const over = rail.scrollWidth - rail.clientWidth;
+                if (over <= 2) { rail.removeAttribute('data-ef'); return; }
+                const sl = rail.scrollLeft;
+                rail.setAttribute('data-ef', sl <= 2 ? 's' : (sl >= over - 2 ? 'e' : 'm'));
+            });
+        };
+        const schedule = () => { if (!raf) raf = requestAnimationFrame(applyAll); };
+        document.addEventListener('scroll', schedule, true);
+        window.addEventListener('resize', schedule);
+        schedule();
+        const settle = requestAnimationFrame(schedule);
+        return () => {
+            document.removeEventListener('scroll', schedule, true);
+            window.removeEventListener('resize', schedule);
+            cancelAnimationFrame(raf); cancelAnimationFrame(settle);
+        };
+    }, [sections, hideInDeck]);
     function isInDeck(c) {
         const k = cardKey(c);
         if (commander && cardKey(commander) === k) return true;
