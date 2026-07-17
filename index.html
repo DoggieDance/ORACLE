@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.44 · 2026-07-17">
+<meta name="oracle-build" content="v4.45 · 2026-07-17">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1357,6 +1357,9 @@ function copyLimit(card) {
     return 1;
 }
 function allowsMultiples(card) { return copyLimit(card) > 1; }
+// Grammar helper: singular/plural a count noun. "1 card" / "2 cards".
+// Pass an explicit plural form for irregulars (none here yet).
+function plural(n, word, pluralForm) { return n === 1 ? word : (pluralForm || word + 's'); }
 
 // ============================================================
 // ORACLE v3 CORE — sheet plumbing, atom engine, shopping helpers
@@ -2676,6 +2679,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v4.45', date: '2026-07-17', focus: 'ui', commander: null, summary: "Small grammar and clutter fix on the search results line. A one-card search used to read \"1 cards · showing 1\" — now it reads simply \"1 card,\" and any count of exactly one is singular everywhere it appears (search header, the Load-More count, and the import toast). The redundant \"· showing N\" tail is gone whenever every match is already on screen; it now appears only when the list is actually longer than what's loaded (e.g. \"1,247 cards · showing 175\"), where it's genuinely informative. Purely text — nothing moved, no capability touched, no cost." },
     { build: 'v4.44', date: '2026-07-17', focus: 'ui', commander: null, summary: "The Deck screen now shows how close your deck is to done at a glance. Under the big \"5 / 100\" counter there was only a line of text (\"95 cards to go\"); now a slim completion gauge sits right below it, filling gold as you add cards the way Moxfield and Steam show progress. It uses the exact etched look of the coverage bars already in the Stats tab, so it feels native — a dark inset track with a soft gold-lit fill. The bar turns green the moment you hit 100 (\"Complete deck!\") and red if you go over the limit, matching the counter's own color. Nothing was moved or removed; it's one small element that only animates when your card count actually changes, so there's no ongoing cost." },
     { build: 'v4.43', date: '2026-07-17', focus: 'ui', commander: null, summary: "The Workshop's card rails now show when they keep scrolling. Each synergy row (Sac Outlets & Fodder, Aristocrat Drains, and the rest) scrolls sideways on phones but hid its scrollbar, so the last card sat cut off flat at the edge with no hint more was there. Each rail now softly fades at whichever edge still hides cards — right at the start, both sides in the middle, left once you reach the end — the same shelf cue Apple Music and Spotify use, and matching the fade the Search filter row got last build. Nothing was added or moved; every card and the View-all link are exactly where they were. The effect turns itself off on desktop, where the rails already wrap into a full grid, and it's pure GPU-composited masking driven only when you actually scroll or resize." },
     { build: 'v4.42', date: '2026-07-17', focus: 'ui', commander: null, summary: "The filter chip row now shows when it has more to scroll. The row of type filters at the top of Search (All, Legendaries, Creatures … Lands) scrolls sideways but hid its scrollbar, so the last chips just got cut off flat at the edge and looked like they might be all there was. The row now softly fades at whichever edge still has hidden chips — right when you're at the start, both sides in the middle, left once you reach the end — the same shelf cue Apple Music and Spotify use. Nothing was added or moved; every filter is exactly where it was, just with a clearer hint that the row keeps going. Pure GPU-composited masking, driven only when you actually scroll or resize." },
@@ -3039,7 +3043,8 @@ function App() {
         const nd = { id, name: deckName, commander: cmdr, cards, created: Date.now() };
         setDecks(p => [nd, ...p]);
         setActiveDeckId(id);
-        const msg = 'Imported ' + (added + (cmdr ? 1 : 0)) + ' cards' + (notFound.length ? ' \u00b7 ' + notFound.length + ' not found' : '');
+        const importedN = added + (cmdr ? 1 : 0);
+        const msg = 'Imported ' + importedN + ' ' + plural(importedN, 'card') + (notFound.length ? ' \u00b7 ' + notFound.length + ' not found' : '');
         onDone({ ok: true, msg, notFound });
     }
     function addCardQty(card, n) {
@@ -3306,7 +3311,10 @@ function SearchScreen({ injectQuery, onInjectConsumed, activeDeck, onOpenDetail,
             setCards(resultCards);
             setNextPage(data.has_more ? data.next_page : null);
             const total = data.total_cards || 0;
-            setMeta(total.toLocaleString() + ' ' + (mode === 'prints' ? 'printings' : 'cards') + ' · showing ' + resultCards.length);
+            const noun = mode === 'prints' ? plural(total, 'printing') : plural(total, 'card');
+            // Only append "· showing N" when the list is actually truncated —
+            // when every match is on screen the suffix is redundant noise.
+            setMeta(total.toLocaleString() + ' ' + noun + (resultCards.length < total ? ' · showing ' + resultCards.length.toLocaleString() : ''));
             setStatus('results');
         }
         catch (e) {
@@ -3329,7 +3337,7 @@ function SearchScreen({ injectQuery, onInjectConsumed, activeDeck, onOpenDetail,
                 throw new Error(data.details || 'Could not load more cards.');
             setCards(previous => {
                 const merged = previous.concat(data.data || []);
-                setMeta('Showing ' + merged.length + ' cards');
+                setMeta('Showing ' + merged.length.toLocaleString() + ' ' + plural(merged.length, 'card'));
                 return merged;
             });
             setNextPage(data.has_more ? data.next_page : null);
