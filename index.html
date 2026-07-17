@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.36 · 2026-07-17">
+<meta name="oracle-build" content="v4.37 · 2026-07-17">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -601,6 +601,8 @@
   .pt-menu-card .nm { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #fff2d0; font-size: 14px; font-weight: 780; }
   .pt-menu-opt { display: flex; align-items: center; gap: 12px; width: 100%; padding: 15px; text-align: left; font-size: 15px; font-weight: 580; color: var(--text); border-bottom: 1px solid rgba(255,255,255,.07); }
   .pt-menu-opt .ic { flex-shrink: 0; width: 22px; text-align: center; font-size: 17px; color: var(--gold-bright); }
+  .pt-menu-opt .ic svg { width: 18px; height: 18px; vertical-align: middle; }
+  a.pt-menu-opt { text-decoration: none; }
   .pt-menu-opt:last-child { border-bottom: none; }
   .pt-menu-opt:active { background: var(--gold-glow); }
   .pt-menu-opt.cancel { justify-content: center; color: var(--muted); font-weight: 700; }
@@ -2638,6 +2640,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v4.37', date: '2026-07-17', focus: 'ui', commander: null, summary: "Decluttered the deck action bar. It used to show seven equal-weight buttons at once (Add Cards, Playtest, Export, Workshop, Similar, EDHREC, Moxfield). Now the primary actions stay up front — Add Cards, Workshop, Playtest — and the rest tuck into a tidy “More” menu (Export, Similar commanders, EDHREC, Moxfield; Random when there's no commander). Nothing was removed — every action is one tap away, the bar just reads cleaner and gives the signature Workshop button more prominence." },
     { build: 'v4.36', date: '2026-07-17', focus: 'ui', commander: null, summary: "Fixed a grammar bug in the deck view: sections used to add a bare “s” to every card type, so a group of two sorceries read “SORCERYS”. Card-type labels now pluralize correctly (“Sorceries”), on both the Cards section headers and the Stats → Type Counts list, via one shared pluralizer — every other type (Creatures, Lands, Artifacts…) is unchanged." },
     { build: 'v4.35', date: '2026-07-17', focus: 'ui', commander: null, summary: "The in-deck badge no longer covers a card's mana cost: on search results, once a card was in your deck its gold copy-count pill (e.g. “1×”) sat in the top-right corner — exactly where every Magic card prints its mana cost — hiding it. The count now pairs with the price tag in the bottom-left corner as a small “1× $5.54” status strip, so the mana cost, name, and power/toughness stay fully visible. This finishes the corner-cleanup started in v4.33." },
     { build: 'v4.34', date: '2026-07-17', focus: 'logic', commander: 'Winota, Joiner of Forces', summary: "The engine now reads library go-wide deploy: Winota puts Humans from your library onto the battlefield tapped and attacking whenever a NON-Human attacks, but every deploy rail was gated on 'from your hand', so she showed up as plain 'More Humans' typal — exactly backwards. She now gets the real deck: a Non-Human Attackers enabler (each cheap body that swings is a separate free Human), Human Haymakers re-scoped as the deploy pool (ETB / combat-damage / anthem bodies, since a creature put attacking never counts as a declared attacker), and Extra Combats as the multiplier — plus the stray Voltron rail (it misread 'it gains indestructible') is gone." },
@@ -3515,6 +3518,7 @@ function DeckScreen(props) {
 }
 function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, onOpenDetail, onOpenPrintings, onClearCommander, onDrawHand, onGoSearch, onOpenSynergy, onOpenSimilar, onOpenBasics, onOpenRandom, onToggleOwned, onSetOwnedAll, ciViolation, showToast, upgrades }) {
     const [showExport, setShowExport] = useState(false);
+    const [showMore, setShowMore] = useState(false);
     const [mode, setMode] = useState('cards'); // cards | stats | shop
     // stats
     const stats = useMemo(() => {
@@ -3620,33 +3624,21 @@ function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, o
                         React.createElement("circle", { cx: "11", cy: "11", r: "8" }),
                         React.createElement("path", { d: "m21 21-4.35-4.35" })),
                     "Add Cards"),
+                deck.commander && (React.createElement("button", { className: "deck-action synergy", onClick: () => { onOpenSynergy && onOpenSynergy(); } },
+                    React.createElement(PixelSpark, { size: 14 }),
+                    "Workshop")),
                 React.createElement("button", { className: "deck-action", onClick: () => { onDrawHand(); } },
                     React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" },
                         React.createElement("rect", { x: "2", y: "6", width: "9", height: "13", rx: "1.5" }),
                         React.createElement("rect", { x: "13", y: "6", width: "9", height: "13", rx: "1.5" }),
                         React.createElement("path", { d: "M6.5 6V4M17.5 6V4" })),
                     "Playtest"),
-                React.createElement("button", { className: "deck-action", onClick: () => { setShowExport(true); haptic(); } },
-                    React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" },
-                        React.createElement("path", { d: "M12 3v12M8 11l4 4 4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" })),
-                    "Export"),
-                deck.commander && (React.createElement("button", { className: "deck-action synergy", onClick: () => { onOpenSynergy && onOpenSynergy(); } },
-                    React.createElement(PixelSpark, { size: 14 }),
-                    "Workshop")),
-                deck.commander && (React.createElement("button", { className: "deck-action synergy", onClick: () => { onOpenSimilar && onOpenSimilar(); } },
-                    TwinIcon(),
-                    "Similar")),
-                deck.commander ? (React.createElement("a", { className: "deck-action", href: 'https://edhrec.com/commanders/' + edhrecSlug(deck.commander.name), target: "_blank", rel: "noopener" },
-                    React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" },
-                        React.createElement("path", { d: "M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" })),
-                    "EDHREC")) : (React.createElement("button", { className: "deck-action", onClick: () => { onOpenRandom && onOpenRandom(); } },
-                    DieIcon(),
-                    "Random")),
-                deck.commander && (React.createElement("a", { className: "deck-action moxfield", href: 'https://www.moxfield.com/search?q=' + encodeURIComponent(deck.commander.name), target: "_blank", rel: "noopener" },
-                    React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" },
-                        React.createElement("rect", { x: "3", y: "4", width: "18", height: "16", rx: "2" }),
-                        React.createElement("path", { d: "M3 9h18M9 9v11" })),
-                    "Moxfield"))),
+                React.createElement("button", { className: "deck-action", onClick: () => { setShowMore(true); haptic(); }, "aria-haspopup": "menu", "aria-expanded": showMore },
+                    React.createElement("svg", { viewBox: "0 0 24 24", fill: "currentColor", stroke: "none" },
+                        React.createElement("circle", { cx: "5", cy: "12", r: "2" }),
+                        React.createElement("circle", { cx: "12", cy: "12", r: "2" }),
+                        React.createElement("circle", { cx: "19", cy: "12", r: "2" })),
+                    "More")),
             React.createElement("div", { className: "deck-mode-row" },
                 React.createElement("div", { className: "ios-segment stretch", role: "group", "aria-label": "Deck view" },
                     React.createElement("button", { className: mode === 'cards' ? 'active' : '', onClick: () => { setMode('cards'); haptic(); } }, "Cards"),
@@ -3763,7 +3755,36 @@ function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, o
                         React.createElement("svg", { viewBox: "0 0 24 24", width: "16", height: "16", fill: "none", stroke: "currentColor", strokeWidth: "2" },
                             React.createElement("path", { d: "M12 5v14M5 12h14" })),
                         "Add Basic Lands")))))),
-        showExport && React.createElement(ExportModal, { text: exportText(), onCopy: copyExport, onClose: () => setShowExport(false) })));
+        showExport && React.createElement(ExportModal, { text: exportText(), onCopy: copyExport, onClose: () => setShowExport(false) }),
+        showMore && React.createElement(DeckMoreSheet, { deck: deck, onExport: () => setShowExport(true), onSimilar: onOpenSimilar, onRandom: onOpenRandom, onClose: () => setShowMore(false) })));
+}
+
+function DeckMoreSheet({ deck, onExport, onSimilar, onRandom, onClose }) {
+    useEscape(onClose);
+    const cmd = deck.commander;
+    const run = fn => () => { fn && fn(); onClose(); };
+    return React.createElement("div", { className: "pt-menu-backdrop", onClick: onClose },
+        React.createElement("div", { className: "pt-menu", onClick: e => e.stopPropagation(), role: "menu", "aria-label": "More deck actions" },
+            React.createElement("button", { className: "pt-menu-opt", onClick: run(onExport) },
+                React.createElement("span", { className: "ic" }, React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" },
+                    React.createElement("path", { d: "M12 3v12M8 11l4 4 4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" }))),
+                "Export deck"),
+            cmd && React.createElement("button", { className: "pt-menu-opt", onClick: run(onSimilar) },
+                React.createElement("span", { className: "ic" }, TwinIcon()),
+                "Similar commanders"),
+            cmd && React.createElement("a", { className: "pt-menu-opt", href: 'https://edhrec.com/commanders/' + edhrecSlug(cmd.name), target: "_blank", rel: "noopener", onClick: onClose },
+                React.createElement("span", { className: "ic" }, React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" },
+                    React.createElement("path", { d: "M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" }))),
+                "EDHREC page"),
+            cmd && React.createElement("a", { className: "pt-menu-opt", href: 'https://www.moxfield.com/search?q=' + encodeURIComponent(cmd.name), target: "_blank", rel: "noopener", onClick: onClose },
+                React.createElement("span", { className: "ic" }, React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" },
+                    React.createElement("rect", { x: "3", y: "4", width: "18", height: "16", rx: "2" }),
+                    React.createElement("path", { d: "M3 9h18M9 9v11" }))),
+                "Search Moxfield"),
+            !cmd && React.createElement("button", { className: "pt-menu-opt", onClick: run(onRandom) },
+                React.createElement("span", { className: "ic" }, DieIcon()),
+                "Random card"),
+            React.createElement("button", { className: "pt-menu-opt cancel", onClick: onClose }, "Cancel")));
 }
 
 function DeckLine({ entry, isCommander, onOpenDetail, onChangeQty, onRemove, ciViolation, upgrade, onViewPrintings }) {
