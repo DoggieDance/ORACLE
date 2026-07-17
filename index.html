@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.32 · 2026-07-17">
+<meta name="oracle-build" content="v4.33 · 2026-07-17">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -410,7 +410,7 @@
   .syn-add { flex-shrink: 0; width: 28px; height: 28px; border: 1px solid rgba(255,234,176,.45); border-radius: 9px; background: var(--grad-gold); color: #211706; font-size: 17px; line-height: 1; display: flex; align-items: center; justify-content: center; padding-bottom: 1px; }
   .syn-add.in { background: rgba(224,196,106,.14); border-color: rgba(224,196,106,.36); color: #f0d580; }
   .syn-add:active { transform: scale(.9); }
-  .syn-price { position: absolute; top: 5px; right: 5px; padding: 2px 6px; border-radius: 8px; font-size: 10px; font-weight: 750; color: #ffe9ad; background: rgba(10,11,17,.78); border: 1px solid rgba(255,238,183,.3); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  .syn-price { position: absolute; bottom: 5px; left: 5px; padding: 2px 6px; border-radius: 8px; font-size: 10px; font-weight: 750; color: #ffe9ad; background: rgba(10,11,17,.78); border: 1px solid rgba(255,238,183,.3); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
   .syn-rail-msg { display: flex; align-items: center; gap: 10px; padding: 14px 4px; color: rgba(234,225,207,.5); font-size: 13px; }
   .syn-rail-msg .spinner { width: 19px; height: 19px; }
 
@@ -2584,6 +2584,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v4.33', date: '2026-07-17', focus: 'ui', commander: null, summary: "Prices no longer cover mana costs: on the Workshop synergy rails and the Similar Commanders grid, each card's price tag used to sit in the top-right corner — exactly where every Magic card prints its mana cost — so the cost was hidden. The price now tucks into the bottom-left corner (the same spot search results already use), leaving the mana cost, name, and power/toughness all fully visible." },
     { build: 'v4.32', date: '2026-07-17', focus: 'ui', commander: null, summary: "My Decks got the Steam-library treatment: each deck is now an art tile — your commander's full art fills the card behind a dark scrim, with the deck name in gold serif, the commander's name, card count, and color pips along the bottom, an Active badge on the current deck, and a gentle art zoom on hover. This also fixes a bug where the desktop deck grid never kicked in, leaving decks as one stretched stack on big screens." },
     { build: 'v4.31', date: '2026-07-17', focus: 'logic', commander: 'Sisay, Weatherlight Captain', summary: "The engine can now see legendary-matters decks: 'legendary' is a supertype, not a creature type, so Sisay — an 18,000-deck toolbox commander — previously matched nothing at all. She (plus Kethis, Reki, Captain Sisay, Yoshimaru) now gets Legendary Density and Legends Matter rails, and any commander whose ability costs {W}{U}{B}{R}{G} — Sisay, Najeela, Golos, Jodah — gets a Five-Color Mana rail (Chromatic Lantern, Faeburrow Elder, Jegantha class), while Ramos-style WUBRG producers correctly don't." },
     { build: 'v4.30', date: '2026-07-17', focus: 'ui', commander: null, summary: "Mistakes are no longer forever: removing a card, ticking its count to zero, clearing your commander, or deleting a whole deck now shows an Undo button right in the toast — one tap puts everything back exactly as it was, quantities and owned marks included. Deleted decks even return to their old spot in the list." },
@@ -4691,7 +4692,7 @@ function SimilarOverlay({ source, onClose, onOpenDetail, onBuild }) {
                         React.createElement("div", { className: "sim-img", onClick: () => onOpenDetail(card) },
                             img ? React.createElement(CardImg, { src: img, alt: card.name }) : null,
                             shared.length > 0 && React.createElement("span", { className: "sim-match" }, shared.length + "\u2605"),
-                            Number.isFinite(priceValue(card)) && React.createElement("div", { className: "syn-price", style: { top: 'auto', bottom: '5px' } }, priceLabel(card))),
+                            Number.isFinite(priceValue(card)) && React.createElement("div", { className: "syn-price" }, priceLabel(card))),
                         React.createElement("div", { className: "sim-foot" },
                             React.createElement("div", { className: "sim-name" }, card.name),
                             React.createElement("div", { className: "sim-traits" }, shared.slice(0, 3).map(t => React.createElement("span", { key: t, className: "trait-chip" }, t))),
