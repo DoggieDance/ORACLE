@@ -1,0 +1,11 @@
+# Local rollback snapshots — kept on disk, never published
+index-backup-*.html
+
+# Standalone progress sidecar (the dashboard now lives inside the app)
+progress.html
+
+# Auto-push tooling + logs (local machine only)
+auto-push.bat
+install-autopush.cmd
+run-hidden.vbs
+autopush.log
