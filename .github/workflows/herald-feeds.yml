@@ -1,0 +1,28 @@
+name: Herald Feeds
+
+on:
+  schedule:
+    - cron: "17 */3 * * *"   # every 3 hours
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Refresh feeds
+        run: node tasks/refresh-feeds.mjs
+      - name: Commit if changed
+        run: |
+          if git diff --quiet; then
+            echo "no changes"
+            exit 0
+          fi
+          git config user.name "herald-bot"
+          git config user.email "herald-bot@users.noreply.github.com"
+          git add index.html
+          git commit -m "Herald: feed refresh"
+          git push
