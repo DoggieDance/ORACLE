@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.46 · 2026-07-17">
+<meta name="oracle-build" content="v4.47 · 2026-07-18">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1011,12 +1011,51 @@
     .sl-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
     .sl-tile { padding: 14px 16px 13px; }
   }
+
+  /* ============ v4.47 FRONT PAGE — the Herald on an altar ============ */
+  .search-landing { max-width: 1180px; position: relative; }
+  .mast { position: relative; height: 212px; border-radius: 20px; overflow: hidden; border: 1px solid var(--hair2); background: var(--ink); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 16px 40px rgba(0,0,0,.38); display: flex; align-items: flex-end; justify-content: center; animation: altarIn .7s var(--fluid) both; }
+  .mast-hero { position: absolute; inset: 0; background-size: cover; background-position: center 28%; opacity: .92; }
+  .mast::before { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(10,11,18,.05), rgba(10,11,18,.5) 52%, rgba(10,11,18,.94)); }
+  .mast-inner { position: relative; z-index: 2; text-align: center; padding-bottom: 15px; width: 100%; }
+  .mast-title { font-family: var(--display); font-size: 24px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: var(--white); text-shadow: 0 2px 16px rgba(0,0,0,.75), 0 0 28px rgba(224,196,106,.22); }
+  .mast-date { margin-top: 5px; font-family: var(--ios-font); font-size: 9px; font-weight: 750; letter-spacing: .3em; text-transform: uppercase; color: rgba(240,222,168,.8); }
+  .mast-ring { position: relative; height: 8px; margin: 11px auto 0; width: min(340px, 68%); border-top: 1px solid rgba(224,196,106,.55); }
+  .mast-ring::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(224,196,106,.55) 0 1px, transparent 1px 9px); -webkit-mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); mask-image: linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent); }
+  .mast-hero-name { position: absolute; right: 13px; bottom: 11px; z-index: 2; font-family: var(--ios-font); font-size: 8.5px; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; color: rgba(238,229,211,.42); }
+  .ctx-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 7px; margin-top: 15px; }
+  .ctx-for { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--gold-dim); margin-right: 3px; }
+  .landing-cols { display: grid; gap: 26px; margin-top: 22px; }
+  @media (min-width: 900px) { .landing-cols { grid-template-columns: 1fr 1fr; gap: 44px; } .mast { height: 244px; } .mast-title { font-size: 28px; } }
+  .col-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(224,196,106,.3); }
+  .col-title { font-family: var(--display); font-size: 13px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: var(--gold-bright); }
+  .col-title .cg { color: var(--gold-dim); margin-right: 8px; }
+  a.col-sub { font-family: var(--ios-font); font-size: 10.5px; font-weight: 750; letter-spacing: .06em; color: var(--gold-dim); text-decoration: none; }
+  a.col-sub:hover { color: var(--gold-bright); }
+  .col-stack { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+  .hd-lead { display: block; text-decoration: none; padding: 14px 2px; border-bottom: 1px solid var(--hair); animation: skIn .45s var(--fluid) both; }
+  .hd-lead-img { width: 100%; height: 158px; object-fit: cover; border-radius: 14px; border: 1px solid var(--hair2); box-shadow: 0 12px 30px rgba(0,0,0,.42); margin-bottom: 11px; }
+  .hd-title.lead { font-size: 18px; }
+  .hd-item { display: grid; grid-template-columns: 64px 1fr; gap: 13px; align-items: center; }
+  .hd-item, .bz-item { text-decoration: none; padding: 12px 2px; border-bottom: 1px solid var(--hair); animation: skIn .4s var(--fluid) both; animation-delay: calc(var(--i, 0) * 45ms); }
+  .bz-item { display: block; }
+  .hd-thumb { width: 64px; height: 64px; border-radius: 12px; object-fit: cover; border: 1px solid var(--hair2); background: #10111a; box-shadow: 0 4px 12px rgba(0,0,0,.35); }
+  .hd-meta, .bz-meta { display: flex; align-items: center; gap: 9px; font-family: var(--ios-font); font-size: 10px; font-weight: 700; letter-spacing: .04em; color: var(--muted2); }
+  .hd-tag { color: var(--gold-dim); text-transform: uppercase; letter-spacing: .12em; }
+  .hd-title, .bz-title { margin-top: 3px; font-size: 14px; font-weight: 700; color: var(--text); line-height: 1.35; transition: color .18s ease; }
+  .hd-blurb { margin-top: 2px; font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+  .bz-title { margin-top: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .bz-meta { margin-top: 5px; }
+  .bz-price { padding: 1px 8px; border: 1px solid rgba(224,196,106,.42); border-radius: 8px; background: rgba(224,196,106,.1); color: #f0d580; font-size: 10px; font-weight: 800; }
+  .bz-flag { padding: 1px 7px; border-radius: 7px; font-size: 8.5px; font-weight: 800; letter-spacing: .08em; color: var(--gold-ink); background: var(--gold-dim); text-transform: uppercase; }
+  .bz-score { color: var(--gold-dim); }
+  @media (hover: hover) and (pointer: fine) { .hd-item:hover .hd-title, .bz-item:hover .bz-title, .hd-lead:hover .hd-title { color: var(--gold-bright); } }
 </style>
 </head>
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v4.13 \u00B7 2026-07-16', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v4.47 \u00B7 2026-07-18', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -2696,6 +2735,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v4.47', date: '2026-07-18', focus: 'ui', commander: null, summary: "The front page grew up. The eight curated-search tiles and their fortune-cookie captions are gone, replaced by a broadsheet with blood in it: the Oracle Herald masthead rides an art altar — a borderless Edge of Eternities or Dominaria Remastered piece drawn fresh daily — over a tick-marked chapter ring. Dispatches leads with a full-art top story and art thumbnails on the rest; The Bazaar lists r/sealedmtgdeals posts filtered to in-stock only, with price chips, flair, score, and age; and The Wire runs the hottest community posts from r/magicTCG, because spoilers break on Reddit hours before articles get written. Reddit blocks live browser fetches, so all three feeds are baked into the file and refreshed by the daily scheduled task — static, instant, never empty. Quick searches survive only in context: with a commander set, one row of chips scoped to that color identity appears under the masthead. Also fixed the console banner, stuck announcing v4.13 since the changelog era began." },
     { build: 'v4.46', date: '2026-07-17', focus: 'ui', commander: null, summary: "Housekeeping pass. Added The Oracle Herald, a small curated MTG news strip on the search landing with four live-verified items (Reality Fracture previews at MagicCon Amsterdam, the Their Magic Is Limitless and Stardew Valley Secret Lairs, and the Hatsune Miku Commander deck). Fixed the Playtest Draw/Untap/Mulligan controls, which ballooned to roughly 800px tiles on desktop because their icons had no size cap; they are now tidy centered buttons. Swapped seven study-database entries from name keys to Scryfall oracle_ids and removed their now-stale swap-me notes, and deleted dead Moxfield button CSS." },
     { build: 'v4.45', date: '2026-07-17', focus: 'ui', commander: null, summary: "Small grammar and clutter fix on the search results line. A one-card search used to read \"1 cards · showing 1\" — now it reads simply \"1 card,\" and any count of exactly one is singular everywhere it appears (search header, the Load-More count, and the import toast). The redundant \"· showing N\" tail is gone whenever every match is already on screen; it now appears only when the list is actually longer than what's loaded (e.g. \"1,247 cards · showing 175\"), where it's genuinely informative. Purely text — nothing moved, no capability touched, no cost." },
     { build: 'v4.44', date: '2026-07-17', focus: 'ui', commander: null, summary: "The Deck screen now shows how close your deck is to done at a glance. Under the big \"5 / 100\" counter there was only a line of text (\"95 cards to go\"); now a slim completion gauge sits right below it, filling gold as you add cards the way Moxfield and Steam show progress. It uses the exact etched look of the coverage bars already in the Stats tab, so it feels native — a dark inset track with a soft gold-lit fill. The bar turns green the moment you hit 100 (\"Complete deck!\") and red if you go over the limit, matching the counter's own color. Nothing was moved or removed; it's one small element that only animates when your card count actually changes, so there's no ongoing cost." },
@@ -3158,6 +3198,77 @@ function App() {
             React.createElement("span", { className: "toast-msg" }, toast.msg || toast),
             toast.action && React.createElement("button", { className: "toast-action", onClick: () => { const fn = toast.action.fn; clearTimeout(toastTimer.current); setToast(''); fn(); } }, toast.action.label))));
 }
+// ============ FRONT PAGE — altar masthead, Bazaar, Wire ============
+// DEALS and WIRE are refreshed by the daily scheduled task alongside NEWS
+// (Reddit blocks live browser fetches — feeds are baked, not fetched).
+// Bazaar policy: in-stock only; drop posts whose flair or title matches
+// /sold out|expired|dead|ended/i.
+const DEALS = [
+    { t: "Ultra Pro Flash Sale", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1v0dlrd/ultra_pro_flash_sale/", s: 55, c: 1784425577, f: "MULTIPLE DEALS" },
+    { t: "Hobbit @ $149.99 + shipping/tax", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1uzlabv/hobbit_14999_shippingtax/", s: 54, c: 1784346925, f: "" },
+    { t: "Marvel Play Boxes $95 each @ripnshipgaming", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1uz5qta/marvel_play_boxes_95_each_ripnshipgaming/", s: 46, c: 1784308154, f: "" },
+    { t: "Amazon Canada | The Hobbit Collector Booster Box | $639 CAD, 2 per customer", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1v023r7/amazon_canada_magic_the_gathering_the_hobbit/", s: 31, c: 1784396175, f: "" },
+    { t: "Hobbit Gift Bundles up on Amazon (at $199.99)", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1v02yzs/hobbit_gift_bundles_up_on_amazon_but_at_19999/", s: 0, c: 1784398200, f: "" },
+];
+const WIRE = [
+    { t: "[HOB] Thranduil, the Elvenking (Debut Stream @ MagicCon Amsterdam)", u: "https://www.reddit.com/r/magicTCG/comments/1uzz9rv/hob_thranduil_the_elvenking_debut_stream_magiccon/", s: 1779, c: 1784389497, f: "Official Spoiler" },
+    { t: "[HOB] Supper for Spiders (Debut Stream @ MagicCon Amsterdam)", u: "https://www.reddit.com/r/magicTCG/comments/1uzzic7/hob_supper_for_spiders_debut_stream_magiccon/", s: 1627, c: 1784390080, f: "Official Spoiler" },
+    { t: "PSA: I am Begging you, EVEN IF you're a trek fan DO NOT BUY THIS at $900", u: "https://www.reddit.com/r/magicTCG/comments/1v0272z/psa_i_am_begging_you_even_if_youre_a_trek_fan_do/", s: 1888, c: 1784396395, f: "Universes Beyond - Discussion" },
+    { t: "I don't understand why FIN was the only UB set to include an indication of what title each card came from.", u: "https://www.reddit.com/r/magicTCG/comments/1v0cyut/i_dont_understand_why_fin_was_the_only_ub_set_to/", s: 400, c: 1784423685, f: "General Discussion" },
+];
+function fmScore(s) { return s >= 1000 ? (s / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : '' + s; }
+function fmAge(utc) { if (!utc) return ''; const h = Math.max(1, Math.round((Date.now() / 1000 - utc) / 3600)); return h < 24 ? h + 'h' : Math.round(h / 24) + 'd'; }
+function MastHero() {
+    const [art, setArt] = useState(null);
+    useEffect(() => {
+        let alive = true;
+        const K = 'oracle_hero_v1';
+        const day = new Date().toISOString().slice(0, 10);
+        try {
+            const c = JSON.parse(localStorage.getItem(K) || 'null');
+            if (c && c.d === day && c.img) { setArt(c); return; }
+        } catch (e) { }
+        fetch(API + '/cards/random?q=' + encodeURIComponent('(set:eoe or set:dmr) is:borderless -t:basic'), { headers: HEADERS })
+            .then(r => r.json())
+            .then(c => {
+                if (!alive || !c) return;
+                const img = (c.image_uris && c.image_uris.art_crop) || (c.card_faces && c.card_faces[0] && c.card_faces[0].image_uris && c.card_faces[0].image_uris.art_crop);
+                if (!img) return;
+                const v = { d: day, img: img, name: c.name };
+                setArt(v);
+                try { localStorage.setItem(K, JSON.stringify(v)); } catch (e) { }
+            }).catch(() => { });
+        return () => { alive = false; };
+    }, []);
+    if (!art) return null;
+    return React.createElement(React.Fragment, null,
+        React.createElement('div', { className: 'mast-hero', style: { backgroundImage: 'url(' + art.img + ')' } }),
+        React.createElement('div', { className: 'mast-hero-name' }, art.name));
+}
+function BazaarRow(p, i, chip, pr) {
+    return React.createElement('a', { key: i, className: 'bz-item', href: p.u, target: '_blank', rel: 'noopener', style: { '--i': i } },
+        React.createElement('div', { className: 'bz-title' }, p.t),
+        React.createElement('div', { className: 'bz-meta' },
+            pr && React.createElement('span', { className: 'bz-price' }, pr),
+            chip && React.createElement('span', { className: 'bz-flag' }, chip),
+            React.createElement('span', { className: 'bz-score' }, '\u25B2 ' + fmScore(p.s)),
+            React.createElement("span", null, fmAge(p.c))));
+}
+function BazaarCol() {
+    function price(t) { const m = t.match(/\$\s?\d[\d,]*(?:\.\d\d)?/); return m ? m[0].replace(/\s/, '') : null; }
+    return React.createElement('div', { className: 'col' },
+        React.createElement('div', { className: 'col-head' },
+            React.createElement('span', { className: 'col-title' }, React.createElement('span', { className: 'cg' }, '\u263F'), 'The Bazaar'),
+            React.createElement('a', { className: 'col-sub', href: 'https://www.reddit.com/r/sealedmtgdeals/', target: '_blank', rel: 'noopener' }, 'r/sealedmtgdeals \u2197')),
+        DEALS.map((p, i) => BazaarRow(p, i, p.f && p.f.length <= 14 ? p.f : null, price(p.t))));
+}
+function WireCol() {
+    return React.createElement('div', { className: 'col' },
+        React.createElement('div', { className: 'col-head' },
+            React.createElement('span', { className: 'col-title' }, React.createElement('span', { className: 'cg' }, '\u26A1\uFE0E'), 'The Wire'),
+            React.createElement('a', { className: 'col-sub', href: 'https://www.reddit.com/r/magicTCG/', target: '_blank', rel: 'noopener' }, 'r/magicTCG \u2197')),
+        WIRE.map((p, i) => BazaarRow(p, i, /spoiler/i.test(p.f) ? 'Spoiler' : null, null)));
+}
 // ============ SEARCH SCREEN ============
 // v4.28: curated one-tap searches for the empty Search landing. Each q uses
 // only Scryfall syntax already proven elsewhere in this file; the tap fills
@@ -3167,10 +3278,10 @@ function App() {
 // or drop date). Strict bar: set reveals/releases, Secret Lair drops, ban/unban & format
 // changes, format-warping cards. Newest first, kept short so brewing tools stay primary.
 const NEWS = [
-    { date: '2026-07-17', tag: 'Set Preview', title: 'Reality Fracture previews at MagicCon Amsterdam', blurb: 'The fall set lands Oct 2 with six Commander decks - a four-color Jace "Multiverse Reforged" plus five mono-color Foundations precons - so a fresh wave of legends to brew around is on the way.', url: 'https://edhrec.com/articles/reality-fracture-reveals-from-magiccon-amsterdam-panel' },
-    { date: '2026-07-20', tag: 'Secret Lair', title: 'Secret Lair: Their Magic Is Limitless', blurb: 'Preorder opens July 20 with borderless Sol Ring, Coat of Arms, Path of Ancestry and Lathril - EDH staples worth the reprint, and 50% of proceeds go to Global Fund for Women.', url: 'https://magic.wizards.com/en/news/announcements/secret-lair-x-global-fund-for-women-their-magic-is-limitless' },
-    { date: '2026-07-27', tag: 'Secret Lair', title: 'Stardew Valley Secret Lair Superdrop', blurb: 'A three-set crossover drops July 27 - fresh art for the tables that like their Commander decks a little cozy.', url: 'https://www.wargamer.com/magic-the-gathering/stardew-valley-secret-lair-hobbit-marvel-superdrop' },
-    { date: '2026-08-10', tag: 'Commander', title: 'Commander Deck: Hatsune Miku', blurb: 'A ready-to-play Secret Lair Commander deck arrives Aug 10 - a new preconstructed legend and support to riff on straight out of the box.', url: 'https://www.thegamer.com/magiccon-amsterdam-2026-secret-lair-reveals/' },
+    { date: '2026-07-17', tag: 'Set Preview', title: 'Reality Fracture previews at MagicCon Amsterdam', blurb: 'Fall set lands Oct 2 — six Commander precons ride along.', img: 'https://cards.scryfall.io/art_crop/front/5/3/53bd9149-e157-4f0b-becf-0b64f47dbad3.jpg?1783905901', url: 'https://edhrec.com/articles/reality-fracture-reveals-from-magiccon-amsterdam-panel' },
+    { date: '2026-07-20', tag: 'Secret Lair', title: 'Their Magic Is Limitless', blurb: 'Borderless Sol Ring and Path of Ancestry, for charity.', img: 'https://cards.scryfall.io/art_crop/front/9/1/91fdb56b-54d5-4272-8319-505ff987fe9b.jpg?1783903215', url: 'https://magic.wizards.com/en/news/announcements/secret-lair-x-global-fund-for-women-their-magic-is-limitless' },
+    { date: '2026-07-27', tag: 'Secret Lair', title: 'Stardew Valley Superdrop', blurb: 'The cozy crossover, July 27.', img: 'https://cards.scryfall.io/art_crop/front/7/5/75338f49-1f02-4333-87e4-5779ef14e688.jpg?1783916328', url: 'https://www.wargamer.com/magic-the-gathering/stardew-valley-secret-lair-hobbit-marvel-superdrop' },
+    { date: '2026-08-10', tag: 'Commander', title: 'Hatsune Miku Commander Deck', blurb: 'Playable out of the box, Aug 10.', img: 'https://cards.scryfall.io/art_crop/front/b/7/b7320233-1c83-4f61-8c08-cc8361867256.jpg?1783931016', url: 'https://www.thegamer.com/magiccon-amsterdam-2026-secret-lair-reveals/' },
 ];
 const SEEKER_PATHS = [
     { label: 'Find a Commander', sub: 'Every legend fit to lead', q: 'is:commander legal:commander' },
@@ -3500,30 +3611,41 @@ function SearchScreen({ injectQuery, onInjectConsumed, activeDeck, onOpenDetail,
                 React.createElement("span", { className: "result-mode-note" }, resultMode === 'prints' ? 'Every version' : 'One per card'))),
         React.createElement("div", { className: "results-pad" },
             status === 'empty' && (React.createElement("div", { className: "search-landing" },
-                React.createElement("div", { className: "sl-head" },
-                    React.createElement("div", { className: "sl-glyph" }, "\u2726"),
-                    React.createElement("div", { className: "sl-title" }, "Ask the Oracle"),
-                    React.createElement("div", { className: "sl-sub" }, "Search any card by name \u2014 or walk one of the well-worn paths.")),
-                React.createElement("div", { className: "sl-grid" }, SEEKER_PATHS.map((s, i) => (React.createElement("button", { key: s.label, className: "sl-tile", style: { '--i': i }, onClick: () => { setQuery(s.q); setActiveChip(''); setAc([]); haptic(); doSearch({ queryOverride: s.q, chipOverride: '' }); } },
-                    React.createElement("span", { className: "sl-tile-name" }, s.label),
-                    React.createElement("span", { className: "sl-tile-sub" }, s.sub))))),
-                React.createElement("div", { className: "sl-foot" },
-                    "Tap ",
-                    React.createElement("em", null, "+"),
-                    " on any result to add it to your deck \u00b7 the ",
-                    React.createElement("em", null, "filter"),
-                    " refines colors, types, mana value & price."),
-                React.createElement("div", { className: "oracle-herald" },
-                    React.createElement("div", { className: "herald-head" },
-                        React.createElement("span", { className: "herald-glyph" }, "\u2727"),
-                        React.createElement("span", { className: "herald-headline" }, "The Oracle Herald"),
-                        React.createElement("span", { className: "herald-rule" })),
-                    React.createElement("div", { className: "herald-list" }, NEWS.map((n, i) => React.createElement(n.url ? "a" : "div", Object.assign({ key: i, className: "herald-item", style: { '--i': i } }, n.url ? { href: n.url, target: "_blank", rel: "noopener" } : {}),
-                        React.createElement("div", { className: "herald-meta" },
-                            React.createElement("span", { className: "herald-tag" }, n.tag),
-                            React.createElement("span", { className: "herald-date" }, n.date)),
-                        React.createElement("div", { className: "herald-title" }, n.title),
-                        React.createElement("div", { className: "herald-blurb" }, n.blurb))))))),
+                React.createElement("div", { className: "mast" },
+                    React.createElement(MastHero, null),
+                    React.createElement("div", { className: "mast-inner" },
+                        React.createElement("div", { className: "mast-title" }, "The Oracle Herald"),
+                        React.createElement("div", { className: "mast-date" }, new Date().toLocaleDateString('en-US', { weekday: 'long' }) + '  \u00B7  ' + new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })),
+                        React.createElement("div", { className: "mast-ring" }))),
+                activeDeck && activeDeck.commander && (React.createElement("div", { className: "ctx-row" },
+                    React.createElement("span", { className: "ctx-for" }, "For " + activeDeck.commander.name.split(',')[0].split(' //')[0]),
+                    [['Removal', 'otag:removal'], ['Draw', 'otag:card-advantage'], ['Ramp', '(otag:ramp OR otag:mana-rock)'], ['Wipes', 'otag:board-wipe']].map(([l, q]) => {
+                        const ci = (activeDeck.commander.color_identity || []).join('');
+                        const cq = (ci ? 'id<=' + ci : 'id:c') + ' legal:commander ' + q;
+                        return React.createElement("button", { key: l, className: "chip", onClick: () => { setQuery(cq); setActiveChip(''); setAc([]); haptic(); doSearch({ queryOverride: cq, chipOverride: '' }); } }, l);
+                    }))),
+                React.createElement("div", { className: "landing-cols" },
+                    React.createElement("div", { className: "col" },
+                        React.createElement("div", { className: "col-head" },
+                            React.createElement("span", { className: "col-title" }, React.createElement("span", { className: "cg" }, "\u2726"), "Dispatches")),
+                        React.createElement("a", { className: "hd-lead", href: NEWS[0].url, target: "_blank", rel: "noopener" },
+                            React.createElement("img", { className: "hd-lead-img", src: NEWS[0].img, alt: "" }),
+                            React.createElement("div", { className: "hd-meta" },
+                                React.createElement("span", { className: "hd-tag" }, NEWS[0].tag),
+                                React.createElement("span", null, NEWS[0].date)),
+                            React.createElement("div", { className: "hd-title lead" }, NEWS[0].title),
+                            React.createElement("div", { className: "hd-blurb" }, NEWS[0].blurb)),
+                        NEWS.slice(1).map((n, i) => React.createElement("a", { key: i, className: "hd-item", href: n.url, target: "_blank", rel: "noopener", style: { '--i': i + 1 } },
+                            n.img ? React.createElement("img", { className: "hd-thumb", src: n.img, alt: "", loading: "lazy" }) : React.createElement("div", { className: "hd-thumb" }),
+                            React.createElement("div", { className: "hd-copy" },
+                                React.createElement("div", { className: "hd-meta" },
+                                    React.createElement("span", { className: "hd-tag" }, n.tag),
+                                    React.createElement("span", null, n.date)),
+                                React.createElement("div", { className: "hd-title" }, n.title),
+                                n.blurb && React.createElement("div", { className: "hd-blurb" }, n.blurb))))),
+                    React.createElement("div", { className: "col-stack" },
+                        React.createElement(BazaarCol, null),
+                        React.createElement(WireCol, null))))),
             status === 'loading' && React.createElement(Skeletons, { n: 10, wrap: "card-grid", lines: 2 }),
             status === 'error' && React.createElement("div", { className: "state-msg" },
                 React.createElement("div", { className: "symbol" }, "\u26A0"),
