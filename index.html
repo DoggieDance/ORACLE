@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.65 · 2026-07-22">
+<meta name="oracle-build" content="v4.66 · 2026-07-22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1046,11 +1046,33 @@
   .arch-tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; margin-top: 12px; }
   @media (min-width: 640px) { .arch-tiles { grid-template-columns: repeat(4, 1fr); } }
   @media (min-width: 900px) { .arch-tiles { grid-template-columns: repeat(5, 1fr); } }
-  .arch-tile { text-align: left; padding: 11px 12px 10px; border: 1px solid var(--hair2); border-radius: 14px; background: var(--glass); cursor: pointer; transition: border-color .18s, background .18s, transform .12s; }
+  .arch-tile { position: relative; text-align: left; padding: 11px 12px 10px; border: 1px solid var(--hair2); border-radius: 14px; background: var(--glass); cursor: pointer; transition: border-color .18s, background .18s, transform .12s; }
   .arch-tile .an { display: block; font-family: var(--display); font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--gold-bright); }
   .arch-tile .af { display: block; margin-top: 3px; font-family: var(--serif); font-style: italic; font-size: 11.5px; color: var(--muted); line-height: 1.35; }
   .arch-tile.active { border-color: rgba(224,196,106,.65); background: rgba(224,196,106,.09); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 6px 18px rgba(0,0,0,.28); }
   @media (hover: hover) and (pointer: fine) { .arch-tile:hover { border-color: rgba(224,196,106,.5); transform: translateY(-2px); } }
+  /* v4.66 VISUAL FLAIR — per-school arcana signature. Each Forge tile carries a faint
+     color wash + a left accent bar keyed to its archetype's canonical MTG colors, so the
+     ten schools read as ten distinct schools at a glance instead of ten identical dark
+     pills. Gold-arcana identity preserved (the active state stays gold; color only tints).
+     Pure CSS keyed off the button's data-arch — zero JS logic, zero per-frame work, fully
+     reversible. --acc is an "r,g,b" triple; --bar overrides the bar for multicolor schools. */
+  .arch-tile::before { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(135% 150% at 0% 50%, rgba(var(--acc, 224,196,106), .14), transparent 58%); opacity: .85; transition: opacity .18s; }
+  .arch-tile::after { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 0 3px 3px 0; background: var(--bar, rgba(var(--acc, 224,196,106), .9)); opacity: .72; transition: opacity .18s, width .12s; pointer-events: none; }
+  .arch-tile > .an, .arch-tile > .af { position: relative; z-index: 1; }
+  .arch-tile.active::before { opacity: 1; }
+  .arch-tile.active::after { opacity: 1; width: 4px; }
+  @media (hover: hover) and (pointer: fine) { .arch-tile:hover::before { opacity: 1; } .arch-tile:hover::after { opacity: 1; width: 4px; } }
+  .arch-tile[data-arch="aristocrats"] { --acc: 154,127,176; }
+  .arch-tile[data-arch="spellslinger"] { --acc: 75,143,214; --bar: linear-gradient(180deg, rgba(75,143,214,.92), rgba(216,82,63,.92)); }
+  .arch-tile[data-arch="tokens"] { --acc: 79,168,110; --bar: linear-gradient(180deg, rgba(79,168,110,.92), rgba(240,228,190,.92)); }
+  .arch-tile[data-arch="reanimator"] { --acc: 132,110,158; --bar: linear-gradient(180deg, rgba(154,127,176,.92), rgba(79,168,110,.85)); }
+  .arch-tile[data-arch="counters"] { --acc: 79,168,110; }
+  .arch-tile[data-arch="lands"] { --acc: 120,150,95; --bar: linear-gradient(180deg, rgba(79,168,110,.92), rgba(176,169,154,.9)); }
+  .arch-tile[data-arch="voltron"] { --acc: 216,82,63; --bar: linear-gradient(180deg, rgba(216,82,63,.92), rgba(240,228,190,.92)); }
+  .arch-tile[data-arch="artifacts"] { --acc: 176,169,154; }
+  .arch-tile[data-arch="stax"] { --acc: 228,220,192; }
+  .arch-tile[data-arch="grouphug"] { --acc: 224,196,106; --bar: linear-gradient(180deg, rgba(244,233,193,.95), rgba(75,143,214,.9), rgba(154,127,176,.9), rgba(216,82,63,.9), rgba(79,168,110,.92)); }
   .arch-spread { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; margin-top: 13px; }
   @media (min-width: 900px) { .arch-spread { grid-template-columns: repeat(8, 1fr); gap: 11px; } }
   /* v4.56: dealt-from-the-stack entrance (Forge stage-B closer). Cards fly in from the
@@ -1090,7 +1112,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v4.65 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v4.66 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3156,6 +3178,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v4.66', date: '2026-07-22', focus: 'ui', commander: null, summary: "The Forge's ten schools now each wear their own colors. The archetype tiles used to be ten identical dark pills you had to read one by one; now every school carries a faint color wash and a left accent bar keyed to its canonical MTG colors — Aristocrats in Golgari-black purple, Spellslinger in Izzet blue-into-red, Tokens in Selesnya green-and-white, Reanimator in graveyard purple-into-green, Voltron in Boros red-and-white, Artifacts in steel, Stax in white, Group Hug in a full five-color ribbon — so the grid reads as ten distinct schools at a glance instead of a wall of sameness. The gold-arcana identity is untouched: a selected tile still lights up gold, the color only tints it. Pure paint, no layout or performance cost — just a faster, more evocative front door for deciding what to brew next." },
     { build: 'v4.65', date: '2026-07-22', focus: 'logic', commander: 'Edgar Markov', summary: "The engine now reads go-wide tribal swarms. Edgar Markov mints a Vampire token for every Vampire spell you cast and slaps a +1/+1 counter on each Vampire when he attacks — so the Oracle was handing him a full +1/+1 counters archetype (proliferate, counter doublers, counter payoffs) plus a generic cast-trigger pile, while his real finish, aristocrats, was missing entirely. That board-wide counter is an anthem, not a counters engine. Now, when a tribal commander both makes same-tribe tokens and buffs the whole team with counters, the Oracle treats the counters as an anthem: it strips the counters engine and the off-theme cast/combat-trigger rails, and leads with aristocrats — Free Sac Outlets (Viscera Seer, Carrion Feeder, Ashnod's Altar) and Aristocrat Drains (Blood Artist, Zulaport Cutthroat, Cruel Celebrant, Bastion of Remembrance) — on top of the Vampire typal and go-wide token rails, whose Go-Wide Payoffs surface the Anointed Procession / Mondrak doublers. Genuine go-tall counter commanders (Grumgully, Ghave) are untouched." },
     { build: 'v4.64', date: '2026-07-22', focus: 'ui', commander: null, summary: "The Deck Doctor now hands you the fix. The Stats tab and the Scouting Report both grade your deck against typical EDH targets — lands, ramp, card draw, removal, board wipes — but those bars were a readout you couldn't act on. Now every bar that's still below target is tappable: tap it and the Oracle drops you into Add Cards already filtered to that exact need in your commander's colors, ranked by how often the format plays it. So 'Ramp 3/10' becomes Sol Ring, Arcane Signet and Cultivate for your colors in one tap; 'Card draw' becomes Rhystic Study and The One Ring; 'Lands' becomes Command Tower and your best duals; 'Board wipes' becomes Cyclonic Rift and Blasphemous Act. Below-target bars wear a gold edge and a › to show they're live; satisfied bars stay green and quiet. It closes the brewing loop — read the gap, fill the gap — without leaving to hand-write a search." },
     { build: 'v4.63', date: '2026-07-22', focus: 'logic', commander: 'Korvold, Fae-Cursed King', summary: "The engine now reads permanent-sacrifice value. Korvold looks like a +1/+1 counters Dragon, so the Oracle was handing him a full counters archetype — proliferate, counter payoffs, the lot — when that counter is just incidental self-growth. Worse, his real engine (he eats ANY permanent and draws off every sacrifice) got only generic creature-aristocrats rails. Now a permanent-sacrifice family leads: Free Sac Outlets (Ashnod's Altar, Viscera Seer, Goblin Bombardment — every outlet is another card because he draws off each sacrifice), Treasure & Sac Fodder (Deadly Dispute, Tireless Provisioner, Pitiless Plunderer — Treasures ramp, then die for a card), and Sacrifice Payoffs (Blood Artist, Zulaport, Syr Konrad). The incidental-counter archetype and the off-theme 'board of attackers' combat rail are stripped; the growing flyer keeps its evasion for the commander-damage clock. Mazirek-class board-wide counter commanders keep their counters." },
@@ -3808,7 +3831,7 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll }) {
             active
                 ? React.createElement('button', { className: 'arch-deal', onClick: () => deal(active), disabled: dealing }, dealing ? 'Dealing…' : '↻ Deal again')
                 : React.createElement('span', { className: 'arch-hint' }, 'ten schools of brewing · tap one to deal commanders')),
-        React.createElement('div', { className: 'arch-tiles' }, FORGE_SCHOOLS.map(a => React.createElement('button', { key: a.id, className: 'arch-tile ' + (activeId === a.id ? 'active' : ''), 'aria-pressed': activeId === a.id, onClick: () => deal(a) },
+        React.createElement('div', { className: 'arch-tiles' }, FORGE_SCHOOLS.map(a => React.createElement('button', { key: a.id, 'data-arch': a.id, className: 'arch-tile ' + (activeId === a.id ? 'active' : ''), 'aria-pressed': activeId === a.id, onClick: () => deal(a) },
             React.createElement('span', { className: 'an' }, a.name),
             React.createElement('span', { className: 'af' }, a.flavor)))),
         active && React.createElement('div', { className: 'arch-ci', role: 'group', 'aria-label': 'Filter by color identity' },
