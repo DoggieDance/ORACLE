@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.63 · 2026-07-22">
+<meta name="oracle-build" content="v4.64 · 2026-07-22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -485,6 +485,10 @@
   .cov-fill.ok { background: linear-gradient(180deg, #7fd8a4, #4a9c6e); }
   .cov-num { font-size: 12px; font-weight: 780; color: var(--gold-bright); text-align: right; white-space: nowrap; }
   .cov-num.ok { color: #8fdcae; }
+  .cov-row.fillable { cursor: pointer; border-radius: 8px; padding: 4px 8px; margin: 0 -8px 5px; box-shadow: inset 2px 0 0 rgba(240,213,128,.5); transition: background .15s ease, box-shadow .15s ease; }
+  .cov-row.fillable:hover, .cov-row.fillable:focus-visible { background: rgba(224,196,106,.1); box-shadow: inset 2px 0 0 rgba(240,213,128,.95); outline: none; }
+  .cov-go { color: var(--gold-dim); font-weight: 800; margin-left: 3px; }
+  .cov-row.fillable:hover .cov-go, .cov-row.fillable:focus-visible .cov-go { color: var(--gold-bright); }
 
   /* ===== Similar commanders ===== */
   .trait-chip { display: inline-flex; align-items: center; padding: 4px 10px; border: 1px solid rgba(224,196,106,.4); border-radius: 20px; background: rgba(224,196,106,.1); color: #f0d580; font-size: 11px; font-weight: 720; white-space: nowrap; }
@@ -1086,7 +1090,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v4.63 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v4.64 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -2908,6 +2912,48 @@ function computeCoverage(deckList) {
     });
     return c;
 }
+// Deck Doctor rows are actionable: a below-target package builds a Scryfall
+// query for that need, scoped to the commander's colour identity, so tapping
+// it drops the brewer into Add Cards on the best (EDHREC-ranked) candidates.
+const PACKAGE_FILL_Q = {
+    lands: 't:land -t:basic',
+    ramp: '(otag:ramp OR otag:mana-rock)',
+    draw: 'otag:card-advantage',
+    removal: 'otag:removal',
+    wipes: 'otag:board-wipe'
+};
+function packageFillQuery(commander, key) {
+    const base = PACKAGE_FILL_Q[key];
+    if (!base || !commander) return null;
+    const ci = (commander.color_identity || []).join('');
+    return (ci ? 'id<=' + ci : 'id:c') + ' legal:commander ' + base;
+}
+// Shared Deck Doctor row — rendered in both the Stats tab and the Scouting
+// Report. Below-target rows with a commander become tappable gap-fillers.
+function covRowEl(p, n, ok, commander, onFill) {
+    const pct = Math.min(100, Math.round(n / (p.target * 1.25) * 100));
+    const cq = (!ok && commander && onFill) ? packageFillQuery(commander, p.key) : null;
+    const fillable = !!cq;
+    const short = commander ? (commander.name || '').split(',')[0].split(' //')[0] : '';
+    const label = 'Add ' + p.label.toLowerCase() + (short ? ' for ' + short : '');
+    return React.createElement("div", {
+        key: p.key,
+        className: 'cov-row' + (fillable ? ' fillable' : ''),
+        onClick: fillable ? () => onFill(cq) : undefined,
+        onKeyDown: fillable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onFill(cq); } } : undefined,
+        role: fillable ? 'button' : undefined,
+        tabIndex: fillable ? 0 : undefined,
+        title: fillable ? label : undefined,
+        "aria-label": fillable ? (label + ' — ' + n + ' of ' + p.target + ', below target') : undefined
+    },
+        React.createElement("span", { className: "cov-label" }, p.label),
+        React.createElement("div", { className: "cov-bar" },
+            React.createElement("div", { className: 'cov-fill' + (ok ? ' ok' : ''), style: { width: pct + '%' } }),
+            React.createElement("span", { className: "cov-tick" })),
+        React.createElement("span", { className: 'cov-num' + (ok ? ' ok' : '') },
+            n + '/' + p.target,
+            fillable && React.createElement("span", { className: "cov-go", "aria-hidden": "true" }, "›")));
+}
 
 
 // ---- art-upgrade detection (cooler printing for <= $10 more) ----
@@ -3084,6 +3130,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v4.64', date: '2026-07-22', focus: 'ui', commander: null, summary: "The Deck Doctor now hands you the fix. The Stats tab and the Scouting Report both grade your deck against typical EDH targets — lands, ramp, card draw, removal, board wipes — but those bars were a readout you couldn't act on. Now every bar that's still below target is tappable: tap it and the Oracle drops you into Add Cards already filtered to that exact need in your commander's colors, ranked by how often the format plays it. So 'Ramp 3/10' becomes Sol Ring, Arcane Signet and Cultivate for your colors in one tap; 'Card draw' becomes Rhystic Study and The One Ring; 'Lands' becomes Command Tower and your best duals; 'Board wipes' becomes Cyclonic Rift and Blasphemous Act. Below-target bars wear a gold edge and a › to show they're live; satisfied bars stay green and quiet. It closes the brewing loop — read the gap, fill the gap — without leaving to hand-write a search." },
     { build: 'v4.63', date: '2026-07-22', focus: 'logic', commander: 'Korvold, Fae-Cursed King', summary: "The engine now reads permanent-sacrifice value. Korvold looks like a +1/+1 counters Dragon, so the Oracle was handing him a full counters archetype — proliferate, counter payoffs, the lot — when that counter is just incidental self-growth. Worse, his real engine (he eats ANY permanent and draws off every sacrifice) got only generic creature-aristocrats rails. Now a permanent-sacrifice family leads: Free Sac Outlets (Ashnod's Altar, Viscera Seer, Goblin Bombardment — every outlet is another card because he draws off each sacrifice), Treasure & Sac Fodder (Deadly Dispute, Tireless Provisioner, Pitiless Plunderer — Treasures ramp, then die for a card), and Sacrifice Payoffs (Blood Artist, Zulaport, Syr Konrad). The incidental-counter archetype and the off-theme 'board of attackers' combat rail are stripped; the growing flyer keeps its evasion for the commander-damage clock. Mazirek-class board-wide counter commanders keep their counters." },
     { build: 'v4.62', date: '2026-07-22', focus: 'ui', commander: null, summary: "The Scouting Report opens with an Engine Map. Once you consult a commander, a compact index of its rails now sits right above them — each rail a color-coded chip (blue for enablers, gold for payoffs, purple for amplifiers, red for gates) carrying its card count, so you read the shape and depth of a commander's engine in one glance: three gold payoffs and two blue enablers tells you how the deck wants to be built before you scroll a single card. Tap any chip to jump straight to that rail. The chips deal in as the rails load — pulsing until their cards land — and a rail that comes back empty quietly drops out, so the map always mirrors exactly what's below. This is the fast read the Report was missing: evaluate a commander's brew potential at the top, then dive into the rail that interests you." },
     { build: 'v4.61', date: '2026-07-22', focus: 'logic', commander: 'Wyleth, Soul of Steel', summary: "Voltron finally reads like Voltron. Equipment- and Aura-matters commanders used to get one flat synergy rail apiece; now they get a real gear rail family — an attach package plus the draw-on-attach engines (Sram, Puresteel Paladin, Kor Spiritdancer) and equip-cost reducers that refund the investment. And because a Voltron deck lives and dies on one body, single-threat commanders like Wyleth now lead with a Protect the Threat rail (hexproof, ward, totem armor, Swiftfoot Boots) and drop the off-theme 'board of attack-trigger creatures' suggestion. The same protection transform lifts Uril, Kemba, and every commander dealt out of the Forge's Voltron school." },
@@ -3550,10 +3597,10 @@ function App() {
                     decks.length > 0 && React.createElement("span", { className: "badge" }, decks.length))),
             React.createElement("button", { className: "build-badge", "aria-label": "What's new in Oracle", onClick: () => { setWhatsNewOn(true); haptic(); } }, BUILD)),
         tab === 'search' && (React.createElement(SearchScreen, { injectQuery: searchInject, onInjectConsumed: () => setSearchInject(null), activeDeck: activeDeck, onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onAdd: addCard, ciViolation: ciViolation, commanderCI: commanderCI, upgrades: upgrades, onOpenRandom: () => { setRandomOn(true); haptic(); } })),
-        tab === 'deck' && (React.createElement(DeckScreen, { deck: activeDeck, deckList: deckList, deckTotal: deckTotal, onChangeQty: changeQty, onRemove: removeCard, onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onClearCommander: clearCommander, onDrawHand: startPlaytest, onGoSearch: () => setTab('search'), onOpenSynergy: () => { setSynergyOn(true); haptic(); }, onOpenSimilar: () => { if (activeDeck && activeDeck.commander) { setSimilarFor(activeDeck.commander); haptic(); } }, onOpenBasics: () => { setBasicsOn(true); haptic(); }, onOpenRandom: () => { setRandomOn(true); haptic(); }, onToggleOwned: toggleOwned, onSetOwnedAll: setOwnedAll, ciViolation: ciViolation, showToast: showToast, upgrades: upgrades })),
+        tab === 'deck' && (React.createElement(DeckScreen, { deck: activeDeck, deckList: deckList, deckTotal: deckTotal, onChangeQty: changeQty, onRemove: removeCard, onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onClearCommander: clearCommander, onDrawHand: startPlaytest, onGoSearch: () => setTab('search'), onFillGap: (q) => { setSearchInject({ q: q, t: Date.now(), sort: 'edhrec' }); setTab('search'); haptic(); }, onOpenSynergy: () => { setSynergyOn(true); haptic(); }, onOpenSimilar: () => { if (activeDeck && activeDeck.commander) { setSimilarFor(activeDeck.commander); haptic(); } }, onOpenBasics: () => { setBasicsOn(true); haptic(); }, onOpenRandom: () => { setRandomOn(true); haptic(); }, onToggleOwned: toggleOwned, onSetOwnedAll: setOwnedAll, ciViolation: ciViolation, showToast: showToast, upgrades: upgrades })),
         tab === 'decks' && (React.createElement(DecksScreen, { decks: decks, activeDeckId: activeDeckId, onSelect: (id) => { setActiveDeckId(id); setTab('deck'); haptic(); }, onCreate: createDeck, onDelete: deleteDeck, onImport: importDeckList, onRandom: () => { setRandomOn(true); haptic(); } })),
-        synergyOn && activeDeck && activeDeck.commander && React.createElement(SynergyOverlay, { onViewAll: (q) => { setSearchInject({ q: q, t: Date.now() }); setSynergyOn(false); setTab('search'); haptic(); }, commander: activeDeck.commander, deck: activeDeck, deckList: deckList, onClose: () => setSynergyOn(false), onAdd: (c) => addCard(c, false), onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onOpenSimilar: (c) => { setSimilarFor(c); haptic(); }, onOpenRandom: () => { setRandomOn(true); haptic(); } }),
-        scoutFor && React.createElement(SynergyOverlay, { scout: true, commander: scoutFor, deck: activeDeck, deckList: deckList, onViewAll: (q) => { setSearchInject({ q: q, t: Date.now() }); setScoutFor(null); setTab('search'); haptic(); }, onClose: () => setScoutFor(null), onAdd: (c) => addCard(c, false), onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onOpenSimilar: (c) => { setSimilarFor(c); haptic(); }, onOpenRandom: () => { setRandomOn(true); haptic(); }, onBuild: buildFromCommander }),
+        synergyOn && activeDeck && activeDeck.commander && React.createElement(SynergyOverlay, { onViewAll: (q, sort) => { setSearchInject({ q: q, t: Date.now(), sort: sort }); setSynergyOn(false); setTab('search'); haptic(); }, commander: activeDeck.commander, deck: activeDeck, deckList: deckList, onClose: () => setSynergyOn(false), onAdd: (c) => addCard(c, false), onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onOpenSimilar: (c) => { setSimilarFor(c); haptic(); }, onOpenRandom: () => { setRandomOn(true); haptic(); } }),
+        scoutFor && React.createElement(SynergyOverlay, { scout: true, commander: scoutFor, deck: activeDeck, deckList: deckList, onViewAll: (q, sort) => { setSearchInject({ q: q, t: Date.now(), sort: sort }); setScoutFor(null); setTab('search'); haptic(); }, onClose: () => setScoutFor(null), onAdd: (c) => addCard(c, false), onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onOpenSimilar: (c) => { setSimilarFor(c); haptic(); }, onOpenRandom: () => { setRandomOn(true); haptic(); }, onBuild: buildFromCommander }),
         similarFor && React.createElement(SimilarOverlay, { source: similarFor, onClose: () => setSimilarFor(null), onOpenDetail: setDetailCard, onBuild: buildFromCommander }),
         randomOn && React.createElement(RandomOverlay, { onClose: () => setRandomOn(false), commanderCI: commanderCI, onOpenDetail: setDetailCard, onBuild: buildFromCommander, onSetCommander: (c) => { setCommander(c); setRandomOn(false); } }),
         detailCard && (React.createElement(DetailOverlay, { card: detailCard, onClose: () => setDetailCard(null), onAdd: (c) => addCard(c, false), onSetCommander: (c) => { setCommander(c); }, onViewPrintings: (card) => setPrintingsCard(card), onSimilar: (c) => { setDetailCard(null); setSimilarFor(c); haptic(); }, onConsult: (c) => { setDetailCard(null); setScoutFor(c); haptic(); }, inDeck: activeDeck && activeDeck.cards[cardKey(detailCard)], isCommander: activeDeck && activeDeck.commander && cardKey(activeDeck.commander) === cardKey(detailCard), ciViolation: ciViolation, upgrade: detailCard && upgrades[detailCard.oracle_id] })),
@@ -4042,7 +4089,8 @@ function SearchScreen({ injectQuery, onInjectConsumed, activeDeck, onOpenDetail,
             setQuery(injectQuery.q);
             setActiveChip('');
             setAc([]);
-            doSearch({ queryOverride: injectQuery.q, chipOverride: '' });
+            if (injectQuery.sort) setSortOrder(injectQuery.sort);
+            doSearch({ queryOverride: injectQuery.q, chipOverride: '', sortOverride: injectQuery.sort });
             onInjectConsumed && onInjectConsumed();
         }
     }, [injectQuery]);
@@ -4233,7 +4281,7 @@ function DeckScreen(props) {
     }
     return React.createElement(DeckScreenContent, Object.assign({}, props));
 }
-function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, onOpenDetail, onOpenPrintings, onClearCommander, onDrawHand, onGoSearch, onOpenSynergy, onOpenSimilar, onOpenBasics, onOpenRandom, onToggleOwned, onSetOwnedAll, ciViolation, showToast, upgrades }) {
+function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, onOpenDetail, onOpenPrintings, onClearCommander, onDrawHand, onGoSearch, onFillGap, onOpenSynergy, onOpenSimilar, onOpenBasics, onOpenRandom, onToggleOwned, onSetOwnedAll, ciViolation, showToast, upgrades }) {
     const [showExport, setShowExport] = useState(false);
     const [showMore, setShowMore] = useState(false);
     const [mode, setMode] = useState('cards'); // cards | stats | shop
@@ -4369,17 +4417,10 @@ function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, o
                     React.createElement("div", { className: "cov-card" },
                         React.createElement("div", { className: "cov-title" },
                             React.createElement("span", null, "Deck Doctor"),
-                            React.createElement("span", { className: "cov-hint" }, "vs. typical EDH targets")),
+                            React.createElement("span", { className: "cov-hint" }, deck.commander ? "tap a short bar to fill it" : "vs. typical EDH targets")),
                         PACKAGES.map(p => {
                             const n = coverage[p.key] || 0;
-                            const pct = Math.min(100, Math.round(n / (p.target * 1.25) * 100));
-                            const covOk = n >= p.target;
-                            return (React.createElement("div", { key: p.key, className: "cov-row" },
-                                React.createElement("span", { className: "cov-label" }, p.label),
-                                React.createElement("div", { className: "cov-bar" },
-                                    React.createElement("div", { className: 'cov-fill' + (covOk ? ' ok' : ''), style: { width: pct + '%' } }),
-                                    React.createElement("span", { className: "cov-tick" })),
-                                React.createElement("span", { className: 'cov-num' + (covOk ? ' ok' : '') }, n + '/' + p.target)));
+                            return covRowEl(p, n, n >= p.target, deck.commander, onFillGap);
                         })),
                     React.createElement("div", { className: "stat-card" },
                         React.createElement("div", { className: "stat-title" },
@@ -4712,17 +4753,10 @@ function SynergyOverlay({ onViewAll, commander, deck, deckList, onClose, onAdd, 
             !scout && React.createElement("div", { className: "cov-card" },
                 React.createElement("div", { className: "cov-title" },
                     React.createElement("span", null, "Deck Doctor"),
-                    React.createElement("span", { className: "cov-hint" }, "vs. typical EDH targets")),
+                    React.createElement("span", { className: "cov-hint" }, "tap a short bar to fill it")),
                 PACKAGES.map(p => {
                     const n = coverage[p.key] || 0;
-                    const pct = Math.min(100, Math.round(n / (p.target * 1.25) * 100));
-                    const ok = n >= p.target;
-                    return (React.createElement("div", { key: p.key, className: "cov-row" },
-                        React.createElement("span", { className: "cov-label" }, p.label),
-                        React.createElement("div", { className: "cov-bar" },
-                            React.createElement("div", { className: 'cov-fill' + (ok ? ' ok' : ''), style: { width: pct + '%' } }),
-                            React.createElement("span", { className: "cov-tick" })),
-                        React.createElement("span", { className: 'cov-num' + (ok ? ' ok' : '') }, n + '/' + p.target)));
+                    return covRowEl(p, n, n >= p.target, commander, (q) => onViewAll(q, 'edhrec'));
                 })),
             model.traps.length > 0 && React.createElement("div", { className: "trap-card" },
                 React.createElement("div", { className: "trap-title" }, "\u26A0 Traps to avoid"),
