@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.76 · 2026-07-22">
+<meta name="oracle-build" content="v4.77 · 2026-07-22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1184,7 +1184,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v4.76 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v4.77 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3258,6 +3258,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v4.77', date: '2026-07-22', focus: 'ui', commander: null, summary: "The Forge now opens twelve doors instead of ten. Two of Commander's most-loved brewing schools joined the landing — Blink & Flicker (flicker your creatures for repeated enter-the-battlefield value) and Mill (win by emptying libraries) — each dealing a fresh, shuffled spread of on-theme commanders (49 blink leaders, 91 mill leaders, both live-tested against Scryfall) with the same color-identity filter and deal-again reshuffle as the other schools. More front doors for 'what should I brew next?'" },
     { build: 'v4.76', date: '2026-07-22', focus: 'ui', commander: null, summary: "The deck list now reads and feels like a proper workbench. Building a hundred-card deck means scanning a long stack of rows, and two small things were missing. First, the type sections — Creatures, Instants, Lands — ran together with no visual break, so a long list read as one undifferentiated column; each section header now carries a faint gold divider, so every type reads as its own block at a glance. Second, on desktop the rows gave no sign they were interactive; now hovering a card lifts it a couple of pixels with a warm gold hairline and a soft shadow, the same tactile language the Forge's dealt cards and the commander crest already use, so it's obvious each row opens the card. It's pure paint and compositor transform — no layout shift, no per-frame work, nothing on mobile changes, and reduced-motion is honored. Every quantity, remove, and swap control is untouched." },
     { build: 'v4.75', date: '2026-07-22', focus: 'ui', commander: null, summary: "Type Counts now answers 'which cards, exactly?' The Stats-tab type list told you a number — 12 creatures, 9 artifacts — but not what they were, and because a card is counted under every type it has, that artifact-creature hiding in both totals was invisible. Now every type row is tappable, the same way the mana curve became tappable last build: tap 'Artifacts · 9' and a breakdown drops in beneath the grid listing exactly those nine cards (with counts), each a chip you can click through to its detail page — and on desktop, hovering a chip floats the full card image. It's the honest, cross-cutting view the Cards tab can't give you, since that groups each card into one section only. The selected row lights up gold, it sits in the flow with no layout shift, respects reduced-motion, and every existing control is untouched." },
     { build: 'v4.74', date: '2026-07-22', focus: 'ui', commander: null, summary: "Finishing a deck now feels like finishing a deck. Hitting the 100-card mark is the payoff of a whole brew, but the counter used to just quietly tick over to green. Now the moment your deck reaches exactly 100, the big count number gives a single confident pop with a green-gold glow and the completion gauge catches a bright sheen that sweeps across it once — a small, earned flourish at the finish line, then stillness (no looping animation, in keeping with the app's motion feel). It fires only at 100, replays if you dip over the limit and come back, is pure GPU paint with zero new layout, and respects reduced-motion. Nothing else about the deck view changes." },
@@ -3824,7 +3825,7 @@ function WireCol() {
         WIRE.map((p, i) => BazaarRow(p, i, /spoiler/i.test(p.f) ? 'Spoiler' : null, null)));
 }
 // ============ THE FORGE — archetype brewing tiles (v4.50) ============
-// Ten schools of brewing; each tap deals 8 fresh commanders. Queries were
+// Twelve schools of brewing; each tap deals 8 fresh commanders. Queries were
 // live-tested against Scryfall on 2026-07-22 (totals in comments). Scryfall
 // IGNORES order=random on /cards/search, so freshness comes from picking a
 // random page (175/page) and Fisher-Yates shuffling client-side; pages are
@@ -3840,6 +3841,8 @@ const FORGE_SCHOOLS = [
     { id: 'artifacts', name: 'Artifacts', flavor: 'The engine builds the engine', q: 'is:commander legal:commander (o:/artifact(s)? (you control|spell|creature|card)/ or o:affinity or o:metalcraft or o:improvise or o:"create a treasure" or o:/artifact enters/)' }, // 245
     { id: 'stax', name: 'Stax', flavor: 'Nothing resolves for free', q: 'is:commander legal:commander (o:/cost[s]? \\{\\d+\\} more/ or o:"don\'t untap" or o:"can\'t untap" or o:/opponents? can\'t/ or o:"no more than one" or (o:"unless" o:"pays"))' }, // 38
     { id: 'grouphug', name: 'Group Hug', flavor: 'Generosity with ulterior motives', q: 'is:commander legal:commander (o:/each player (may )?draws?/ or o:"each player may" or o:/each opponent (draws|gains|may)/ or o:"all players" or o:/target (player|opponent) (may )?(draws?|gains|creates)/)' }, // 44
+    { id: 'blink', name: 'Blink & Flicker', flavor: 'Every homecoming pays again', q: 'is:commander legal:commander (o:/exile .+ return (it|that card|them|those cards)/ or o:"whenever a creature you control enters" or o:"whenever another creature enters the battlefield under your control")' }, // 49 (live-tested 2026-07-22: Aminatou, Brago, Emiel, Elesh Norn, Abuelo)
+    { id: 'mill', name: 'Mill', flavor: 'The library runs out first', q: 'is:commander legal:commander (o:mill or o:"into their graveyard" or o:"library into")' }, // 91 (live-tested 2026-07-22: Bruvac, Laquatus, Anowon, Captain N\'ghathrod, Coram)
 ];
 const ARCH_CACHE = {}; // key (school id + optional '|CI') -> { total, pages: { n: card[] } } — session-lived
 const CI_NAMES = { W: 'White', U: 'Blue', B: 'Black', R: 'Red', G: 'Green' };
@@ -3920,7 +3923,7 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll }) {
             React.createElement('span', { className: 'col-title' }, React.createElement('span', { className: 'cg' }, '⚒︎'), 'The Forge'),
             active
                 ? React.createElement('button', { className: 'arch-deal', onClick: () => deal(active), disabled: dealing }, dealing ? 'Dealing…' : '↻ Deal again')
-                : React.createElement('span', { className: 'arch-hint' }, 'ten schools of brewing · tap one to deal commanders')),
+                : React.createElement('span', { className: 'arch-hint' }, 'twelve schools of brewing · tap one to deal commanders')),
         React.createElement('div', { className: 'arch-tiles' }, FORGE_SCHOOLS.map(a => React.createElement('button', { key: a.id, 'data-arch': a.id, className: 'arch-tile ' + (activeId === a.id ? 'active' : ''), 'aria-pressed': activeId === a.id, onClick: () => deal(a) },
             React.createElement('span', { className: 'an' }, a.name),
             React.createElement('span', { className: 'af' }, a.flavor)))),
