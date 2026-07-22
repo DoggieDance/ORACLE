@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.68 · 2026-07-22">
+<meta name="oracle-build" content="v4.69 · 2026-07-22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1108,6 +1108,13 @@
   /* Phones deal 4 cards across (~83px each); a five-color badge at full size would span the
      whole card, so shrink the pips there — five WUBRG pips then fit with room to spare. */
   @media (max-width: 639px) { .arch-ci-badge { left: 4px; bottom: 4px; gap: 1px; padding: 1px 2px; } .arch-ci-badge .pip { width: 11px; height: 11px; font-size: 7px; } }
+  /* v4.69: EDHREC-popularity chip on each dealt commander (top-left, opposite the
+     colors badge) — reads a random spread as evaluable: which are proven staples and
+     which are Hidden-gem spice (>15000 = the purple 'gem' tier the dossier flags as an
+     underplayed brew). Same solid-scrim, no-blur, pointer-events:none idiom. */
+  .arch-rank-badge { position: absolute; left: 5px; top: 5px; z-index: 2; display: inline-flex; align-items: center; gap: 2px; padding: 2px 6px; border-radius: 7px; font-size: 9.5px; font-weight: 800; letter-spacing: .02em; background: rgba(8,8,12,.72); color: var(--gold); box-shadow: 0 1px 4px rgba(0,0,0,.45), inset 0 0 0 1px rgba(224,196,106,.30); pointer-events: none; }
+  .arch-rank-badge.gem { color: #d9ccff; box-shadow: 0 1px 4px rgba(0,0,0,.45), inset 0 0 0 1px rgba(167,148,224,.42); }
+  @media (max-width: 639px) { .arch-rank-badge { left: 4px; top: 4px; padding: 1px 4px; font-size: 8.5px; } }
   /* ===== v4.58 Scouting Report ===== */
   .consult-btn { border-color: rgba(224,196,106,.55); background: linear-gradient(135deg, rgba(224,196,106,.18), rgba(224,196,106,.07)); }
   .scout-build { max-width: 560px; margin: 0 auto 16px; }
@@ -1122,7 +1129,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v4.68 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v4.69 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3117,6 +3124,14 @@ function edhrecTier(rank) {
     if (rank <= 15000) return 'Established';
     return 'Hidden gem';
 }
+// v4.69: compact EDHREC-rank chip for dealt Forge commanders. Returns null when
+// Scryfall has no rank (so the chip simply omits). `gem` mirrors edhrecTier's
+// bottom band (>15000) — the purple 'underplayed brew waiting to happen' cue.
+function forgeRankChip(rank) {
+    if (rank == null || !isFinite(rank)) return null;
+    const label = rank >= 1000 ? (Math.round(rank / 100) / 10) + 'k' : String(rank);
+    return { label: label, gem: rank > 15000 };
+}
 function pipFor(v, key) {
     let cls = 'generic', txt = v, style;
     if (/^[WUBRG]$/.test(v)) { cls = v; }
@@ -3188,6 +3203,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v4.69', date: '2026-07-22', focus: 'ui', commander: null, summary: "The Forge now tells you how played each dealt commander is. Because a spread is dealt from a random page, it mixes format pillars with deep cuts — so every card now wears a small EDHREC-rank chip in its top corner (opposite the colors badge): #88 for a proven staple, #24k for a rarely-brewed oddity. The deepest cuts glow purple with a ✦, the same 'Hidden gem' cue the card dossier uses to mark an underplayed brew waiting to happen. At a glance you can tell the safe builds from the spice before opening a single card." },
     { build: 'v4.68', date: '2026-07-22', focus: 'ui', commander: null, summary: "The Forge deals faster now. Every time you tap a school — or hit Deal again — it lays out eight commander cards, and each was quietly downloading a full 488-pixel image only to shrink it into a ~140-pixel tile. Now those tiles carry a responsive image set: standard displays pull the light 146-pixel version (roughly four to six times smaller), while high-resolution screens still get the crisp full-size art, so nothing looks softer. Since re-dealing is the whole point of the Forge, the savings compound with every fresh spread — the same cards, less to load." },
     { build: 'v4.67', date: '2026-07-22', focus: 'ui', commander: null, summary: "The Forge now shows each dealt commander's colors at a glance. When you tap a school and it deals eight commanders, the default deal spans every color — but you had to open each face to learn whether it was mono-black, Golgari, or five-color. Now a small color-identity badge sits in the bottom-left corner of every dealt card (the same corner-chip idiom the search and Workshop cards already use), so you can read each commander's colors instantly and spot the ones that fit your pod or your collection without opening a single one. Colorless commanders show a diamond. It's the 'does this fit my colors?' evaluation, answered on the spread itself — pure paint over the existing card, no layout change, no per-frame cost, and the color filter above still re-cuts the deal when you want to narrow it." },
     { build: 'v4.66', date: '2026-07-22', focus: 'ui', commander: null, summary: "The Forge's ten schools now each wear their own colors. The archetype tiles used to be ten identical dark pills you had to read one by one; now every school carries a faint color wash and a left accent bar keyed to its canonical MTG colors — Aristocrats in Golgari-black purple, Spellslinger in Izzet blue-into-red, Tokens in Selesnya green-and-white, Reanimator in graveyard purple-into-green, Voltron in Boros red-and-white, Artifacts in steel, Stax in white, Group Hug in a full five-color ribbon — so the grid reads as ten distinct schools at a glance instead of a wall of sameness. The gold-arcana identity is untouched: a selected tile still lights up gold, the color only tints it. Pure paint, no layout or performance cost — just a faster, more evocative front door for deciding what to brew next." },
@@ -3864,8 +3880,10 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll }) {
                 // image (~4-6× lighter) on every deal, while retina still pulls 'normal'.
                 const imgSmall = cardImage(c, 'small');
                 const cid = c.color_identity || [];
-                return React.createElement('div', { key: c.id, className: 'arch-card', style: { '--i': i }, role: 'button', tabIndex: 0, 'aria-label': c.name + (cid.length ? ' (' + cid.join('') + ')' : ' (colorless)'), onClick: () => onOpenDetail(c), onKeyDown: (e) => { if (e.key === 'Enter') onOpenDetail(c); } },
+                const rc = forgeRankChip(c.edhrec_rank);
+                return React.createElement('div', { key: c.id, className: 'arch-card', style: { '--i': i }, role: 'button', tabIndex: 0, 'aria-label': c.name + (cid.length ? ' (' + cid.join('') + ')' : ' (colorless)') + (rc ? ' · EDHREC #' + Number(c.edhrec_rank).toLocaleString() : ''), onClick: () => onOpenDetail(c), onKeyDown: (e) => { if (e.key === 'Enter') onOpenDetail(c); } },
                     img ? React.createElement(CardImg, { src: img, srcSet: imgSmall ? (imgSmall + ' 146w, ' + img + ' 488w') : undefined, sizes: '(min-width:900px) 140px, (min-width:640px) 23vw, 24vw', alt: c.name }) : React.createElement('div', { className: 'card-img-placeholder' }, React.createElement('div', { className: 'pn' }, c.name)),
+                    rc && React.createElement('div', { className: 'arch-rank-badge' + (rc.gem ? ' gem' : ''), 'aria-hidden': true }, (rc.gem ? '✦ #' : '#') + rc.label),
                     React.createElement('div', { className: 'arch-ci-badge', 'aria-hidden': true }, cid.length ? cid.map(col => React.createElement('span', { key: col, className: 'pip ' + col }, col)) : React.createElement('span', { className: 'pip C' }, '◇')));
             })),
         active && spread && spread.length > 0 && !err && React.createElement('div', { className: 'arch-foot' },
