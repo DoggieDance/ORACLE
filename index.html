@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.67 · 2026-07-22">
+<meta name="oracle-build" content="v4.68 · 2026-07-22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1122,7 +1122,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v4.67 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v4.68 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3188,6 +3188,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v4.68', date: '2026-07-22', focus: 'ui', commander: null, summary: "The Forge deals faster now. Every time you tap a school — or hit Deal again — it lays out eight commander cards, and each was quietly downloading a full 488-pixel image only to shrink it into a ~140-pixel tile. Now those tiles carry a responsive image set: standard displays pull the light 146-pixel version (roughly four to six times smaller), while high-resolution screens still get the crisp full-size art, so nothing looks softer. Since re-dealing is the whole point of the Forge, the savings compound with every fresh spread — the same cards, less to load." },
     { build: 'v4.67', date: '2026-07-22', focus: 'ui', commander: null, summary: "The Forge now shows each dealt commander's colors at a glance. When you tap a school and it deals eight commanders, the default deal spans every color — but you had to open each face to learn whether it was mono-black, Golgari, or five-color. Now a small color-identity badge sits in the bottom-left corner of every dealt card (the same corner-chip idiom the search and Workshop cards already use), so you can read each commander's colors instantly and spot the ones that fit your pod or your collection without opening a single one. Colorless commanders show a diamond. It's the 'does this fit my colors?' evaluation, answered on the spread itself — pure paint over the existing card, no layout change, no per-frame cost, and the color filter above still re-cuts the deal when you want to narrow it." },
     { build: 'v4.66', date: '2026-07-22', focus: 'ui', commander: null, summary: "The Forge's ten schools now each wear their own colors. The archetype tiles used to be ten identical dark pills you had to read one by one; now every school carries a faint color wash and a left accent bar keyed to its canonical MTG colors — Aristocrats in Golgari-black purple, Spellslinger in Izzet blue-into-red, Tokens in Selesnya green-and-white, Reanimator in graveyard purple-into-green, Voltron in Boros red-and-white, Artifacts in steel, Stax in white, Group Hug in a full five-color ribbon — so the grid reads as ten distinct schools at a glance instead of a wall of sameness. The gold-arcana identity is untouched: a selected tile still lights up gold, the color only tints it. Pure paint, no layout or performance cost — just a faster, more evocative front door for deciding what to brew next." },
     { build: 'v4.65', date: '2026-07-22', focus: 'logic', commander: 'Edgar Markov', summary: "The engine now reads go-wide tribal swarms. Edgar Markov mints a Vampire token for every Vampire spell you cast and slaps a +1/+1 counter on each Vampire when he attacks — so the Oracle was handing him a full +1/+1 counters archetype (proliferate, counter doublers, counter payoffs) plus a generic cast-trigger pile, while his real finish, aristocrats, was missing entirely. That board-wide counter is an anthem, not a counters engine. Now, when a tribal commander both makes same-tribe tokens and buffs the whole team with counters, the Oracle treats the counters as an anthem: it strips the counters engine and the off-theme cast/combat-trigger rails, and leads with aristocrats — Free Sac Outlets (Viscera Seer, Carrion Feeder, Ashnod's Altar) and Aristocrat Drains (Blood Artist, Zulaport Cutthroat, Cruel Celebrant, Bastion of Remembrance) — on top of the Vampire typal and go-wide token rails, whose Go-Wide Payoffs surface the Anointed Procession / Mondrak doublers. Genuine go-tall counter commanders (Grumgully, Ghave) are untouched." },
@@ -3858,9 +3859,13 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll }) {
             ? Array.from({ length: 8 }).map((_, i) => React.createElement('div', { key: 'sk' + i, className: 'arch-card', style: { '--i': i } }, React.createElement('div', { className: 'img-skeleton' })))
             : spread.map((c, i) => {
                 const img = cardImage(c, 'normal');
+                // v4.68 perf: dealt tiles render ~137px wide but 'normal' is 488px — a
+                // responsive srcset lets standard (dpr≤1) displays fetch the ~146px 'small'
+                // image (~4-6× lighter) on every deal, while retina still pulls 'normal'.
+                const imgSmall = cardImage(c, 'small');
                 const cid = c.color_identity || [];
                 return React.createElement('div', { key: c.id, className: 'arch-card', style: { '--i': i }, role: 'button', tabIndex: 0, 'aria-label': c.name + (cid.length ? ' (' + cid.join('') + ')' : ' (colorless)'), onClick: () => onOpenDetail(c), onKeyDown: (e) => { if (e.key === 'Enter') onOpenDetail(c); } },
-                    img ? React.createElement(CardImg, { src: img, alt: c.name }) : React.createElement('div', { className: 'card-img-placeholder' }, React.createElement('div', { className: 'pn' }, c.name)),
+                    img ? React.createElement(CardImg, { src: img, srcSet: imgSmall ? (imgSmall + ' 146w, ' + img + ' 488w') : undefined, sizes: '(min-width:900px) 140px, (min-width:640px) 23vw, 24vw', alt: c.name }) : React.createElement('div', { className: 'card-img-placeholder' }, React.createElement('div', { className: 'pn' }, c.name)),
                     React.createElement('div', { className: 'arch-ci-badge', 'aria-hidden': true }, cid.length ? cid.map(col => React.createElement('span', { key: col, className: 'pip ' + col }, col)) : React.createElement('span', { className: 'pip C' }, '◇')));
             })),
         active && spread && spread.length > 0 && !err && React.createElement('div', { className: 'arch-foot' },
@@ -4292,7 +4297,7 @@ function SearchScreen({ injectQuery, onInjectConsumed, activeDeck, onOpenDetail,
         showFilter && React.createElement(FilterSheet, { filters: filters, setFilters: setFilters, commanderCI: commanderCI, onApply: (nextFilters) => { const wantsPrints = nextFilters.setCode.trim() || nextFilters.finish || nextFilters.treatment; const nextMode = wantsPrints ? 'prints' : resultMode; if (nextMode !== resultMode)
                 setResultMode(nextMode); setShowFilter(false); doSearch({ filtersOverride: nextFilters, resultModeOverride: nextMode }); }, onClose: () => setShowFilter(false) })));
 }
-function CardImg({ src, alt }) {
+function CardImg({ src, alt, srcSet, sizes }) {
     const [loaded, setLoaded] = useState(false);
     const [failed, setFailed] = useState(false);
     const [shouldLoad, setShouldLoad] = useState(false);
@@ -4323,7 +4328,7 @@ function CardImg({ src, alt }) {
     }
     return (React.createElement("div", { className: "card-img-loader", ref: hostRef },
         !loaded && React.createElement("div", { className: "img-skeleton" }),
-        shouldLoad && React.createElement("img", { src: src, alt: alt, decoding: "async", className: loaded ? 'loaded' : '', onLoad: () => setLoaded(true), onError: () => { setFailed(true); setLoaded(true); } })));
+        shouldLoad && React.createElement("img", { src: src, srcSet: srcSet, sizes: sizes, alt: alt, decoding: "async", className: loaded ? 'loaded' : '', onLoad: () => setLoaded(true), onError: () => { setFailed(true); setLoaded(true); } })));
 }
 // ============ DECK SCREEN ============
 function DeckScreen(props) {
