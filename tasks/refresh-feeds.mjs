@@ -13,8 +13,36 @@ const FILE = new URL('../index.html', import.meta.url).pathname.includes('tasks'
 const UA = { 'user-agent': 'oracle-herald/1.0 (github.com/DoggieDance/ORACLE)' };
 const DEAD = /sold out|sold-out|expired|dead|ended/i;
 
-async function grab(url) {
-  const r = await fetch(url, { headers: UA });
+// Reddit blocks anonymous requests from datacenter IPs (GitHub runners get
+// HTTP 403). Application-only OAuth is the sanctioned lane: with
+// REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET set (repo Actions secrets), we
+// fetch a client_credentials token and use oauth.reddit.com. With no creds
+// (e.g. running on a home machine), we fall back to anonymous www access.
+async function redditToken() {
+  const id = process.env.REDDIT_CLIENT_ID, sec = process.env.REDDIT_CLIENT_SECRET;
+  if (!id || !sec) return null;
+  const r = await fetch('https://www.reddit.com/api/v1/access_token', {
+    method: 'POST',
+    headers: {
+      'authorization': 'Basic ' + Buffer.from(id + ':' + sec).toString('base64'),
+      'user-agent': UA['user-agent'],
+      'content-type': 'application/x-www-form-urlencoded'
+    },
+    body: 'grant_type=client_credentials'
+  });
+  if (!r.ok) throw new Error('reddit auth -> HTTP ' + r.status);
+  const d = await r.json();
+  if (!d.access_token) throw new Error('reddit auth: no token in response');
+  return d.access_token;
+}
+
+async function grab(path, token) {
+  const url = token
+    ? 'https://oauth.reddit.com' + path
+    : 'https://www.reddit.com' + path.replace(/\?/, '.json?');
+  const headers = { ...UA };
+  if (token) headers['authorization'] = 'bearer ' + token;
+  const r = await fetch(url, { headers });
   if (!r.ok) throw new Error(url + ' -> HTTP ' + r.status);
   const d = await r.json();
   return ((d.data && d.data.children) || []).map(x => x.data).filter(p => p && p.title);
@@ -55,9 +83,11 @@ const nl = src.includes('\r\n') ? '\r\n' : '\n';
 
 let rawDeals, rawWire;
 try {
+  let token = null;
+  try { token = await redditToken(); } catch (e) { console.log('::warning::reddit oauth failed (' + e.message + ') - trying anonymous'); }
   [rawDeals, rawWire] = await Promise.all([
-    grab('https://www.reddit.com/r/sealedmtgdeals/new.json?limit=25&raw_json=1'),
-    grab('https://www.reddit.com/r/magicTCG/hot.json?limit=20&raw_json=1')
+    grab('/r/sealedmtgdeals/new?limit=25&raw_json=1', token),
+    grab('/r/magicTCG/hot?limit=20&raw_json=1', token)
   ]);
 } catch (e) {
   // Reddit throttles some cloud IPs. Stale feeds beat a broken pipeline:
@@ -94,4 +124,3 @@ if (!sameWire) out = splice(out, 'WIRE', serialize(wire, nl), nl);
 if (!out.trimEnd().endsWith('</html>')) throw new Error('sanity: output does not end with </html>');
 writeFileSync(FILE, out);
 console.log('feeds updated: deals=' + (!sameDeals) + ' wire=' + (!sameWire));
-
