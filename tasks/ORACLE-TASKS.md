@@ -13,6 +13,61 @@ them on the other. Git is the sync point: pull before enabling.
 
 ---
 
+## READ FIRST — GIT DISCIPLINE (added 2026-07-22, after the fork incident)
+
+These rules override anything below.
+
+1. PULL BEFORE BUILD. The first action of every run is `git pull` in the
+   repo clone (if the working folder is not the clone, halt if its build
+   tag is behind the live site). Building from a stale copy is the
+   failure — index.html is one generated ~490KB file; conflicts cannot
+   be merged, so a stale base ruins the whole run.
+2. PUSH ONLY FAST-FORWARD. After building: if origin moved during the
+   build, discard the build and rerun from a fresh pull. Never
+   force-push, never merge.
+3. ONE ATOMIC ACTOR. pull → build → push happens inside one task run.
+   The separate Auto-Push task is retired — do not re-create it.
+4. STALE = HALT. If at task start the working copy oracle-build tag is
+   older than the live site meta at doggiedance.github.io/ORACLE, stop
+   and report instead of building.
+
+## VERSION LEDGER
+
+- v4.48 is RESERVED for the iOS advanced-filters keyboard fix (ships
+  from chat via browser deploy). Do not use it.
+- The overnight lineage resumes at v4.49.
+- Feed refreshes (DEALS / WIRE arrays via tasks/refresh-feeds.mjs)
+  never bump the version and never add changelog entries.
+
+## NEXT STUDY (user-directed): Kilo, Apogee Mind
+
+eoc, Jeskai artificer. Trigger: "Whenever Kilo becomes tapped,
+proliferate." Combat is optional; tap frequency is the deck. STUDY_DB
+entry keyed by oracle_id (api.scryfall.com/cards/named?exact=Kilo,
+Apogee Mind).
+
+Rails to verify/add:
+- Untap to Re-Trigger (gate: selftap): o:"untap target creature" OR
+  aura/equip granting "{U}: untap" — Freed from the Real class. Top
+  synergy cluster (Freed 50%, Pemmin’s Aura, Aura of Dominion, Keys,
+  Clock of Omens); add rail if missing.
+- Counter Fuel (param counterFuel): o:"charge counter" artifacts +
+  cheap counter seeds (Everflowing Chalice class, 70% synergy).
+  Proliferate with no counters is dead cardboard.
+- Ways to Tap: crew (t:vehicle), convoke, "tap an untapped creature you
+  control" (Springleaf Drum / Paradise Mantle class). Note:
+  summoning-sick creatures can crew/convoke.
+- Proliferate Amplifiers: o:proliferate density; Tekuthal, Inquiry
+  Dominus is the headline (85% inclusion, 76% synergy).
+- Optional Game Plan angle: poison (Prologue to Phyresis + Inkmoth).
+
+Combo awareness: Kilo + Magosi, the Waterveil + Resourceful Defense =
+infinite turns.
+
+Traps: attacking once per turn undersells him; no counter base = blank
+triggers; stun counters on own permanents are proliferate-able — never
+choose them.
+
 ## TASK 1 — oracle-halfhourly-improve
 Schedule (cron, local time): `*/30 0-9 * * *` (every 30 min, midnight–10am)
 
