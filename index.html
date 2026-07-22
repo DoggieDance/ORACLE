@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.73 · 2026-07-22">
+<meta name="oracle-build" content="v4.74 · 2026-07-22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -270,12 +270,19 @@
   .deck-count-hero { display: flex; align-items: baseline; justify-content: center; gap: 5px; margin: 4px 0 0; }
   .deck-count-num { font-family: var(--display); font-size: 42px; font-weight: 700; color: var(--gold-bright); text-shadow: 0 0 24px rgba(224,196,106,.3); }
   .deck-count-num.over { color: var(--red-bad); }
+  /* v4.74: one-time finish-line flourish when the deck hits exactly 100 (honours the app's "breathe once, then still" motion ethos; reduced-motion neutralised globally). */
+  .deck-count-num.complete { animation: deckCountPop 1.15s var(--spring) both; }
+  @keyframes deckCountPop { 0% { transform: scale(1); text-shadow: 0 0 24px rgba(224,196,106,.3); } 34% { transform: scale(1.16); text-shadow: 0 0 30px rgba(120,210,150,.65), 0 0 12px rgba(224,196,106,.5); } 100% { transform: scale(1); text-shadow: 0 0 24px rgba(224,196,106,.3); } }
   .deck-count-target { font-family: var(--display); font-size: 19px; color: var(--muted); }
   .deck-count-label { font-size: 12.5px; font-weight: 620; color: var(--muted); }
   /* Deck-completion gauge — shares the etched-gauge idiom of .cov-bar/.cov-fill */
   .deck-progress-track { max-width: 320px; margin: 5px auto 6px; height: 7px; border-radius: 4px; background: rgba(0,0,0,.4); box-shadow: inset 0 1px 2px rgba(0,0,0,.55), inset 0 -1px 0 rgba(255,255,255,.05); overflow: hidden; }
-  .deck-progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #8a6f2c, var(--gold-lo) 60%, var(--gold-hi)); box-shadow: 0 0 10px rgba(224,196,106,.24); transition: width .8s var(--fluid), background .3s ease, box-shadow .3s ease; }
-  .deck-progress-fill.done { background: linear-gradient(90deg, #2c6b47, var(--green-ok)); box-shadow: 0 0 10px rgba(88,184,126,.30); }
+  .deck-progress-fill { position: relative; overflow: hidden; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #8a6f2c, var(--gold-lo) 60%, var(--gold-hi)); box-shadow: 0 0 10px rgba(224,196,106,.24); transition: width .8s var(--fluid), background .3s ease, box-shadow .3s ease; }
+  .deck-progress-fill.done { background: linear-gradient(90deg, #2c6b47, var(--green-ok)); box-shadow: 0 0 10px rgba(88,184,126,.30); animation: deckDoneGlow 1.15s ease both; }
+  /* v4.74: a single sheen sweeps the bar the moment the build is complete; ::after is clipped by the fill's own overflow so it never bleeds past the gauge. */
+  .deck-progress-fill.done::after { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 42%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.6), transparent); transform: translateX(-140%) skewX(-16deg); animation: deckDoneSheen 1.15s var(--fluid) .08s both; pointer-events: none; }
+  @keyframes deckDoneGlow { 0%, 100% { box-shadow: 0 0 10px rgba(88,184,126,.30); } 42% { box-shadow: 0 0 20px rgba(120,210,150,.62); } }
+  @keyframes deckDoneSheen { 0% { transform: translateX(-140%) skewX(-16deg); } 60%, 100% { transform: translateX(360%) skewX(-16deg); } }
   .deck-progress-fill.over { background: linear-gradient(90deg, #7a2f24, var(--red-bad)); box-shadow: 0 0 10px rgba(224,96,76,.30); }
   .deck-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin: 16px 0; }
   .deck-actions .deck-action { min-width: 0; }
@@ -1170,7 +1177,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v4.73 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v4.74 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3244,6 +3251,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v4.74', date: '2026-07-22', focus: 'ui', commander: null, summary: "Finishing a deck now feels like finishing a deck. Hitting the 100-card mark is the payoff of a whole brew, but the counter used to just quietly tick over to green. Now the moment your deck reaches exactly 100, the big count number gives a single confident pop with a green-gold glow and the completion gauge catches a bright sheen that sweeps across it once — a small, earned flourish at the finish line, then stillness (no looping animation, in keeping with the app's motion feel). It fires only at 100, replays if you dip over the limit and come back, is pure GPU paint with zero new layout, and respects reduced-motion. Nothing else about the deck view changes." },
     { build: 'v4.73', date: '2026-07-22', focus: 'ui', commander: null, summary: "The mana curve is now a card finder. In the Stats tab you could see the shape of your curve but not what was in it — a tall bar at three mana told you nothing about which three-drops you'd actually chosen. Now every bar is tappable: tap a mana value and a breakdown drops in beneath the curve listing exactly the cards sitting there (with counts), each a chip you can click straight through to its detail page — and on desktop, hovering a chip floats the full card image. So 'my curve is top-heavy' becomes an answerable question: tap the 6+ bar and read your expensive cards, decide what to cut. The selected bar lights up gold, empty buckets stay quiet, and it all sits in the flow beneath the chart — no layout shift, no extra load, and every existing control untouched." },
     { build: 'v4.72', date: '2026-07-22', focus: 'ui', commander: null, summary: "The mana curve now reads like a real chart. In the Stats tab it was a row of flat gold bars where empty slots simply vanished and every column looked the same — hard to judge a deck's shape at a glance. Now each mana value sits in a faint histogram track, so empty buckets show as empty slots instead of disappearing; the tallest bucket — your deck's center of gravity — lights up brighter so the peak of the curve pops; and a slim dashed marker drops onto the curve at your average mana value (the same 'avg' the header already prints), so you can see whether your deck leans cheap or top-heavy without reading a number. Pure paint — no new layout box, no per-frame work, no change to any control." },
     { build: 'v4.71', date: '2026-07-22', focus: 'ui', commander: null, summary: "Card search results now show how played each card is. The Oracle already lets you sort a search by EDHREC rank, but you couldn't see the rank without opening a card — so every result tile now wears a small EDHREC popularity chip in its top-right corner: #88 is a format pillar, #7.2k is a role-player, and a purple ✦ marks the deep cuts (rank past 15k) — the underplayed spice. Sort by EDHREC and scan the page, and the staples and the oddities separate themselves at a glance, so a brewer picking removal or ramp for a deck can weigh proven-vs-fringe without a single tap. Pure corner paint — no layout shift, no extra load, and it stays out of the way of the price, printings, and add controls." },
@@ -4429,6 +4437,7 @@ function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, o
         const bucketCards = [[], [], [], [], [], [], [], []];
         const colorCount = { W: 0, U: 0, B: 0, R: 0, G: 0, C: 0 };
         const types = { Creature: 0, Instant: 0, Sorcery: 0, Enchantment: 0, Artifact: 0, Planeswalker: 0, Land: 0, Battle: 0 };
+        const typeCards = { Creature: [], Instant: [], Sorcery: [], Enchantment: [], Artifact: [], Planeswalker: [], Land: [], Battle: [] };
         let price = 0, nonLandCount = 0, mvSum = 0;
         const all = [...deckList];
         if (deck.commander) all.push({ card: deck.commander, qty: 1 });
@@ -4521,7 +4530,7 @@ function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, o
                             React.createElement("span", { className: "ci-pips" }, ciColors.length ? ciColors.map(c => React.createElement("span", { key: c, className: 'pip ' + c }, c)) : React.createElement("span", { className: "pip C" }, "\u25C7")),
                             React.createElement("span", { onClick: onClearCommander, style: { color: 'var(--gold-dim)', cursor: 'pointer' } }, "change")))) : (React.createElement("div", { className: "cmdr-name", style: { fontSize: '14px', color: 'var(--muted)', fontWeight: 400 } }, "Tap a legendary creature \u2192 Set as Commander")))),
             React.createElement("div", { className: "deck-count-hero" },
-                React.createElement("span", { className: 'deck-count-num ' + (deckTotal > 100 ? 'over' : '') }, deckTotal),
+                React.createElement("span", { className: 'deck-count-num ' + (deckTotal > 100 ? 'over' : (deckTotal === 100 ? 'complete' : '')) }, deckTotal),
                 React.createElement("span", { className: "deck-count-target" }, "/ 100")),
             React.createElement("div", { className: "deck-count-label", style: { textAlign: 'center', marginTop: '-2px', marginBottom: '4px' } }, deckTotal === 100 ? 'Complete deck!' : deckTotal < 100 ? (100 - deckTotal) + ' cards to go' : (deckTotal - 100) + ' over limit'),
             React.createElement("div", { className: "deck-progress-track", role: "progressbar", "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": Math.min(100, deckTotal), "aria-label": "Deck completion" },
