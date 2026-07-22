@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.74 · 2026-07-22">
+<meta name="oracle-build" content="v4.75 · 2026-07-22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -329,6 +329,12 @@
   .type-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 2px; font-size: 13.5px; }
   .type-row .tr-label { color: var(--text-dim); font-weight: 580; }
   .type-row .tr-count { color: var(--gold-bright); font-weight: 750; }
+  /* v4.75: Type Counts rows tap to reveal the exact cards of that type (mirrors the v4.73 mana-curve breakdown; reuses .curve-detail panel). */
+  .type-row.clickable { cursor: pointer; border-radius: 6px; transition: background .12s ease; outline: none; -webkit-tap-highlight-color: transparent; }
+  .type-row.clickable:hover { background: rgba(240,214,130,.06); }
+  .type-row.clickable:focus-visible { box-shadow: inset 0 0 0 1px rgba(240,214,130,.55); }
+  .type-row.clickable.sel { background: rgba(240,214,130,.10); box-shadow: inset 0 0 0 1px rgba(240,214,130,.35); }
+  .type-row.clickable.sel .tr-label { color: var(--text); }
 
   .deck-section-head { display: flex; align-items: baseline; justify-content: space-between; padding: 16px 4px 8px; font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(232,205,120,.72); }
   .deck-line { display: flex; align-items: center; gap: 9px; min-height: 48px; padding: 8px 10px; border: 1px solid rgba(255,255,255,.07); border-radius: 13px; background: var(--glass); margin-bottom: 6px; }
@@ -1177,7 +1183,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v4.74 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v4.75 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3251,6 +3257,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v4.75', date: '2026-07-22', focus: 'ui', commander: null, summary: "Type Counts now answers 'which cards, exactly?' The Stats-tab type list told you a number — 12 creatures, 9 artifacts — but not what they were, and because a card is counted under every type it has, that artifact-creature hiding in both totals was invisible. Now every type row is tappable, the same way the mana curve became tappable last build: tap 'Artifacts · 9' and a breakdown drops in beneath the grid listing exactly those nine cards (with counts), each a chip you can click through to its detail page — and on desktop, hovering a chip floats the full card image. It's the honest, cross-cutting view the Cards tab can't give you, since that groups each card into one section only. The selected row lights up gold, it sits in the flow with no layout shift, respects reduced-motion, and every existing control is untouched." },
     { build: 'v4.74', date: '2026-07-22', focus: 'ui', commander: null, summary: "Finishing a deck now feels like finishing a deck. Hitting the 100-card mark is the payoff of a whole brew, but the counter used to just quietly tick over to green. Now the moment your deck reaches exactly 100, the big count number gives a single confident pop with a green-gold glow and the completion gauge catches a bright sheen that sweeps across it once — a small, earned flourish at the finish line, then stillness (no looping animation, in keeping with the app's motion feel). It fires only at 100, replays if you dip over the limit and come back, is pure GPU paint with zero new layout, and respects reduced-motion. Nothing else about the deck view changes." },
     { build: 'v4.73', date: '2026-07-22', focus: 'ui', commander: null, summary: "The mana curve is now a card finder. In the Stats tab you could see the shape of your curve but not what was in it — a tall bar at three mana told you nothing about which three-drops you'd actually chosen. Now every bar is tappable: tap a mana value and a breakdown drops in beneath the curve listing exactly the cards sitting there (with counts), each a chip you can click straight through to its detail page — and on desktop, hovering a chip floats the full card image. So 'my curve is top-heavy' becomes an answerable question: tap the 6+ bar and read your expensive cards, decide what to cut. The selected bar lights up gold, empty buckets stay quiet, and it all sits in the flow beneath the chart — no layout shift, no extra load, and every existing control untouched." },
     { build: 'v4.72', date: '2026-07-22', focus: 'ui', commander: null, summary: "The mana curve now reads like a real chart. In the Stats tab it was a row of flat gold bars where empty slots simply vanished and every column looked the same — hard to judge a deck's shape at a glance. Now each mana value sits in a faint histogram track, so empty buckets show as empty slots instead of disappearing; the tallest bucket — your deck's center of gravity — lights up brighter so the peak of the curve pops; and a slim dashed marker drops onto the curve at your average mana value (the same 'avg' the header already prints), so you can see whether your deck leans cheap or top-heavy without reading a number. Pure paint — no new layout box, no per-frame work, no change to any control." },
@@ -4431,6 +4438,7 @@ function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, o
     const [showMore, setShowMore] = useState(false);
     const [mode, setMode] = useState('cards'); // cards | stats | shop
     const [openBucket, setOpenBucket] = useState(null); // v4.73: selected mana-curve bucket -> card breakdown
+    const [openType, setOpenType] = useState(null); // v4.75: selected type -> card breakdown
     // stats
     const stats = useMemo(() => {
         const buckets = [0, 0, 0, 0, 0, 0, 0, 0];
@@ -4455,15 +4463,16 @@ function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, o
             const ci = card.color_identity || [];
             if (ci.length === 0) colorCount.C += qty;
             else ci.forEach(c => { colorCount[c] += qty; });
-            Object.keys(types).forEach(t => { if (tl.includes(t)) types[t] += qty; });
+            Object.keys(types).forEach(t => { if (tl.includes(t)) { types[t] += qty; typeCards[t].push({ card, qty }); } });
             const p = card.prices && card.prices.usd ? parseFloat(card.prices.usd) : 0;
             price += p * qty;
         });
         bucketCards.forEach(a => a.sort((x, y) => x.card.name.localeCompare(y.card.name)));
+        Object.values(typeCards).forEach(a => a.sort((x, y) => x.card.name.localeCompare(y.card.name)));
         const maxBucket = Math.max(1, ...buckets);
         const totalColorPips = Object.values(colorCount).reduce((a, b) => a + b, 0) || 1;
         const avgMv = nonLandCount ? (mvSum / nonLandCount) : 0;
-        return { buckets, bucketCards, maxBucket, colorCount, totalColorPips, types, price, avgMv };
+        return { buckets, bucketCards, maxBucket, colorCount, totalColorPips, types, typeCards, price, avgMv };
     }, [deckList, deck.commander]);
     // group deck list by type
     const groups = useMemo(() => {
@@ -4601,10 +4610,19 @@ function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, o
                             " \u00B7 ",
                             stats.colorCount[c]))))),
                     React.createElement("div", { className: "stat-card" },
-                        React.createElement("div", { className: "stat-title" }, "Type Counts"),
-                        React.createElement("div", { className: "type-grid" }, Object.entries(stats.types).filter(([t, n]) => n > 0).map(([t, n]) => (React.createElement("div", { key: t, className: "type-row" },
+                        React.createElement("div", { className: "stat-title" },
+                            "Type Counts",
+                            Object.values(stats.types).some(n => n > 0) && React.createElement("span", { className: "curve-tap-hint" }, " · tap a type")),
+                        React.createElement("div", { className: "type-grid" }, Object.entries(stats.types).filter(([t, n]) => n > 0).map(([t, n]) => (React.createElement("div", { key: t, className: "type-row clickable" + (openType === t ? " sel" : ""), onClick: () => { setOpenType(openType === t ? null : t); haptic(); }, role: "button", tabIndex: 0, "aria-pressed": openType === t, "aria-label": n + " " + pluralType(t, n), onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenType(openType === t ? null : t); } } },
                             React.createElement("span", { className: "tr-label" }, pluralType(t, n)),
-                            React.createElement("span", { className: "tr-count" }, n)))))),
+                            React.createElement("span", { className: "tr-count" }, n))))),
+                        (openType != null && stats.typeCards[openType] && stats.typeCards[openType].length) ? React.createElement("div", { className: "curve-detail" },
+                            React.createElement("div", { className: "curve-detail-head" },
+                                React.createElement("span", null, pluralType(openType, stats.types[openType]) + " · " + stats.types[openType] + " cards"),
+                                React.createElement("button", { className: "curve-detail-x", "aria-label": "Close breakdown", onClick: () => setOpenType(null) }, "×")),
+                            React.createElement("div", { className: "curve-chips" }, stats.typeCards[openType].map(e => React.createElement("button", { key: cardKey(e.card), className: "curve-chip", onClick: () => { CardPeek.hide(); onOpenDetail(e.card); }, onMouseEnter: (ev) => CardPeek.show(ev, e.card), onMouseMove: CardPeek.move, onMouseLeave: CardPeek.hide },
+                                e.card.name,
+                                e.qty > 1 ? React.createElement("span", { className: "cc-qty" }, " ×" + e.qty) : null)))) : null),
                     React.createElement("div", { className: "stat-card" },
                         React.createElement("div", { className: "stat-title" }, "Estimated Price"),
                         React.createElement("div", { style: { fontFamily: 'var(--display)', fontSize: '26px', color: 'var(--gold-bright)', textAlign: 'center' } },
