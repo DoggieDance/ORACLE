@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.69 · 2026-07-22">
+<meta name="oracle-build" content="v4.70 · 2026-07-22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1073,8 +1073,25 @@
   .arch-tile[data-arch="artifacts"] { --acc: 176,169,154; }
   .arch-tile[data-arch="stax"] { --acc: 228,220,192; }
   .arch-tile[data-arch="grouphug"] { --acc: 224,196,106; --bar: linear-gradient(180deg, rgba(244,233,193,.95), rgba(75,143,214,.9), rgba(154,127,176,.9), rgba(216,82,63,.9), rgba(79,168,110,.92)); }
-  .arch-spread { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; margin-top: 13px; }
+  .arch-spread { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; margin-top: 13px; }
   @media (min-width: 900px) { .arch-spread { grid-template-columns: repeat(8, 1fr); gap: 11px; } }
+  /* v4.70 VISUAL FLAIR — school-tinted deal rail. Echoing each tile's left accent bar
+     (v4.66), the dealt spread gains a thin top accent line in the active school's canonical
+     color, so a deal reads as belonging to THAT school (Aristocrats purple-railed, Voltron
+     red, Group Hug gold) rather than as generic gold. Static paint keyed off a data-arch on
+     the spread; no layout box (absolute, above the grid in the margin gap), GPU-cheap, fully
+     reversible. Falls back to gold when no --acc is set. */
+  .arch-spread::before { content: ''; position: absolute; left: 0; right: 0; top: -9px; height: 2px; border-radius: 2px; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(var(--acc, 224,196,106), .85) 18%, rgba(var(--acc, 224,196,106), .85) 82%, transparent); opacity: .8; }
+  .arch-spread[data-arch="aristocrats"] { --acc: 154,127,176; }
+  .arch-spread[data-arch="spellslinger"] { --acc: 75,143,214; }
+  .arch-spread[data-arch="tokens"] { --acc: 79,168,110; }
+  .arch-spread[data-arch="reanimator"] { --acc: 132,110,158; }
+  .arch-spread[data-arch="counters"] { --acc: 79,168,110; }
+  .arch-spread[data-arch="lands"] { --acc: 120,150,95; }
+  .arch-spread[data-arch="voltron"] { --acc: 216,82,63; }
+  .arch-spread[data-arch="artifacts"] { --acc: 176,169,154; }
+  .arch-spread[data-arch="stax"] { --acc: 228,220,192; }
+  .arch-spread[data-arch="grouphug"] { --acc: 224,196,106; }
   /* v4.56: dealt-from-the-stack entrance (Forge stage-B closer). Cards fly in from the
      up-left (where the school tiles sit) with an alternating tilt and the spring bezier's
      natural overshoot, so a deal reads as cards hitting the table. fill is BACKWARDS, not
@@ -1129,7 +1146,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v4.69 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v4.70 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3203,6 +3220,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v4.70', date: '2026-07-22', focus: 'ui', commander: null, summary: "The Forge's dealt spread now wears its school's colors. Each archetype tile already carries a left accent bar in its canonical MTG color, but once you tapped a school the eight commanders it dealt sat under a plain layout with no tie back to where they came from. Now a thin accent rail runs across the top of the spread in the active school's color — purple for Aristocrats, blue-red for Spellslinger, red for Voltron, a warm gold for Group Hug — so a deal reads as belonging to that school at a glance, echoing the tile you just tapped. It's pure paint above the cards: no layout shift, no extra load, and it re-tints instantly every time you switch schools or hit Deal again." },
     { build: 'v4.69', date: '2026-07-22', focus: 'ui', commander: null, summary: "The Forge now tells you how played each dealt commander is. Because a spread is dealt from a random page, it mixes format pillars with deep cuts — so every card now wears a small EDHREC-rank chip in its top corner (opposite the colors badge): #88 for a proven staple, #24k for a rarely-brewed oddity. The deepest cuts glow purple with a ✦, the same 'Hidden gem' cue the card dossier uses to mark an underplayed brew waiting to happen. At a glance you can tell the safe builds from the spice before opening a single card." },
     { build: 'v4.68', date: '2026-07-22', focus: 'ui', commander: null, summary: "The Forge deals faster now. Every time you tap a school — or hit Deal again — it lays out eight commander cards, and each was quietly downloading a full 488-pixel image only to shrink it into a ~140-pixel tile. Now those tiles carry a responsive image set: standard displays pull the light 146-pixel version (roughly four to six times smaller), while high-resolution screens still get the crisp full-size art, so nothing looks softer. Since re-dealing is the whole point of the Forge, the savings compound with every fresh spread — the same cards, less to load." },
     { build: 'v4.67', date: '2026-07-22', focus: 'ui', commander: null, summary: "The Forge now shows each dealt commander's colors at a glance. When you tap a school and it deals eight commanders, the default deal spans every color — but you had to open each face to learn whether it was mono-black, Golgari, or five-color. Now a small color-identity badge sits in the bottom-left corner of every dealt card (the same corner-chip idiom the search and Workshop cards already use), so you can read each commander's colors instantly and spot the ones that fit your pod or your collection without opening a single one. Colorless commanders show a diamond. It's the 'does this fit my colors?' evaluation, answered on the spread itself — pure paint over the existing card, no layout change, no per-frame cost, and the color filter above still re-cuts the deal when you want to narrow it." },
@@ -3871,7 +3889,7 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll }) {
             ci && React.createElement('button', { className: 'arch-deal arch-ci-any', onClick: () => toggleCi('') }, '✕ Any colors')),
         err && React.createElement('div', { className: 'arch-err' }, err),
         active && !err && !dealing && spread && spread.length === 0 && React.createElement('div', { className: 'arch-err' }, 'No ' + active.name + ' commanders fit inside those colors — loosen a color.'),
-        active && !err && (dealing || (spread && spread.length > 0)) && React.createElement('div', { className: 'arch-spread' }, (!spread || spread.length === 0)
+        active && !err && (dealing || (spread && spread.length > 0)) && React.createElement('div', { className: 'arch-spread', 'data-arch': active.id }, (!spread || spread.length === 0)
             ? Array.from({ length: 8 }).map((_, i) => React.createElement('div', { key: 'sk' + i, className: 'arch-card', style: { '--i': i } }, React.createElement('div', { className: 'img-skeleton' })))
             : spread.map((c, i) => {
                 const img = cardImage(c, 'normal');
