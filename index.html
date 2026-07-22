@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.72 · 2026-07-22">
+<meta name="oracle-build" content="v4.73 · 2026-07-22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -299,6 +299,21 @@
   .curve-x { text-align: center; font-size: 10.5px; font-weight: 700; color: var(--muted); padding-top: 6px; }
   .curve-avg { position: absolute; top: 2px; bottom: 21px; width: 0; border-left: 1.5px dashed rgba(240,214,130,.5); pointer-events: none; z-index: 2; }
   .curve-avg::before { content: ''; position: absolute; top: -4px; left: 50%; transform: translateX(-50%); border-left: 3px solid transparent; border-right: 3px solid transparent; border-top: 4px solid rgba(240,214,130,.85); }
+  .curve-col.clickable { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .curve-col.clickable .curve-bar-wrap { transition: background .12s ease, box-shadow .12s ease; }
+  .curve-col.clickable:hover .curve-bar-wrap, .curve-col.sel .curve-bar-wrap { background: linear-gradient(180deg, rgba(240,218,137,.10), rgba(240,218,137,.17)); box-shadow: inset 0 0 0 1px rgba(240,214,130,.4); }
+  .curve-col.sel .curve-bar { background: linear-gradient(180deg, rgba(252,232,150,1), rgba(214,178,86,.82)); box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 0 10px rgba(242,212,120,.32); }
+  .curve-col.clickable:focus-visible { outline: 2px solid rgba(240,214,130,.7); outline-offset: 2px; border-radius: 7px; }
+  .curve-tap-hint { color: var(--muted2); font-weight: 600; font-size: 10px; letter-spacing: 0; }
+  .curve-detail { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--hair); animation: curveDetIn .16s ease; }
+  @keyframes curveDetIn { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+  .curve-detail-head { display: flex; align-items: center; justify-content: space-between; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: rgba(232,205,120,.82); margin-bottom: 9px; }
+  .curve-detail-x { background: none; border: none; color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer; padding: 0 2px; }
+  .curve-detail-x:hover { color: var(--text); }
+  .curve-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .curve-chip { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; background: var(--glass); border: 1px solid var(--hair); border-radius: 999px; padding: 4px 10px; font-size: 12px; color: var(--text); cursor: pointer; text-align: left; transition: border-color .12s ease, background .12s ease; }
+  .curve-chip:hover { border-color: rgba(240,214,130,.5); background: rgba(240,214,130,.08); }
+  .curve-chip .cc-qty { color: var(--gold-dim); font-weight: 700; }
   .colorbar { display: flex; height: 14px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(0,0,0,.4); box-shadow: inset 0 1px 3px rgba(0,0,0,.4); }
   .colorbar-seg { height: 100%; }
   .color-legend { display: flex; flex-wrap: wrap; gap: 10px 14px; margin-top: 11px; }
@@ -1155,7 +1170,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v4.72 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v4.73 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3229,6 +3244,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v4.73', date: '2026-07-22', focus: 'ui', commander: null, summary: "The mana curve is now a card finder. In the Stats tab you could see the shape of your curve but not what was in it — a tall bar at three mana told you nothing about which three-drops you'd actually chosen. Now every bar is tappable: tap a mana value and a breakdown drops in beneath the curve listing exactly the cards sitting there (with counts), each a chip you can click straight through to its detail page — and on desktop, hovering a chip floats the full card image. So 'my curve is top-heavy' becomes an answerable question: tap the 6+ bar and read your expensive cards, decide what to cut. The selected bar lights up gold, empty buckets stay quiet, and it all sits in the flow beneath the chart — no layout shift, no extra load, and every existing control untouched." },
     { build: 'v4.72', date: '2026-07-22', focus: 'ui', commander: null, summary: "The mana curve now reads like a real chart. In the Stats tab it was a row of flat gold bars where empty slots simply vanished and every column looked the same — hard to judge a deck's shape at a glance. Now each mana value sits in a faint histogram track, so empty buckets show as empty slots instead of disappearing; the tallest bucket — your deck's center of gravity — lights up brighter so the peak of the curve pops; and a slim dashed marker drops onto the curve at your average mana value (the same 'avg' the header already prints), so you can see whether your deck leans cheap or top-heavy without reading a number. Pure paint — no new layout box, no per-frame work, no change to any control." },
     { build: 'v4.71', date: '2026-07-22', focus: 'ui', commander: null, summary: "Card search results now show how played each card is. The Oracle already lets you sort a search by EDHREC rank, but you couldn't see the rank without opening a card — so every result tile now wears a small EDHREC popularity chip in its top-right corner: #88 is a format pillar, #7.2k is a role-player, and a purple ✦ marks the deep cuts (rank past 15k) — the underplayed spice. Sort by EDHREC and scan the page, and the staples and the oddities separate themselves at a glance, so a brewer picking removal or ramp for a deck can weigh proven-vs-fringe without a single tap. Pure corner paint — no layout shift, no extra load, and it stays out of the way of the price, printings, and add controls." },
     { build: 'v4.70', date: '2026-07-22', focus: 'ui', commander: null, summary: "The Forge's dealt spread now wears its school's colors. Each archetype tile already carries a left accent bar in its canonical MTG color, but once you tapped a school the eight commanders it dealt sat under a plain layout with no tie back to where they came from. Now a thin accent rail runs across the top of the spread in the active school's color — purple for Aristocrats, blue-red for Spellslinger, red for Voltron, a warm gold for Group Hug — so a deal reads as belonging to that school at a glance, echoing the tile you just tapped. It's pure paint above the cards: no layout shift, no extra load, and it re-tints instantly every time you switch schools or hit Deal again." },
@@ -4406,9 +4422,11 @@ function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, o
     const [showExport, setShowExport] = useState(false);
     const [showMore, setShowMore] = useState(false);
     const [mode, setMode] = useState('cards'); // cards | stats | shop
+    const [openBucket, setOpenBucket] = useState(null); // v4.73: selected mana-curve bucket -> card breakdown
     // stats
     const stats = useMemo(() => {
         const buckets = [0, 0, 0, 0, 0, 0, 0, 0];
+        const bucketCards = [[], [], [], [], [], [], [], []];
         const colorCount = { W: 0, U: 0, B: 0, R: 0, G: 0, C: 0 };
         const types = { Creature: 0, Instant: 0, Sorcery: 0, Enchantment: 0, Artifact: 0, Planeswalker: 0, Land: 0, Battle: 0 };
         let price = 0, nonLandCount = 0, mvSum = 0;
@@ -4421,6 +4439,7 @@ function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, o
             if (!isLand) {
                 const idx = Math.min(7, Math.floor(mv));
                 buckets[idx] += qty;
+                bucketCards[idx].push({ card, qty });
                 nonLandCount += qty;
                 mvSum += mv * qty;
             }
@@ -4431,10 +4450,11 @@ function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, o
             const p = card.prices && card.prices.usd ? parseFloat(card.prices.usd) : 0;
             price += p * qty;
         });
+        bucketCards.forEach(a => a.sort((x, y) => x.card.name.localeCompare(y.card.name)));
         const maxBucket = Math.max(1, ...buckets);
         const totalColorPips = Object.values(colorCount).reduce((a, b) => a + b, 0) || 1;
         const avgMv = nonLandCount ? (mvSum / nonLandCount) : 0;
-        return { buckets, maxBucket, colorCount, totalColorPips, types, price, avgMv };
+        return { buckets, bucketCards, maxBucket, colorCount, totalColorPips, types, price, avgMv };
     }, [deckList, deck.commander]);
     // group deck list by type
     const groups = useMemo(() => {
@@ -4548,13 +4568,21 @@ function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, o
                             "Mana Curve ",
                             React.createElement("span", { className: "stat-extra" },
                                 "avg ",
-                                stats.avgMv.toFixed(2))),
+                                stats.avgMv.toFixed(2),
+                                stats.avgMv > 0 && React.createElement("span", { className: "curve-tap-hint" }, " · tap a bar"))),
                         React.createElement("div", { className: "curve" },
-                            stats.buckets.map((count, i) => (React.createElement("div", { key: i, className: "curve-col" },
+                            stats.buckets.map((count, i) => (React.createElement("div", { key: i, className: "curve-col" + (count > 0 ? " clickable" : "") + (openBucket === i && count > 0 ? " sel" : ""), onClick: count > 0 ? () => { setOpenBucket(openBucket === i ? null : i); haptic(); } : undefined, role: count > 0 ? "button" : undefined, tabIndex: count > 0 ? 0 : undefined, "aria-pressed": count > 0 ? (openBucket === i) : undefined, "aria-label": count > 0 ? ((i === 7 ? '7+' : i) + ' mana value, ' + count + ' cards') : undefined, onKeyDown: count > 0 ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenBucket(openBucket === i ? null : i); } } : undefined },
                             React.createElement("div", { className: "curve-bar-wrap" },
                                 React.createElement("div", { className: 'curve-bar' + (count === stats.maxBucket && count > 0 ? ' peak' : ''), style: { height: (count / stats.maxBucket * 100) + '%' } }, count > 0 && React.createElement("span", { className: "cb-count" }, count))),
                             React.createElement("div", { className: "curve-x" }, i === 7 ? '7+' : i)))),
-                            stats.avgMv > 0 && React.createElement("div", { key: "avg", className: "curve-avg", "aria-hidden": true, style: { left: 'calc(' + (Math.min(Math.max((stats.avgMv + 0.5) / 8, 0), 1) * 100).toFixed(2) + '% - 0.75px)' } }))),
+                            stats.avgMv > 0 && React.createElement("div", { key: "avg", className: "curve-avg", "aria-hidden": true, style: { left: 'calc(' + (Math.min(Math.max((stats.avgMv + 0.5) / 8, 0), 1) * 100).toFixed(2) + '% - 0.75px)' } })),
+                        (openBucket != null && stats.bucketCards[openBucket] && stats.bucketCards[openBucket].length) ? React.createElement("div", { className: "curve-detail" },
+                            React.createElement("div", { className: "curve-detail-head" },
+                                React.createElement("span", null, "MV " + (openBucket === 7 ? '7+' : openBucket) + " · " + stats.bucketCards[openBucket].reduce((s, e) => s + e.qty, 0) + " cards"),
+                                React.createElement("button", { className: "curve-detail-x", "aria-label": "Close breakdown", onClick: () => setOpenBucket(null) }, "×")),
+                            React.createElement("div", { className: "curve-chips" }, stats.bucketCards[openBucket].map(e => React.createElement("button", { key: cardKey(e.card), className: "curve-chip", onClick: () => { CardPeek.hide(); onOpenDetail(e.card); }, onMouseEnter: (ev) => CardPeek.show(ev, e.card), onMouseMove: CardPeek.move, onMouseLeave: CardPeek.hide },
+                                e.card.name,
+                                e.qty > 1 ? React.createElement("span", { className: "cc-qty" }, " ×" + e.qty) : null)))) : null),
                     React.createElement("div", { className: "stat-card" },
                         React.createElement("div", { className: "stat-title" }, "Color Breakdown"),
                         React.createElement("div", { className: "colorbar" }, ['W', 'U', 'B', 'R', 'G', 'C'].map(c => stats.colorCount[c] > 0 && (React.createElement("div", { key: c, className: "colorbar-seg", style: { width: (stats.colorCount[c] / stats.totalColorPips * 100) + '%', background: COLOR_VAR[c] } })))),
