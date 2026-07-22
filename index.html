@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.71 · 2026-07-22">
+<meta name="oracle-build" content="v4.72 · 2026-07-22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -290,12 +290,15 @@
   .stat-card { background: var(--glass); border: 1px solid var(--hair); border-radius: 18px; padding: 15px; margin-bottom: 12px; box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
   .stat-title { font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(232,205,120,.72); margin-bottom: 13px; display: flex; align-items: baseline; justify-content: space-between; }
   .stat-extra { font-weight: 650; letter-spacing: 0; text-transform: none; color: var(--muted); font-size: 12px; }
-  .curve { display: flex; gap: 6px; align-items: flex-end; height: 110px; }
+  .curve { display: flex; gap: 6px; align-items: flex-end; height: 110px; position: relative; }
   .curve-col { flex: 1; display: flex; flex-direction: column; height: 100%; }
-  .curve-bar-wrap { flex: 1; display: flex; align-items: flex-end; }
+  .curve-bar-wrap { flex: 1; display: flex; align-items: flex-end; background: linear-gradient(180deg, rgba(255,255,255,.016), rgba(255,255,255,.055)); border-radius: 7px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.03); }
   .curve-bar { width: 100%; min-height: 2px; border-radius: 6px 6px 3px 3px; background: linear-gradient(180deg, rgba(240,218,137,.9), rgba(198,161,68,.55)); position: relative; box-shadow: inset 0 1px 0 rgba(255,255,255,.35); }
+  .curve-bar.peak { background: linear-gradient(180deg, rgba(252,232,150,1), rgba(214,178,86,.72)); box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 0 9px rgba(242,212,120,.22); }
   .cb-count { position: absolute; top: -17px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 750; color: var(--gold-bright); }
   .curve-x { text-align: center; font-size: 10.5px; font-weight: 700; color: var(--muted); padding-top: 6px; }
+  .curve-avg { position: absolute; top: 2px; bottom: 21px; width: 0; border-left: 1.5px dashed rgba(240,214,130,.5); pointer-events: none; z-index: 2; }
+  .curve-avg::before { content: ''; position: absolute; top: -4px; left: 50%; transform: translateX(-50%); border-left: 3px solid transparent; border-right: 3px solid transparent; border-top: 4px solid rgba(240,214,130,.85); }
   .colorbar { display: flex; height: 14px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(0,0,0,.4); box-shadow: inset 0 1px 3px rgba(0,0,0,.4); }
   .colorbar-seg { height: 100%; }
   .color-legend { display: flex; flex-wrap: wrap; gap: 10px 14px; margin-top: 11px; }
@@ -1152,7 +1155,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v4.71 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v4.72 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3226,6 +3229,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v4.72', date: '2026-07-22', focus: 'ui', commander: null, summary: "The mana curve now reads like a real chart. In the Stats tab it was a row of flat gold bars where empty slots simply vanished and every column looked the same — hard to judge a deck's shape at a glance. Now each mana value sits in a faint histogram track, so empty buckets show as empty slots instead of disappearing; the tallest bucket — your deck's center of gravity — lights up brighter so the peak of the curve pops; and a slim dashed marker drops onto the curve at your average mana value (the same 'avg' the header already prints), so you can see whether your deck leans cheap or top-heavy without reading a number. Pure paint — no new layout box, no per-frame work, no change to any control." },
     { build: 'v4.71', date: '2026-07-22', focus: 'ui', commander: null, summary: "Card search results now show how played each card is. The Oracle already lets you sort a search by EDHREC rank, but you couldn't see the rank without opening a card — so every result tile now wears a small EDHREC popularity chip in its top-right corner: #88 is a format pillar, #7.2k is a role-player, and a purple ✦ marks the deep cuts (rank past 15k) — the underplayed spice. Sort by EDHREC and scan the page, and the staples and the oddities separate themselves at a glance, so a brewer picking removal or ramp for a deck can weigh proven-vs-fringe without a single tap. Pure corner paint — no layout shift, no extra load, and it stays out of the way of the price, printings, and add controls." },
     { build: 'v4.70', date: '2026-07-22', focus: 'ui', commander: null, summary: "The Forge's dealt spread now wears its school's colors. Each archetype tile already carries a left accent bar in its canonical MTG color, but once you tapped a school the eight commanders it dealt sat under a plain layout with no tie back to where they came from. Now a thin accent rail runs across the top of the spread in the active school's color — purple for Aristocrats, blue-red for Spellslinger, red for Voltron, a warm gold for Group Hug — so a deal reads as belonging to that school at a glance, echoing the tile you just tapped. It's pure paint above the cards: no layout shift, no extra load, and it re-tints instantly every time you switch schools or hit Deal again." },
     { build: 'v4.69', date: '2026-07-22', focus: 'ui', commander: null, summary: "The Forge now tells you how played each dealt commander is. Because a spread is dealt from a random page, it mixes format pillars with deep cuts — so every card now wears a small EDHREC-rank chip in its top corner (opposite the colors badge): #88 for a proven staple, #24k for a rarely-brewed oddity. The deepest cuts glow purple with a ✦, the same 'Hidden gem' cue the card dossier uses to mark an underplayed brew waiting to happen. At a glance you can tell the safe builds from the spice before opening a single card." },
@@ -4545,10 +4549,12 @@ function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, o
                             React.createElement("span", { className: "stat-extra" },
                                 "avg ",
                                 stats.avgMv.toFixed(2))),
-                        React.createElement("div", { className: "curve" }, stats.buckets.map((count, i) => (React.createElement("div", { key: i, className: "curve-col" },
+                        React.createElement("div", { className: "curve" },
+                            stats.buckets.map((count, i) => (React.createElement("div", { key: i, className: "curve-col" },
                             React.createElement("div", { className: "curve-bar-wrap" },
-                                React.createElement("div", { className: "curve-bar", style: { height: (count / stats.maxBucket * 100) + '%' } }, count > 0 && React.createElement("span", { className: "cb-count" }, count))),
-                            React.createElement("div", { className: "curve-x" }, i === 7 ? '7+' : i)))))),
+                                React.createElement("div", { className: 'curve-bar' + (count === stats.maxBucket && count > 0 ? ' peak' : ''), style: { height: (count / stats.maxBucket * 100) + '%' } }, count > 0 && React.createElement("span", { className: "cb-count" }, count))),
+                            React.createElement("div", { className: "curve-x" }, i === 7 ? '7+' : i)))),
+                            stats.avgMv > 0 && React.createElement("div", { key: "avg", className: "curve-avg", "aria-hidden": true, style: { left: 'calc(' + (Math.min(Math.max((stats.avgMv + 0.5) / 8, 0), 1) * 100).toFixed(2) + '% - 0.75px)' } }))),
                     React.createElement("div", { className: "stat-card" },
                         React.createElement("div", { className: "stat-title" }, "Color Breakdown"),
                         React.createElement("div", { className: "colorbar" }, ['W', 'U', 'B', 'R', 'G', 'C'].map(c => stats.colorCount[c] > 0 && (React.createElement("div", { key: c, className: "colorbar-seg", style: { width: (stats.colorCount[c] / stats.totalColorPips * 100) + '%', background: COLOR_VAR[c] } })))),
