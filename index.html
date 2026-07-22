@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.75 · 2026-07-22">
+<meta name="oracle-build" content="v4.76 · 2026-07-22">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -336,8 +336,8 @@
   .type-row.clickable.sel { background: rgba(240,214,130,.10); box-shadow: inset 0 0 0 1px rgba(240,214,130,.35); }
   .type-row.clickable.sel .tr-label { color: var(--text); }
 
-  .deck-section-head { display: flex; align-items: baseline; justify-content: space-between; padding: 16px 4px 8px; font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(232,205,120,.72); }
-  .deck-line { display: flex; align-items: center; gap: 9px; min-height: 48px; padding: 8px 10px; border: 1px solid rgba(255,255,255,.07); border-radius: 13px; background: var(--glass); margin-bottom: 6px; }
+  .deck-section-head { display: flex; align-items: baseline; justify-content: space-between; padding: 16px 4px 7px; margin-bottom: 5px; border-bottom: 1px solid rgba(232,205,120,.15); font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(232,205,120,.72); }
+  .deck-line { display: flex; align-items: center; gap: 9px; min-height: 48px; padding: 8px 10px; border: 1px solid rgba(255,255,255,.07); border-radius: 13px; background: var(--glass); margin-bottom: 6px; transition: transform .16s var(--fluid), border-color .16s ease, box-shadow .16s ease; }
   .dl-qty { min-width: 26px; text-align: center; font-size: 13px; font-weight: 780; color: var(--gold-bright); flex-shrink: 0; }
   .dl-name { flex: 1; min-width: 0; font-size: 14.5px; font-weight: 590; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
   .dl-mana { display: inline-flex; gap: 2px; flex-shrink: 0; }
@@ -1003,6 +1003,7 @@
     .dl-name:hover { color: var(--gold-bright); }
     .shop-name { cursor: pointer; }
     .shop-name:hover { color: var(--gold-bright); }
+    .deck-line:hover { transform: translateY(-2px); border-color: rgba(224,196,106,.34); box-shadow: 0 8px 20px rgba(0,0,0,.34), 0 0 0 1px rgba(224,196,106,.12); }
   }
   @media (prefers-reduced-motion: reduce) { .card-peek { transition: none; } }
 
@@ -1183,7 +1184,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v4.75 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v4.76 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3257,6 +3258,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v4.76', date: '2026-07-22', focus: 'ui', commander: null, summary: "The deck list now reads and feels like a proper workbench. Building a hundred-card deck means scanning a long stack of rows, and two small things were missing. First, the type sections — Creatures, Instants, Lands — ran together with no visual break, so a long list read as one undifferentiated column; each section header now carries a faint gold divider, so every type reads as its own block at a glance. Second, on desktop the rows gave no sign they were interactive; now hovering a card lifts it a couple of pixels with a warm gold hairline and a soft shadow, the same tactile language the Forge's dealt cards and the commander crest already use, so it's obvious each row opens the card. It's pure paint and compositor transform — no layout shift, no per-frame work, nothing on mobile changes, and reduced-motion is honored. Every quantity, remove, and swap control is untouched." },
     { build: 'v4.75', date: '2026-07-22', focus: 'ui', commander: null, summary: "Type Counts now answers 'which cards, exactly?' The Stats-tab type list told you a number — 12 creatures, 9 artifacts — but not what they were, and because a card is counted under every type it has, that artifact-creature hiding in both totals was invisible. Now every type row is tappable, the same way the mana curve became tappable last build: tap 'Artifacts · 9' and a breakdown drops in beneath the grid listing exactly those nine cards (with counts), each a chip you can click through to its detail page — and on desktop, hovering a chip floats the full card image. It's the honest, cross-cutting view the Cards tab can't give you, since that groups each card into one section only. The selected row lights up gold, it sits in the flow with no layout shift, respects reduced-motion, and every existing control is untouched." },
     { build: 'v4.74', date: '2026-07-22', focus: 'ui', commander: null, summary: "Finishing a deck now feels like finishing a deck. Hitting the 100-card mark is the payoff of a whole brew, but the counter used to just quietly tick over to green. Now the moment your deck reaches exactly 100, the big count number gives a single confident pop with a green-gold glow and the completion gauge catches a bright sheen that sweeps across it once — a small, earned flourish at the finish line, then stillness (no looping animation, in keeping with the app's motion feel). It fires only at 100, replays if you dip over the limit and come back, is pure GPU paint with zero new layout, and respects reduced-motion. Nothing else about the deck view changes." },
     { build: 'v4.73', date: '2026-07-22', focus: 'ui', commander: null, summary: "The mana curve is now a card finder. In the Stats tab you could see the shape of your curve but not what was in it — a tall bar at three mana told you nothing about which three-drops you'd actually chosen. Now every bar is tappable: tap a mana value and a breakdown drops in beneath the curve listing exactly the cards sitting there (with counts), each a chip you can click straight through to its detail page — and on desktop, hovering a chip floats the full card image. So 'my curve is top-heavy' becomes an answerable question: tap the 6+ bar and read your expensive cards, decide what to cut. The selected bar lights up gold, empty buckets stay quiet, and it all sits in the flow beneath the chart — no layout shift, no extra load, and every existing control untouched." },
