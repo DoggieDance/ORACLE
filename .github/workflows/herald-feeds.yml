@@ -14,6 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Refresh feeds
+        env:
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
         run: node tasks/refresh-feeds.mjs
       - name: Commit if changed
         run: |
