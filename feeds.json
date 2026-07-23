@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T11:22:10.959Z",
+  "updated": "2026-07-23T14:15:42.988Z",
   "deals": [
     {
       "t": "Best Buy Turtle Team-Up $30",
@@ -46,6 +46,13 @@
   ],
   "wire": [
     {
+      "t": "[HOB] - Bothersome Noisemaker - (Heute)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v4d3aq/hob_bothersome_noisemaker_heute/",
+      "s": 0,
+      "c": 1784811237,
+      "f": ""
+    },
+    {
       "t": "[HOC] The Gaffer (Boxtoppers, Chuck Lukacs)",
       "u": "https://www.reddit.com/r/magicTCG/comments/1v4ahvc/hoc_the_gaffer_boxtoppers_chuck_lukacs/",
       "s": 0,
@@ -53,10 +60,10 @@
       "f": ""
     },
     {
-      "t": "[HOB] Fateful Discovery (Leak)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v3tsy6/hob_fateful_discovery_leak/",
+      "t": "[HOC] Elven Chorus (Boxtoppers, Stephen Walsh)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v4c688/hoc_elven_chorus_boxtoppers_stephen_walsh/",
       "s": 0,
-      "c": 1784755794,
+      "c": 1784808824,
       "f": ""
     },
     {
@@ -67,24 +74,17 @@
       "f": ""
     },
     {
+      "t": "[HOB] Fateful Discovery (Leak)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v3tsy6/hob_fateful_discovery_leak/",
+      "s": 0,
+      "c": 1784755794,
+      "f": ""
+    },
+    {
       "t": "[HOB] Desert Were-Wurm",
       "u": "https://www.reddit.com/r/magicTCG/comments/1v3j6j4/hob_desert_werewurm/",
       "s": 0,
       "c": 1784733586,
-      "f": ""
-    },
-    {
-      "t": "[HOB] Chief-Warg's Company",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v3j9ij/hob_chiefwargs_company/",
-      "s": 0,
-      "c": 1784733758,
-      "f": ""
-    },
-    {
-      "t": "[ART] Saruman of Many Colors by RK Post",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v3vgg3/art_saruman_of_many_colors_by_rk_post/",
-      "s": 0,
-      "c": 1784759575,
       "f": ""
     }
   ]
