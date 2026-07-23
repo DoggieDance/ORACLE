@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T14:15:42.988Z",
+  "updated": "2026-07-23T19:15:42.442Z",
   "deals": [
     {
       "t": "Best Buy Turtle Team-Up $30",
@@ -46,6 +46,27 @@
   ],
   "wire": [
     {
+      "t": "[HOB] Bilbo’s Gambit",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v4irkz/hob_bilbos_gambit/",
+      "s": 0,
+      "c": 1784823860,
+      "f": ""
+    },
+    {
+      "t": "[HOB] - Belladonna Took - (Wizards Instagram)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v4k6mo/hob_belladonna_took_wizards_instagram/",
+      "s": 0,
+      "c": 1784826862,
+      "f": ""
+    },
+    {
+      "t": "[HOB] the Sackville-Bagginses (via TCGPlayer)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v4j8ii/hob_the_sackvillebagginses_via_tcgplayer/",
+      "s": 0,
+      "c": 1784824863,
+      "f": ""
+    },
+    {
       "t": "[HOB] - Bothersome Noisemaker - (Heute)",
       "u": "https://www.reddit.com/r/magicTCG/comments/1v4d3aq/hob_bothersome_noisemaker_heute/",
       "s": 0,
@@ -64,27 +85,6 @@
       "u": "https://www.reddit.com/r/magicTCG/comments/1v4c688/hoc_elven_chorus_boxtoppers_stephen_walsh/",
       "s": 0,
       "c": 1784808824,
-      "f": ""
-    },
-    {
-      "t": "[HOB] Sparkstarter, Gandalf (MTGArenaJP)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v496xs/hob_sparkstarter_gandalf_mtgarenajp/",
-      "s": 0,
-      "c": 1784800003,
-      "f": ""
-    },
-    {
-      "t": "[HOB] Fateful Discovery (Leak)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v3tsy6/hob_fateful_discovery_leak/",
-      "s": 0,
-      "c": 1784755794,
-      "f": ""
-    },
-    {
-      "t": "[HOB] Desert Were-Wurm",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v3j6j4/hob_desert_werewurm/",
-      "s": 0,
-      "c": 1784733586,
       "f": ""
     }
   ]

@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v5.08 · 2026-07-23">
+<meta name="oracle-build" content="v5.10 · 2026-07-23">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1232,6 +1232,14 @@
   .arch-rank-badge { position: absolute; left: 5px; top: 5px; z-index: 2; display: inline-flex; align-items: center; gap: 2px; padding: 2px 6px; border-radius: 7px; font-size: 9.5px; font-weight: 800; letter-spacing: .02em; background: rgba(8,8,12,.72); color: var(--gold); box-shadow: 0 1px 4px rgba(0,0,0,.45), inset 0 0 0 1px rgba(224,196,106,.30); pointer-events: none; }
   .arch-rank-badge.gem { color: #d9ccff; box-shadow: 0 1px 4px rgba(0,0,0,.45), inset 0 0 0 1px rgba(167,148,224,.42); }
   @media (max-width: 639px) { .arch-rank-badge { left: 4px; top: 4px; padding: 1px 4px; font-size: 8.5px; } }
+  /* v5.09: "I Bite!" warning on Group Hug commanders that hand out value but ALSO
+     punish the table (hand-size clamp, burn, life drain, taxes). Top-right corner —
+     opposite the rank chip (top-left) and colors chip (bottom-left) so no collision.
+     Gold-arcana identity kept, warmed toward ember with a small downward fang (::before,
+     pure clip-path) to read as teeth. Static paint, pointer-events:none, no per-frame work. */
+  .arch-bite-badge { position: absolute; right: 5px; top: 5px; z-index: 3; display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 7px; font-size: 9px; font-weight: 900; letter-spacing: .03em; text-transform: uppercase; color: #ffdf8f; background: rgba(26,9,7,.82); box-shadow: 0 1px 4px rgba(0,0,0,.5), inset 0 0 0 1px rgba(231,150,86,.58); text-shadow: 0 1px 1px rgba(0,0,0,.6); pointer-events: none; }
+  .arch-bite-badge::before { content: ""; width: 6px; height: 7px; background: linear-gradient(180deg, #ffe6a0, #e6924f); clip-path: polygon(0 0, 100% 0, 50% 100%); }
+  @media (max-width: 639px) { .arch-bite-badge { right: 4px; top: 4px; padding: 1px 4px; font-size: 8px; gap: 2px; } .arch-bite-badge::before { width: 5px; height: 6px; } }
   /* v4.71: EDHREC popularity chip on plain card-search result tiles — pairs with the
      existing 'EDHREC Rank' sort so a brewer reads how-played each card is at a glance.
      Top-right corner: cmdr-flag holds top-left, tile-foot bottom-left, art-upgrade bottom-right. */
@@ -1282,7 +1290,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v5.08 \u00B7 2026-07-23', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v5.10 \u00B7 2026-07-23', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3673,6 +3681,8 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v5.10', date: '2026-07-23', focus: 'ui', commander: null, summary: "The Forge's Group Hug school just got more complete. An audit found the query had gotten too narrow and was missing six genuine group-hug commanders whose gift-to-the-table wording didn't quite match the old patterns. Now included: Braids, Conjurer Adept (every player may cheat a permanent into play each upkeep — mass symmetric ramp), Ludevic, Necro-Alchemist (hands every player a card), Grismold, the Dreadsower (Plant tokens for the whole table), Kibo, Uktabi Prince (Bananas for everyone), Rendmaw, Creaking Nest (Birds for everyone), and Willie Lumpkin, Postman (gift a card in exchange for a peace pact). The widening was done carefully so it does NOT re-admit the punishers a prior audit removed — Rankle and Torbran, whose Treasure hand-out is really wrapped around a sacrifice-and-burn edict, is explicitly kept out. Every addition was verified card-by-card against live Scryfall; the school grows 41 → 47 with none of the old roster lost. Query-only change, no new fetches or per-frame work." },
+    { build: 'v5.09', date: '2026-07-23', focus: 'ui', commander: null, summary: "The Forge's Group Hug school now shows which hugs have a bite. Some commanders hand cards and value to the whole table but ALSO punish it — clamping hand size, burning players, draining life, or taxing spells — and those decks play very differently from a pure everyone-draws hug. A new gold \"I Bite!\" badge (a small ember-gold fang in the top-right corner, opposite the rank and colors chips) now flags them at a glance. It's driven by reading each commander's real Oracle text, so the call is accurate rather than a hand-kept list: Winter, Misanthropic Guide (hand-size clamp), Niv-Mizzet, Guildpact (burn), and Shadrix Silverquill + Wernog, Rider's Chaplain (life drain) light up, while pure-value hugs like Kwain, Zedruu, and Rocco stay unmarked. Winter — pulled from the school in the last audit as a weaponized hug — is welcomed back with this warning rather than hidden, so the school is more complete and clearer at once. Pure static paint, no new fetches, no per-frame work." },
     { build: 'v5.08', date: '2026-07-23', focus: 'ui', commander: null, summary: "The Oracle Herald landing now breathes on a proper vertical rhythm. Its three pillars — the daily masthead, The Forge's archetype tiles, and the Dispatches / Wire feed block below — used to sit on a flat 22px gap that never grew, so on desktop the tall cinematic masthead crowded straight into the Forge and the whole page felt cramped. The gaps between those pillars now scale with the layout: a roomier, even 28px on phones and 36px on desktop where the masthead is largest, giving each section clear air while staying tight enough to keep the Forge — the brewer's front door — above the fold. The feed columns' own spacing was tidied to a consistent 24px so Dispatches, The Wire, and The Bazaar read as one grouped block rather than three loose strips. It is pure spacing — no new markup, no per-frame work, nothing moved or removed — so every surface is exactly where it was, just better paced, on both iPhone and desktop." },
     { build: 'v5.07', date: '2026-07-23', focus: 'ui', commander: null, summary: "The Oracle Herald's masthead — the daily art banner that crowns the landing — got a cinematic pass. The top half of each day's borderless card art used to wash out to a flat, dead field with the nameplate stranded at the very bottom; now the art reads richer (a light saturation-and-contrast lift and a re-balanced scrim that lets more of the picture show through the middle) and the title sits on a warm gold plinth — a soft glow rises from the base, tying the nameplate to the gold-arcana identity, with a gentle side vignette framing the art toward center. The wordmark itself gained a small gold ✦ flourish above it that echoes the sidebar mark, a crisper multi-layer text-shadow so it stays razor-sharp over any art, and a touch more size on desktop. It is pure CSS — no new markup and no per-frame work, so it stays smooth on iPhone — and the daily art fetch and everything below the masthead are untouched." },
     { build: 'v5.06', date: '2026-07-23', focus: 'ui', commander: null, summary: "The Wire — the r/magicTCG feed on the Herald landing — was a monotone wall of plain-text headlines, every row the same weight with only a bare age hanging beneath it. It now reads like a real feed: each headline carries a small color-coded source pill parsed from its Reddit flair, and a matching accent bar runs down the left edge of the row. Spoilers wear the gold — they are the highest brew signal, the new cards you might build around — while News is a cool blue, Rules teal, Deck green, Community violet, and Discussion a quiet slate; a post with no recognizable flair simply shows no pill, staying clean. The upvote score (▲ 1.8k) now shows alongside the age so you can tell at a glance what the table is actually buzzing about. It is pure CSS with a single tiny flair-classifier per row — no new dependencies, no per-frame work — and it is scoped so The Bazaar's solid-gold deal flags are untouched. The rows are still the same links to the same Reddit threads; the feed just went from a list you skim past to one you can actually scan for what's worth a brew." },
@@ -4302,7 +4312,7 @@ const FORGE_SCHOOLS = [
     { id: 'voltron', name: 'Voltron', flavor: 'All power to a single blade', q: 'is:commander legal:commander (o:equipped or o:"equipment" or o:/aura(s)? (attached|you control)/ or o:"enchanted creature" or o:attach)' }, // 116
     { id: 'artifacts', name: 'Artifacts', flavor: 'The engine builds the engine', q: 'is:commander legal:commander (o:/artifact(s)? (you control|spell|creature|card)/ or o:affinity or o:metalcraft or o:improvise or o:"create a treasure" or o:/artifact enters/)' }, // 245
     { id: 'stax', name: 'Stax', flavor: 'Nothing resolves for free', q: 'is:commander legal:commander (o:/cost[s]? \\{\\d+\\} more/ or o:"don\'t untap" or o:"can\'t untap" or o:/opponents? can\'t/ or o:"no more than one" or (o:"unless" o:"pays"))' }, // 38
-    { id: 'grouphug', name: 'Group Hug', flavor: 'Gifts to all — with an ulterior motive', q: 'is:commander legal:commander (o:/each player (may )?draws?/ or o:"each player may" or o:/each opponent (draws|gains|may)/ or o:"all players" or o:/target (player|opponent) (may )?(draws?|gains|creates)/) -o:/each opponent may (sacrifice|discard)/ -o:/maximum hand size is (reduced|equal to)/' }, // 40 — v5.04 audit: tightened to keep true generosity out of aristocrats/stax/edict. Excluded "each opponent may sacrifice/discard" (edict engines: Braids Arisen Nightmare, Fandaniel, Zoyowa) and "maximum hand size is reduced/equal to" (hand-lock stax: Winter, Misanthropic Guide — a weaponized hug, filed hybrid not pure). Card-by-card audited vs live Scryfall 2026-07-23; keeps Zedruu/Kwain/Kynaios/Phelddagrif/Selvala/Kenrith/Second Doctor and hug-adjacent Iwamori/Wernog.
+    { id: 'grouphug', name: 'Group Hug', flavor: 'Gifts to all — with an ulterior motive', q: 'is:commander legal:commander (o:/each player (may )?draws?/ or o:"each player may" or o:/each opponent (draws|gains|may)/ or o:"all players" or o:/target (player|opponent) (may )?(draws?|gains|creates)/ or o:"that player may draw" or o:"that player may put" or o:"each player creates") -o:/each opponent may (sacrifice|discard)/ -o:"each player sacrifices" -o:"each player discards" -o:"each player loses"' }, // 47 — v5.10: widened to catch missed group-hug commanders WITHOUT re-leaking (backlog slice c). Added three LITERAL clauses (kept literal, not regex, to stay under Scryfall's regex-operator cap): "that player may draw" (catches Ludevic, Necro-Alchemist — each player may draw; also Willie Lumpkin, Postman — gift a card + pillowfort pact), "that player may put" (Braids, Conjurer Adept — each player may cheat a permanent into play, a mass symmetric ramp gift), and "each player creates" (Grismold Plants / Kibo Bananas / Rendmaw Birds — symmetric token gifts to the whole table). Guarded against symmetric-PUNISHER leak-in with -o:"each player sacrifices"/"discards"/"loses", which drops Rankle and Torbran (its "each player creates a Treasure" mode is a gift but the card is net a sac+burn edict). 41→47, ZERO drop from the prior roster; card-by-card audited vs live Scryfall 2026-07-23. v5.09: restored Winter, Misanthropic Guide (the "maximum hand size is reduced/equal to" exclusion was dropped — verified live it removed ONLY Winter, no stax/aristocrats leak-in). Winter is a genuine group-hug shell (upkeep "each player draws two cards") that ALSO clamps hands via delirium, so he's back but flagged by the new client-side hugBite() "I Bite!" badge (see ArchetypeShelf). Still excludes "each opponent may sacrifice/discard" (edict engines: Braids Arisen Nightmare, Fandaniel, Zoyowa). Card-by-card audited vs live Scryfall 2026-07-23; keeps Zedruu/Kwain/Kynaios/Phelddagrif/Selvala/Kenrith/Second Doctor and hug-adjacent Iwamori/Wernog.
     { id: 'blink', name: 'Blink & Flicker', flavor: 'Every homecoming pays again', q: 'is:commander legal:commander (o:/exile .+ return (it|that card|them|those cards)/ or o:"whenever a creature you control enters" or o:"whenever another creature enters the battlefield under your control")' }, // 49 (live-tested 2026-07-22: Aminatou, Brago, Emiel, Elesh Norn, Abuelo)
     { id: 'mill', name: 'Mill', flavor: 'The library runs out first', q: 'is:commander legal:commander (o:mill or o:"into their graveyard" or o:"library into")' }, // 91 (live-tested 2026-07-22: Bruvac, Laquatus, Anowon, Captain N\'ghathrod, Coram)
 ];
@@ -4325,6 +4335,23 @@ const FORGE_ART = {
 };
 const ARCH_CACHE = {}; // key (school id + optional '|CI') -> { total, pages: { n: card[] } } — session-lived
 const CI_NAMES = { W: 'White', U: 'Blue', B: 'Black', R: 'Red', G: 'Green' };
+// v5.09: "I Bite!" detector for the Group Hug school. Some commanders that hand
+// out cards/value to the whole table ALSO punish it — clamping hand size, taxing
+// spells, burning players, or draining life. hugBite() reads a card's real oracle
+// text and returns a short reason string (used as the badge tooltip) if the hug
+// has teeth, else null. Patterns verified card-by-card vs live Scryfall 2026-07-23
+// against the full 41-commander roster: flags Winter (hand clamp), Niv-Mizzet,
+// Guildpact (burn), Shadrix Silverquill + Wernog (life drain); leaves pure-value
+// hugs (Kwain, Zedruu, Rocco, Ms. Bumbleflower…) unflagged. Careful not to catch
+// "Players have no maximum hand size" (a gift) or damage aimed only at creatures.
+function hugBite(c) {
+    const o = c.oracle_text || (c.card_faces || []).map(f => f.oracle_text || '').join('\n') || '';
+    if (/maximum hand size is (reduced|equal to|\d)/i.test(o)) return 'clamps hand size';
+    if (/deals? (\d+|x) damage to (any target|any player|each player|each opponent|target player|target opponent|that player|them\b)/i.test(o)) return 'burns players';
+    if (/\b(each opponent|target opponent|target player|that player|each other player|opponents?)\b[^.]{0,55}?\blos(e|es) \d+ life/i.test(o)) return 'drains life';
+    if (/\bmore to cast\b|cost[s]? \{?\d+\}?( or more)? more|unless [^.]{0,60}\bpays?\b|can'?t [^.]{0,40}unless [^.]{0,40}\bpay/i.test(o)) return 'taxes the table';
+    return null;
+}
 function ArchetypeShelf({ onOpenDetail, onSearchAll }) {
     const [activeId, setActiveId] = useState('');
     const [spread, setSpread] = useState(null);
@@ -4425,9 +4452,13 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll }) {
                 const imgSmall = cardImage(c, 'small');
                 const cid = c.color_identity || [];
                 const rc = forgeRankChip(c.edhrec_rank);
-                return React.createElement('div', { key: c.id, className: 'arch-card', style: { '--i': i }, role: 'button', tabIndex: 0, 'aria-label': c.name + (cid.length ? ' (' + cid.join('') + ')' : ' (colorless)') + (rc ? ' · EDHREC #' + Number(c.edhrec_rank).toLocaleString() : ''), onClick: () => onOpenDetail(c), onKeyDown: (e) => { if (e.key === 'Enter') onOpenDetail(c); } },
+                // v5.09: only the Group Hug school shows the "I Bite!" warning — the
+                // idiom is meaningless under other schools, so gate on the active tile.
+                const bite = active && active.id === 'grouphug' ? hugBite(c) : null;
+                return React.createElement('div', { key: c.id, className: 'arch-card', style: { '--i': i }, role: 'button', tabIndex: 0, 'aria-label': c.name + (cid.length ? ' (' + cid.join('') + ')' : ' (colorless)') + (rc ? ' · EDHREC #' + Number(c.edhrec_rank).toLocaleString() : '') + (bite ? ' · group hug with a bite: ' + bite : ''), onClick: () => onOpenDetail(c), onKeyDown: (e) => { if (e.key === 'Enter') onOpenDetail(c); } },
                     img ? React.createElement(CardImg, { src: img, srcSet: imgSmall ? (imgSmall + ' 146w, ' + img + ' 488w') : undefined, sizes: '(min-width:900px) 140px, (min-width:640px) 23vw, 24vw', alt: c.name }) : React.createElement('div', { className: 'card-img-placeholder' }, React.createElement('div', { className: 'pn' }, c.name)),
                     rc && React.createElement('div', { className: 'arch-rank-badge' + (rc.gem ? ' gem' : ''), 'aria-hidden': true }, (rc.gem ? '✦ #' : '#') + rc.label),
+                    bite && React.createElement('div', { className: 'arch-bite-badge', title: 'Group hug with teeth — this commander also ' + bite, 'aria-hidden': true }, 'I Bite!'),
                     React.createElement('div', { className: 'arch-ci-badge', 'aria-hidden': true }, cid.length ? cid.map(col => React.createElement('span', { key: col, className: 'pip ' + col }, col)) : React.createElement('span', { className: 'pip C' }, '◇')));
             })),
         active && spread && spread.length > 0 && !err && React.createElement('div', { className: 'arch-foot' },
