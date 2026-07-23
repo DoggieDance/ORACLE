@@ -1,16 +1,16 @@
 # Oracle publisher (local, single-writer). Replaces auto-push.bat.
 #
-# One actor (this PC) owns every push. It publishes two SEPARATE files that can
+# One actor (this PC) owns everything and pushes two SEPARATE files that can
 # never collide with each other:
-#   - index.html        (the app build, copied from the working folder)
-#   - feeds.json         (the Reddit Bazaar/Wire feeds, refreshed here)
-# Because feeds live in feeds.json now (not inside index.html), a feed refresh
-# and an app build touch different files, so the old two-writer divergence is
+#   - index.html         (the app build, copied from the working folder)
+#   - feeds.json          (Reddit Bazaar/Wire, refreshed from RSS)
+# Because feeds live in feeds.json (not inside index.html), a feed refresh and
+# an app build touch different files, so the old two-writer divergence is
 # structurally impossible.
 #
-# Feeds use anonymous Reddit, which works from a home IP with NO API key. If you
-# ever want feeds to refresh while this PC is off, set REDDIT_CLIENT_ID /
-# REDDIT_CLIENT_SECRET and move the refresh into the GitHub Action instead.
+# Feeds use Reddit RSS (anonymous, browser UA) which works from a home IP with
+# NO API key/OAuth/ticket. GitHub Actions can't do this - datacenter IPs are
+# 403'd by Reddit - so the refresh lives here, on the PC.
 
 $ErrorActionPreference = 'Stop'
 $repo = "$HOME\OneDrive\Documents\GitHub\ORACLE"
@@ -31,7 +31,7 @@ if ($LASTEXITCODE -ne 0) {
   exit 1
 }
 
-# 2 - refresh feeds.json (anonymous Reddit; best effort - stale beats broken).
+# 2 - refresh feeds.json from Reddit RSS (anonymous; best effort - stale beats broken).
 $refresh   = Join-Path $repo 'tasks\refresh-feeds.mjs'
 $feedsFile = Join-Path $repo 'feeds.json'
 if (Test-Path $refresh) {
@@ -48,7 +48,7 @@ if ($workTag -gt $repoTag) {
   Copy-Item (Join-Path $work 'oracle-worklog.md') $repo -Force
   Write-Host "app build v$workTag staged (was v$repoTag)"
 } else {
-  Write-Host "no newer build (work v$workTag <= repo v$repoTag) - feeds-only run"
+  Write-Host "no newer build (work v$workTag <= repo v$repoTag)"
 }
 
 # 4 - stage exactly what we own (index.html + worklog if copied, feeds.json if changed).

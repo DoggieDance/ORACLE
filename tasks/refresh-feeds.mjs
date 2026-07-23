@@ -1,113 +1,108 @@
-// Herald feed refresh — no AI, no judgment, just plumbing.
-// Fetches r/sealedmtgdeals + r/magicTCG, filters mechanically, and writes the
-// DEALS/WIRE arrays to feeds.json. NEWS (Dispatches) is editorial and lives in
-// index.html — this script never touches index.html, so it can NEVER collide
-// with the app build. Same posts in the same order = no rewrite (no commit).
+// Herald feed refresh via Reddit RSS - no API key, no OAuth, no ticket.
+// Reddit blocks anonymous JSON (403) but serves public RSS to a browser UA from
+// a residential IP. RSS is rate-limited, so we fetch the two feeds SEQUENTIALLY
+// with a gap, retry on 429 (honoring Retry-After), and - importantly - treat the
+// two feeds INDEPENDENTLY: if one is throttled, we still update the other and
+// keep the throttled one's current data. Only when BOTH fail do we no-op.
+// Writes feeds.json only - never index.html - so a refresh can't collide with
+// the app build.
 //
-// All logic runs inside main() and exits via `return` (never process.exit()).
-// Calling process.exit() right after a failed fetch triggers a libuv teardown
-// assertion on Windows ("UV_HANDLE_CLOSING ... async.c"); returning instead lets
-// Node drain cleanly, so that crash line no longer appears.
+// RSS carries no score, so entries get s:0; the app hides the score chip when
+// s<=0. All logic runs in main() and exits via return (never process.exit()).
 import { readFileSync, writeFileSync } from 'node:fs';
 
-const UA = { 'user-agent': 'oracle-herald/1.0 (github.com/DoggieDance/ORACLE)' };
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
 const DEAD = /sold out|sold-out|expired|dead|ended/i;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-// Reddit blocks anonymous requests from datacenter IPs (GitHub runners get
-// HTTP 403). Application-only OAuth is the sanctioned lane: with
-// REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET set we fetch a client_credentials
-// token and use oauth.reddit.com. With no creds (a home machine) we fall back
-// to anonymous www access.
-async function redditToken() {
-  const id = process.env.REDDIT_CLIENT_ID, sec = process.env.REDDIT_CLIENT_SECRET;
-  if (!id || !sec) return null;
-  const r = await fetch('https://www.reddit.com/api/v1/access_token', {
-    method: 'POST',
-    headers: {
-      'authorization': 'Basic ' + Buffer.from(id + ':' + sec).toString('base64'),
-      'user-agent': UA['user-agent'],
-      'content-type': 'application/x-www-form-urlencoded'
-    },
-    body: 'grant_type=client_credentials'
-  });
-  if (!r.ok) throw new Error('reddit auth -> HTTP ' + r.status);
-  const d = await r.json();
-  if (!d.access_token) throw new Error('reddit auth: no token in response');
-  return d.access_token;
+function decode(s) {
+  return String(s)
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&apos;|&#0?39;/g, "'")
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)));
 }
 
-async function grab(path, token) {
-  const url = token
-    ? 'https://oauth.reddit.com' + path
-    : 'https://www.reddit.com' + path.replace(/\?/, '.json?');
-  const headers = { ...UA };
-  if (token) headers['authorization'] = 'bearer ' + token;
-  const r = await fetch(url, { headers });
-  if (!r.ok) throw new Error(url + ' -> HTTP ' + r.status);
-  const d = await r.json();
-  return ((d.data && d.data.children) || []).map(x => x.data).filter(p => p && p.title);
+function parseAtom(xml) {
+  const out = [];
+  const entries = xml.split('<entry>').slice(1);
+  for (const raw of entries) {
+    const e = raw.split('</entry>')[0];
+    const title = (e.match(/<title>([\s\S]*?)<\/title>/) || [])[1];
+    const href  = (e.match(/<link[^>]*href="([^"]+)"/) || [])[1];
+    const pub   = (e.match(/<published>([\s\S]*?)<\/published>/) || [])[1]
+              || (e.match(/<updated>([\s\S]*?)<\/updated>/) || [])[1];
+    const flair = (e.match(/<category[^>]*\bterm="([^"]*)"/) || [])[1] || '';
+    if (!title || !href) continue;
+    const c = pub ? Math.floor(Date.parse(pub) / 1000) : 0;
+    out.push({ t: decode(title).trim(), u: href, s: 0, c: c || 0, f: decode(flair).trim() });
+  }
+  return out;
 }
 
-function entry(p) {
-  return { t: p.title.trim(), u: 'https://www.reddit.com' + p.permalink, s: p.score || 0, c: p.created_utc || 0, f: (p.link_flair_text || '').trim() };
+async function grab(url, tries = 4) {
+  for (let attempt = 1; attempt <= tries; attempt++) {
+    let r;
+    try {
+      r = await fetch(url, { headers: { 'user-agent': UA, 'accept': 'application/atom+xml, application/xml, text/xml' } });
+    } catch (netErr) {
+      if (attempt === tries) throw netErr;
+      await sleep(attempt * 4000);
+      continue;
+    }
+    if (r.ok) return parseAtom(await r.text());
+    if ((r.status === 429 || r.status >= 500) && attempt < tries) {
+      const ra = parseInt(r.headers.get('retry-after') || '', 10);
+      const wait = (Number.isFinite(ra) ? Math.min(ra, 60) : attempt * 6) * 1000;
+      console.log('throttled (HTTP ' + r.status + ') on ' + url + ' - waiting ' + (wait / 1000) + 's (attempt ' + attempt + '/' + tries + ')');
+      await sleep(wait);
+      continue;
+    }
+    throw new Error(url + ' -> HTTP ' + r.status);
+  }
 }
 
-// Identity ignores score/age drift so only real content changes cause a write.
+// Fetch one feed, returning null (not throwing) on failure so the other feed
+// can still update.
+async function tryFeed(label, url) {
+  try { return await grab(url); }
+  catch (e) { console.log('::warning::' + label + ' feed unavailable - ' + e.message + ' - keeping current'); return null; }
+}
+
 function identity(list) { return JSON.stringify(list.map(p => [p.u, p.t, p.f])); }
+
+function pickDeals(raw) { const d = raw.filter(p => !DEAD.test(p.f + ' ' + p.t)).slice(0, 6); return d.length >= 3 ? d : null; }
+function pickWire(raw) {
+  const s = raw.filter(p => /official spoiler/i.test(p.f));
+  const r = raw.filter(p => !/official spoiler/i.test(p.f));
+  const w = [...s, ...r].slice(0, 6);
+  return w.length >= 3 ? w : null;
+}
 
 async function main() {
   const FILE = process.argv[2] || new URL('../feeds.json', import.meta.url).pathname;
 
-  // Read the current feeds.json (tolerate a missing/garbage file on first run).
   let cur = { deals: [], wire: [] };
   try { cur = JSON.parse(readFileSync(FILE, 'utf8')); } catch (e) { console.log('no readable feeds.json yet - will create it'); }
   if (!Array.isArray(cur.deals)) cur.deals = [];
   if (!Array.isArray(cur.wire)) cur.wire = [];
 
-  let rawDeals, rawWire;
-  try {
-    let token = null;
-    try { token = await redditToken(); } catch (e) { console.log('::warning::reddit oauth failed (' + e.message + ') - trying anonymous'); }
-    [rawDeals, rawWire] = await Promise.all([
-      grab('/r/sealedmtgdeals/new?limit=25&raw_json=1', token),
-      grab('/r/magicTCG/hot?limit=20&raw_json=1', token)
-    ]);
-  } catch (e) {
-    // Reddit throttles some cloud IPs. Stale feeds beat a broken pipeline:
-    // warn and stop clean; the next run (or a home-IP run) catches up.
-    console.log('::warning::reddit unreachable - ' + e.message + ' - keeping current feeds');
-    return;
-  }
+  const rawDeals = await tryFeed('deals', 'https://www.reddit.com/r/sealedmtgdeals/new/.rss?limit=25');
+  await sleep(2500);
+  const rawWire  = await tryFeed('wire',  'https://www.reddit.com/r/magicTCG/hot/.rss?limit=25');
 
-  const deals = rawDeals
-    .filter(p => !p.stickied && !DEAD.test((p.link_flair_text || '') + ' ' + p.title))
-    .slice(0, 6).map(entry);
+  if (!rawDeals && !rawWire) { console.log('both feeds unreachable - keeping current feeds'); return; }
 
-  const wire = rawWire
-    .filter(p => !p.stickied && !p.over_18)
-    .filter(p => /official spoiler/i.test(p.link_flair_text || '') || (p.score || 0) >= 300)
-    .slice(0, 6).map(entry);
-
-  if (deals.length < 3 || wire.length < 3) {
-    console.log('thin results (deals=' + deals.length + ', wire=' + wire.length + ') - keeping current feeds');
-    return;
-  }
+  const deals = rawDeals ? (pickDeals(rawDeals) || cur.deals) : cur.deals;
+  const wire  = rawWire  ? (pickWire(rawWire)   || cur.wire)  : cur.wire;
 
   const sameDeals = identity(cur.deals) === identity(deals);
   const sameWire = identity(cur.wire) === identity(wire);
-  if (sameDeals && sameWire) {
-    console.log('feeds unchanged - nothing to do');
-    return;
-  }
+  if (sameDeals && sameWire) { console.log('feeds unchanged - nothing to do'); return; }
 
-  const out = {
-    updated: new Date().toISOString(),
-    deals: sameDeals ? cur.deals : deals,
-    wire:  sameWire  ? cur.wire  : wire
-  };
-  writeFileSync(FILE, JSON.stringify(out, null, 2) + '\n');
-  console.log('feeds.json updated: deals=' + (!sameDeals) + ' wire=' + (!sameWire));
+  const outObj = { updated: new Date().toISOString(), deals, wire };
+  writeFileSync(FILE, JSON.stringify(outObj, null, 2) + '\n');
+  console.log('feeds.json updated (RSS): deals=' + (!sameDeals) + ' wire=' + (!sameWire));
 }
 
-// No process.exit(): set exitCode and let the event loop drain naturally.
 main().catch(e => { console.log('::warning::refresh error - ' + (e && e.message) + ' - keeping current feeds'); process.exitCode = 0; });

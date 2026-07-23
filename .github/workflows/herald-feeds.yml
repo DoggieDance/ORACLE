@@ -1,18 +1,13 @@
 name: Herald Feeds
 
-# DISABLED as an automatic job. Feeds are refreshed locally by
-# tasks/publish-oracle.ps1 (anonymous Reddit from a home IP, no API key).
-#
-# This workflow is kept as a MANUAL-ONLY hook and, importantly, only ever writes
-# feeds.json - it never touches index.html, so it can no longer cause the app
-# build to diverge (that was the original bug). To make it run automatically you
-# would (a) add REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET repo secrets - GitHub's
-# datacenter IPs get 403 from anonymous Reddit - and (b) re-add the schedule.
+# MANUAL-ONLY. Feeds are refreshed on the PC by tasks/publish-oracle.ps1 using
+# Reddit RSS (anonymous, browser UA - works from a home IP). GitHub's datacenter
+# IPs are 403'd by Reddit for BOTH JSON and RSS, so this Action can't refresh
+# feeds from CI; it exists only as a manual hook / future OAuth path. It only
+# ever writes feeds.json, never index.html, so it can't cause a build divergence.
 
 on:
   workflow_dispatch: {}
-  # schedule:
-  #   - cron: "17 */3 * * *"   # re-enable only with Reddit OAuth secrets set
 
 permissions:
   contents: write
@@ -26,19 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Refresh feeds.json
-        env:
-          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
-          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
         run: node tasks/refresh-feeds.mjs feeds.json
-
       - name: Commit if changed
         run: |
-          if git diff --quiet -- feeds.json; then
-            echo "no feed changes"
-            exit 0
-          fi
+          if git diff --quiet -- feeds.json; then echo "no feed changes"; exit 0; fi
           git config user.name "herald-bot"
           git config user.email "herald-bot@users.noreply.github.com"
           git add feeds.json
