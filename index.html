@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v5.12 · 2026-07-23">
+<meta name="oracle-build" content="v5.14 · 2026-07-23">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1173,6 +1173,14 @@
   .arch-tile[data-arch="artifacts"] { --acc: 176,169,154; }
   .arch-tile[data-arch="stax"] { --acc: 228,220,192; }
   .arch-tile[data-arch="grouphug"] { --acc: 224,196,106; --bar: linear-gradient(180deg, rgba(244,233,193,.95), rgba(75,143,214,.9), rgba(154,127,176,.9), rgba(216,82,63,.9), rgba(79,168,110,.92)); }
+  /* v5.13: the three newest schools (blink/mill/chaos) were added after the v4.66/v4.70 school-color
+     system and had NO --acc, so their tile accent bar + radial glow AND their dealt-spread top rail all
+     fell back to generic gold — visually orphaned from the other ten. Give each its canonical color:
+     Blink & Flicker = WU value (white→blue), Mill = Dimir (blue→black), Chaos & Gambling = a fiery
+     red→gold (warm red-orange, deliberately hotter than Voltron's 216,82,63 so the two reds don't collide). */
+  .arch-tile[data-arch="blink"] { --acc: 150,180,225; --bar: linear-gradient(180deg, rgba(244,244,240,.95), rgba(75,143,214,.9)); }
+  .arch-tile[data-arch="mill"] { --acc: 96,132,190; --bar: linear-gradient(180deg, rgba(75,143,214,.92), rgba(70,64,92,.92)); }
+  .arch-tile[data-arch="chaos"] { --acc: 224,110,70; --bar: linear-gradient(180deg, rgba(224,110,70,.94), rgba(240,228,190,.92)); }
   .arch-spread { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; margin-top: 13px; }
   @media (min-width: 900px) { .arch-spread { grid-template-columns: repeat(8, 1fr); gap: 11px; } }
   /* v4.70 VISUAL FLAIR — school-tinted deal rail. Echoing each tile's left accent bar
@@ -1192,6 +1200,9 @@
   .arch-spread[data-arch="artifacts"] { --acc: 176,169,154; }
   .arch-spread[data-arch="stax"] { --acc: 228,220,192; }
   .arch-spread[data-arch="grouphug"] { --acc: 224,196,106; }
+  .arch-spread[data-arch="blink"] { --acc: 150,180,225; }
+  .arch-spread[data-arch="mill"] { --acc: 96,132,190; }
+  .arch-spread[data-arch="chaos"] { --acc: 224,110,70; }
   /* v4.56: dealt-from-the-stack entrance (Forge stage-B closer). Cards fly in from the
      up-left (where the school tiles sit) with an alternating tilt and the spring bezier's
      natural overshoot, so a deal reads as cards hitting the table. fill is BACKWARDS, not
@@ -1207,6 +1218,16 @@
   .arch-deal:disabled { opacity: .55; cursor: default; }
   .arch-hint { font-family: var(--serif); font-style: italic; font-size: 12px; color: var(--muted); }
   @media (max-width: 639px) { .arch-hint { display: none; } }
+  /* v5.14 — "Surprise me" deals a random brewing school (the one-tap answer to
+     "what should I brew next?"). Lives in the Forge header beside Deal again / the
+     hint; unlike .arch-hint it stays visible on mobile, giving narrow viewports a
+     discovery CTA they previously lacked. Pure CSS pill, no animation loop. */
+  .arch-head-actions { display: inline-flex; align-items: center; gap: 12px; }
+  .arch-surprise { display: inline-flex; align-items: center; gap: 5px; font-family: var(--ios-font); font-size: 10.5px; font-weight: 750; letter-spacing: .06em; color: var(--gold-dim); padding: 4px 11px; border: 1px solid rgba(224,196,106,.34); border-radius: 999px; background: rgba(224,196,106,.06); cursor: pointer; transition: color .15s, border-color .15s, background .15s, transform .1s; }
+  @media (hover: hover) and (pointer: fine) { .arch-surprise:hover { color: var(--gold-bright); border-color: rgba(224,196,106,.6); background: rgba(224,196,106,.12); } }
+  .arch-surprise:active { transform: scale(.96); }
+  .arch-surprise:disabled { opacity: .55; cursor: default; }
+  .arch-surprise .die { font-size: 12.5px; line-height: 1; margin-top: -1px; }
   .arch-err { margin-top: 12px; font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); }
   .arch-foot { display: flex; justify-content: center; margin-top: 12px; }
   .arch-ci { display: flex; align-items: center; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
@@ -1290,7 +1311,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v5.12 \u00B7 2026-07-23', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v5.14 \u00B7 2026-07-23', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3681,6 +3702,8 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v5.14', date: '2026-07-23', focus: 'ui', commander: null, summary: "The Forge got a Surprise me button — the one-tap answer to “what should I brew next?”. Instead of scanning thirteen tiles to choose a direction, tap Surprise me and Oracle picks a random brewing school for you and deals a fresh eight-commander spread on the spot; tap it again and it jumps to a different school, so the well of ideas never runs dry. It keeps whatever color filter you've set, so a brewer locked into, say, Golgari still gets an in-color surprise. It sits in the Forge header next to Deal again and — unlike the desktop-only hint text — stays visible on phones, giving narrow screens a discovery front door they didn't have before. Pure additive: every tile, the color filter, Deal again, and View all are untouched." },
+    { build: 'v5.13', date: '2026-07-23', focus: 'ui', commander: null, summary: "Every school in the Forge now deals in its own colors. The three newest schools — Blink & Flicker, Mill, and Chaos & Gambling — were added after the color system that tints each tile's accent bar and the rail above its dealt spread, so they'd been sitting under a generic gold, visually orphaned from the other ten. Now Blink glows white-into-blue for its WU flicker value, Mill runs blue-into-black like Dimir, and Chaos & Gambling burns a fiery red-into-gold (kept hotter than Voltron's red so the two don't collide). Tap any of them and both the tile and the eight commanders it deals read at a glance as belonging to that school. Pure paint — no layout shift, no extra load, no change to which commanders each school deals." },
     { build: 'v5.12', date: '2026-07-23', focus: 'ui', commander: null, summary: "The Forge gained a thirteenth school: Chaos & Gambling. Tap it to deal commanders who live and die by luck and mayhem — coin-flippers (Okaun & Zndrsplt, Yusri, Krark), dice-rollers (Mr. House, Delina), goad-and-politics troublemakers (Marisi, Alela), and 'at random' wildcards (Zurzoth, Haktos). Gambling on its own is a tiny pool, so it folds into the broader chaos playstyle as one coherent front door rather than a thin standalone tile. The query is all-literal and was spot-audited card-by-card against live Scryfall — 77 commanders, every one with a real chaos or luck hook, no stray filler." },
     { build: 'v5.11', date: '2026-07-23', focus: 'ui', commander: null, summary: "The Forge's +1/+1 Counters school got sharper. Its query had a bare 'proliferate' arm that quietly let in commanders whose proliferate feeds a DIFFERENT counter type — not +1/+1 at all. An audit of every commander that arm uniquely added (14 of them; the other 457 come from the true +1/+1 arm) removed the three genuine mismatches: Yawgmoth, Thran Physician and High Perfect Morcant (both −1/−1 counters) and Lulu, Stern Guardian (stun counters). The generic proliferate engines that DO grow +1/+1 counters stay put — Atraxa, Kilo, Ezuri, Agent Frank Horrigan, Tekuthal — as do the explicit +1/+1 payoffs the old arm was actually there to catch, like Tromell (creatures enter with an extra +1/+1 counter), Cayth, and Brimaz. Verified card-by-card against live Scryfall: the school tightens 471 → 468 with nothing legit lost. A future pass will trim the remaining incidental cases — commanders that make a stray +1/+1 counter but are really doing something else entirely." },
     { build: 'v5.10', date: '2026-07-23', focus: 'ui', commander: null, summary: "The Forge's Group Hug school just got more complete. An audit found the query had gotten too narrow and was missing six genuine group-hug commanders whose gift-to-the-table wording didn't quite match the old patterns. Now included: Braids, Conjurer Adept (every player may cheat a permanent into play each upkeep — mass symmetric ramp), Ludevic, Necro-Alchemist (hands every player a card), Grismold, the Dreadsower (Plant tokens for the whole table), Kibo, Uktabi Prince (Bananas for everyone), Rendmaw, Creaking Nest (Birds for everyone), and Willie Lumpkin, Postman (gift a card in exchange for a peace pact). The widening was done carefully so it does NOT re-admit the punishers a prior audit removed — Rankle and Torbran, whose Treasure hand-out is really wrapped around a sacrifice-and-burn edict, is explicitly kept out. Every addition was verified card-by-card against live Scryfall; the school grows 41 → 47 with none of the old roster lost. Query-only change, no new fetches or per-frame work." },
@@ -4426,14 +4449,28 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll }) {
         if (a)
             deal(a, next);
     }
+    // v5.14: "Surprise me" — deal a RANDOM school (different from the one showing),
+    // the zero-decision front door for "what should I brew next?". Keeps the current
+    // color filter so a color-locked brewer still gets an in-color surprise.
+    function surprise() {
+        if (dealing)
+            return;
+        const pool = FORGE_SCHOOLS.filter(s => s.id !== activeId);
+        const pick = pool[Math.floor(Math.random() * pool.length)];
+        if (pick)
+            deal(pick);
+    }
     const active = FORGE_SCHOOLS.find(x => x.id === activeId);
     const total = active && ARCH_CACHE[keyFor(active, ci)] ? ARCH_CACHE[keyFor(active, ci)].total : 0;
     return React.createElement('div', { className: 'arch-sec' },
         React.createElement('div', { className: 'col-head' },
             React.createElement('span', { className: 'col-title' }, React.createElement('span', { className: 'cg' }, '⚒︎'), 'The Forge'),
-            active
-                ? React.createElement('button', { className: 'arch-deal', onClick: () => deal(active), disabled: dealing }, dealing ? 'Dealing…' : '↻ Deal again')
-                : React.createElement('span', { className: 'arch-hint' }, 'thirteen schools of brewing · tap one to deal commanders')),
+            React.createElement('div', { className: 'arch-head-actions' },
+                active
+                    ? React.createElement('button', { className: 'arch-deal', onClick: () => deal(active), disabled: dealing }, dealing ? 'Dealing…' : '↻ Deal again')
+                    : React.createElement('span', { className: 'arch-hint' }, 'thirteen schools of brewing · tap one to deal commanders'),
+                React.createElement('button', { className: 'arch-surprise', onClick: surprise, disabled: dealing, title: 'Deal a random brewing school', 'aria-label': 'Surprise me — deal a random brewing school' },
+                    React.createElement('span', { className: 'die', 'aria-hidden': true }, '⚄'), 'Surprise me'))),
         React.createElement('div', { className: 'arch-tiles' }, FORGE_SCHOOLS.map(a => React.createElement('button', { key: a.id, 'data-arch': a.id, className: 'arch-tile ' + (activeId === a.id ? 'active' : ''), 'aria-pressed': activeId === a.id, style: FORGE_ART[a.id] ? { '--art': 'url("' + FORGE_ART[a.id] + '")' } : undefined, onClick: () => deal(a) },
             React.createElement('span', { className: 'an' }, a.name),
             React.createElement('span', { className: 'af' }, a.flavor)))),

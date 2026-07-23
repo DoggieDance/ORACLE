@@ -1,6 +1,13 @@
 {
-  "updated": "2026-07-23T19:15:42.442Z",
+  "updated": "2026-07-23T21:15:42.073Z",
   "deals": [
+    {
+      "t": "Marvel Jumpstart $104.99",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v4pstp/marvel_jumpstart_10499/",
+      "s": 0,
+      "c": 1784838711,
+      "f": ""
+    },
     {
       "t": "Best Buy Turtle Team-Up $30",
       "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v41mc4/best_buy_turtle_teamup_30/",
@@ -34,13 +41,6 @@
       "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v1xc0n/check_your_kohls/",
       "s": 0,
       "c": 1784579952,
-      "f": ""
-    },
-    {
-      "t": "[BestBuy] FF7 Cloud Commander deck - Game Edition: $60 ($40 off)",
-      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v1vw8u/bestbuy_ff7_cloud_commander_deck_game_edition_60/",
-      "s": 0,
-      "c": 1784576777,
       "f": ""
     }
   ],
