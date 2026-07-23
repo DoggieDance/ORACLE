@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v4.78 · 2026-07-22">
+<meta name="oracle-build" content="v4.79 · 2026-07-23">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1184,7 +1184,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v4.77 \u00B7 2026-07-22', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v4.79 \u00B7 2026-07-23', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -1839,7 +1839,7 @@ function normTribe(t) {
     if (IRR[t]) t = IRR[t]; return t === 'elves' ? 'elf' : t; }
 function detectTribe(o) {
     let m = o.match(/other ([a-z]+?)s? you control/) || o.match(/another ([a-z]+) you control/) || o.match(/([a-z]+) spells you cast cost/) || o.match(/([a-z]+) creatures you control get/)
-        || o.match(/(?:target|a|an|another|each) ([a-z]+) creature card/) || o.match(/return (?:up to \w+ )?target ([a-z]+) creature/) || o.match(/whenever (?:a|an) ([a-z]+) you control (?:enters|dies|attacks)/);
+        || o.match(/(?:target|a|an|another|each) ([a-z]+) creature card/) || o.match(/return (?:up to \w+ )?target ([a-z]+) creature/) || o.match(/whenever (?:a|an) ([a-z]+) you control (?:enters|dies|attacks)/) || o.match(/whenever (?:a|an) ([a-z]+) (?:enters|dies|attacks)\b/);
     if (m && !TRIBE_GENERIC[m[1]]) {
         const t = normTribe(m[1]);
         if (TRIBES.indexOf(t) !== -1) return t;
@@ -2868,7 +2868,7 @@ function buildEngineModel(commander) {
     // lifegain fired only off keyword text inside token creation: incidental, not a plan
     const lgFired = found.some(f => f.atom.key === 'lifegain');
     if (lgFired) {
-        const oNoTok = o.replace(/tokens? with [^.]{0,40}lifelink/g, ' ').replace(/lifelink creature tokens?/g, ' ');
+        const oNoTok = o.replace(/tokens? with [^.]{0,40}lifelink/g, ' ').replace(/lifelink creature tokens?/g, ' ').replace(/\b(gains?|have|has) [^.]{0,40}lifelink[^.]{0,40}until end of turn/g, ' ');
         const lgReal = /gains? .{0,10}life|lifelink|whenever you gain life/.test(oNoTok);
         if (!lgReal) {
             for (let i = out.length - 1; i >= 0; i--) if (/^lifegain/.test(out[i].key || '')) out.splice(i, 1);
@@ -3258,6 +3258,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v4.79', date: '2026-07-23', focus: 'ui', commander: null, summary: "Search now finds exactly what you typed. Pressing Enter in the search box would sometimes run a bare everything-search — thirty-thousand cards listed A to Z — instead of the commander or card you'd just typed, most reliably on the very first search after the page loaded or when you typed fast or pasted a name and hit Enter. The cause was a timing race: Enter was searching the box's last-saved value, which hadn't always caught up to what was actually on screen. Enter now reads the live contents of the box directly, so it always searches precisely what you see there — the app's front door is dependable on the first try. No other search behavior changes." },
     { build: 'v4.78', date: '2026-07-22', focus: 'ui', commander: null, summary: "Daily housekeeping. The Oracle Herald's Secret Lair dispatch was refreshed to the newly announced Stardew Valley 'Superdrop of the Moonlight Jellies' (out July 27), which reprints Command Tower and Yavimaya, Cradle of Growth — staples worth a brewer's attention — retiring the older charity-drop note. A dead .mode-toggle CSS selector left over from an old layout was swept out of the stylesheet. Every brewing surface — search, the commander Scouting Report and its synergy rails, the card dossier, the deck list, and the playtest board — was walked end to end with a clean console." },
     { build: 'v4.77', date: '2026-07-22', focus: 'ui', commander: null, summary: "The Forge now opens twelve doors instead of ten. Two of Commander's most-loved brewing schools joined the landing — Blink & Flicker (flicker your creatures for repeated enter-the-battlefield value) and Mill (win by emptying libraries) — each dealing a fresh, shuffled spread of on-theme commanders (49 blink leaders, 91 mill leaders, both live-tested against Scryfall) with the same color-identity filter and deal-again reshuffle as the other schools. More front doors for 'what should I brew next?'" },
     { build: 'v4.76', date: '2026-07-22', focus: 'ui', commander: null, summary: "The deck list now reads and feels like a proper workbench. Building a hundred-card deck means scanning a long stack of rows, and two small things were missing. First, the type sections — Creatures, Instants, Lands — ran together with no visual break, so a long list read as one undifferentiated column; each section header now carries a faint gold divider, so every type reads as its own block at a glance. Second, on desktop the rows gave no sign they were interactive; now hovering a card lifts it a couple of pixels with a warm gold hairline and a soft shadow, the same tactile language the Forge's dealt cards and the commander crest already use, so it's obvious each row opens the card. It's pure paint and compositor transform — no layout shift, no per-frame work, nothing on mobile changes, and reduced-motion is honored. Every quantity, remove, and swap control is untouched." },
@@ -3759,21 +3760,18 @@ function App() {
 // (Reddit blocks live browser fetches — feeds are baked, not fetched).
 // Bazaar policy: in-stock only; drop posts whose flair or title matches
 // /sold out|expired|dead|ended/i.
-const DEALS = [
-    { t: "5% OFF anything at Black Vault Gaming with code DINGUS", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1v30zq6/5_off_anything_at_black_vault_gaming_with_code/", s: 0, c: 1784681781, f: "" },
-    { t: "EB Games TMNT sales", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1v22iq4/eb_games_tmnt_sales/", s: 20, c: 1784592581, f: "Canada" },
-    { t: "Star Trek pbb 118.99//Reality Fracture pbb 115.99 and other preorders. Misc sales on FF Deck 156.99//Marvel Deck Display 199.99// Marvel and Avatar pbb 93.99 and others while they last @ Conspectus Gaming", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1v1zx2q/star_trek_pbb_11899reality_fracture_pbb_11599_and/", s: 53, c: 1784586008, f: "" },
-    { t: "Check your Kohl's", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1v1xc0n/check_your_kohls/", s: 395, c: 1784579952, f: "In-Person" },
-    { t: "[BestBuy] FF7 Cloud Commander deck - Game Edition: $60 ($40 off)", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1v1vw8u/bestbuy_ff7_cloud_commander_deck_game_edition_60/", s: 86, c: 1784576777, f: "" },
-    { t: "[Best Buy] Wizards of The Coast Magic: The Gathering Teenage Mutant Ninja Turtles Draft Night $74.99/$55 off", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1v1mqcb/best_buy_wizards_of_the_coast_magic_the_gathering/", s: 42, c: 1784556770, f: "" },
+let DEALS = [
+    { t: "Ultra Pro Flash Sale", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1v0dlrd/ultra_pro_flash_sale/", s: 55, c: 1784425577, f: "MULTIPLE DEALS" },
+    { t: "Hobbit @ $149.99 + shipping/tax", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1uzlabv/hobbit_14999_shippingtax/", s: 54, c: 1784346925, f: "" },
+    { t: "Marvel Play Boxes $95 each @ripnshipgaming", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1uz5qta/marvel_play_boxes_95_each_ripnshipgaming/", s: 46, c: 1784308154, f: "" },
+    { t: "Amazon Canada | The Hobbit Collector Booster Box | $639 CAD, 2 per customer", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1v023r7/amazon_canada_magic_the_gathering_the_hobbit/", s: 31, c: 1784396175, f: "" },
+    { t: "Hobbit Gift Bundles up on Amazon (at $199.99)", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1v02yzs/hobbit_gift_bundles_up_on_amazon_but_at_19999/", s: 0, c: 1784398200, f: "" },
 ];
-const WIRE = [
-    { t: "[HOC] Aragorn, the Uniter and Andúril, Flame of the West (Boxtoppers, Paolo Parente)", u: "https://www.reddit.com/r/magicTCG/comments/1v3ahyt/hoc_aragorn_the_uniter_and_andúril_flame_of_the/", s: 236, c: 1784710502, f: "Official Spoiler" },
-    { t: "[HOB] Sound the Trumpets", u: "https://www.reddit.com/r/magicTCG/comments/1v38nuu/hob_sound_the_trumpets/", s: 276, c: 1784704224, f: "Official Spoiler" },
-    { t: "[HOB] Last Light of Durin's Day", u: "https://www.reddit.com/r/magicTCG/comments/1v2sgbx/hob_last_light_of_durins_day/", s: 1394, c: 1784661781, f: "Official Spoiler" },
-    { t: "[HOB] - Thranduil's Command - MTG JP Facebook", u: "https://www.reddit.com/r/magicTCG/comments/1v386uh/hob_thranduils_command_mtg_jp_facebook/", s: 167, c: 1784702678, f: "Official Spoiler" },
-    { t: "[HOB] Orcrist, Goblin-cleaver (via Polygon)", u: "https://www.reddit.com/r/magicTCG/comments/1v2n2go/hob_orcrist_goblincleaver_via_polygon/", s: 2270, c: 1784650570, f: "Official Spoiler" },
-    { t: "[HOB]Gnashing of Teeth (via EDHWarRoom/指挥官战情室）", u: "https://www.reddit.com/r/magicTCG/comments/1v36w6u/hobgnashing_of_teeth_via_edhwarroom指挥官战情室/", s: 180, c: 1784698457, f: "Official Spoiler" },
+let WIRE = [
+    { t: "[HOB] Thranduil, the Elvenking (Debut Stream @ MagicCon Amsterdam)", u: "https://www.reddit.com/r/magicTCG/comments/1uzz9rv/hob_thranduil_the_elvenking_debut_stream_magiccon/", s: 1779, c: 1784389497, f: "Official Spoiler" },
+    { t: "[HOB] Supper for Spiders (Debut Stream @ MagicCon Amsterdam)", u: "https://www.reddit.com/r/magicTCG/comments/1uzzic7/hob_supper_for_spiders_debut_stream_magiccon/", s: 1627, c: 1784390080, f: "Official Spoiler" },
+    { t: "PSA: I am Begging you, EVEN IF you're a trek fan DO NOT BUY THIS at $900", u: "https://www.reddit.com/r/magicTCG/comments/1v0272z/psa_i_am_begging_you_even_if_youre_a_trek_fan_do/", s: 1888, c: 1784396395, f: "Universes Beyond - Discussion" },
+    { t: "I don't understand why FIN was the only UB set to include an indication of what title each card came from.", u: "https://www.reddit.com/r/magicTCG/comments/1v0cyut/i_dont_understand_why_fin_was_the_only_ub_set_to/", s: 400, c: 1784423685, f: "General Discussion" },
 ];
 function fmScore(s) { return s >= 1000 ? (s / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : '' + s; }
 function fmAge(utc) { if (!utc) return ''; const h = Math.max(1, Math.round((Date.now() / 1000 - utc) / 3600)); return h < 24 ? h + 'h' : Math.round(h / 24) + 'd'; }
@@ -4258,9 +4256,15 @@ function SearchScreen({ injectQuery, onInjectConsumed, activeDeck, onOpenDetail,
                         React.createElement("circle", { cx: "11", cy: "11", r: "8" }),
                         React.createElement("path", { d: "m21 21-4.35-4.35" })),
                     React.createElement("input", { className: "search-input", type: "text", value: query, placeholder: "Card name or syntax...", title: "Shortcut: press / anywhere to search", autoComplete: "off", autoCorrect: "off", autoCapitalize: "off", spellCheck: "false", onChange: e => onInput(e.target.value), onKeyDown: e => { if (e.key === 'Enter') {
+                            // Search EXACTLY what's in the box. Reading e.target.value (not the
+                            // React `query` closure) makes Enter immune to the state-commit race
+                            // that otherwise fired a bare `game:paper` everything-search (32k cards
+                            // A–Z) on a cold/fast/paste-then-Enter submit — the app's front door.
+                            const v = e.target.value;
                             e.target.blur();
                             setAc([]);
-                            doSearch();
+                            setQuery(v);
+                            doSearch({ queryOverride: v });
                         } } }),
                     query && React.createElement("div", { className: "clear-icon", onClick: () => { setQuery(''); setAc([]); } },
                         React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" },
@@ -5939,7 +5943,23 @@ function BasicsSheet({ deck, commanderCI, onAddQty, onClose, showToast }) {
 
 // ============ MOUNT ============
 try {
-    ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App, null));
+    const __oracleRoot = ReactDOM.createRoot(document.getElementById('root'));
+    __oracleRoot.render(React.createElement(App, null));
+    // Safe feed hydration: the Bazaar/Wire feeds live in feeds.json (refreshed
+    // out-of-band, separate file from this app so builds can never collide with
+    // feed updates). Fetch once on load; on success, swap the baked-in DEALS/WIRE
+    // fallbacks and re-render (preact diffs, so app state is preserved). Any
+    // failure leaves the baked arrays in place, so the Herald always renders.
+    fetch('feeds.json?ts=' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (f) {
+            if (!f) return;
+            var changed = false;
+            if (Array.isArray(f.deals) && f.deals.length) { DEALS = f.deals; changed = true; }
+            if (Array.isArray(f.wire) && f.wire.length) { WIRE = f.wire; changed = true; }
+            if (changed) __oracleRoot.render(React.createElement(App, null));
+        })
+        .catch(function () {});
 }
 catch (error) {
     if (window.__oracleShowBootFailure)
