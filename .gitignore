@@ -9,3 +9,4 @@ auto-push.bat
 install-autopush.cmd
 run-hidden.vbs
 autopush.log
+publish.log
