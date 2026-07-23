@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T06:19:07.145Z",
+  "updated": "2026-07-23T07:52:23.078Z",
   "deals": [
     {
       "t": "Best Buy Turtle Team-Up $30",
@@ -60,17 +60,31 @@
       "f": ""
     },
     {
-      "t": "In this Standard deck, 87.5% of the maindeck cost is lands.",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v3yi27/in_this_standard_deck_875_of_the_maindeck_cost_is/",
+      "t": "[HOB] Chief-Warg's Company",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v3j9ij/hob_chiefwargs_company/",
       "s": 0,
-      "c": 1784767269,
+      "c": 1784733758,
       "f": ""
     },
     {
-      "t": "Siri called 911 on us while we were playing magic",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v44obe/siri_called_911_on_us_while_we_were_playing_magic/",
+      "t": "[ART] Saruman of Many Colors by RK Post",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v3vgg3/art_saruman_of_many_colors_by_rk_post/",
       "s": 0,
-      "c": 1784784757,
+      "c": 1784759575,
+      "f": ""
+    },
+    {
+      "t": "[HOC] Palantír of Orthanc (Official Card Gallery)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v3jmmy/hoc_palantír_of_orthanc_official_card_gallery/",
+      "s": 0,
+      "c": 1784734526,
+      "f": ""
+    },
+    {
+      "t": "[HOC] Saruman of Many Colors",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v3jlp0/hoc_saruman_of_many_colors/",
+      "s": 0,
+      "c": 1784734471,
       "f": ""
     }
   ]
