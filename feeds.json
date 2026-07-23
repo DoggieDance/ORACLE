@@ -1,16 +1,91 @@
 {
-  "updated": "2026-07-22T00:00:00Z",
+  "updated": "2026-07-23T06:19:07.145Z",
   "deals": [
-    { "t": "Ultra Pro Flash Sale", "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v0dlrd/ultra_pro_flash_sale/", "s": 55, "c": 1784425577, "f": "MULTIPLE DEALS" },
-    { "t": "Hobbit @ $149.99 + shipping/tax", "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1uzlabv/hobbit_14999_shippingtax/", "s": 54, "c": 1784346925, "f": "" },
-    { "t": "Marvel Play Boxes $95 each @ripnshipgaming", "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1uz5qta/marvel_play_boxes_95_each_ripnshipgaming/", "s": 46, "c": 1784308154, "f": "" },
-    { "t": "Amazon Canada | The Hobbit Collector Booster Box | $639 CAD, 2 per customer", "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v023r7/amazon_canada_magic_the_gathering_the_hobbit/", "s": 31, "c": 1784396175, "f": "" },
-    { "t": "Hobbit Gift Bundles up on Amazon (at $199.99)", "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v02yzs/hobbit_gift_bundles_up_on_amazon_but_at_19999/", "s": 0, "c": 1784398200, "f": "" }
+    {
+      "t": "Best Buy Turtle Team-Up $30",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v41mc4/best_buy_turtle_teamup_30/",
+      "s": 0,
+      "c": 1784775656,
+      "f": "sealedmtgdeals"
+    },
+    {
+      "t": "5% OFF anything at Black Vault Gaming with code DINGUS",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v30zq6/5_off_anything_at_black_vault_gaming_with_code/",
+      "s": 0,
+      "c": 1784681781,
+      "f": "sealedmtgdeals"
+    },
+    {
+      "t": "EB Games TMNT sales",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v22iq4/eb_games_tmnt_sales/",
+      "s": 0,
+      "c": 1784592581,
+      "f": "sealedmtgdeals"
+    },
+    {
+      "t": "Star Trek pbb 118.99//Reality Fracture pbb 115.99 and other preorders. Misc sales on FF Deck 156.99//Marvel Deck Display 199.99// Marvel and Avatar pbb 93.99 and others while they last @ Conspectus Gaming",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v1zx2q/star_trek_pbb_11899reality_fracture_pbb_11599_and/",
+      "s": 0,
+      "c": 1784586008,
+      "f": "sealedmtgdeals"
+    },
+    {
+      "t": "Check your Kohl's",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v1xc0n/check_your_kohls/",
+      "s": 0,
+      "c": 1784579952,
+      "f": "sealedmtgdeals"
+    },
+    {
+      "t": "[BestBuy] FF7 Cloud Commander deck - Game Edition: $60 ($40 off)",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v1vw8u/bestbuy_ff7_cloud_commander_deck_game_edition_60/",
+      "s": 0,
+      "c": 1784576777,
+      "f": "sealedmtgdeals"
+    }
   ],
   "wire": [
-    { "t": "[HOB] Thranduil, the Elvenking (Debut Stream @ MagicCon Amsterdam)", "u": "https://www.reddit.com/r/magicTCG/comments/1uzz9rv/hob_thranduil_the_elvenking_debut_stream_magiccon/", "s": 1779, "c": 1784389497, "f": "Official Spoiler" },
-    { "t": "[HOB] Supper for Spiders (Debut Stream @ MagicCon Amsterdam)", "u": "https://www.reddit.com/r/magicTCG/comments/1uzzic7/hob_supper_for_spiders_debut_stream_magiccon/", "s": 1627, "c": 1784390080, "f": "Official Spoiler" },
-    { "t": "PSA: I am Begging you, EVEN IF you're a trek fan DO NOT BUY THIS at $900", "u": "https://www.reddit.com/r/magicTCG/comments/1v0272z/psa_i_am_begging_you_even_if_youre_a_trek_fan_do/", "s": 1888, "c": 1784396395, "f": "Universes Beyond - Discussion" },
-    { "t": "I don't understand why FIN was the only UB set to include an indication of what title each card came from.", "u": "https://www.reddit.com/r/magicTCG/comments/1v0cyut/i_dont_understand_why_fin_was_the_only_ub_set_to/", "s": 400, "c": 1784423685, "f": "General Discussion" }
+    {
+      "t": "Daily Questions Thread - Ask All Your Magic Related Questions Here!",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v3u7n6/daily_questions_thread_ask_all_your_magic_related/",
+      "s": 0,
+      "c": 1784756705,
+      "f": "magicTCG"
+    },
+    {
+      "t": "Wound-Up Wednesdays - Vent here!",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v3bxhi/woundup_wednesdays_vent_here/",
+      "s": 0,
+      "c": 1784715305,
+      "f": "magicTCG"
+    },
+    {
+      "t": "[HOB] Fateful Discovery (Leak)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v3tsy6/hob_fateful_discovery_leak/",
+      "s": 0,
+      "c": 1784755794,
+      "f": "magicTCG"
+    },
+    {
+      "t": "[HOB] Desert Were-Wurm",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v3j6j4/hob_desert_werewurm/",
+      "s": 0,
+      "c": 1784733586,
+      "f": "magicTCG"
+    },
+    {
+      "t": "In this Standard deck, 87.5% of the maindeck cost is lands.",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v3yi27/in_this_standard_deck_875_of_the_maindeck_cost_is/",
+      "s": 0,
+      "c": 1784767269,
+      "f": "magicTCG"
+    },
+    {
+      "t": "Siri called 911 on us while we were playing magic",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v44obe/siri_called_911_on_us_while_we_were_playing_magic/",
+      "s": 0,
+      "c": 1784784757,
+      "f": "magicTCG"
+    }
   ]
 }
