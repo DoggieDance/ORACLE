@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v5.03 · 2026-07-23">
+<meta name="oracle-build" content="v5.06 · 2026-07-23">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1107,6 +1107,30 @@
   .bz-score { color: var(--gold-dim); }
   @media (hover: hover) and (pointer: fine) { .hd-item:hover .hd-title, .bz-item:hover .bz-title, .hd-lead:hover .hd-title { color: var(--gold-bright); } }
 
+  /* ============ v5.06 THE WIRE — categorized r/magicTCG feed ============ */
+  /* The monotone plain-text list becomes a scannable feed: every row carries a
+     color-coded source pill (Spoiler / News / Rules / Deck / Community /
+     Discussion) parsed from its Reddit flair, plus a left accent bar keyed to
+     the same category. Spoilers wear the gold — they are the highest brew
+     signal (new cards to build around). Pure CSS, no per-frame work; scoped to
+     .wire-col so The Bazaar's solid-gold deal flags stay untouched. */
+  .wire-col .bz-item { position: relative; padding-left: 14px; border-radius: 9px; transition: background .16s ease; }
+  .wire-col .bz-item::before { content: ''; position: absolute; left: 3px; top: 12px; bottom: 12px; width: 2px; border-radius: 2px; background: var(--hair2); }
+  @media (hover: hover) and (pointer: fine) { .wire-col .bz-item:hover { background: rgba(224,196,106,.05); } }
+  .wire-col .bz-age { color: var(--muted2); font-variant-numeric: tabular-nums; }
+  .bz-flag.wc-spoiler   { color: #f2d783; background: rgba(224,196,106,.14); border: 1px solid rgba(224,196,106,.5); }
+  .bz-flag.wc-news      { color: #9dc0ee; background: rgba(120,170,235,.12); border: 1px solid rgba(120,170,235,.42); }
+  .bz-flag.wc-rules     { color: #7fd0c6; background: rgba(90,205,192,.11);  border: 1px solid rgba(90,205,192,.4); }
+  .bz-flag.wc-deck      { color: #9fd193; background: rgba(125,205,125,.11);  border: 1px solid rgba(125,205,125,.4); }
+  .bz-flag.wc-community { color: #c0a6e8; background: rgba(165,135,225,.12);  border: 1px solid rgba(165,135,225,.42); }
+  .bz-flag.wc-talk      { color: #a6afbe; background: rgba(150,162,182,.1);   border: 1px solid rgba(150,162,182,.34); }
+  .wire-col .bz-item.wc-spoiler::before   { background: linear-gradient(180deg, #f2d783, rgba(224,196,106,.35)); }
+  .wire-col .bz-item.wc-news::before      { background: rgba(120,170,235,.6); }
+  .wire-col .bz-item.wc-rules::before     { background: rgba(90,205,192,.55); }
+  .wire-col .bz-item.wc-deck::before      { background: rgba(125,205,125,.55); }
+  .wire-col .bz-item.wc-community::before { background: rgba(165,135,225,.6); }
+  .wire-col .bz-item.wc-talk::before      { background: rgba(150,162,182,.5); }
+
   /* ============ v4.50 THE FORGE — archetype brewing tiles ============ */
   /* Six schools of brewing on the landing; tapping one deals 8 fresh
      commanders from a random Scryfall page (Scryfall ignores order=random,
@@ -1115,10 +1139,16 @@
   .arch-tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; margin-top: 12px; }
   @media (min-width: 640px) { .arch-tiles { grid-template-columns: repeat(4, 1fr); } }
   @media (min-width: 900px) { .arch-tiles { grid-template-columns: repeat(5, 1fr); } }
-  .arch-tile { position: relative; text-align: left; padding: 11px 12px 10px; border: 1px solid var(--hair2); border-radius: 14px; background: var(--glass); cursor: pointer; transition: border-color .18s, background .18s, transform .12s; }
+  /* v5.05 VISUAL FLAIR — each Forge school now carries an iconic card-art window.
+     Art rides at the very back of the tile (element background), under a left+bottom
+     dark scrim so the gold heading and flavor stay crisp; the art peeks on the right.
+     --art is an inline per-tile url() (FORGE_ART map). GPU-cheap: no new DOM, no
+     per-frame JS, static paint. The v4.66 school-color wash (::before) and accent bar
+     (::after) still layer on top, preserving the ten-schools-at-a-glance identity. */
+  .arch-tile { position: relative; overflow: hidden; text-align: left; padding: 11px 12px 10px; min-height: 64px; border: 1px solid var(--hair2); border-radius: 14px; background-color: var(--glass); background-image: linear-gradient(96deg, rgba(8,9,14,.93) 0%, rgba(8,9,14,.75) 43%, rgba(8,9,14,.45) 74%, rgba(8,9,14,.28) 100%), linear-gradient(0deg, rgba(8,9,14,.68) 0%, rgba(8,9,14,.12) 52%, transparent 72%), var(--art, none); background-size: cover; background-position: center 20%; background-repeat: no-repeat; cursor: pointer; transition: border-color .18s, transform .12s, box-shadow .18s; }
   .arch-tile .an { display: block; font-family: var(--display); font-size: 11.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--gold-bright); }
   .arch-tile .af { display: block; margin-top: 3px; font-family: var(--serif); font-style: italic; font-size: 11.5px; color: var(--muted); line-height: 1.35; }
-  .arch-tile.active { border-color: rgba(224,196,106,.65); background: rgba(224,196,106,.09); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 6px 18px rgba(0,0,0,.28); }
+  .arch-tile.active { border-color: rgba(224,196,106,.7); box-shadow: inset 0 0 0 1px rgba(224,196,106,.28), inset 0 1px 0 rgba(255,255,255,.06), 0 8px 20px rgba(0,0,0,.4); }
   @media (hover: hover) and (pointer: fine) { .arch-tile:hover { border-color: rgba(224,196,106,.5); transform: translateY(-2px); } }
   /* v4.66 VISUAL FLAIR — per-school arcana signature. Each Forge tile carries a faint
      color wash + a left accent bar keyed to its archetype's canonical MTG colors, so the
@@ -1129,7 +1159,7 @@
   .arch-tile::before { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: radial-gradient(135% 150% at 0% 50%, rgba(var(--acc, 224,196,106), .14), transparent 58%); opacity: .85; transition: opacity .18s; }
   .arch-tile::after { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 0 3px 3px 0; background: var(--bar, rgba(var(--acc, 224,196,106), .9)); opacity: .72; transition: opacity .18s, width .12s; pointer-events: none; }
   .arch-tile > .an, .arch-tile > .af { position: relative; z-index: 1; }
-  .arch-tile.active::before { opacity: 1; }
+  .arch-tile.active::before { opacity: 1; background: radial-gradient(150% 165% at 0% 50%, rgba(224,196,106,.24), rgba(224,196,106,.06) 52%, transparent 78%); }
   .arch-tile.active::after { opacity: 1; width: 4px; }
   @media (hover: hover) and (pointer: fine) { .arch-tile:hover::before { opacity: 1; } .arch-tile:hover::after { opacity: 1; width: 4px; } }
   .arch-tile[data-arch="aristocrats"] { --acc: 154,127,176; }
@@ -1251,7 +1281,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v5.03 \u00B7 2026-07-23', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v5.06 \u00B7 2026-07-23', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3642,6 +3672,9 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v5.06', date: '2026-07-23', focus: 'ui', commander: null, summary: "The Wire — the r/magicTCG feed on the Herald landing — was a monotone wall of plain-text headlines, every row the same weight with only a bare age hanging beneath it. It now reads like a real feed: each headline carries a small color-coded source pill parsed from its Reddit flair, and a matching accent bar runs down the left edge of the row. Spoilers wear the gold — they are the highest brew signal, the new cards you might build around — while News is a cool blue, Rules teal, Deck green, Community violet, and Discussion a quiet slate; a post with no recognizable flair simply shows no pill, staying clean. The upvote score (▲ 1.8k) now shows alongside the age so you can tell at a glance what the table is actually buzzing about. It is pure CSS with a single tiny flair-classifier per row — no new dependencies, no per-frame work — and it is scoped so The Bazaar's solid-gold deal flags are untouched. The rows are still the same links to the same Reddit threads; the feed just went from a list you skim past to one you can actually scan for what's worth a brew." },
+    { build: 'v5.05', date: '2026-07-23', focus: 'ui', commander: null, summary: "The Forge — the front door where a brewer picks what deck to build next — now wears its craft. Each of the twelve school tiles used to be a flat dark pill with a color wash; every one now carries an iconic piece of card art behind it, framed as a window on the right with a dark scrim sweeping in from the left so the gold heading and italic flavor stay razor-sharp. The picks are the archetype's signature: Blood Artist for Aristocrats, Young Pyromancer for Spellslinger, Krenko for Tokens, Rise of the Dark Realms for Reanimator, Doubling Season for +1/+1 Counters, Lotus Cobra for Lands Matter, the flaming Sword of Fire and Ice for Voltron, Urza for Artifacts, Smokestack for Stax, Zedruu for Group Hug, Restoration Angel for Blink, and Traumatize for Mill. The school-color identity (the left accent bar and, when a tile is selected, a gold wash) rides on top exactly as before, and the whole thing is pure CSS — one static background per tile, no new markup, no per-frame work — so it stays smooth on iPhone. Tapping a school still deals a fresh spread of commanders; nothing about the brew flow changed, it just looks like the altar it always wanted to be." },
+    { build: 'v5.04', date: '2026-07-23', focus: 'ui', commander: null, summary: "The Forge's Group Hug school now deals actual group hug — not the stax and aristocrats commanders that had been leaking into it. The tile's Scryfall query cast a wide net for 'gives resources to the whole table,' but three edict/aristocrats engines slipped through on the phrase 'each opponent may sacrifice/discard': Braids, Arisen Nightmare (a sacrifice-edict value engine that makes each opponent sac a permanent and drains those who don't — not a gift-giver), Fandaniel, Telophoroi Ascian, and Zoyowa Lava-Tongue. And Winter, Misanthropic Guide sat in the pure-hug pool despite being a weaponized hug: he force-feeds every player two cards each upkeep but clamps their maximum hand size with delirium, so the 'gift' is really a discard trap — a hybrid, not pure altruism. Audited all 44 members card-by-card against live Scryfall and tightened the query with two surgical exclusions — -o:/each opponent may (sacrifice|discard)/ strips the edict engines, and -o:/maximum hand size is (reduced|equal to)/ strips the hand-lock stax — which drops exactly those four and leaves the genuine article untouched: Zedruu, Kwain, Kynaios and Tiro, Phelddagrif, Selvala, Kenrith, The Second Doctor, plus the hug-adjacent politics of Iwamori and Wernog (both keep their 'each opponent may put a legendary creature / investigate' gifts). The school now deals 40 true group hug commanders (was 44), and the exclusions generalize so future sacrifice-edict and hand-lock commanders stop leaking in. Freshness shuffle, color filter, and deal-again are all untouched." },
     { build: 'v5.03', date: '2026-07-23', focus: 'logic', commander: 'Kilo, Apogee Mind', summary: "Kilo, Apogee Mind — the Jeskai proliferate engine whose entire plan is tapping him over and over (every tap is another proliferate) — got a card-by-card audit of every rail against live Scryfall. The 'Ways to Tap' rail was the misfire: its keyword:convoke clause surfaced incidental one-shot convoke cards played for OTHER text — City on Fire (triple damage), Clever Concealment (phase out), Hour of Reckoning (board wipe), Bennie Bracks — which EDHREC popularity floated to the TOP, burying the genuine repeatable outlets. Dropped convoke; the rail now leads Vehicles + creature-tapping rocks and lands (Springleaf Drum, Survivors' Encampment, Holdout Settlement) — every one a real, repeatable way to tap Kilo. Proliferate Amplifiers (Tekuthal/Contagion Engine/Inexorable Tide) and Untap to Re-Trigger (Thousand-Year Elixir/Freed from the Real/Voltaic Key) audited clean and were kept as-is. The study note records the near-misses left for a future run: Counter Fuel omits planeswalkers and a poison/toxic seed (proliferate-to-10 is a real Kilo alt-wincon). The same convoke drop was generalized to the shared 'Tap Triggers' selftap atom rail, so every 'becomes tapped' commander now surfaces repeatable tap outlets rather than incidental convoke spells." },
     { build: 'v5.02', date: '2026-07-23', focus: 'logic', commander: 'Winter, Misanthropic Guide', summary: "Winter, Misanthropic Guide — the Jund forced-draw punisher whose delirium clause turns the number of card types in your graveyard into a shrinking cap on each opponent's maximum hand size — got a card-by-card rail audit against live Scryfall. Its Draw Punishers (Sheoldred, Underworld Dreams, Fate Unraveler, Orcish Bowmasters) and Wheel Enablers rails audited clean, but the graveyard clause was mis-read as a 'Graveyard Value — Recur & rebuy' rail (Eternal Witness, Ramunap Excavator, Crucible) — exactly backwards, since Winter needs the yard kept FULL and DIVERSE to crank the lock, not emptied. Reframed it into a Delirium 'Fill the Yard' self-mill enabler (Stitcher's Supplier, Grisly Salvage, dredge), and added the Discard Punishers payoff (Waste Not, Liliana's Caress, Megrim) the engine was missing — the hand-size lock forces an opponent discard every cleanup that nothing was paying off. Scoped to Winter's exact delirium+hand-size wording (1 card in all of Magic), so zero regression. Added a full Winter teardown to STUDY_DB." },
     { build: 'v5.01', date: '2026-07-23', focus: 'logic', commander: 'The Astonishing Ant-Man', summary: "The Astonishing Ant-Man — the Marvel Simic go-wide commander who banks a +1/+1 counter every time you draw, then removes them to mint that many 1/1 Insects — got a card-by-card quality audit of every rail, read against live Scryfall. His heart rail, 'Draw Fuels the Counters' (card draw is his real ammunition), was leaking draw-TRIGGERED payoffs like Alandra and Jolrael into the counter-supply slot while missing the engines that matter, so it now leads with the premium repeatable draw a strong deck actually runs — Rhystic Study, Mystic Remora, Consecrated Sphinx, Sylvan Library — each of which banks him a counter every time it fires, and a wheel or mass-draw turn stacks a whole fistful at once (he triggers once per card drawn). The rest of his rails audited clean and ship unchanged: Go-Wide Payoffs lead with Doubling Season and Parallel Lives (both double his counters AND his Insects), Counter Amplifiers cover proliferate and doublers, and Untap Enablers (Thousand-Year Elixir, Seedborn Muse) let him fire the {T} ability more than once a turn. His study note gained the audit's findings — which 'whenever you draw' payoffs feed the swarm (Chasm Skulker, Nadir Kraken) versus which chase a different wincon (Sphinx's Tutelage, Psychic Corrosion), and why 'creatures with +1/+1 counters' cards like Inspiring Call whiff on him." },
@@ -4185,6 +4218,20 @@ let WIRE = [
 ];
 function fmScore(s) { return s >= 1000 ? (s / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : '' + s; }
 function fmAge(utc) { if (!utc) return ''; const h = Math.max(1, Math.round((Date.now() / 1000 - utc) / 3600)); return h < 24 ? h + 'h' : Math.round(h / 24) + 'd'; }
+// Classify a Reddit flair into a compact, color-coded Wire category. Spoilers
+// rank first (the highest brew signal); order matters for multi-word flairs
+// like "Universes Beyond - Discussion" (→ Discussion, not News).
+function wireCat(f) {
+    var s = (f || '').toLowerCase();
+    if (!s) return null;
+    if (/spoiler|preview|debut/.test(s)) return { label: 'Spoiler', cls: 'wc-spoiler' };
+    if (/rules|ruling|judge/.test(s)) return { label: 'Rules', cls: 'wc-rules' };
+    if (/deck|brew|\bedh\b|commander|precon/.test(s)) return { label: 'Deck', cls: 'wc-deck' };
+    if (/discussion|question|help\b|opinion/.test(s)) return { label: 'Discussion', cls: 'wc-talk' };
+    if (/news|announce|official|leak/.test(s)) return { label: 'News', cls: 'wc-news' };
+    if (/art|fan|content|show|pull|collection|photo|humou?r|meme/.test(s)) return { label: 'Community', cls: 'wc-community' };
+    return null;
+}
 function MastHero() {
     const [art, setArt] = useState(null);
     useEffect(() => {
@@ -4212,14 +4259,14 @@ function MastHero() {
         React.createElement('div', { className: 'mast-hero', style: { backgroundImage: 'url(' + art.img + ')' } }),
         React.createElement('div', { className: 'mast-hero-name' }, art.name));
 }
-function BazaarRow(p, i, chip, pr) {
-    return React.createElement('a', { key: i, className: 'bz-item', href: p.u, target: '_blank', rel: 'noopener', style: { '--i': i } },
+function BazaarRow(p, i, chip, pr, chipCls) {
+    return React.createElement('a', { key: i, className: 'bz-item' + (chipCls ? ' ' + chipCls : ''), href: p.u, target: '_blank', rel: 'noopener', style: { '--i': i } },
         React.createElement('div', { className: 'bz-title' }, p.t),
         React.createElement('div', { className: 'bz-meta' },
             pr && React.createElement('span', { className: 'bz-price' }, pr),
-            chip && React.createElement('span', { className: 'bz-flag' }, chip),
+            chip && React.createElement('span', { className: 'bz-flag' + (chipCls ? ' ' + chipCls : '') }, chip),
             p.s > 0 && React.createElement('span', { className: 'bz-score' }, '\u25B2 ' + fmScore(p.s)),
-            React.createElement("span", null, fmAge(p.c))));
+            React.createElement("span", { className: 'bz-age' }, fmAge(p.c))));
 }
 function BazaarCol() {
     function price(t) { const m = t.match(/\$\s?\d[\d,]*(?:\.\d\d)?/); return m ? m[0].replace(/\s/, '') : null; }
@@ -4230,11 +4277,11 @@ function BazaarCol() {
         DEALS.slice(0, 3).map((p, i) => BazaarRow(p, i, p.f && p.f.length <= 14 ? p.f : null, price(p.t))));
 }
 function WireCol() {
-    return React.createElement('div', { className: 'col' },
+    return React.createElement('div', { className: 'col wire-col' },
         React.createElement('div', { className: 'col-head' },
             React.createElement('span', { className: 'col-title' }, React.createElement('span', { className: 'cg' }, '\u26A1\uFE0E'), 'The Wire'),
             React.createElement('a', { className: 'col-sub', href: 'https://www.reddit.com/r/magicTCG/', target: '_blank', rel: 'noopener' }, 'r/magicTCG \u2197')),
-        WIRE.map((p, i) => BazaarRow(p, i, /spoiler/i.test(p.f) ? 'Spoiler' : null, null)));
+        WIRE.map((p, i) => { const c = wireCat(p.f); return BazaarRow(p, i, c ? c.label : null, null, c ? c.cls : null); }));
 }
 // ============ THE FORGE — archetype brewing tiles (v4.50) ============
 // Twelve schools of brewing; each tap deals 8 fresh commanders. Queries were
@@ -4256,6 +4303,23 @@ const FORGE_SCHOOLS = [
     { id: 'blink', name: 'Blink & Flicker', flavor: 'Every homecoming pays again', q: 'is:commander legal:commander (o:/exile .+ return (it|that card|them|those cards)/ or o:"whenever a creature you control enters" or o:"whenever another creature enters the battlefield under your control")' }, // 49 (live-tested 2026-07-22: Aminatou, Brago, Emiel, Elesh Norn, Abuelo)
     { id: 'mill', name: 'Mill', flavor: 'The library runs out first', q: 'is:commander legal:commander (o:mill or o:"into their graveyard" or o:"library into")' }, // 91 (live-tested 2026-07-22: Bruvac, Laquatus, Anowon, Captain N\'ghathrod, Coram)
 ];
+// v5.05 — one iconic card-art crop per school, rendered as a dim window behind each
+// Forge tile (see .arch-tile CSS). Hand-picked archetype signatures, art_crop URLs
+// verified live against Scryfall 2026-07-23. Static CDN images (no API calls).
+const FORGE_ART = {
+    aristocrats: 'https://cards.scryfall.io/art_crop/front/b/5/b5275d76-2947-4219-be21-614c7421614a.jpg?1783903786', // Blood Artist
+    spellslinger: 'https://cards.scryfall.io/art_crop/front/c/0/c0d74ecd-a595-4012-81b4-083264b40c94.jpg?1783907139', // Young Pyromancer
+    tokens: 'https://cards.scryfall.io/art_crop/front/8/2/824b2d73-2151-4e5e-9f05-8f63e2bdcaa9.jpg?1783909065', // Krenko, Mob Boss
+    reanimator: 'https://cards.scryfall.io/art_crop/front/8/6/8645bf0c-631f-4003-bd24-3e069ae23513.jpg?1783909071', // Rise of the Dark Realms
+    counters: 'https://cards.scryfall.io/art_crop/front/f/2/f2c4f80e-84a0-463b-82c3-5c6503809351.jpg?1783909062', // Doubling Season
+    lands: 'https://cards.scryfall.io/art_crop/front/a/4/a4b759f0-901f-4be3-93fa-224609b08d48.jpg?1783929336', // Lotus Cobra
+    voltron: 'https://cards.scryfall.io/art_crop/front/2/6/2626d4c9-fcef-4057-a154-7d987a4a4b84.jpg?1783930092', // Sword of Fire and Ice
+    artifacts: 'https://cards.scryfall.io/art_crop/front/7/b/7b7a348a-51f7-4dc5-8fe7-1c70fea5e050.jpg?1783915686', // Urza, Lord High Artificer
+    stax: 'https://cards.scryfall.io/art_crop/front/d/1/d1af92a1-a86a-43eb-82fd-394f1168111e.jpg?1783939229', // Smokestack
+    grouphug: 'https://cards.scryfall.io/art_crop/front/e/9/e9ea2a6b-5aaf-4178-b945-f409fe83c41a.jpg?1783937042', // Zedruu the Greathearted
+    blink: 'https://cards.scryfall.io/art_crop/front/f/1/f17f85d3-58e5-4128-90c5-98b524256af8.jpg?1783908175', // Restoration Angel
+    mill: 'https://cards.scryfall.io/art_crop/front/9/b/9b8784dd-83f9-41f8-aedc-f0f81073ffcb.jpg?1783939929', // Traumatize
+};
 const ARCH_CACHE = {}; // key (school id + optional '|CI') -> { total, pages: { n: card[] } } — session-lived
 const CI_NAMES = { W: 'White', U: 'Blue', B: 'Black', R: 'Red', G: 'Green' };
 function ArchetypeShelf({ onOpenDetail, onSearchAll }) {
@@ -4336,7 +4400,7 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll }) {
             active
                 ? React.createElement('button', { className: 'arch-deal', onClick: () => deal(active), disabled: dealing }, dealing ? 'Dealing…' : '↻ Deal again')
                 : React.createElement('span', { className: 'arch-hint' }, 'twelve schools of brewing · tap one to deal commanders')),
-        React.createElement('div', { className: 'arch-tiles' }, FORGE_SCHOOLS.map(a => React.createElement('button', { key: a.id, 'data-arch': a.id, className: 'arch-tile ' + (activeId === a.id ? 'active' : ''), 'aria-pressed': activeId === a.id, onClick: () => deal(a) },
+        React.createElement('div', { className: 'arch-tiles' }, FORGE_SCHOOLS.map(a => React.createElement('button', { key: a.id, 'data-arch': a.id, className: 'arch-tile ' + (activeId === a.id ? 'active' : ''), 'aria-pressed': activeId === a.id, style: FORGE_ART[a.id] ? { '--art': 'url("' + FORGE_ART[a.id] + '")' } : undefined, onClick: () => deal(a) },
             React.createElement('span', { className: 'an' }, a.name),
             React.createElement('span', { className: 'af' }, a.flavor)))),
         active && React.createElement('div', { className: 'arch-ci', role: 'group', 'aria-label': 'Filter by color identity' },
