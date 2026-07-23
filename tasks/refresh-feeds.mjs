@@ -1,18 +1,21 @@
 // Herald feed refresh via Reddit RSS - no API key, no OAuth, no ticket.
 // Reddit blocks anonymous JSON (403) but serves public RSS to a browser UA from
-// a residential IP. RSS is rate-limited, so we fetch the two feeds SEQUENTIALLY
-// with a gap, retry on 429 (honoring Retry-After), and - importantly - treat the
-// two feeds INDEPENDENTLY: if one is throttled, we still update the other and
-// keep the throttled one's current data. Only when BOTH fail do we no-op.
-// Writes feeds.json only - never index.html - so a refresh can't collide with
-// the app build.
-//
-// RSS carries no score, so entries get s:0; the app hides the score chip when
-// s<=0. All logic runs in main() and exits via return (never process.exit()).
+// a residential IP. RSS is rate-limited (fetch sequentially + retry on 429) and
+// thinner than JSON: it has NO score and NO stickied flag, and its <category>
+// is the SUBREDDIT, not the post flair. So we:
+//   - pull real flair only if a non-subreddit <category> exists (else blank),
+//   - drop recurring mod/sticky threads by title (they have no flair signal),
+//   - rank likely spoilers/news (set-code "[XXX]" prefix or a spoiler flair) first.
+// Writes feeds.json only - never index.html. Each feed is independent: one
+// throttled feed doesn't block the other. Exits via return (no process.exit()).
 import { readFileSync, writeFileSync } from 'node:fs';
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
 const DEAD = /sold out|sold-out|expired|dead|ended/i;
+// Recurring mod/sticky threads we don't want in the news rail.
+const MOD = /\b(daily (questions|discussion)|weekly|wound-?up|vent here|free talk|megathread|what should i (buy|brew|play)|deck help|rules? (thread|question)|moderator|announcement|self.?promo|sticky)\b/i;
+const SETCODE = /^\[[A-Z0-9]{2,5}\]/;               // e.g. [HOB], [FIN] - spoiler/news tag
+const SPOILER = /official spoiler|spoiler|leak|preview/i;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 function decode(s) {
@@ -23,7 +26,7 @@ function decode(s) {
     .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)));
 }
 
-function parseAtom(xml) {
+function parseAtom(xml, sub) {
   const out = [];
   const entries = xml.split('<entry>').slice(1);
   for (const raw of entries) {
@@ -32,15 +35,18 @@ function parseAtom(xml) {
     const href  = (e.match(/<link[^>]*href="([^"]+)"/) || [])[1];
     const pub   = (e.match(/<published>([\s\S]*?)<\/published>/) || [])[1]
               || (e.match(/<updated>([\s\S]*?)<\/updated>/) || [])[1];
-    const flair = (e.match(/<category[^>]*\bterm="([^"]*)"/) || [])[1] || '';
+    // Reddit's category is usually the subreddit; real flair (if present) is a
+    // different term. Take the first category that isn't the subreddit.
+    const cats = [...e.matchAll(/<category[^>]*\bterm="([^"]*)"/g)].map(m => decode(m[1]).trim());
+    const flair = cats.find(c => c && c.toLowerCase() !== String(sub).toLowerCase()) || '';
     if (!title || !href) continue;
     const c = pub ? Math.floor(Date.parse(pub) / 1000) : 0;
-    out.push({ t: decode(title).trim(), u: href, s: 0, c: c || 0, f: decode(flair).trim() });
+    out.push({ t: decode(title).trim(), u: href, s: 0, c: c || 0, f: flair });
   }
   return out;
 }
 
-async function grab(url, tries = 4) {
+async function grab(url, sub, tries = 4) {
   for (let attempt = 1; attempt <= tries; attempt++) {
     let r;
     try {
@@ -50,7 +56,7 @@ async function grab(url, tries = 4) {
       await sleep(attempt * 4000);
       continue;
     }
-    if (r.ok) return parseAtom(await r.text());
+    if (r.ok) return parseAtom(await r.text(), sub);
     if ((r.status === 429 || r.status >= 500) && attempt < tries) {
       const ra = parseInt(r.headers.get('retry-after') || '', 10);
       const wait = (Number.isFinite(ra) ? Math.min(ra, 60) : attempt * 6) * 1000;
@@ -62,20 +68,21 @@ async function grab(url, tries = 4) {
   }
 }
 
-// Fetch one feed, returning null (not throwing) on failure so the other feed
-// can still update.
-async function tryFeed(label, url) {
-  try { return await grab(url); }
+async function tryFeed(label, url, sub) {
+  try { return await grab(url, sub); }
   catch (e) { console.log('::warning::' + label + ' feed unavailable - ' + e.message + ' - keeping current'); return null; }
 }
 
 function identity(list) { return JSON.stringify(list.map(p => [p.u, p.t, p.f])); }
 
-function pickDeals(raw) { const d = raw.filter(p => !DEAD.test(p.f + ' ' + p.t)).slice(0, 6); return d.length >= 3 ? d : null; }
+function pickDeals(raw) {
+  const d = raw.filter(p => !DEAD.test(p.f + ' ' + p.t) && !MOD.test(p.t)).slice(0, 6);
+  return d.length >= 3 ? d : null;
+}
 function pickWire(raw) {
-  const s = raw.filter(p => /official spoiler/i.test(p.f));
-  const r = raw.filter(p => !/official spoiler/i.test(p.f));
-  const w = [...s, ...r].slice(0, 6);
+  const clean = raw.filter(p => !MOD.test(p.t));
+  const isNews = p => SPOILER.test(p.f) || SETCODE.test(p.t);
+  const w = [...clean.filter(isNews), ...clean.filter(p => !isNews(p))].slice(0, 6);
   return w.length >= 3 ? w : null;
 }
 
@@ -87,9 +94,9 @@ async function main() {
   if (!Array.isArray(cur.deals)) cur.deals = [];
   if (!Array.isArray(cur.wire)) cur.wire = [];
 
-  const rawDeals = await tryFeed('deals', 'https://www.reddit.com/r/sealedmtgdeals/new/.rss?limit=25');
+  const rawDeals = await tryFeed('deals', 'https://www.reddit.com/r/sealedmtgdeals/new/.rss?limit=25', 'sealedmtgdeals');
   await sleep(2500);
-  const rawWire  = await tryFeed('wire',  'https://www.reddit.com/r/magicTCG/hot/.rss?limit=25');
+  const rawWire  = await tryFeed('wire',  'https://www.reddit.com/r/magicTCG/hot/.rss?limit=25', 'magicTCG');
 
   if (!rawDeals && !rawWire) { console.log('both feeds unreachable - keeping current feeds'); return; }
 
@@ -100,8 +107,7 @@ async function main() {
   const sameWire = identity(cur.wire) === identity(wire);
   if (sameDeals && sameWire) { console.log('feeds unchanged - nothing to do'); return; }
 
-  const outObj = { updated: new Date().toISOString(), deals, wire };
-  writeFileSync(FILE, JSON.stringify(outObj, null, 2) + '\n');
+  writeFileSync(FILE, JSON.stringify({ updated: new Date().toISOString(), deals, wire }, null, 2) + '\n');
   console.log('feeds.json updated (RSS): deals=' + (!sameDeals) + ' wire=' + (!sameWire));
 }
 
