@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v5.14 · 2026-07-23">
+<meta name="oracle-build" content="v5.15 · 2026-07-23">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1311,7 +1311,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v5.14 \u00B7 2026-07-23', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v5.15 \u00B7 2026-07-23', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3702,6 +3702,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v5.15', date: '2026-07-23', focus: 'ui', commander: null, summary: "The Forge's Aristocrats tile now finds the commanders it used to miss. It was only catching commanders with a literal “whenever … dies” trigger, so it quietly overlooked pure sacrifice engines — Yawgmoth, Ayara, Ayli, Brion Stoutarm, Ghave, Jarad, Ghoulcaller Gisa, Sidisi and 40 more whose whole plan is feeding creatures to a sac outlet, exploiting them on the way in, or devouring them. The tile now recognizes exploit, devour, and repeatable “sacrifice a creature” outlets, growing from 135 to 183 commanders (+48) — while carefully skipping look-alikes that sacrifice a creature just to cheat or copy another one (polymorph/pod/clone), so every name it deals is a real aristocrats leader. Nothing that used to appear was lost." },
     { build: 'v5.14', date: '2026-07-23', focus: 'ui', commander: null, summary: "The Forge got a Surprise me button — the one-tap answer to “what should I brew next?”. Instead of scanning thirteen tiles to choose a direction, tap Surprise me and Oracle picks a random brewing school for you and deals a fresh eight-commander spread on the spot; tap it again and it jumps to a different school, so the well of ideas never runs dry. It keeps whatever color filter you've set, so a brewer locked into, say, Golgari still gets an in-color surprise. It sits in the Forge header next to Deal again and — unlike the desktop-only hint text — stays visible on phones, giving narrow screens a discovery front door they didn't have before. Pure additive: every tile, the color filter, Deal again, and View all are untouched." },
     { build: 'v5.13', date: '2026-07-23', focus: 'ui', commander: null, summary: "Every school in the Forge now deals in its own colors. The three newest schools — Blink & Flicker, Mill, and Chaos & Gambling — were added after the color system that tints each tile's accent bar and the rail above its dealt spread, so they'd been sitting under a generic gold, visually orphaned from the other ten. Now Blink glows white-into-blue for its WU flicker value, Mill runs blue-into-black like Dimir, and Chaos & Gambling burns a fiery red-into-gold (kept hotter than Voltron's red so the two don't collide). Tap any of them and both the tile and the eight commanders it deals read at a glance as belonging to that school. Pure paint — no layout shift, no extra load, no change to which commanders each school deals." },
     { build: 'v5.12', date: '2026-07-23', focus: 'ui', commander: null, summary: "The Forge gained a thirteenth school: Chaos & Gambling. Tap it to deal commanders who live and die by luck and mayhem — coin-flippers (Okaun & Zndrsplt, Yusri, Krark), dice-rollers (Mr. House, Delina), goad-and-politics troublemakers (Marisi, Alela), and 'at random' wildcards (Zurzoth, Haktos). Gambling on its own is a tiny pool, so it folds into the broader chaos playstyle as one coherent front door rather than a thin standalone tile. The query is all-literal and was spot-audited card-by-card against live Scryfall — 77 commanders, every one with a real chaos or luck hook, no stray filler." },
@@ -4328,7 +4329,7 @@ function WireCol() {
 // random page (175/page) and Fisher-Yates shuffling client-side; pages are
 // cached per archetype so re-deals within a session cost at most one fetch.
 const FORGE_SCHOOLS = [
-    { id: 'aristocrats', name: 'Aristocrats', flavor: 'Every death pays a dividend', q: 'is:commander legal:commander o:/whenever .+ dies/ (o:sacrifice or o:dies)' }, // 135
+    { id: 'aristocrats', name: 'Aristocrats', flavor: 'Every death pays a dividend', q: 'is:commander legal:commander ( (o:/whenever .+ dies/ (o:sacrifice or o:dies)) or keyword:exploit or keyword:devour or (o:/sacrifice (a|an|another)( \\w+)? creature[s]?:/ -o:"that card onto the battlefield" -o:"becomes a copy of the sacrificed") )' }, // 183 — v5.15: WIDENED (backlog blind-spot). Old query required a literal "whenever … dies" trigger, so it missed pure sac-outlet / exploit / devour commanders. Added 3 OR arms: keyword:exploit (Sidisi Undead Vizier, Colonel Autumn), keyword:devour (Thromok), and a colon-activated creature sac-outlet o:/sacrifice (a|an|another)( \\w+)? creature[s]?:/ (Yawgmoth, Ayara First of Locthwain, Ayli, Brion, Ghave, Jarad, Vish Kal, Ghoulcaller Gisa, Razaketh, Sephiroth Fallen Hero (base arm missed him: his death trigger reads "die" not "dies"), Grimgrin, Tymaret, Shattergang, Prossh…). Two scoped exclusions drop the sac-to-CHEAT/COPY leaks: -o:"that card onto the battlefield" (Jalira polymorph, Vannifar pod) and -o:"becomes a copy of the sacrificed" (The Ever-Changing 'Dane); the precise "that card" phrasing spares Zimone and Dina (which puts a LAND onto the battlefield). Verified card-by-card vs live Scryfall 2026-07-23: 135→183 (+48), ALL 135 prior members retained, zero non-aristocrats leaked.
     { id: 'spellslinger', name: 'Spellslinger', flavor: 'The storm speaks in cantrips', q: 'is:commander legal:commander o:"instant or sorcery"' }, // 104
     { id: 'tokens', name: 'Tokens & Go-Wide', flavor: 'One becomes ten becomes legion', q: 'is:commander legal:commander o:create o:token' }, // 665
     { id: 'reanimator', name: 'Reanimator', flavor: 'The grave is a second hand', q: 'is:commander legal:commander (o:"from your graveyard to the battlefield" or o:"from your graveyard onto the battlefield")' }, // 83
