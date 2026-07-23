@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T07:52:23.078Z",
+  "updated": "2026-07-23T11:22:10.959Z",
   "deals": [
     {
       "t": "Best Buy Turtle Team-Up $30",
@@ -46,10 +46,24 @@
   ],
   "wire": [
     {
+      "t": "[HOC] The Gaffer (Boxtoppers, Chuck Lukacs)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v4ahvc/hoc_the_gaffer_boxtoppers_chuck_lukacs/",
+      "s": 0,
+      "c": 1784804118,
+      "f": ""
+    },
+    {
       "t": "[HOB] Fateful Discovery (Leak)",
       "u": "https://www.reddit.com/r/magicTCG/comments/1v3tsy6/hob_fateful_discovery_leak/",
       "s": 0,
       "c": 1784755794,
+      "f": ""
+    },
+    {
+      "t": "[HOB] Sparkstarter, Gandalf (MTGArenaJP)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v496xs/hob_sparkstarter_gandalf_mtgarenajp/",
+      "s": 0,
+      "c": 1784800003,
       "f": ""
     },
     {
@@ -71,20 +85,6 @@
       "u": "https://www.reddit.com/r/magicTCG/comments/1v3vgg3/art_saruman_of_many_colors_by_rk_post/",
       "s": 0,
       "c": 1784759575,
-      "f": ""
-    },
-    {
-      "t": "[HOC] Palantír of Orthanc (Official Card Gallery)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v3jmmy/hoc_palantír_of_orthanc_official_card_gallery/",
-      "s": 0,
-      "c": 1784734526,
-      "f": ""
-    },
-    {
-      "t": "[HOC] Saruman of Many Colors",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v3jlp0/hoc_saruman_of_many_colors/",
-      "s": 0,
-      "c": 1784734471,
       "f": ""
     }
   ]
