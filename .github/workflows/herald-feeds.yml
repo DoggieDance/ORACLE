@@ -1,31 +1,47 @@
 name: Herald Feeds
 
+# DISABLED as an automatic job. Feeds are refreshed locally by
+# tasks/publish-oracle.ps1 (anonymous Reddit from a home IP, no API key).
+#
+# This workflow is kept as a MANUAL-ONLY hook and, importantly, only ever writes
+# feeds.json - it never touches index.html, so it can no longer cause the app
+# build to diverge (that was the original bug). To make it run automatically you
+# would (a) add REDDIT_CLIENT_ID / REDDIT_CLIENT_SECRET repo secrets - GitHub's
+# datacenter IPs get 403 from anonymous Reddit - and (b) re-add the schedule.
+
 on:
-  schedule:
-    - cron: "17 */3 * * *"   # every 3 hours
   workflow_dispatch: {}
+  # schedule:
+  #   - cron: "17 */3 * * *"   # re-enable only with Reddit OAuth secrets set
 
 permissions:
   contents: write
+
+concurrency:
+  group: herald-feeds
+  cancel-in-progress: false
 
 jobs:
   refresh:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Refresh feeds
+
+      - name: Refresh feeds.json
         env:
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
           REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
-        run: node tasks/refresh-feeds.mjs
+        run: node tasks/refresh-feeds.mjs feeds.json
+
       - name: Commit if changed
         run: |
-          if git diff --quiet; then
-            echo "no changes"
+          if git diff --quiet -- feeds.json; then
+            echo "no feed changes"
             exit 0
           fi
           git config user.name "herald-bot"
           git config user.email "herald-bot@users.noreply.github.com"
-          git add index.html
+          git add feeds.json
           git commit -m "Herald: feed refresh"
+          git pull --rebase --autostash origin main
           git push
