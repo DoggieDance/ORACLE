@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-24T20:15:49.082Z",
+  "updated": "2026-07-24T21:16:08.980Z",
   "deals": [
     {
       "t": "Amazon Marvel Commander 4 Pack $209",
@@ -46,6 +46,13 @@
   ],
   "wire": [
     {
+      "t": "[HOB] Beorn‘s Hospitality (via Facebook)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v5izio/hob_beorns_hospitality_via_facebook/",
+      "s": 0,
+      "c": 1784916184,
+      "f": ""
+    },
+    {
       "t": "[HOC] Mithril Coat - Ellie Livingston via artists IG (@elliejoliv)",
       "u": "https://www.reddit.com/r/magicTCG/comments/1v5cmyj/hoc_mithril_coat_ellie_livingston_via_artists_ig/",
       "s": 0,
@@ -53,10 +60,10 @@
       "f": ""
     },
     {
-      "t": "[HOB] Beorn‘s Hospitality (via Facebook)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v5izio/hob_beorns_hospitality_via_facebook/",
+      "t": "[HOC] Arwen, Weaver of Hope (Boxtoppers, Danny Schwartz)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v5i5i1/hoc_arwen_weaver_of_hope_boxtoppers_danny_schwartz/",
       "s": 0,
-      "c": 1784916184,
+      "c": 1784914417,
       "f": ""
     },
     {
@@ -78,13 +85,6 @@
       "u": "https://www.reddit.com/r/magicTCG/comments/1v5b72b/hoc_galadriel_light_of_valinor_rebecca_guay/",
       "s": 0,
       "c": 1784899140,
-      "f": ""
-    },
-    {
-      "t": "[HOC] Arwen, Weaver of Hope (Boxtoppers, Danny Schwartz)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v5i5i1/hoc_arwen_weaver_of_hope_boxtoppers_danny_schwartz/",
-      "s": 0,
-      "c": 1784914417,
       "f": ""
     }
   ]
