@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-24T01:15:41.964Z",
+  "updated": "2026-07-24T01:32:52.521Z",
   "deals": [
     {
       "t": "Best buy - all 4 LOTR commander decks restock at MSRP. 64.99USD each",
@@ -60,6 +60,13 @@
       "f": ""
     },
     {
+      "t": "[HOB] - Down in the Valley - ScottNoMana",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v4tziq/hob_down_in_the_valley_scottnomana/",
+      "s": 0,
+      "c": 1784848318,
+      "f": ""
+    },
+    {
       "t": "[HOB] the Sackville-Bagginses (via TCGPlayer)",
       "u": "https://www.reddit.com/r/magicTCG/comments/1v4j8ii/hob_the_sackvillebagginses_via_tcgplayer/",
       "s": 0,
@@ -67,24 +74,17 @@
       "f": ""
     },
     {
-      "t": "[HOB] - Bothersome Noisemaker - (Heute)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v4d3aq/hob_bothersome_noisemaker_heute/",
+      "t": "[HOC] Minas Tirith",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v4u0yk/hoc_minas_tirith/",
       "s": 0,
-      "c": 1784811237,
+      "c": 1784848413,
       "f": ""
     },
     {
-      "t": "[HOC] The Gaffer (Boxtoppers, Chuck Lukacs)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v4ahvc/hoc_the_gaffer_boxtoppers_chuck_lukacs/",
+      "t": "[TRK] Star trek teaser: Captain Jean-Luc Picard signed by Patrick Stewart",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v4my9i/trk_star_trek_teaser_captain_jeanluc_picard/",
       "s": 0,
-      "c": 1784804118,
-      "f": ""
-    },
-    {
-      "t": "[HOC] Elven Chorus (Boxtoppers, Stephen Walsh)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v4c688/hoc_elven_chorus_boxtoppers_stephen_walsh/",
-      "s": 0,
-      "c": 1784808824,
+      "c": 1784832654,
       "f": ""
     }
   ]

@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v5.17 · 2026-07-23">
+<meta name="oracle-build" content="v5.19 · 2026-07-23">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1306,6 +1306,29 @@
   .or-want-go { color: var(--gold-dim); font-weight: 800; margin-left: 1px; opacity: .68; }
   @media (hover: hover) and (pointer: fine) { .or-want.tappable:hover { border-color: rgba(224,196,106,.5); background: rgba(224,196,106,.1); } .or-want.tappable:hover .or-want-go { opacity: 1; color: var(--gold-bright); } }
   @media (prefers-reduced-motion: reduce) { .or-want.tappable:active { transform: none; } }
+  /* v5.18: Known Combos card on the deck Stats tab (data: Commander Spellbook).
+     Reuses the stat-card frame + curve-chip pieces; rows read piece + piece ->
+     what the combo produces, with popularity + a link out per combo. */
+  .combo-row { border-top: 1px solid var(--hair); padding: 11px 2px 9px; }
+  .combo-row:first-of-type { border-top: none; padding-top: 4px; }
+  .combo-pieces { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+  .combo-plus { color: var(--gold-dim); font-size: 11px; font-weight: 800; opacity: .8; }
+  .combo-produce { margin-top: 6px; font-size: 13px; line-height: 1.35; color: var(--gold-bright); font-family: var(--serif, 'Crimson Pro', serif); font-style: italic; }
+  .combo-produce .cp-arrow { color: var(--gold-dim); font-style: normal; margin-right: 5px; }
+  .combo-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 5px; font-size: 11px; color: var(--muted2); }
+  .combo-link { color: var(--muted); text-decoration: none; border-bottom: 1px dotted rgba(235,225,207,.35); white-space: nowrap; transition: color .15s, border-color .15s; }
+  .combo-link:hover { color: var(--gold-bright); border-color: rgba(224,196,106,.55); }
+  .combo-more { display: block; width: 100%; margin-top: 10px; padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(224,196,106,.32); background: rgba(224,196,106,.07); color: var(--gold-bright); font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: .04em; cursor: pointer; transition: background .15s, border-color .15s, transform .1s; -webkit-tap-highlight-color: transparent; }
+  .combo-more:hover { background: rgba(224,196,106,.13); border-color: rgba(224,196,106,.5); }
+  .combo-more:active { transform: scale(.98); }
+  .combo-attrib { margin-top: 9px; font-size: 10px; color: var(--muted2); text-align: right; font-style: italic; }
+  .combo-attrib a { color: inherit; text-decoration: none; border-bottom: 1px dotted rgba(235,225,207,.3); }
+  .combo-attrib a:hover { color: var(--muted); }
+  /* v5.19: One card away section (missing-piece suggestions) */
+  .combo-section-label { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--hair2); display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 9.5px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; color: var(--gold-dim); }
+  .combo-section-label .csl-hint { font-size: 10px; color: var(--muted2); text-transform: none; letter-spacing: 0; font-weight: 500; font-style: italic; }
+  .curve-chip.combo-missing { border: 1px dashed rgba(224,196,106,.55); color: var(--gold-bright); background: rgba(224,196,106,.08); }
+  .curve-chip.combo-missing:hover { background: rgba(224,196,106,.16); border-color: rgba(224,196,106,.75); }
 </style>
 </head>
 <body>
@@ -3845,6 +3868,8 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v5.19', date: '2026-07-23', focus: 'ui', commander: null, summary: "The Known Combos card now also shows what you're one card away from. Below the combos your deck already contains, a new One card away section lists the highest-value near-misses: the missing piece as a gold dashed chip (tap it to open the card and add it straight to the deck), next to the pieces you already run, what the finished combo produces, and how many recorded decks play it. Suggestions respect your commander's color identity, never propose a card that would have to BE your commander, and only surface combos actually recorded in real decks — capped at five, expandable to fifteen, so it stays a scalpel rather than a firehose. Add the missing card and the combo graduates to the list above on the spot." },
+    { build: 'v5.18', date: '2026-07-23', focus: 'ui', commander: null, summary: "Your deck now shows the combos it already contains. On the deck's Stats tab, a new Known Combos card lists every combo from the Commander Spellbook library whose pieces are all sitting in your list — the pieces as tappable chips, what the combo produces (infinite mana, infinite tokens, win the game…), how many recorded decks run it, and a link to the full how-it-works writeup on Commander Spellbook. Combos that only function when a specific card is your commander are counted only when that card actually leads the deck, so nothing overpromises. Decks with no known combos simply don't show the card — no empty shell. The combo library (95,367 commander-legal combos) loads once, only when you first open a deck's Stats tab." },
     { build: 'v5.17', date: '2026-07-23', focus: 'logic', commander: null, summary: "Groundwork day: Oracle just learned the Commander Spellbook combo library. A weekly machine-side task now distills their full combo database (over 95,000 commander-legal combos) into a compact snapshot the app can read, and the engine gained a tested matcher that can tell, for any deck, which known combos it already contains and which are exactly one card away — combos that need a specific commander are only counted when that card actually leads your deck. Nothing shows in the interface yet; the combo panels arrive in the next build on this foundation. Combo data from Commander Spellbook (commanderspellbook.com)." },
     { build: 'v5.16', date: '2026-07-23', focus: 'ui', commander: null, summary: "Daily housekeeping - a quiet, healthy day. The Oracle Herald's Dispatches picked up fresh news: Mystery Booster Commander Edition, debuting at Gen Con on July 30 with 59 brand-new legendary creatures and eight rule-bending Rulebreaker cards, now leads the feed (the far-off Star Trek first-look stepped aside). Under the hood, a full end-to-end walk - Search, a commander's Workshop and synergy rails, card detail, the deck view, and a live Playtest - came back clean at phone, tablet, and desktop widths with no console errors, and the worklog's own bookkeeping got tidied. No features changed; nothing you rely on moved." },
     { build: 'v5.15', date: '2026-07-23', focus: 'ui', commander: null, summary: "The Forge's Aristocrats tile now finds the commanders it used to miss. It was only catching commanders with a literal “whenever … dies” trigger, so it quietly overlooked pure sacrifice engines — Yawgmoth, Ayara, Ayli, Brion Stoutarm, Ghave, Jarad, Ghoulcaller Gisa, Sidisi and 40 more whose whole plan is feeding creatures to a sac outlet, exploiting them on the way in, or devouring them. The tile now recognizes exploit, devour, and repeatable “sacrifice a creature” outlets, growing from 135 to 183 commanders (+48) — while carefully skipping look-alikes that sacrifice a creature just to cheat or copy another one (polymorph/pod/clone), so every name it deals is a real aristocrats leader. Nothing that used to appear was lost." },
@@ -5148,6 +5173,29 @@ function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, o
     const [openBucket, setOpenBucket] = useState(null); // v4.73: selected mana-curve bucket -> card breakdown
     const [openType, setOpenType] = useState(null); // v4.75: selected type -> card breakdown
     const [openColor, setOpenColor] = useState(null); // v4.81: selected color -> card breakdown
+    // v5.18: known combos (Commander Spellbook snapshot) — lazy: the ~7 MB
+    // snapshot only loads the first time a deck's Stats tab is opened, then
+    // stays cached for the session. Silent no-op when the snapshot is absent.
+    const [comboRes, setComboRes] = useState(null);
+    const [showAllCombos, setShowAllCombos] = useState(false);
+    const [showAllAlmost, setShowAllAlmost] = useState(false); // v5.19: one-card-away expander
+    useEffect(() => {
+        if (mode !== 'stats')
+            return;
+        let dead = false;
+        loadCombos().then(db => {
+            if (dead)
+                return;
+            if (!db) {
+                setComboRes(null);
+                return;
+            }
+            const cmdrOid = deck.commander ? cardKey(deck.commander) : '';
+            const ci = deck.commander ? (deck.commander.color_identity || []) : ['W', 'U', 'B', 'R', 'G'];
+            setComboRes(matchCombos(db, deckComboKeys(deck), ci, cmdrOid));
+        });
+        return () => { dead = true; };
+    }, [deck, deckList, mode]);
     // stats
     const stats = useMemo(() => {
         const buckets = [0, 0, 0, 0, 0, 0, 0, 0];
@@ -5185,6 +5233,64 @@ function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, o
         const avgMv = nonLandCount ? (mvSum / nonLandCount) : 0;
         return { buckets, bucketCards, maxBucket, colorCount, colorCards, totalColorPips, types, typeCards, price, avgMv };
     }, [deckList, deck.commander]);
+    // v5.18: Known Combos card (included-only; zero combos renders nothing).
+    const comboIncluded = (comboRes && comboRes.included) || [];
+    const comboPieceCard = (oid) => {
+        if (deck.commander && cardKey(deck.commander) === oid)
+            return deck.commander;
+        const e = deck.cards && deck.cards[oid];
+        return e ? e.card : null;
+    };
+    const comboShown = showAllCombos ? comboIncluded : comboIncluded.slice(0, 6);
+    // v5.19: one-card-away suggestions — display filters to combos recorded in
+    // at least one deck (pop >= 1) to keep suggestions meaningful; capped at 5
+    // rows, expandable to 15. The matcher itself stays unfiltered.
+    const comboAlmost = ((comboRes && comboRes.almost) || []).filter(e => e.pop > 0);
+    const almostShown = showAllAlmost ? comboAlmost.slice(0, 15) : comboAlmost.slice(0, 5);
+    const openMissing = (miss) => {
+        fetch(API + '/cards/search?q=' + encodeURIComponent('oracleid:' + miss.oid) + '&unique=cards', { headers: HEADERS })
+            .then(r => r.ok ? r.json() : null)
+            .then(j => {
+            const c = j && j.data && j.data[0];
+            if (c) {
+                CardPeek.hide();
+                onOpenDetail(c);
+            }
+            else if (showToast)
+                showToast("Couldn't load " + miss.name);
+        })
+            .catch(() => { if (showToast) showToast("Couldn't load " + miss.name); });
+    };
+    const comboRowEl = (cb, isAlmost) => {
+        const inDeckPieces = isAlmost ? cb.pieces.filter(p => p.oid !== cb.missing.oid) : cb.pieces;
+        const missChip = isAlmost ? [React.createElement("button", { key: "miss", className: "curve-chip combo-missing", title: "Tap to view & add", onClick: () => { openMissing(cb.missing); haptic(); } }, "+ " + cb.missing.name)] : [];
+        return React.createElement("div", { className: "combo-row", key: cb.id },
+            React.createElement("div", { className: "combo-pieces" }, missChip.concat(inDeckPieces.flatMap((p, pi) => {
+                const cardObj = comboPieceCard(p.oid);
+                const chip = React.createElement("button", { key: p.oid, className: "curve-chip", onClick: cardObj ? () => { CardPeek.hide(); onOpenDetail(cardObj); } : undefined, onMouseEnter: cardObj ? (ev) => CardPeek.show(ev, cardObj) : undefined, onMouseMove: cardObj ? CardPeek.move : undefined, onMouseLeave: cardObj ? CardPeek.hide : undefined }, p.name);
+                return (pi === 0 && !isAlmost) ? [chip] : [React.createElement("span", { key: p.oid + '-plus', className: "combo-plus" }, "+"), chip];
+            }))),
+            cb.produces.length > 0 && React.createElement("div", { className: "combo-produce" },
+                React.createElement("span", { className: "cp-arrow" }, "\u2192"),
+                (cb.produces.length > 4 ? cb.produces.slice(0, 4).join(' \u00B7 ') + ' \u00B7 +' + (cb.produces.length - 4) + ' more' : cb.produces.join(' \u00B7 '))),
+            React.createElement("div", { className: "combo-meta" },
+                React.createElement("span", null, cb.pop > 0 ? ("in " + cb.pop.toLocaleString() + " decks") : "rarely recorded"),
+                React.createElement("a", { className: "combo-link", href: cb.url, target: "_blank", rel: "noopener noreferrer" }, "how it works \u2197")));
+    };
+    const comboCardEl = (comboIncluded.length + comboAlmost.length) === 0 ? null : (React.createElement("div", { className: "stat-card" },
+        React.createElement("div", { className: "stat-title" },
+            "Known Combos ",
+            React.createElement("span", { className: "stat-extra" }, comboIncluded.length ? (comboIncluded.length + (comboIncluded.length === 1 ? " combo" : " combos") + " in this deck") : "none complete yet")),
+        comboShown.map(cb => comboRowEl(cb, false)),
+        comboIncluded.length > 6 && !showAllCombos && (React.createElement("button", { className: "combo-more", onClick: () => { setShowAllCombos(true); haptic(); } }, "Show all " + comboIncluded.length + " combos")),
+        comboAlmost.length > 0 && React.createElement("div", { className: "combo-section-label" },
+            React.createElement("span", null, "One card away"),
+            React.createElement("span", { className: "csl-hint" }, "tap the missing card to add it")),
+        almostShown.map(cb => comboRowEl(cb, true)),
+        comboAlmost.length > 5 && !showAllAlmost && (React.createElement("button", { className: "combo-more", onClick: () => { setShowAllAlmost(true); haptic(); } }, "Show " + (Math.min(comboAlmost.length, 15) - 5) + " more suggestions")),
+        React.createElement("div", { className: "combo-attrib" },
+            "combo data \u00B7 ",
+            React.createElement("a", { href: "https://commanderspellbook.com", target: "_blank", rel: "noopener noreferrer" }, "Commander Spellbook"))));
     // group deck list by type
     const groups = useMemo(() => {
         const order = ['Commander', 'Creature', 'Planeswalker', 'Instant', 'Sorcery', 'Enchantment', 'Artifact', 'Battle', 'Land', 'Other'];
@@ -5292,6 +5398,7 @@ function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, o
                             const n = coverage[p.key] || 0;
                             return covRowEl(p, n, n >= p.target, deck.commander, onFillGap);
                         })),
+                    comboCardEl,
                     React.createElement("div", { className: "stat-card" },
                         React.createElement("div", { className: "stat-title" },
                             "Mana Curve ",
