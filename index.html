@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v5.16 · 2026-07-23">
+<meta name="oracle-build" content="v5.17 · 2026-07-23">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1545,6 +1545,149 @@ function saveDecks(decks) {
     catch (e) {
         return false;
     }
+}
+// ============ COMMANDER SPELLBOOK COMBOS (same-origin snapshot) ============
+// Combo data from Commander Spellbook (commanderspellbook.com), community-
+// maintained. CSB's live API is CORS-blocked from this origin (tested), so a
+// machine-side task (tasks/refresh-combos.mjs) prunes their bulk export into
+// ./combos-min.json weekly and the app matches decks against it client-side.
+// Snapshot shape: { cards:[[oracle_id,name],..], features:[name,..],
+//   combos:[[id,[cardIdx..],[featIdx..],identity,popularity,bracket,mcMask],..] }
+// The feature degrades silently when the snapshot is missing (local preview).
+// >>> COMBO CORE (self-contained; unit-tested in node — keep it framework-free)
+function comboIndex(data) {
+    // byCard: oracle_id -> [combo array index...] so a deck only scans candidates.
+    const byCard = new Map();
+    if (!data || !Array.isArray(data.cards) || !Array.isArray(data.combos) || !Array.isArray(data.features))
+        return null;
+    for (let i = 0; i < data.combos.length; i++) {
+        const row = data.combos[i];
+        if (!row || !Array.isArray(row[1]))
+            continue;
+        for (const ci of row[1]) {
+            const card = data.cards[ci];
+            if (!card)
+                continue;
+            const oid = card[0];
+            let arr = byCard.get(oid);
+            if (!arr)
+                byCard.set(oid, arr = []);
+            arr.push(i);
+        }
+    }
+    return { data, byCard };
+}
+function comboEntry(db, i) {
+    const row = db.data.combos[i];
+    return {
+        id: row[0],
+        url: 'https://commanderspellbook.com/combo/' + row[0] + '/',
+        pieces: row[1].map(ci => ({ oid: db.data.cards[ci][0], name: db.data.cards[ci][1] })),
+        produces: row[2].map(fi => db.data.features[fi]).filter(Boolean),
+        ci: row[3] || '',
+        pop: row[4] || 0,
+        bracket: row[5] || '',
+        mcMask: row[6] || 0
+    };
+}
+// matchCombos(db, oracleIdSet, ciList, commanderOid) -> {included, almost}
+//   included: every piece is in the deck (commander counts as in the deck) AND
+//             any "must be your commander" piece IS this deck's commander.
+//   almost:   exactly ONE piece missing; the missing piece is addable to the
+//             99 (never a must-be-commander piece) and the combo's color
+//             identity fits inside the deck's (colorless 'C' always fits) —
+//             almost is a SUGGESTION so it respects CI; included is a FACT
+//             about the deck so it skips the CI gate.
+// Both lists sort by Commander Spellbook popularity (deck count), descending.
+function matchCombos(db, oracleIdSet, ciList, commanderOid) {
+    const out = { included: [], almost: [] };
+    if (!db || !oracleIdSet || !oracleIdSet.size)
+        return out;
+    const deckCi = new Set((ciList || []).map(x => String(x).toUpperCase()));
+    const hits = new Map();
+    for (const oid of oracleIdSet) {
+        const arr = db.byCard.get(oid);
+        if (!arr)
+            continue;
+        for (const i of arr)
+            hits.set(i, (hits.get(i) || 0) + 1);
+    }
+    for (const [i, n] of hits) {
+        const row = db.data.combos[i];
+        const need = row[1].length;
+        if (n < need - 1)
+            continue;
+        // "must be your commander" pieces: the combo only works if that exact
+        // card is the deck's commander — otherwise it is not actionable here.
+        const mc = row[6] || 0;
+        let mcOk = true;
+        if (mc) {
+            for (let k = 0; k < need; k++) {
+                if ((mc & (1 << k)) && db.data.cards[row[1][k]][0] !== commanderOid) {
+                    mcOk = false;
+                    break;
+                }
+            }
+        }
+        if (!mcOk)
+            continue;
+        if (n === need) {
+            out.included.push(comboEntry(db, i));
+        }
+        else {
+            // exactly one missing: CI gate + find the missing piece
+            const comboCi = row[3] || '';
+            let ciOk = true;
+            for (const ch of comboCi) {
+                if (ch !== 'C' && !deckCi.has(ch)) {
+                    ciOk = false;
+                    break;
+                }
+            }
+            if (!ciOk)
+                continue;
+            let missing = null;
+            for (const ci of row[1]) {
+                const oid = db.data.cards[ci][0];
+                if (!oracleIdSet.has(oid)) {
+                    missing = { oid, name: db.data.cards[ci][1] };
+                    break;
+                }
+            }
+            if (!missing)
+                continue;
+            const e = comboEntry(db, i);
+            e.missing = missing;
+            out.almost.push(e);
+        }
+    }
+    out.included.sort((a, b) => b.pop - a.pop);
+    out.almost.sort((a, b) => b.pop - a.pop);
+    return out;
+}
+function deckComboKeys(deck) {
+    // A deck's matchable oracle_id set = its 99 plus the commander.
+    const s = new Set(Object.keys((deck && deck.cards) || {}));
+    if (deck && deck.commander)
+        s.add(cardKey(deck.commander));
+    return s;
+}
+// <<< COMBO CORE
+let COMBO_DB = null; // {data, byCard} once loaded
+let COMBO_LOAD = null; // in-flight promise; reset to null on failure so a
+// later combo surface can retry (e.g. flaky network)
+function loadCombos() {
+    if (COMBO_DB)
+        return Promise.resolve(COMBO_DB);
+    if (COMBO_LOAD)
+        return COMBO_LOAD;
+    // Default HTTP caching on purpose: the snapshot is ~7 MB raw and only
+    // refreshes weekly — GitHub Pages ETag revalidation keeps repeats cheap.
+    COMBO_LOAD = fetch('combos-min.json')
+        .then(r => { if (!r.ok) throw new Error('combos http ' + r.status); return r.json(); })
+        .then(j => { COMBO_DB = comboIndex(j); return COMBO_DB; })
+        .catch(() => { COMBO_LOAD = null; return null; });
+    return COMBO_LOAD;
 }
 const COLORS = [
     { c: 'W', sym: '\u2600' }, { c: 'U', sym: '\u{1F4A7}' }, { c: 'B', sym: '\u2620' },
@@ -3702,6 +3845,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v5.17', date: '2026-07-23', focus: 'logic', commander: null, summary: "Groundwork day: Oracle just learned the Commander Spellbook combo library. A weekly machine-side task now distills their full combo database (over 95,000 commander-legal combos) into a compact snapshot the app can read, and the engine gained a tested matcher that can tell, for any deck, which known combos it already contains and which are exactly one card away — combos that need a specific commander are only counted when that card actually leads your deck. Nothing shows in the interface yet; the combo panels arrive in the next build on this foundation. Combo data from Commander Spellbook (commanderspellbook.com)." },
     { build: 'v5.16', date: '2026-07-23', focus: 'ui', commander: null, summary: "Daily housekeeping - a quiet, healthy day. The Oracle Herald's Dispatches picked up fresh news: Mystery Booster Commander Edition, debuting at Gen Con on July 30 with 59 brand-new legendary creatures and eight rule-bending Rulebreaker cards, now leads the feed (the far-off Star Trek first-look stepped aside). Under the hood, a full end-to-end walk - Search, a commander's Workshop and synergy rails, card detail, the deck view, and a live Playtest - came back clean at phone, tablet, and desktop widths with no console errors, and the worklog's own bookkeeping got tidied. No features changed; nothing you rely on moved." },
     { build: 'v5.15', date: '2026-07-23', focus: 'ui', commander: null, summary: "The Forge's Aristocrats tile now finds the commanders it used to miss. It was only catching commanders with a literal “whenever … dies” trigger, so it quietly overlooked pure sacrifice engines — Yawgmoth, Ayara, Ayli, Brion Stoutarm, Ghave, Jarad, Ghoulcaller Gisa, Sidisi and 40 more whose whole plan is feeding creatures to a sac outlet, exploiting them on the way in, or devouring them. The tile now recognizes exploit, devour, and repeatable “sacrifice a creature” outlets, growing from 135 to 183 commanders (+48) — while carefully skipping look-alikes that sacrifice a creature just to cheat or copy another one (polymorph/pod/clone), so every name it deals is a real aristocrats leader. Nothing that used to appear was lost." },
     { build: 'v5.14', date: '2026-07-23', focus: 'ui', commander: null, summary: "The Forge got a Surprise me button — the one-tap answer to “what should I brew next?”. Instead of scanning thirteen tiles to choose a direction, tap Surprise me and Oracle picks a random brewing school for you and deals a fresh eight-commander spread on the spot; tap it again and it jumps to a different school, so the well of ideas never runs dry. It keeps whatever color filter you've set, so a brewer locked into, say, Golgari still gets an in-color surprise. It sits in the Forge header next to Deal again and — unlike the desktop-only hint text — stays visible on phones, giving narrow screens a discovery front door they didn't have before. Pure additive: every tile, the color filter, Deal again, and View all are untouched." },
