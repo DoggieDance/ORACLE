@@ -1,6 +1,13 @@
 {
-  "updated": "2026-07-24T01:32:52.521Z",
+  "updated": "2026-07-24T03:15:42.829Z",
   "deals": [
+    {
+      "t": "Jeskai Striker Deck + Foundation Pack + Lorwyn Eclipsed Pack + Tarkir Pack + Ixalan Set Pack + Gishath Promo Card for 49.99 (Limit 2 Per Transaction) [$77 value if bought items separately]",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v4z7fp/jeskai_striker_deck_foundation_pack_lorwyn/",
+      "s": 0,
+      "c": 1784862328,
+      "f": ""
+    },
     {
       "t": "Best buy - all 4 LOTR commander decks restock at MSRP. 64.99USD each",
       "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v4v1kz/best_buy_all_4_lotr_commander_decks_restock_at/",
@@ -35,13 +42,6 @@
       "s": 0,
       "c": 1784592581,
       "f": ""
-    },
-    {
-      "t": "Check your Kohl's",
-      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v1xc0n/check_your_kohls/",
-      "s": 0,
-      "c": 1784579952,
-      "f": ""
     }
   ],
   "wire": [
@@ -67,17 +67,17 @@
       "f": ""
     },
     {
-      "t": "[HOB] the Sackville-Bagginses (via TCGPlayer)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v4j8ii/hob_the_sackvillebagginses_via_tcgplayer/",
-      "s": 0,
-      "c": 1784824863,
-      "f": ""
-    },
-    {
       "t": "[HOC] Minas Tirith",
       "u": "https://www.reddit.com/r/magicTCG/comments/1v4u0yk/hoc_minas_tirith/",
       "s": 0,
       "c": 1784848413,
+      "f": ""
+    },
+    {
+      "t": "[HOB] the Sackville-Bagginses (via TCGPlayer)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v4j8ii/hob_the_sackvillebagginses_via_tcgplayer/",
+      "s": 0,
+      "c": 1784824863,
       "f": ""
     },
     {
