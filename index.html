@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v5.19 · 2026-07-23">
+<meta name="oracle-build" content="v5.20 · 2026-07-23">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -701,7 +701,8 @@
   .pt-card:active { transform: scale(.94); }
   .pt-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .pt-card.tapped { transform: rotate(8deg) scale(.96); opacity: .82; }
-  .pt-card .tap-dot { position: absolute; bottom: 3px; right: 3px; width: 8px; height: 8px; border-radius: 50%; background: var(--gold-bright); box-shadow: 0 0 6px var(--gold-bright); }
+  /* v5.20: dot moved off the P&T corner (card-scan integrity) to the artist-line corner. */
+  .pt-card .tap-dot { position: absolute; bottom: 3px; left: 3px; width: 8px; height: 8px; border-radius: 50%; background: var(--gold-bright); box-shadow: 0 0 6px var(--gold-bright); }
   .pt-card-ph { display: flex; align-items: center; justify-content: center; text-align: center; padding: 4px; font-size: 9px; color: var(--text); font-weight: 700; height: 100%; line-height: 1.2; }
   .pt-hand-zone { flex-shrink: 0; border-top: 1px solid var(--hair2); background: rgba(20,21,30,.9); backdrop-filter: saturate(145%) blur(22px); -webkit-backdrop-filter: saturate(145%) blur(22px); padding: 8px 10px calc(8px + var(--sab-live)); position: relative; z-index: 3; }
   .pt-hand-scroll { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
@@ -1210,9 +1211,14 @@
      which silently blocked the v4.50 .arch-card:hover translateY lift (repro'd in-browser);
      backwards still hides pre-delay cards but releases transform once the deal lands. */
   @keyframes archDeal { from { opacity: 0; transform: translate(-44px, -26px) rotate(var(--deal-rot, -7deg)) scale(.86); } 55% { opacity: 1; } to { opacity: 1; transform: none; } }
-  .arch-card { position: relative; aspect-ratio: 488/680; border-radius: 10px; overflow: hidden; background: #10111a; border: 1px solid var(--hair2); cursor: pointer; animation: archDeal .55s var(--spring) backwards; animation-delay: calc(var(--i, 0) * 62ms); }
+  /* v5.20 CARD-SCAN INTEGRITY: dealt cards are full card frames, and the old corner
+     badges sat exactly on the frame's scan zones (rank top-left = NAME, bite top-right
+     = MANA COST). The card is now an untouched image window + a slim caption strip
+     BELOW it carrying rank/bite/colors — nothing overlays the frame, ever. */
+  .arch-card { position: relative; cursor: pointer; min-width: 0; animation: archDeal .55s var(--spring) backwards; animation-delay: calc(var(--i, 0) * 62ms); }
   .arch-card:nth-child(even) { --deal-rot: 6deg; }
-  @media (hover: hover) and (pointer: fine) { .arch-card { transition: transform .16s var(--fluid), box-shadow .16s; } .arch-card:hover { transform: translateY(-4px); box-shadow: 0 12px 26px rgba(0,0,0,.45), 0 0 0 1px rgba(224,196,106,.35); } }
+  .arch-imgwrap { position: relative; aspect-ratio: 488/680; border-radius: 10px; overflow: hidden; background: #10111a; border: 1px solid var(--hair2); }
+  @media (hover: hover) and (pointer: fine) { .arch-card { transition: transform .16s var(--fluid); } .arch-card .arch-imgwrap { transition: box-shadow .16s; } .arch-card:hover { transform: translateY(-4px); } .arch-card:hover .arch-imgwrap { box-shadow: 0 12px 26px rgba(0,0,0,.45), 0 0 0 1px rgba(224,196,106,.35); } }
   .arch-deal { font-family: var(--ios-font); font-size: 10.5px; font-weight: 750; letter-spacing: .06em; color: var(--gold-dim); background: none; border: 0; padding: 0; cursor: pointer; transition: color .15s; }
   .arch-deal:hover { color: var(--gold-bright); }
   .arch-deal:disabled { opacity: .55; cursor: default; }
@@ -1236,31 +1242,18 @@
   @media (hover: hover) and (pointer: fine) { .arch-ci-pip:hover { transform: translateY(-1px); border-color: rgba(224,196,106,.5); } }
   .arch-ci-pip.on { border-color: transparent; box-shadow: 0 0 0 2px rgba(224,196,106,.55), 0 2px 8px rgba(0,0,0,.35); }
   .arch-ci-any { margin-left: 2px; }
-  /* v4.67 ADDED FUNCTIONALITY — color-identity badge on each dealt Forge card. When a school
-     deals unfiltered, the 8 commanders span every color; a small pip cluster in the card's
-     bottom-left corner (the app's established corner-chip idiom) lets a brewer read each
-     commander's colors at a glance — the "does this fit my pod/colors?" evaluation — without
-     opening any card. Solid scrim, no backdrop blur, pointer-events:none, static paint. */
-  .arch-ci-badge { position: absolute; left: 5px; bottom: 5px; z-index: 2; display: inline-flex; gap: 2px; padding: 2px 3px; border-radius: 7px; background: rgba(8,8,12,.68); box-shadow: 0 1px 4px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.06); pointer-events: none; }
-  .arch-ci-badge .pip { width: 13px; height: 13px; font-size: 8px; box-shadow: inset 0 -1px 2px rgba(0,0,0,.3); }
-  /* Phones deal 4 cards across (~83px each); a five-color badge at full size would span the
-     whole card, so shrink the pips there — five WUBRG pips then fit with room to spare. */
-  @media (max-width: 639px) { .arch-ci-badge { left: 4px; bottom: 4px; gap: 1px; padding: 1px 2px; } .arch-ci-badge .pip { width: 11px; height: 11px; font-size: 7px; } }
-  /* v4.69: EDHREC-popularity chip on each dealt commander (top-left, opposite the
-     colors badge) — reads a random spread as evaluable: which are proven staples and
-     which are Hidden-gem spice (>15000 = the purple 'gem' tier the dossier flags as an
-     underplayed brew). Same solid-scrim, no-blur, pointer-events:none idiom. */
-  .arch-rank-badge { position: absolute; left: 5px; top: 5px; z-index: 2; display: inline-flex; align-items: center; gap: 2px; padding: 2px 6px; border-radius: 7px; font-size: 9.5px; font-weight: 800; letter-spacing: .02em; background: rgba(8,8,12,.72); color: var(--gold); box-shadow: 0 1px 4px rgba(0,0,0,.45), inset 0 0 0 1px rgba(224,196,106,.30); pointer-events: none; }
-  .arch-rank-badge.gem { color: #d9ccff; box-shadow: 0 1px 4px rgba(0,0,0,.45), inset 0 0 0 1px rgba(167,148,224,.42); }
-  @media (max-width: 639px) { .arch-rank-badge { left: 4px; top: 4px; padding: 1px 4px; font-size: 8.5px; } }
-  /* v5.09: "I Bite!" warning on Group Hug commanders that hand out value but ALSO
-     punish the table (hand-size clamp, burn, life drain, taxes). Top-right corner —
-     opposite the rank chip (top-left) and colors chip (bottom-left) so no collision.
-     Gold-arcana identity kept, warmed toward ember with a small downward fang (::before,
-     pure clip-path) to read as teeth. Static paint, pointer-events:none, no per-frame work. */
-  .arch-bite-badge { position: absolute; right: 5px; top: 5px; z-index: 3; display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 7px; font-size: 9px; font-weight: 900; letter-spacing: .03em; text-transform: uppercase; color: #ffdf8f; background: rgba(26,9,7,.82); box-shadow: 0 1px 4px rgba(0,0,0,.5), inset 0 0 0 1px rgba(231,150,86,.58); text-shadow: 0 1px 1px rgba(0,0,0,.6); pointer-events: none; }
-  .arch-bite-badge::before { content: ""; width: 6px; height: 7px; background: linear-gradient(180deg, #ffe6a0, #e6924f); clip-path: polygon(0 0, 100% 0, 50% 100%); }
-  @media (max-width: 639px) { .arch-bite-badge { right: 4px; top: 4px; padding: 1px 4px; font-size: 8px; gap: 2px; } .arch-bite-badge::before { width: 5px; height: 6px; } }
+  /* v5.20 caption strip under each dealt card — carries what the old corner badges
+     carried (v4.67 colors, v4.69 rank/gem, v5.09 I-Bite), OFF the card frame so the
+     name / mana cost / type / P&T stay scannable. Static paint, no blur. */
+  .arch-strip { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-top: 4px; min-height: 15px; padding: 0 1px; pointer-events: none; }
+  .arch-strip-left { display: inline-flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; }
+  .as-rank { display: inline-flex; align-items: center; font-size: 9px; font-weight: 800; letter-spacing: .02em; color: var(--gold-dim); white-space: nowrap; }
+  .as-rank.gem { color: #d9ccff; }
+  .as-bite { display: inline-flex; align-items: center; gap: 2px; font-size: 8.5px; font-weight: 900; letter-spacing: .03em; text-transform: uppercase; color: #eb9d5f; white-space: nowrap; }
+  .as-bite::before { content: ""; width: 5px; height: 6px; background: linear-gradient(180deg, #ffe6a0, #e6924f); clip-path: polygon(0 0, 100% 0, 50% 100%); }
+  .arch-strip .pips { display: inline-flex; gap: 1px; flex: 0 0 auto; }
+  .arch-strip .pip { width: 11px; height: 11px; font-size: 7px; box-shadow: inset 0 -1px 2px rgba(0,0,0,.3); }
+  @media (max-width: 639px) { .as-rank { font-size: 8px; } .as-bite { font-size: 7.5px; } .arch-strip .pip { width: 9px; height: 9px; font-size: 6px; } .arch-strip { margin-top: 3px; min-height: 12px; } }
   /* v4.71: EDHREC popularity chip on plain card-search result tiles — pairs with the
      existing 'EDHREC Rank' sort so a brewer reads how-played each card is at a glance.
      Top-right corner: cmdr-flag holds top-left, tile-foot bottom-left, art-upgrade bottom-right. */
@@ -3868,6 +3861,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v5.20', date: '2026-07-23', focus: 'ui', commander: null, summary: "First slice of the Herald makeover, and it starts with respect for the cards themselves: nothing may cover what a brewer scans. The Forge's dealt commanders used to wear their EDHREC-rank chip on the card's name line, the Group Hug \"I Bite!\" warning on the mana cost, and their color pips on the artist line — all three now live in a slim caption strip just beneath each card, so every name, mana cost, type line, and power/toughness reads clean at a glance. Same information, better manners: rank (with the purple ✦ hidden-gem tier), a compact Bites warning with its fang, and the color pips sit neatly under the art on desktop and phone alike. The Playtest hand's tap-dot also slid off the power/toughness corner. This card-scan rule now governs the whole makeover: badges never block what a builder needs to read." },
     { build: 'v5.19', date: '2026-07-23', focus: 'ui', commander: null, summary: "The Known Combos card now also shows what you're one card away from. Below the combos your deck already contains, a new One card away section lists the highest-value near-misses: the missing piece as a gold dashed chip (tap it to open the card and add it straight to the deck), next to the pieces you already run, what the finished combo produces, and how many recorded decks play it. Suggestions respect your commander's color identity, never propose a card that would have to BE your commander, and only surface combos actually recorded in real decks — capped at five, expandable to fifteen, so it stays a scalpel rather than a firehose. Add the missing card and the combo graduates to the list above on the spot." },
     { build: 'v5.18', date: '2026-07-23', focus: 'ui', commander: null, summary: "Your deck now shows the combos it already contains. On the deck's Stats tab, a new Known Combos card lists every combo from the Commander Spellbook library whose pieces are all sitting in your list — the pieces as tappable chips, what the combo produces (infinite mana, infinite tokens, win the game…), how many recorded decks run it, and a link to the full how-it-works writeup on Commander Spellbook. Combos that only function when a specific card is your commander are counted only when that card actually leads the deck, so nothing overpromises. Decks with no known combos simply don't show the card — no empty shell. The combo library (95,367 commander-legal combos) loads once, only when you first open a deck's Stats tab." },
     { build: 'v5.17', date: '2026-07-23', focus: 'logic', commander: null, summary: "Groundwork day: Oracle just learned the Commander Spellbook combo library. A weekly machine-side task now distills their full combo database (over 95,000 commander-legal combos) into a compact snapshot the app can read, and the engine gained a tested matcher that can tell, for any deck, which known combos it already contains and which are exactly one card away — combos that need a specific commander are only counted when that card actually leads your deck. Nothing shows in the interface yet; the combo panels arrive in the next build on this foundation. Combo data from Commander Spellbook (commanderspellbook.com)." },
@@ -4655,7 +4649,7 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll }) {
         err && React.createElement('div', { className: 'arch-err' }, err),
         active && !err && !dealing && spread && spread.length === 0 && React.createElement('div', { className: 'arch-err' }, 'No ' + active.name + ' commanders fit inside those colors — loosen a color.'),
         active && !err && (dealing || (spread && spread.length > 0)) && React.createElement('div', { className: 'arch-spread', 'data-arch': active.id }, (!spread || spread.length === 0)
-            ? Array.from({ length: 8 }).map((_, i) => React.createElement('div', { key: 'sk' + i, className: 'arch-card', style: { '--i': i } }, React.createElement('div', { className: 'img-skeleton' })))
+            ? Array.from({ length: 8 }).map((_, i) => React.createElement('div', { key: 'sk' + i, className: 'arch-card', style: { '--i': i } }, React.createElement('div', { className: 'arch-imgwrap' }, React.createElement('div', { className: 'img-skeleton' }))))
             : spread.map((c, i) => {
                 const img = cardImage(c, 'normal');
                 // v4.68 perf: dealt tiles render ~137px wide but 'normal' is 488px — a
@@ -4668,10 +4662,14 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll }) {
                 // idiom is meaningless under other schools, so gate on the active tile.
                 const bite = active && active.id === 'grouphug' ? hugBite(c) : null;
                 return React.createElement('div', { key: c.id, className: 'arch-card', style: { '--i': i }, role: 'button', tabIndex: 0, 'aria-label': c.name + (cid.length ? ' (' + cid.join('') + ')' : ' (colorless)') + (rc ? ' · EDHREC #' + Number(c.edhrec_rank).toLocaleString() : '') + (bite ? ' · group hug with a bite: ' + bite : ''), onClick: () => onOpenDetail(c), onKeyDown: (e) => { if (e.key === 'Enter') onOpenDetail(c); } },
-                    img ? React.createElement(CardImg, { src: img, srcSet: imgSmall ? (imgSmall + ' 146w, ' + img + ' 488w') : undefined, sizes: '(min-width:900px) 140px, (min-width:640px) 23vw, 24vw', alt: c.name }) : React.createElement('div', { className: 'card-img-placeholder' }, React.createElement('div', { className: 'pn' }, c.name)),
-                    rc && React.createElement('div', { className: 'arch-rank-badge' + (rc.gem ? ' gem' : ''), 'aria-hidden': true }, (rc.gem ? '✦ #' : '#') + rc.label),
-                    bite && React.createElement('div', { className: 'arch-bite-badge', title: 'Group hug with teeth — this commander also ' + bite, 'aria-hidden': true }, 'I Bite!'),
-                    React.createElement('div', { className: 'arch-ci-badge', 'aria-hidden': true }, cid.length ? cid.map(col => React.createElement('span', { key: col, className: 'pip ' + col }, col)) : React.createElement('span', { className: 'pip C' }, '◇')));
+                    React.createElement('div', { className: 'arch-imgwrap' }, img ? React.createElement(CardImg, { src: img, srcSet: imgSmall ? (imgSmall + ' 146w, ' + img + ' 488w') : undefined, sizes: '(min-width:900px) 140px, (min-width:640px) 23vw, 24vw', alt: c.name }) : React.createElement('div', { className: 'card-img-placeholder' }, React.createElement('div', { className: 'pn' }, c.name))),
+                    // v5.20 card-scan integrity: rank / bite / colors moved OFF the card
+                    // frame into a caption strip below (name + mana cost stay visible).
+                    React.createElement('div', { className: 'arch-strip', 'aria-hidden': true },
+                        React.createElement('span', { className: 'arch-strip-left' },
+                            rc && React.createElement('span', { className: 'as-rank' + (rc.gem ? ' gem' : '') }, (rc.gem ? '✦ #' : '#') + rc.label),
+                            bite && React.createElement('span', { className: 'as-bite', title: 'Group hug with teeth — this commander also ' + bite }, 'Bites')),
+                        React.createElement('span', { className: 'pips' }, cid.length ? cid.map(col => React.createElement('span', { key: col, className: 'pip ' + col }, col)) : React.createElement('span', { className: 'pip C' }, '◇'))));
             })),
         active && spread && spread.length > 0 && !err && React.createElement('div', { className: 'arch-foot' },
             React.createElement('button', { className: 'arch-deal', onClick: () => onSearchAll(qFor(active, ci)) }, 'View all ' + (total ? total.toLocaleString() + ' ' : '') + active.name + (ci ? ' (' + ci + ')' : '') + ' commanders →')));
