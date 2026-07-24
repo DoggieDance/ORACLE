@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v5.39 · 2026-07-24">
+<meta name="oracle-build" content="v5.40 · 2026-07-24">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -4034,6 +4034,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v5.40', date: '2026-07-24', focus: 'ui', commander: null, summary: "The Forge's first roster-driven tiles. Aristocrats, Tokens & Go-Wide, and Reanimator no longer approximate their archetype with a hand-tuned card-text query \u2014 each tile's membership now IS EDHREC's community roster for that theme, rebuilt weekly from every commander page's own theme data (kept when at least 20 decks tag the theme, or a tenth of that commander's decks do \u2014 plus every commander EDHREC itself showcases for the theme, so brand-new legends appear from day one). Deals sample the real roster, the color filter works off each entry's recorded identity, and the tile count is the roster's truth. If the roster file hasn't arrived yet, the old queries quietly take over \u2014 nothing breaks. (Housekeeping: this build also actually delivers the roster plumbing v5.38's notes promised \u2014 a concurrent editing session had silently reverted it before v5.39 shipped; the collision is documented and the protocol tightened.)" },
     { build: 'v5.39', date: '2026-07-24', focus: 'logic', commander: 'The Astonishing Ant-Man', summary: "Deep study: enablers are not payoffs. The Astonishing Ant-Man's token rails \u2014 and every go-wide token commander's \u2014 now respect the distinction. Token Producers remains the enabler rail (ways to make MORE bodies); Go-Wide Payoffs now lists only cards that CASH IN a wide board: anthems and overrun finishers, per-body enter triggers of the Impact Tremors family, death drains of the Blood Artist family, and count-the-crowd card draw like Shamanic Revelation. A new Token Doublers rail (Doubling Season, Parallel Lives, Branching Evolution) sits between them as the amplifier \u2014 for Ant-Man it multiplies both halves of his engine at once, since twice the counters is twice the Insects. And the Token Typal rail stopped pretending: it used to list token GENERATORS dressed as tribal payoffs; it now requires genuine lords and anthems, so commanders whose token type has no lords in their colors \u2014 Ant-Man's incidental Insects \u2014 simply don't get a typal rail at all. Verified card-by-card against EDHREC's data, where Skullclamp at 67% synergy tells the whole story." },
     { build: 'v5.38', date: '2026-07-24', focus: 'ui', commander: null, summary: "Fixed the iPhone filter-sheet keyboard bug. Tapping into a Filters field on a phone could scroll the sheet's contents clean out of view — a blank band where the controls should be, with the field you were typing into lost above the keyboard. Two iOS quirks conspired: the system 'reveals' a focused field by scrolling ANY container (even ones that should never scroll, which nothing ever reset), and it does so before the keyboard finishes resizing the view, so the sheet's scroll position was computed against the wrong height. The viewport engine now runs a repair pass while you type: it undoes the stray container scrolls and keeps the focused field visible inside the sheet itself, re-checking as the keyboard animates. The sheet's dropdowns also grew to the 16-pixel floor that stops iOS's focus-zoom from panning the view. Needs a quick on-phone confirmation, but the failure is now reproduced-and-fixed in simulation. Also aboard this build: the plumbing for EDHREC-roster-driven Forge tiles (Aristocrats, Tokens, Reanimator first) — dormant until the roster snapshot file ships alongside it." },
     { build: 'v5.37', date: '2026-07-24', focus: 'ui', commander: null, summary: "The Forge's Mill tile stops overlooking commanders who empty libraries in wordings its card search didn't cover. Cross-checked against EDHREC's Mill roster, three genuine mill commanders now deal into the tile: Umbris, Fear Manifest, who repeatedly exiles each opponent's library down to a land, plus the two Dimir mill payoffs Lazav, Dimir Mastermind and Lorcan, Warlock Collector, who copy and reanimate (respectively) every creature milled into an opponent's graveyard. Look-alikes were kept out: the graveyard-value and clone shells that merely pair with self-mill — Muldrotha, The Mimeoplasm, Disa, The Mycotyrant, Baron Helmut Zemo — and Doctor Doom, Unrivaled, who draws his whole deck to win rather than milling. A broader 'opponent's graveyard' net was rejected for dragging in graveyard-hate (Anafenza) and aristocrats payoffs (Patron of the Nezumi). 91 → 94 commanders, every new name checked by hand against its card, and nothing already in the tile was dropped." },
@@ -4698,11 +4699,47 @@ function WireCol() {
 // IGNORES order=random on /cards/search, so freshness comes from picking a
 // random page (175/page) and Fisher-Yates shuffling client-side; pages are
 // cached per archetype so re-deals within a session cost at most one fetch.
+// ============ EDHREC TILE ROSTERS (roster-based tile membership) ============
+// Owner decision (oracle-tile-reverse-engineering-plan.md): a Forge tile's
+// membership IS EDHREC's theme roster — not an approximating query. Rosters
+// are generated MACHINE-SIDE by tasks/refresh-tile-rosters.mjs (inverse gather:
+// every commander page's taglinks, grouped by tag, thresholded, headline-
+// unioned; weekly) into ./tile-rosters.json (external + lazy, feeds/combos
+// pattern). Tiles with edhrecTags deal from the roster; the old Scryfall q
+// remains ONLY as a silent fallback when the file is missing (local preview)
+// or a tag is absent. File: { generated, policy, tags: { slug: [ {o: oracle_id,
+// n: name, c: colorIdentity, d: themeDeckCount}, ... ] } }.
+let TILE_ROSTERS = null;
+let TILE_ROSTERS_LOAD = null;
+function loadTileRosters() {
+    if (TILE_ROSTERS)
+        return Promise.resolve(TILE_ROSTERS);
+    if (TILE_ROSTERS_LOAD)
+        return TILE_ROSTERS_LOAD;
+    TILE_ROSTERS_LOAD = fetch('tile-rosters.json')
+        .then(r => { if (!r.ok) throw new Error('rosters http ' + r.status); return r.json(); })
+        .then(j => (TILE_ROSTERS = (j && j.tags) ? j : null))
+        .catch(() => { TILE_ROSTERS_LOAD = null; return null; });
+    return TILE_ROSTERS_LOAD;
+}
+function rosterUnion(R, slugs) {
+    // Union the tag rosters a tile maps to (e.g. lands-matter + landfall),
+    // dedup by oracle_id keeping the highest theme-deck count for ranking.
+    const seen = new Map();
+    for (const s of (slugs || [])) {
+        for (const e of ((R && R.tags && R.tags[s]) || [])) {
+            const prev = seen.get(e.o);
+            if (!prev || e.d > prev.d)
+                seen.set(e.o, e);
+        }
+    }
+    return seen.size ? Array.from(seen.values()) : null;
+}
 const FORGE_SCHOOLS = [
-    { id: 'aristocrats', name: 'Aristocrats', flavor: 'Every death pays a dividend', q: 'is:commander legal:commander ( (o:/whenever .+ dies/ (o:sacrifice or o:dies)) or keyword:exploit or keyword:devour or (o:/sacrifice (a|an|another)( \\w+)? creature[s]?:/ -o:"that card onto the battlefield" -o:"becomes a copy of the sacrificed") )' }, // 183 — v5.15: WIDENED (backlog blind-spot). Old query required a literal "whenever … dies" trigger, so it missed pure sac-outlet / exploit / devour commanders. Added 3 OR arms: keyword:exploit (Sidisi Undead Vizier, Colonel Autumn), keyword:devour (Thromok), and a colon-activated creature sac-outlet o:/sacrifice (a|an|another)( \\w+)? creature[s]?:/ (Yawgmoth, Ayara First of Locthwain, Ayli, Brion, Ghave, Jarad, Vish Kal, Ghoulcaller Gisa, Razaketh, Sephiroth Fallen Hero (base arm missed him: his death trigger reads "die" not "dies"), Grimgrin, Tymaret, Shattergang, Prossh…). Two scoped exclusions drop the sac-to-CHEAT/COPY leaks: -o:"that card onto the battlefield" (Jalira polymorph, Vannifar pod) and -o:"becomes a copy of the sacrificed" (The Ever-Changing 'Dane); the precise "that card" phrasing spares Zimone and Dina (which puts a LAND onto the battlefield). Verified card-by-card vs live Scryfall 2026-07-23: 135→183 (+48), ALL 135 prior members retained, zero non-aristocrats leaked.
+    { id: 'aristocrats', name: 'Aristocrats', flavor: 'Every death pays a dividend', edhrecTags: ['aristocrats'], q: 'is:commander legal:commander ( (o:/whenever .+ dies/ (o:sacrifice or o:dies)) or keyword:exploit or keyword:devour or (o:/sacrifice (a|an|another)( \\w+)? creature[s]?:/ -o:"that card onto the battlefield" -o:"becomes a copy of the sacrificed") )' }, // 183 — v5.15: WIDENED (backlog blind-spot). Old query required a literal "whenever … dies" trigger, so it missed pure sac-outlet / exploit / devour commanders. Added 3 OR arms: keyword:exploit (Sidisi Undead Vizier, Colonel Autumn), keyword:devour (Thromok), and a colon-activated creature sac-outlet o:/sacrifice (a|an|another)( \\w+)? creature[s]?:/ (Yawgmoth, Ayara First of Locthwain, Ayli, Brion, Ghave, Jarad, Vish Kal, Ghoulcaller Gisa, Razaketh, Sephiroth Fallen Hero (base arm missed him: his death trigger reads "die" not "dies"), Grimgrin, Tymaret, Shattergang, Prossh…). Two scoped exclusions drop the sac-to-CHEAT/COPY leaks: -o:"that card onto the battlefield" (Jalira polymorph, Vannifar pod) and -o:"becomes a copy of the sacrificed" (The Ever-Changing 'Dane); the precise "that card" phrasing spares Zimone and Dina (which puts a LAND onto the battlefield). Verified card-by-card vs live Scryfall 2026-07-23: 135→183 (+48), ALL 135 prior members retained, zero non-aristocrats leaked.
     { id: 'spellslinger', name: 'Spellslinger', flavor: 'The storm speaks in cantrips', q: 'is:commander legal:commander o:"instant or sorcery"' }, // 104
-    { id: 'tokens', name: 'Tokens & Go-Wide', flavor: 'One becomes ten becomes legion', q: 'is:commander legal:commander o:create o:token (o:"creature token" OR o:"twice that many" OR o:"one or more tokens" OR o:"that\'s a copy of" OR o:"tokens that are copies" OR o:populate OR o:"whenever you create a token" OR o:"if you created a token" OR o:"create your first token" OR o:"whenever one or more tokens enter" OR o:"a token enters the battlefield under your control")' }, // 501 — v5.30: TIGHTENED (backlog leak-fix). Old o:create o:token (665) caught any commander making even one incidental token — mostly pure Treasure/Clue/Food/Blood/Gold/Map/Powerstone ramp + aristocrats (Atsushi, Captain Lannery Storm, Old Gnawbone, Ziatora…) whose real plan isn't going wide. Now the token plan must be CREATURE-relevant: creature tokens (o:"creature token", all 432 kept), OR token doublers/multipliers (o:"twice that many"/"one or more tokens" — Adrix and Nev, Mondrak), OR token-COPY go-wide (o:"that's a copy of"/"tokens that are copies"/populate — Miirym, Delina, Cadric, Ashling, Calix, Orvar, Anikthea), OR token-MATTERS payoffs (o:"whenever you create a token"/"if you created a token"/… — Bennie Bracks, Rosie Cotton). Audited all 166 dropped card-by-card vs live Scryfall 2026-07-24: every drop is pure artifact-token ramp / aristocrats; ZERO legit go-wide lost. Payoff-only leaders (Jetmir) were never in the tile — they make no tokens — a separate widen item. 665→501.
-    { id: 'reanimator', name: 'Reanimator', flavor: 'The grave is a second hand', q: 'is:commander legal:commander (o:"from your graveyard to the battlefield" or o:"from your graveyard onto the battlefield" or o:"creature card from a graveyard onto the battlefield" or o:"has unearth" or o:"have unearth" or o:encore)' }, // 92
+    { id: 'tokens', name: 'Tokens & Go-Wide', flavor: 'One becomes ten becomes legion', edhrecTags: ['tokens'], q: 'is:commander legal:commander o:create o:token (o:"creature token" OR o:"twice that many" OR o:"one or more tokens" OR o:"that\'s a copy of" OR o:"tokens that are copies" OR o:populate OR o:"whenever you create a token" OR o:"if you created a token" OR o:"create your first token" OR o:"whenever one or more tokens enter" OR o:"a token enters the battlefield under your control")' }, // 501 — v5.30: TIGHTENED (backlog leak-fix). Old o:create o:token (665) caught any commander making even one incidental token — mostly pure Treasure/Clue/Food/Blood/Gold/Map/Powerstone ramp + aristocrats (Atsushi, Captain Lannery Storm, Old Gnawbone, Ziatora…) whose real plan isn't going wide. Now the token plan must be CREATURE-relevant: creature tokens (o:"creature token", all 432 kept), OR token doublers/multipliers (o:"twice that many"/"one or more tokens" — Adrix and Nev, Mondrak), OR token-COPY go-wide (o:"that's a copy of"/"tokens that are copies"/populate — Miirym, Delina, Cadric, Ashling, Calix, Orvar, Anikthea), OR token-MATTERS payoffs (o:"whenever you create a token"/"if you created a token"/… — Bennie Bracks, Rosie Cotton). Audited all 166 dropped card-by-card vs live Scryfall 2026-07-24: every drop is pure artifact-token ramp / aristocrats; ZERO legit go-wide lost. Payoff-only leaders (Jetmir) were never in the tile — they make no tokens — a separate widen item. 665→501.
+    { id: 'reanimator', name: 'Reanimator', flavor: 'The grave is a second hand', edhrecTags: ['reanimator'], q: 'is:commander legal:commander (o:"from your graveyard to the battlefield" or o:"from your graveyard onto the battlefield" or o:"creature card from a graveyard onto the battlefield" or o:"has unearth" or o:"have unearth" or o:encore)' }, // 92
     { id: 'counters', name: '+1/+1 Counters', flavor: 'Growth upon growth upon growth', q: 'is:commander legal:commander (o:/put[s]? (a|one or more|X|two) \\+1\\/\\+1 counter/ or (o:proliferate -o:/(-1\\/-1|poison|loyalty|charge|energy|stun) counter/ -o:blight) or keyword:bolster or keyword:adapt or keyword:mentor or keyword:training or keyword:outlast or keyword:evolve)' }, // 482 — v5.31 WIDEN (backlog blind-spot): added six keyword arms (bolster/adapt/mentor/training/outlast/evolve). These keywords place +1/+1 counters ONLY in their reminder text, which o: does not search, so the literal put-arm missed every commander whose counters come from a keyword. Net +14, all audited card-by-card vs live Scryfall 2026-07-24 and all genuine +1/+1 counters commanders: Anafenza Kin-Tree Spirit, Aurelia Exemplar of Justice, Danny Pink, Darwin Adaptive Mutant, Dromoka the Eternal, Felisa Fang of Silverquill, Iroh Dragon of the West, Jetfire, Optimus Prime, Ray Fillet, Tajic Legion's Edge, Torens Fist of the Angels, Vikya Scorching Stalwart, Zegana Utopian Speaker (several — Danny Pink, Felisa, Iroh, Ray Fillet, Zegana — even carry explicit +1/+1-counter-matters payoff text). ZERO -1/-1/poison/loyalty/charge/energy/stun/proliferate-only leaks (the keywords place only +1/+1 counters); additive OR so all 468 prior members retained. outlast adds 0 today but is kept as a genuine +1/+1 keyword to future-proof. v5.11: qualified the bare o:proliferate arm (backlog leak-fix, slice 1 of 2). The old unqualified arm leaked commanders whose proliferate serves a RIVAL counter type, not +1/+1. Audited all 14 commanders the proliferate arm uniquely adds (the other 457 come from the +1/+1 put-arm) card-by-card vs live Scryfall 2026-07-23: kept the generic proliferate engines usable in +1/+1 (Atraxa, Kilo, Ezuri Stalker, Agent Frank Horrigan, Tekuthal) and the explicit +1/+1 payoffs the put-arm missed (Tromell "enters with an additional +1/+1 counter", Cayth fabricate, Brimaz incubate = +1/+1 counters, Tidus/Venser); dropped ONLY the mis-filed rival-type ones — Yawgmoth ("-1/-1 counter"), Lulu ("stun counter"), and High Perfect Morcant (blight = -1/-1). Exclusions consolidated into ONE alternation regex to stay under Scryfall's regex-operator cap; -o:blight is a plain clause (blight is the -1/-1 keyword and Morcant's "-1/-1" lives only in reminder text, which o: does not search). 471->468, ZERO drop from the +1/+1 put-arm, ZERO additions; every generic/legit member retained. Exclusions are scoped INSIDE the proliferate sub-clause, so a genuine +1/+1 putter that also references a rival type stays via the put-arm OR. REMAINING (slice 2, future run): the put-arm (~457) still catches commanders with only INCIDENTAL +1/+1 counters whose real plan is elsewhere (e.g. The Astonishing Ant-Man = draw->tokens) — needs careful per-commander auditing so nothing legit is lost.
     { id: 'lands', name: 'Lands Matter', flavor: 'The earth itself takes sides', q: 'is:commander legal:commander (o:landfall or o:"play an additional land" or o:"lands you control" or o:"land card from your graveyard" or o:"land cards from your graveyard" or o:"lands from your graveyard" or o:"land card in your graveyard" or o:"every land type" or o:"are lands in addition" or o:"discard one or more land cards") -o:"nonland card" -o:"treefolk, or land"' }, // 81
     { id: 'voltron', name: 'Voltron', flavor: 'All power to a single blade', q: 'is:commander legal:commander (o:equipped or o:"equipment" or o:/aura(s)? (attached|you control)/ or o:"enchanted creature" or o:attach)' }, // 116
@@ -4783,6 +4820,41 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll }) {
         try {
             const key = keyFor(a, f);
             const q = qFor(a, f);
+            // v5.40 roster-based membership: tiles mapped to EDHREC tags deal
+            // from the theme roster (the faithful match). Query path below runs
+            // only when the snapshot is missing (silent degrade, local preview).
+            if (a.edhrecTags) {
+                const R = await loadTileRosters();
+                const roster = R ? rosterUnion(R, a.edhrecTags) : null;
+                if (roster && roster.length) {
+                    const pool0 = f ? roster.filter(e => (e.c || '').split('').every(L => f.includes(L))) : roster;
+                    if (my !== seq.current)
+                        return;
+                    ARCH_CACHE[key] = { total: pool0.length, pages: {}, roster: true };
+                    if (pool0.length === 0) {
+                        setSpread([]);
+                        setDealing(false);
+                        return;
+                    }
+                    const picks = pool0.slice();
+                    for (let i = picks.length - 1; i > 0; i--) {
+                        const j2 = Math.floor(Math.random() * (i + 1));
+                        const t = picks[i];
+                        picks[i] = picks[j2];
+                        picks[j2] = t;
+                    }
+                    const chosen = picks.slice(0, 8);
+                    const cr = await fetch(API + '/cards/collection', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ identifiers: chosen.map(e => ({ oracle_id: e.o })) }) });
+                    if (!cr.ok)
+                        throw new Error('HTTP ' + cr.status);
+                    const cd = await cr.json();
+                    if (my !== seq.current)
+                        return;
+                    setSpread((cd.data || []).slice(0, 8));
+                    setDealing(false);
+                    return;
+                }
+            }
             const cache = ARCH_CACHE[key] || (ARCH_CACHE[key] = { total: 0, pages: {} });
             if (!cache.pages[1]) {
                 const d = await fetchArchPage(q, 1);
