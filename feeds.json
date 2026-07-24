@@ -1,6 +1,13 @@
 {
-  "updated": "2026-07-24T13:15:43.206Z",
+  "updated": "2026-07-24T14:15:24.997Z",
   "deals": [
+    {
+      "t": "Trading Card Market Secrets of Strixhaven Bundle $36.00 free shipping at $75",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v5bu1p/trading_card_market_secrets_of_strixhaven_bundle/",
+      "s": 0,
+      "c": 1784900665,
+      "f": ""
+    },
     {
       "t": "[UK Deal] Games Island all four FF Commander decks for approx £145",
       "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v57ju5/uk_deal_games_island_all_four_ff_commander_decks/",
@@ -35,16 +42,23 @@
       "s": 0,
       "c": 1784775656,
       "f": ""
-    },
-    {
-      "t": "5% OFF anything at Black Vault Gaming with code DINGUS",
-      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v30zq6/5_off_anything_at_black_vault_gaming_with_code/",
-      "s": 0,
-      "c": 1784681781,
-      "f": ""
     }
   ],
   "wire": [
+    {
+      "t": "[HOC] Galadriel, Light of Valinor (Rebecca Guay - spoiler from @mtgjp",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v5b72b/hoc_galadriel_light_of_valinor_rebecca_guay/",
+      "s": 0,
+      "c": 1784899140,
+      "f": ""
+    },
+    {
+      "t": "[HOB] Hunting Packleader, Mirkwood Pathmaker (@MTGArenaJP)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v5apgt/hob_hunting_packleader_mirkwood_pathmaker/",
+      "s": 0,
+      "c": 1784897978,
+      "f": ""
+    },
     {
       "t": "[HOB] Dwarven Mauler (ChinaOA)",
       "u": "https://www.reddit.com/r/magicTCG/comments/1v4zrwo/hob_dwarven_mauler_chinaoa/",
@@ -71,20 +85,6 @@
       "u": "https://www.reddit.com/r/magicTCG/comments/1v4k6mo/hob_belladonna_took_wizards_instagram/",
       "s": 0,
       "c": 1784826862,
-      "f": ""
-    },
-    {
-      "t": "[HOC] Minas Tirith",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v4u0yk/hoc_minas_tirith/",
-      "s": 0,
-      "c": 1784848413,
-      "f": ""
-    },
-    {
-      "t": "[HOB] Hunting Packleader, Mirkwood Pathmaker (@MTGArenaJP)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v5apgt/hob_hunting_packleader_mirkwood_pathmaker/",
-      "s": 0,
-      "c": 1784897978,
       "f": ""
     }
   ]
