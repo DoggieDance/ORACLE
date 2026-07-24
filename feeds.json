@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-24T11:15:42.175Z",
+  "updated": "2026-07-24T13:15:43.206Z",
   "deals": [
     {
       "t": "[UK Deal] Games Island all four FF Commander decks for approx £145",
@@ -46,17 +46,17 @@
   ],
   "wire": [
     {
-      "t": "[HOB] Bilbo’s Gambit",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v4irkz/hob_bilbos_gambit/",
-      "s": 0,
-      "c": 1784823860,
-      "f": ""
-    },
-    {
       "t": "[HOB] Dwarven Mauler (ChinaOA)",
       "u": "https://www.reddit.com/r/magicTCG/comments/1v4zrwo/hob_dwarven_mauler_chinaoa/",
       "s": 0,
       "c": 1784863923,
+      "f": ""
+    },
+    {
+      "t": "[HOB] Bilbo’s Gambit",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v4irkz/hob_bilbos_gambit/",
+      "s": 0,
+      "c": 1784823860,
       "f": ""
     },
     {
@@ -81,10 +81,10 @@
       "f": ""
     },
     {
-      "t": "[HOB] the Sackville-Bagginses (via TCGPlayer)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v4j8ii/hob_the_sackvillebagginses_via_tcgplayer/",
+      "t": "[HOB] Hunting Packleader, Mirkwood Pathmaker (@MTGArenaJP)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v5apgt/hob_hunting_packleader_mirkwood_pathmaker/",
       "s": 0,
-      "c": 1784824863,
+      "c": 1784897978,
       "f": ""
     }
   ]
