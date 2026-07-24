@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v5.48 · 2026-07-24">
+<meta name="oracle-build" content="v5.50 · 2026-07-24">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1282,6 +1282,20 @@
   .arch-ci-pip { width: 27px; height: 27px; border-radius: 50%; border: 1px solid var(--hair2); background: rgba(255,255,255,.04); color: var(--muted); font-family: var(--display); font-weight: 700; font-size: 12px; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; transition: transform .12s, box-shadow .15s, border-color .15s, background .15s, color .15s; }
   @media (hover: hover) and (pointer: fine) { .arch-ci-pip:hover { transform: translateY(-1px); border-color: rgba(224,196,106,.5); } }
   .arch-ci-pip.on { border-color: transparent; box-shadow: 0 0 0 2px rgba(224,196,106,.55), 0 2px 8px rgba(0,0,0,.35); }
+  /* v5.49 VISUAL FLAIR — the Forge color filter already lit each pip its canonical
+     mana color once SELECTED, but the idle W/U/B/R/G row read as five identical gray
+     letter-circles, giving no color cue until you clicked. Give each IDLE pip a faint
+     wash + colored glyph in its true mana color (the app's PIP_HEX language used in
+     every card-caption pip), so a brewer reads the color filter at a glance and it ties
+     back to the colored pips on the dealt cards. Scoped :not(.on) so the strong selected
+     state (full color fill + gold ring, set inline) is untouched. Static paint, no JS
+     per-frame, fully reversible. */
+  .arch-ci-pip:not(.on)[data-c="W"] { color: #f4e9c1; border-color: rgba(244,233,193,.42); background: rgba(244,233,193,.08); }
+  .arch-ci-pip:not(.on)[data-c="U"] { color: #7cb0e6; border-color: rgba(75,143,214,.5); background: rgba(75,143,214,.11); }
+  .arch-ci-pip:not(.on)[data-c="B"] { color: #bda4d0; border-color: rgba(154,127,176,.5); background: rgba(154,127,176,.12); }
+  .arch-ci-pip:not(.on)[data-c="R"] { color: #e6796a; border-color: rgba(216,82,63,.5); background: rgba(216,82,63,.11); }
+  .arch-ci-pip:not(.on)[data-c="G"] { color: #66c087; border-color: rgba(79,168,110,.5); background: rgba(79,168,110,.11); }
+  @media (hover: hover) and (pointer: fine) { .arch-ci-pip:not(.on):hover { filter: brightness(1.18); } }
   .arch-ci-any { margin-left: 2px; }
   /* v5.20 caption strip under each dealt card — carries what the old corner badges
      carried (v4.67 colors, v4.69 rank/gem, v5.09 I-Bite), OFF the card frame so the
@@ -1668,6 +1682,18 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
        2px idempotence guard + re-entrancy flag make repeats/loops harmless. */
     setTimeout(function () { repairFocusScroll(true); }, 350);
     setTimeout(function () { repairFocusScroll(false); }, 900);
+  });
+  /* v5.50: in resizes-content mode the keyboard's arrival IS a window resize
+     (not a vv-height delta), so give the focused field one extra debounced
+     discrete reveal 250ms after the resize settles. Debounced + the repair's
+     own re-entrancy flag and 2px idempotence guard make resize storms harmless.
+     NOTE: the v5.47 build placed this in a React useEffect where repairFocusScroll
+     was out of scope — it threw a ReferenceError on every resize and never fired;
+     moved here into the viewport IIFE where the function actually lives. */
+  var rzT = 0;
+  window.addEventListener('resize', function () {
+    clearTimeout(rzT);
+    rzT = setTimeout(function () { repairFocusScroll(false); }, 250);
   });
   /* Belt & suspenders: never let a residual document scroll persist. */
   window.addEventListener('scroll', function () {
@@ -4112,6 +4138,8 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v5.50', date: '2026-07-24', focus: 'ui', commander: null, summary: "An invisible error that fired on every window resize is gone. The last round of iPhone keyboard work added a small helper meant to nudge the field you're typing in back into view a beat after the on-screen keyboard reshapes the screen — but it got wired into the wrong part of the app, where the function it needed didn't exist. So instead of helping, it threw a quiet error every single time the window resized and never once did its job. The helper now lives right beside the function it calls, so the field you're editing in the search and filters sheets is kept above the keyboard on mobile as intended — and the resize error stops. It also clears out a stray listener that used to pile up a little more each time you opened Search. Nothing moved on screen: the console is quiet, there's a touch less work on every resize, and the phone keyboard finally behaves the way the last three fixes were aiming for." },
+    { build: 'v5.49', date: '2026-07-24', focus: 'ui', commander: null, summary: "The Forge's color filter now wears its colors. The little W/U/B/R/G row you use to lock a school's deal to an in-color spread already lit each pip its true mana color once you SELECTED it — but sitting idle, all five read as identical gray letter-circles, telling you nothing at a glance. Each idle pip now carries a faint wash and a colored glyph in its real mana color — cream White, blue, purple-black, red, green — the same palette the pips under every dealt card already use, so the control reads instantly and ties back to the color identity shown on the commanders it filters. Selecting a color still fills the pip solid with its gold ring exactly as before; nothing else moved. Pure paint: no new markup weight, no per-frame work, and the whole thing vanishes cleanly if a pip is ever chosen." },
     { build: 'v5.48', date: '2026-07-24', focus: 'ui', commander: null, summary: "The Forge now deals a genuinely fresh spread. Tap a school — or hit Deal again, Surprise me, or a color — and Oracle lays out eight commanders drawn at random from a roster that can run into the hundreds; until now, two deals in a row could easily surface some of the same faces. The Forge now remembers who it has already shown you this session and deals AROUND them, walking through the whole roster before it repeats a single commander — and once you've seen them all, it quietly reshuffles and starts a fresh lap. The memory is kept per school and per color filter, so a Golgari-locked Aristocrats hunt and an all-colors one keep separate trails, and returning to one you were browsing resumes right where you left off. Pure discovery: on real rosters, ten straight deals now show eighty different commanders instead of overlapping by chance — every deal is new ground until there's no new ground left." },
     { build: 'v5.47', date: '2026-07-24', focus: 'ui', commander: null, summary: "Third round on the iPhone filter-sheet bug \u2014 and this time the phone itself told us what was wrong. The little telemetry pill revealed the smoking gun: on this device the keyboard shrinks BOTH viewports together (546 == 546), so the old keyboard detector \u2014 which watched for the two viewports to disagree \u2014 read zero and never armed; meanwhile iOS had quietly scrolled the whole page 327 pixels, shoving the sheet mostly off-screen and leaving the blank band. The detector now watches BOTH signals: the classic overlay gap, and the layout viewport shrinking below its remembered no-keyboard height while a field is focused. Once armed, the repair pass first undoes the stray page scroll, then reveals the field inside the sheet's own scroller \u2014 still only at discrete moments, still loop-proof. The telemetry pill stays on for one more round: re-test on the phone, screenshot with the pill either way." },
     { build: 'v5.46', date: '2026-07-24', focus: 'logic', commander: null, summary: "The enabler-versus-payoff cleanup went systemic. After Ant-Man exposed a 'payoff' rail full of enablers, every rail family in the engine was audited against the framework \u2014 enablers set up, payoffs cash in, amplifiers multiply \u2014 and two more mislabels surfaced. Voltron's 'Equip Engines & Reducers' (Puresteel Paladin, Sram, cost reducers) was wearing a payoff label: those cards are the setup; the payoff is the equipped hit. And the Poison family had proliferate folded into its payoff rail \u2014 proliferate doesn't reward poison, it MULTIPLIES it, so it now stands alone as the amplifier while a true Corrupted Payoffs rail cashes in the venom. Twenty-eight other rail families audited clean. The role chips brewers see now tell the truth everywhere." },
@@ -5182,7 +5210,7 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll }) {
             React.createElement('span', { className: 'arch-ci-lab', title: 'Deals only commanders whose color identity fits inside the chosen colors' }, 'Colors'),
             'WUBRG'.split('').map(L => {
                 const on = ci.includes(L);
-                return React.createElement('button', { key: L, className: 'arch-ci-pip' + (on ? ' on' : ''), 'aria-pressed': on, title: CI_NAMES[L], style: on ? { background: PIP_HEX[L], color: PIP_DARK_TEXT[L] ? '#1a1408' : '#fff' } : undefined, onClick: () => toggleCi(L) }, L);
+                return React.createElement('button', { key: L, 'data-c': L, className: 'arch-ci-pip' + (on ? ' on' : ''), 'aria-pressed': on, title: CI_NAMES[L], style: on ? { background: PIP_HEX[L], color: PIP_DARK_TEXT[L] ? '#1a1408' : '#fff' } : undefined, onClick: () => toggleCi(L) }, L);
             }),
             ci && React.createElement('button', { className: 'arch-deal arch-ci-any', onClick: () => toggleCi('') }, '✕ Any colors')),
         err && React.createElement('div', { className: 'arch-err' }, err),
@@ -5487,14 +5515,6 @@ function SearchScreen({ injectQuery, onInjectConsumed, activeDeck, onOpenDetail,
         raf = requestAnimationFrame(() => { raf = 0; apply(); }); // re-measure after font/layout settle
         el.addEventListener('scroll', sched, { passive: true });
         window.addEventListener('resize', sched);
-  /* v5.47: in resize-mode the keyboard's arrival IS a window resize; give the
-     field one extra discrete reveal after the resize settles (guarded + idem-
-     potent, so this cannot loop even if resizes storm). */
-  var rzT = 0;
-  window.addEventListener('resize', function () {
-    clearTimeout(rzT);
-    rzT = setTimeout(function () { repairFocusScroll(false); }, 250);
-  });
         return () => {
             el.removeEventListener('scroll', sched);
             window.removeEventListener('resize', sched);
