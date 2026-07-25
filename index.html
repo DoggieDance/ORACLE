@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v5.52 · 2026-07-24">
+<meta name="oracle-build" content="v5.53 · 2026-07-24">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,6 +46,11 @@
     --shadow-deep: 0 18px 50px rgba(0,0,0,.5);
   }
   html.kb-open { --sab-live: 0px; }
+  /* v5.53: while the on-screen keyboard is up, drop the sheet's 42px backdrop
+     blur — an expensive surface that re-rasterizes on every viewport tick and
+     flashes white on iOS during the keyboard animation. Swap to an opaque
+     background so nothing shows through. Higher specificity than .sheet wins. */
+  html.kb-open .sheet { backdrop-filter: none; -webkit-backdrop-filter: none; background: linear-gradient(180deg, #191a26, #10111a); }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { position: fixed; inset: 0; width: 100%; height: 100%; overflow: hidden; overscroll-behavior: none; background: var(--bg); color: var(--text); font-family: var(--ios-font); font-size: 16px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%; }
@@ -1400,7 +1405,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v5.52 \u00B7 2026-07-24', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v5.53 \u00B7 2026-07-24', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -1546,17 +1551,11 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
   var vv = window.visualViewport;
   var raf = 0;
   var baseH = window.innerHeight; /* v5.47: last known no-keyboard layout height */
+  var lastVvh = '', lastVvt = '', prevKb = false; /* v5.53: gate redundant var writes + edge-detect keyboard-open */
 
   function apply() {
     raf = 0;
     var h = (vv && vv.height) || window.innerHeight;
-    var t = (vv && vv.offsetTop) || 0;
-    if (h) {
-      var hpx = Math.round(h) + 'px';
-      root.style.setProperty('--vvh', hpx);
-      root.style.setProperty('--oracle-vvh', hpx); /* legacy alias */
-    }
-    root.style.setProperty('--vvt', Math.round(t) + 'px');
     /* v5.47 keyboard heuristic, DUAL signal (real-device telemetry, owner's
        iPhone pill: vvH 546 == winH 546 with the keyboard up). Because the
        viewport meta uses interactive-widget=resizes-content, this device
@@ -1573,15 +1572,36 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
     var kbResize = editingK && baseH > 0 && (baseH - window.innerHeight) > 90;
     var kb = kbOverlay || kbResize;
     root.classList.toggle('kb-open', kb);
-    /* If nothing is focused, the layout viewport must sit at 0,0.
-       iOS sometimes leaves it panned after keyboard dismissal. */
-    var ae = document.activeElement;
-    var editing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT');
-    if (!editing && (window.scrollY || window.scrollX)) window.scrollTo(0, 0);
-    /* v5.43: corrections are DELIBERATELY not run from viewport events anymore.
-       The v5.39 repair ran on every vv resize/scroll while editing and could
-       fight iOS's own scroll-into-focus frame-by-frame (owner report: sheet
-       freezes after focusing a field). apply() now only updates vars. */
+    /* v5.53: kill the transient blank band. iOS pans the LAYOUT viewport to chase
+       the caret when the keyboard covers a focused field (owner video: scrollY 281,
+       vvTop 281, a blank band inside the sheet, then a ~0.6s snap back). Undo the
+       pan SYNCHRONOUSLY whenever the keyboard is up — not only when nothing is
+       focused — so it is never left standing for a debounce gap. Do it BEFORE
+       reading offsetTop below, so --vvt is written from the corrected (0) value and
+       the sheet never sits a frame at the panned offset. (html/body are already
+       position:fixed/overflow:hidden/overscroll:none, but iOS pans anyway, so this
+       JS reset is the only cure.) */
+    if ((kb || !editingK) && (window.scrollY || window.scrollX)) window.scrollTo(0, 0);
+    /* v5.53: write the viewport vars AFTER the pan-undo, and only when the rounded
+       value actually changed — no per-vv-event relayout / backdrop-repaint thrash. */
+    if (h) {
+      var hpx = Math.round(h) + 'px';
+      if (hpx !== lastVvh) {
+        lastVvh = hpx;
+        root.style.setProperty('--vvh', hpx);
+        root.style.setProperty('--oracle-vvh', hpx); /* legacy alias */
+      }
+    }
+    var tpx = Math.round((vv && vv.offsetTop) || 0) + 'px';
+    if (tpx !== lastVvt) { lastVvt = tpx; root.style.setProperty('--vvt', tpx); }
+    /* v5.53: the instant the keyboard ARMS, reveal the focused field in the sheet's
+       own scroller so it is already above the keyboard — then iOS has no reason to
+       re-pan and the synchronous reset above has nothing to fight. Edge-triggered
+       (kb false→true) = a single call, NOT per-vv-event work; repairFocusScroll's
+       re-entrancy latch + 2px idempotence guard keep it safe. The v5.43 freeze came
+       from running the repair on EVERY vv event, which this does not do. */
+    if (kb && !prevKb && editingK) repairFocusScroll(false);
+    prevKb = kb;
   }
   function sched() { if (!raf) raf = requestAnimationFrame(apply); }
   /* v5.43 iOS keyboard-focus repair, second attempt — REAL-DEVICE feedback:
@@ -1666,7 +1686,7 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
     var f = ae.getBoundingClientRect();
     dbgEl.style.display = 'block';
     dbgEl.style.top = ((vv ? vv.offsetTop : 0) + 4) + 'px';
-    dbgEl.textContent = 'TEMP kb-debug v5.52 baseH ' + baseH +
+    dbgEl.textContent = 'TEMP kb-debug v5.53 baseH ' + baseH +
       '\nvvH ' + Math.round(vv ? vv.height : -1) + '  vvTop ' + Math.round(vv ? vv.offsetTop : -1) + '  winH ' + window.innerHeight +
       '\nscroller ' + (body ? ('sT ' + Math.round(body.scrollTop) + '  cH ' + body.clientHeight + '  sH ' + body.scrollHeight) : 'NONE') +
       '\nfield top ' + Math.round(f.top) + '  bot ' + Math.round(f.bottom) + '  kbClass ' + document.documentElement.classList.contains('kb-open') +
@@ -1729,11 +1749,17 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
     vv.addEventListener('scroll', onVV);
   }
   apply(); /* set correct initial --vvh/--vvt/kb-open at startup */
-  /* Belt & suspenders: never let a residual document scroll persist. */
+  /* Belt & suspenders: undo any layout-viewport pan the instant it happens.
+     v5.53: also while the keyboard is UP (kb-open) — not only when nothing is
+     focused — so iOS's caret-chasing pan (the blank band) is reverted
+     synchronously, with no debounce gap. The field is kept above the keyboard by
+     the sheet sizing + repairFocusScroll, so iOS has nothing to re-pan toward and
+     this cannot war; scrollTo(0,0) is a no-op once already at 0, so it can't loop. */
   window.addEventListener('scroll', function () {
     var ae = document.activeElement;
-    var editing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA');
-    if (!editing && window.scrollY) window.scrollTo(0, 0);
+    var editing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT');
+    if ((window.scrollY || window.scrollX) && (root.classList.contains('kb-open') || !editing))
+      window.scrollTo(0, 0);
   }, { passive: true });
 }());
 </script>
@@ -4256,6 +4282,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v5.53', date: '2026-07-24', focus: 'ui', commander: null, summary: "Killed the last piece of the iPhone Filters-keyboard bug — the flash and freeze you could still see. The v5.52 build parked the field in the right place once things settled, but a frame-by-frame recording showed what happened in between: the instant the keyboard covered a field, iOS yanked the whole page down about 281 pixels to chase the cursor, punching a blank band into the sheet, and only ~0.6s later did it snap back. Three changes end that. (1) That page-yank is now undone the very instant it happens instead of after a delay — and, because the sheet is already sized to the space above the keyboard and the field is pulled into view immediately when the keyboard arms, iOS has nothing left to chase, so there's nothing to snap back from and no war between the app and the system. (2) The viewport variables that drive the sheet's size are now only rewritten when they actually change, so the sheet stops re-laying-out on every tiny viewport tick while you type. (3) The sheet's heavy 42-pixel background blur is dropped while the keyboard is up — it was an expensive surface that re-rendered on every tick and flashed white on iOS — replaced by a solid panel that looks the same but never flickers. Net: tap a Filters field and it should rise smoothly above the keyboard with no blank flash, no downward jump, and no freeze. The debug pill stays on (now v5.53) for one more confirming screenshot." },
     { build: 'v5.52', date: '2026-07-24', focus: 'ui', commander: null, summary: "Two mobile fixes, one root cause each. FIRST, the app now updates itself. There's no service worker here, so on an iPhone the Home-Screen app cached this page hard and kept running an OLD build — the reason a keyboard fix shipped and the phone still showed the bug (it was stuck on v5.48 while the fix landed in v5.50). On load and every time you switch back to the app, Oracle now quietly checks the live site's build number; if a newer one has shipped, a small 'New version available — tap to reload' pill appears at the bottom and a tap reloads a fresh, cache-busted copy. It's throttled, silent when offline, and can't loop — the reload is always your tap, and once you're current the pill never reappears. SECOND, the keyboard scroll itself. On this phone the keyboard is an overlay: it shrinks only the visual viewport (to 519) while the window height never changes (873) — so the previous fix's window-resize trigger never fired, the sheet stayed sized to the full height and ran under the keyboard, and the field you were typing in sat below the visible area. The viewport engine now watches the visual viewport directly, so the Filters and Search sheets resize to the space above the keyboard the instant it appears, the keyboard state arms correctly, the stray iOS page-shift that caused the blank/frozen band is undone, and the focused field is nudged above the keyboard. The on-screen debug pill stays on (now labelled v5.52) for one more on-phone confirmation." },
     { build: 'v5.51', date: '2026-07-24', focus: 'ui', commander: null, summary: "Daily housekeeping — a health check; nothing moved on screen. Walked the whole app end to end as a brewer: Search and its filters, a commander's dossier and Oracle's Read, the Scouting Report's Traps / Game Plans / Engine Map with its synergy rails pulling real cards and prices, then the Deck view — adding a card, removing one (the undo toast appears as it should), the Shop tab's owned/to-buy math, and a live Playtest opening hand. All clean, console silent, and re-checked at phone (390px), tablet (768px), and desktop widths. The front-page Herald was verified against live sources this evening and every item still holds: The Hobbit (Aug 14), Mystery Booster: Commander Edition at Gen Con (Jul 30), Reality Fracture (Oct 2), the Stardew Valley 'Moonlight Jellies' Secret Lair (Jul 27), and the Hatsune Miku Commander deck (Aug 10) — accurate and current, so it stands unchanged rather than diluted. STUDY_DB is still fully oracle-id keyed with no stale name keys, and no safe CSS consolidation was outstanding. A healthy day: nothing to cut, no news to swap." },
     { build: 'v5.50', date: '2026-07-24', focus: 'ui', commander: null, summary: "An invisible error that fired on every window resize is gone. The last round of iPhone keyboard work added a small helper meant to nudge the field you're typing in back into view a beat after the on-screen keyboard reshapes the screen — but it got wired into the wrong part of the app, where the function it needed didn't exist. So instead of helping, it threw a quiet error every single time the window resized and never once did its job. The helper now lives right beside the function it calls, so the field you're editing in the search and filters sheets is kept above the keyboard on mobile as intended — and the resize error stops. It also clears out a stray listener that used to pile up a little more each time you opened Search. Nothing moved on screen: the console is quiet, there's a touch less work on every resize, and the phone keyboard finally behaves the way the last three fixes were aiming for." },
