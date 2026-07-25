@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v5.82 · 2026-07-25">
+<meta name="oracle-build" content="v5.85 · 2026-07-25">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1449,6 +1449,13 @@
   .school-chips { display: flex; flex-wrap: wrap; gap: 5px; }
   .school-chip { display: inline-flex; align-items: baseline; gap: 4px; padding: 2px 9px; border-radius: 999px; border: 1px solid rgba(224,196,106,.4); background: rgba(224,196,106,.09); color: var(--gold-bright); font-size: 11px; font-weight: 700; white-space: nowrap; }
   .school-chip .sc-n { font-size: 9.5px; color: var(--gold-dim); font-weight: 750; }
+  /* v5.85: School chips are now buttons that deal that school in the Forge. */
+  .school-chip.tappable { cursor: pointer; font-family: inherit; line-height: 1.35; transition: background .15s ease, border-color .15s ease, transform .1s ease; }
+  .school-chip.tappable:hover { background: rgba(224,196,106,.2); border-color: rgba(224,196,106,.75); }
+  .school-chip.tappable:active { transform: scale(.96); }
+  .school-chip.tappable:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+  .school-chip .sc-go { font-size: 10px; color: var(--gold-dim); opacity: .65; margin-left: 1px; transition: transform .15s ease, opacity .15s ease; }
+  .school-chip.tappable:hover .sc-go { opacity: 1; transform: translateX(2px); }
   .consult-studied { display: inline-flex; align-items: center; margin-left: 7px; padding: 1px 7px; border-radius: 7px; border: 1px solid rgba(88,184,126,.5); background: rgba(88,184,126,.12); color: #a9e8c3; font-size: 8.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
   /* ===== v4.92 Oracle's Read — archetype preview in the commander dossier ===== */
   .oracle-read { border: 1px solid var(--hair2); border-radius: 15px; background: linear-gradient(160deg, rgba(224,196,106,.10), rgba(18,17,27,.55)); padding: 11px 13px 12px; margin: 0 0 13px; }
@@ -1500,7 +1507,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v5.82 \u00B7 2026-07-25', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v5.85 \u00B7 2026-07-25', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -4721,6 +4728,9 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v5.85', date: '2026-07-25', focus: 'ui', commander: null, summary: "A commander's dossier now lets you jump straight from it into brewing an archetype it belongs to. The Schools row already told you which Forge schools the community files a commander under — tapping a commander from any tile shows you which other doors it also lives behind. Now those chips are doors you can open: tap 'Aristocrats 4.3k' on Teysa Karlov's dossier and the Forge deals a fresh spread of Aristocrats commanders, scrolled into view, so one glance at what a commander is becomes one tap into a whole school of others like it. Every chip carries a small ↪ and lights up on hover; it keeps whatever color filter the Forge had, and re-tapping a school (or Deal again) reshuffles as always. Works whether the dossier was opened from a tile, a search result, or your deck. Nothing else moved — the same gold-arcana pills, now clickable." },
+    { build: 'v5.84', date: '2026-07-25', focus: 'logic', commander: 'Selvala, Heart of the Wilds', summary: "Selvala, Heart of the Wilds now brews as the explosive mana engine she is. Her only trigger a keyword matcher could read was 'whenever another creature enters', so the app dressed her as a go-wide/blink token deck — exactly backwards, since 1/1 tokens neither raise her power nor win her draw. Because her tap adds mana equal to your greatest creature's power, she now leads with cheap high-power bodies that fuel the mana and fire her draw, X-spell mana sinks to dump the flood (Finale of Devastation, Green Sun's Zenith, Genesis Wave, Walking Ballista, Goldvein Hydra), and untappers to tap her twice. The old go-wide and blink rails are gone." },
+    { build: 'v5.83', date: '2026-07-25', focus: 'ui', commander: null, summary: "The EDHREC rank chip on every dealt Forge commander (and in search results and the Workshop rails) now reads as a popularity GRADIENT instead of a flat number. Format staples — the well-charted anchors of an archetype, EDHREC rank 1000 or better — glow warm gold; hidden gems — the underplayed commanders past rank 15,000 that this app exists to help you discover — keep their arcane purple and pick up a faint halo; everything in between stays calm. So when the Forge deals you eight commanders for a school, your eye instantly sorts the known pillars from the brew-waiting-to-happen discoveries without reading a single number. Hover any card (or its chip) for the exact rank and its full tier — Format staple, Heavily played, Popular, Established, or Hidden gem — and screen readers now announce that tier too. Pure text color and shadow: no layout shift, no new data, smooth at every width." },
     { build: 'v5.82', date: '2026-07-25', focus: 'ui', commander: null, summary: "Fixed a regression in the iPhone Filters keyboard: the page could pan down and reopen the old blank band. When the keyboard model was rewritten a few builds back, the mechanism that kept the page pinned in place got removed along with the code that used to cause the field to jerk — but they weren't the same thing. iOS still slides the whole page up to chase the cursor when you focus a field (a fixed layout doesn't stop it), and on this phone that slide shows up as a viewport event rather than a normal scroll, so the one remaining safeguard wasn't catching it and the page drifted (a debug capture showed it creeping to 322px), leaving an empty band below the field. The page pin is now restored where it actually fires — on every viewport change while the keyboard is up — so the page snaps back to 0 immediately and the blank band is gone. This is kept deliberately separate from the reveal: the pin only moves the page/window, while bringing your field into view only moves the inner filter list, so the two can't fight and there's no jerk. Net: field revealed above the keyboard, page stays put, no blank band, no jump. Debug pill stays on (now correctly v5.82; it had been stuck reading v5.66)." },
     { build: 'v5.81', date: '2026-07-25', focus: 'ui', commander: null, summary: "Every recommended and searched card now shows its full name. On the two surfaces where you scan a lot of cards at once — the Scouting Report's recommendation rails (the heart of brewing) and the search results grid — a long card name was hard-cut to a single line with no way to read the rest without opening the card, so a rail of a commander's payoffs would deal you 'Return of the Wildspea…', 'Overwhelming Stampe…', and 'Tribute to the World Tr…' and leave you guessing at what's actually being recommended. Card names now wrap to two lines and read in full, and because the name area reserves a consistent two-line height, every card stays the same size — the wrapping grid and the horizontal rail scroller stay perfectly aligned with no ragged rows. Pure CSS, scoped to the two card-scan surfaces (the deck list already reveals full names through its hover preview, so it's left untouched); nothing else moves and the card-scan rule still holds, with rank, price and the add button in the strip below the frame. Verified at phone (390px) and desktop (1200px) widths." },
     { build: 'v5.80', date: '2026-07-25', focus: 'logic', commander: 'Anje Falkenrath', summary: "Anje Falkenrath now brews as the madness engine she is. Her {T}, discard, draw ability made the engine read her as a Krenko-style tap-value commander — it dealt her Untappers, Ability Copiers, and a Haste Enablers rail that's dead cardboard (she already has haste), while her whole madness theme collapsed into one bundled 'Looting & Madness' rail. Now the off-theme tap rails are gated off and she leads with the three halves a real Anje deck wants: Madness Cards to cast from the bin for their cheaper cost (Big Game Hunter, Fiery Temper, Call to the Netherworld, Asylum Visitor, Anje's Ravager), Discard Outlets to pitch them on demand and keep going when she's tapped or removed (Faithless Looting, Thrill of Possibility, Cathartic Reunion, Key to the City, Chainer), and Discard Payoffs that reward every pitch (Bone Miser, Glint-Horn Buccaneer, Containment Construct, Inti). A general fix rides along: any commander that already has haste no longer gets recommended haste-granters for its {T} ability. Full STUDY_DB teardown with five traps; every rail live-QA'd EDHREC-sorted in Rakdos." },
@@ -4903,6 +4913,10 @@ function App() {
     const [activeDeckId, setActiveDeckId] = useState(() => { const d = loadDecks(); return d && d.length ? d[0].id : null; });
     const [toast, setToast] = useState('');
     const [detailCard, setDetailCard] = useState(null);
+    // v5.85: Forge cross-link — tapping a School chip in a commander's dossier
+    // signals the landing's Forge to deal that school. { id, t } (t forces a
+    // fresh deal even when the same school is tapped twice).
+    const [forgeIntent, setForgeIntent] = useState(null);
     const [printingsCard, setPrintingsCard] = useState(null);
     const [playtesting, setPlaytesting] = useState(false);
     const [storageWarned, setStorageWarned] = useState(false);
@@ -5340,14 +5354,14 @@ function App() {
                     "My Decks",
                     decks.length > 0 && React.createElement("span", { className: "badge" }, decks.length))),
             React.createElement("button", { className: "build-badge", "aria-label": "What's new in Oracle", onClick: () => { setWhatsNewOn(true); haptic(); } }, BUILD)),
-        tab === 'search' && (React.createElement(SearchScreen, { injectQuery: searchInject, onInjectConsumed: () => setSearchInject(null), activeDeck: activeDeck, onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onAdd: addCard, ciViolation: ciViolation, commanderCI: commanderCI, upgrades: upgrades, onOpenRandom: () => { setRandomOn(true); haptic(); }, onGoDeck: () => { setTab('deck'); haptic(); } })),
+        tab === 'search' && (React.createElement(SearchScreen, { injectQuery: searchInject, onInjectConsumed: () => setSearchInject(null), forgeIntent: forgeIntent, onForgeIntentConsumed: () => setForgeIntent(null), activeDeck: activeDeck, onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onAdd: addCard, ciViolation: ciViolation, commanderCI: commanderCI, upgrades: upgrades, onOpenRandom: () => { setRandomOn(true); haptic(); }, onGoDeck: () => { setTab('deck'); haptic(); } })),
         tab === 'deck' && (React.createElement(DeckScreen, { deck: activeDeck, deckList: deckList, deckTotal: deckTotal, onChangeQty: changeQty, onRemove: removeCard, onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onClearCommander: clearCommander, onDrawHand: startPlaytest, onGoSearch: () => setTab('search'), onFillGap: (q) => { setSearchInject({ q: q, t: Date.now(), sort: 'edhrec' }); setTab('search'); haptic(); }, onOpenSynergy: () => { setSynergyOn(true); haptic(); }, onOpenSimilar: () => { if (activeDeck && activeDeck.commander) { setSimilarFor(activeDeck.commander); haptic(); } }, onOpenBasics: () => { setBasicsOn(true); haptic(); }, onOpenRandom: () => { setRandomOn(true); haptic(); }, onToggleOwned: toggleOwned, onSetOwnedAll: setOwnedAll, ciViolation: ciViolation, showToast: showToast, upgrades: upgrades, decksAll: decks, onCrossDeck: crossDeck })),
         tab === 'decks' && (React.createElement(DecksScreen, { decks: decks, activeDeckId: activeDeckId, onSelect: (id) => { setActiveDeckId(id); setTab('deck'); haptic(); }, onCreate: createDeck, onDelete: deleteDeck, onImport: importDeckList, onRandom: () => { setRandomOn(true); haptic(); } })),
         synergyOn && activeDeck && activeDeck.commander && React.createElement(SynergyOverlay, { onViewAll: (q, sort) => { setSearchInject({ q: q, t: Date.now(), sort: sort }); setSynergyOn(false); setTab('search'); haptic(); }, commander: activeDeck.commander, deck: activeDeck, deckList: deckList, onClose: () => setSynergyOn(false), onAdd: (c) => addCard(c, false), onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onOpenSimilar: (c) => { setSimilarFor(c); haptic(); }, onOpenRandom: () => { setRandomOn(true); haptic(); } }),
         scoutFor && React.createElement(SynergyOverlay, { scout: true, focusRail: scoutFocus, commander: scoutFor, deck: activeDeck, deckList: deckList, onViewAll: (q, sort) => { setSearchInject({ q: q, t: Date.now(), sort: sort }); setScoutFor(null); setScoutFocus(null); setTab('search'); haptic(); }, onClose: () => { setScoutFor(null); setScoutFocus(null); }, onAdd: (c) => addCard(c, false), onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onOpenSimilar: (c) => { setSimilarFor(c); haptic(); }, onOpenRandom: () => { setRandomOn(true); haptic(); }, onBuild: buildFromCommander }),
         similarFor && React.createElement(SimilarOverlay, { source: similarFor, onClose: () => setSimilarFor(null), onOpenDetail: setDetailCard, onBuild: buildFromCommander }),
         randomOn && React.createElement(RandomOverlay, { onClose: () => setRandomOn(false), commanderCI: commanderCI, onOpenDetail: setDetailCard, onBuild: buildFromCommander, onSetCommander: (c) => { setCommander(c); setRandomOn(false); } }),
-        detailCard && (React.createElement(DetailOverlay, { card: detailCard, onClose: () => setDetailCard(null), onAdd: (c) => addCard(c, false), onSetCommander: (c) => { setCommander(c); }, onViewPrintings: (card) => setPrintingsCard(card), onSimilar: (c) => { setDetailCard(null); setSimilarFor(c); haptic(); }, onConsult: (c, railKey) => { setDetailCard(null); setScoutFor(c); setScoutFocus(railKey || null); haptic(); }, inDeck: activeDeck && activeDeck.cards[cardKey(detailCard)], isCommander: activeDeck && activeDeck.commander && cardKey(activeDeck.commander) === cardKey(detailCard), ciViolation: ciViolation, upgrade: detailCard && upgrades[detailCard.oracle_id] })),
+        detailCard && (React.createElement(DetailOverlay, { card: detailCard, onClose: () => setDetailCard(null), onAdd: (c) => addCard(c, false), onSetCommander: (c) => { setCommander(c); }, onViewPrintings: (card) => setPrintingsCard(card), onSimilar: (c) => { setDetailCard(null); setSimilarFor(c); haptic(); }, onConsult: (c, railKey) => { setDetailCard(null); setScoutFor(c); setScoutFocus(railKey || null); haptic(); }, onOpenSchool: (id) => { setDetailCard(null); setForgeIntent({ id: id, t: Date.now() }); setTab('search'); haptic(); }, inDeck: activeDeck && activeDeck.cards[cardKey(detailCard)], isCommander: activeDeck && activeDeck.commander && cardKey(activeDeck.commander) === cardKey(detailCard), ciViolation: ciViolation, upgrade: detailCard && upgrades[detailCard.oracle_id] })),
         printingsCard && (React.createElement(PrintingsSheet, { card: printingsCard, deck: activeDeck, onClose: () => setPrintingsCard(null), onChoose: choosePrinting })),
         basicsOn && activeDeck && React.createElement(BasicsSheet, { deck: activeDeck, commanderCI: commanderCI, onAddQty: addCardQty, onClose: () => setBasicsOn(false), showToast: showToast }),
         playtesting && React.createElement(PlaytestBoard, { deck: activeDeck, deckList: deckList, onClose: () => setPlaytesting(false) }),
@@ -5596,7 +5610,7 @@ function hugBite(c) {
     if (/\bmore to cast\b|cost[s]? \{?\d+\}?( or more)? more|unless [^.]{0,60}\bpays?\b|can'?t [^.]{0,40}unless [^.]{0,40}\bpay/i.test(o)) return 'taxes the table';
     return null;
 }
-function ArchetypeShelf({ onOpenDetail, onSearchAll }) {
+function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentConsumed }) {
     const [activeId, setActiveId] = useState('');
     const [spread, setSpread] = useState(null);
     const [dealing, setDealing] = useState(false);
@@ -5612,6 +5626,7 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll }) {
     const [multiIds, setMultiIds] = useState(null);
     const [interTotal, setInterTotal] = useState(0);
     const seq = useRef(0);
+    const rootRef = useRef(null); // v5.85: scroll the Forge into view on a dossier cross-link
     const qFor = (a, f) => f ? a.q + ' id<=' + f.toLowerCase() : a.q;
     const keyFor = (a, f) => a.id + (f ? '|' + f : '');
     async function fetchArchPage(q, page) {
@@ -5805,9 +5820,23 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll }) {
         if (pick)
             deal(pick);
     }
+    // v5.85: consume a Forge cross-link sent from a dossier School chip — deal
+    // that school and bring the Forge into view. Depends on [forgeIntent], so it
+    // also fires on mount when the intent was set before the landing (re)mounted
+    // (i.e. the dossier was opened from search results or the deck view).
+    useEffect(() => {
+        if (!forgeIntent || !forgeIntent.id) return;
+        const sch = FORGE_SCHOOLS.find(x => x.id === forgeIntent.id);
+        if (sch) {
+            if (multiIds !== null) setMultiIds(null); // leave Combine mode for a single-school deal
+            deal(sch);
+            if (rootRef.current && rootRef.current.scrollIntoView) rootRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        onForgeIntentConsumed && onForgeIntentConsumed();
+    }, [forgeIntent]);
     const active = FORGE_SCHOOLS.find(x => x.id === activeId);
     const total = active && ARCH_CACHE[keyFor(active, ci)] ? ARCH_CACHE[keyFor(active, ci)].total : 0;
-    return React.createElement('div', { className: 'arch-sec' },
+    return React.createElement('div', { className: 'arch-sec', ref: rootRef },
         React.createElement('div', { className: 'col-head' },
             React.createElement('span', { className: 'col-title' }, React.createElement('span', { className: 'cg' }, '⚒︎'), 'The Forge'),
             React.createElement('div', { className: 'arch-head-actions' },
@@ -5875,7 +5904,7 @@ const NEWS = [
 ];
 // (v4.49 housekeeping: removed dead SEEKER_PATHS const — the v4.47 Herald landing
 // no longer renders the seeker tiles; restore from the 2026-07-22 backup if revived.)
-function SearchScreen({ injectQuery, onInjectConsumed, activeDeck, onOpenDetail, onOpenPrintings, onAdd, ciViolation, commanderCI, upgrades, onOpenRandom, onGoDeck }) {
+function SearchScreen({ injectQuery, onInjectConsumed, forgeIntent, onForgeIntentConsumed, activeDeck, onOpenDetail, onOpenPrintings, onAdd, ciViolation, commanderCI, upgrades, onOpenRandom, onGoDeck }) {
     const [query, setQuery] = useState('');
     const [activeChip, setActiveChip] = useState('');
     const [cards, setCards] = useState([]);
@@ -6162,6 +6191,13 @@ function SearchScreen({ injectQuery, onInjectConsumed, activeDeck, onOpenDetail,
             onInjectConsumed && onInjectConsumed();
         }
     }, [injectQuery]);
+    // v5.85: a Forge cross-link (dossier School chip) needs the landing showing so
+    // the Forge is mounted to receive it. Clear any active search → status 'empty'
+    // → landing renders → ArchetypeShelf consumes forgeIntent and deals the school.
+    useEffect(() => {
+        if (!forgeIntent) return;
+        setQuery(''); setActiveChip(''); setAc([]); setStatus('empty');
+    }, [forgeIntent]);
     return (React.createElement("div", { className: "screen" },
         React.createElement("div", { className: "search-area" },
             React.createElement("div", { className: "search-row" },
@@ -6236,7 +6272,7 @@ function SearchScreen({ injectQuery, onInjectConsumed, activeDeck, onOpenDetail,
                         const cq = (ci ? 'id<=' + ci : 'id:c') + ' legal:commander ' + q;
                         return React.createElement("button", { key: l, className: "chip", onClick: () => { setQuery(cq); setActiveChip(''); setAc([]); haptic(); doSearch({ queryOverride: cq, chipOverride: '' }); } }, l);
                     }))),
-                React.createElement(ArchetypeShelf, { onOpenDetail: onOpenDetail, onSearchAll: (q) => { setQuery(q); setActiveChip(''); setAc([]); haptic(); doSearch({ queryOverride: q, chipOverride: '' }); } }),
+                React.createElement(ArchetypeShelf, { onOpenDetail: onOpenDetail, forgeIntent: forgeIntent, onForgeIntentConsumed: onForgeIntentConsumed, onSearchAll: (q) => { setQuery(q); setActiveChip(''); setAc([]); haptic(); doSearch({ queryOverride: q, chipOverride: '' }); } }),
                 // v5.25 S4 (makeover): the news surfaces read as ONE grouped Reading Room
                 // band beneath the brewing surfaces (hero / resume / Forge come first).
                 React.createElement("div", { className: "rr-head" },
@@ -7284,7 +7320,7 @@ function SynergyOverlay({ onViewAll, commander, deck, deckList, onClose, onAdd, 
 }
 
 // ============ DETAIL OVERLAY ============
-function DetailOverlay({ card, onClose, onAdd, onSetCommander, onViewPrintings, onSimilar, onConsult, inDeck, isCommander, ciViolation, upgrade }) {
+function DetailOverlay({ card, onClose, onAdd, onSetCommander, onViewPrintings, onSimilar, onConsult, onOpenSchool, inDeck, isCommander, ciViolation, upgrade }) {
     useEscape(onClose);
     const [faceIdx, setFaceIdx] = useState(0);
     // v5.45: roster-driven Forge Schools row (silent when absent/not loaded).
@@ -7454,9 +7490,10 @@ function DetailOverlay({ card, onClose, onAdd, onSetCommander, onViewPrintings, 
                 (schools && schools.length > 0) && React.createElement("div", { className: "info-row" },
                     React.createElement("div", { className: "info-label" }, "Schools"),
                     React.createElement("div", { className: "info-val" },
-                        React.createElement("div", { className: "school-chips" }, schools.slice(0, 4).map(sc => React.createElement("span", { key: sc.id, className: "school-chip", title: sc.d ? (sc.d.toLocaleString() + ' ' + sc.name + ' decks on EDHREC') : sc.name },
+                        React.createElement("div", { className: "school-chips" }, schools.slice(0, 4).map(sc => React.createElement(onOpenSchool ? "button" : "span", Object.assign({ key: sc.id, className: "school-chip" + (onOpenSchool ? " tappable" : ""), title: (sc.d ? (sc.d.toLocaleString() + ' ' + sc.name + ' decks on EDHREC — ') : '') + (onOpenSchool ? ('deal ' + sc.name + ' commanders in the Forge') : sc.name) }, onOpenSchool ? { type: "button", onClick: () => onOpenSchool(sc.id) } : {}),
                             sc.name,
-                            sc.d ? React.createElement("span", { className: "sc-n" }, sc.d >= 1000 ? (sc.d / 1000).toFixed(1).replace('.0', '') + 'k' : String(sc.d)) : null))))),
+                            sc.d ? React.createElement("span", { className: "sc-n" }, sc.d >= 1000 ? (sc.d / 1000).toFixed(1).replace('.0', '') + 'k' : String(sc.d)) : null,
+                            onOpenSchool ? React.createElement("span", { className: "sc-go", 'aria-hidden': true }, '↪') : null))))),
                 card.artist && React.createElement("div", { className: "info-row" },
                     React.createElement("div", { className: "info-label" }, "Artist"),
                     React.createElement("div", { className: "info-val" }, card.artist)),
