@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-24T23:15:18.652Z",
+  "updated": "2026-07-25T01:15:25.370Z",
   "deals": [
     {
       "t": "Collector Store - Secrets of Strixhaven Bundle - $38. free shipping over $100",
@@ -53,10 +53,24 @@
       "f": ""
     },
     {
+      "t": "[HOB] Bard's Company (via ScreenHub)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v5rw4f/hob_bards_company_via_screenhub/",
+      "s": 0,
+      "c": 1784936397,
+      "f": ""
+    },
+    {
       "t": "[HOC] Arwen, Weaver of Hope (Boxtoppers, Danny Schwartz)",
       "u": "https://www.reddit.com/r/magicTCG/comments/1v5i5i1/hoc_arwen_weaver_of_hope_boxtoppers_danny_schwartz/",
       "s": 0,
       "c": 1784914417,
+      "f": ""
+    },
+    {
+      "t": "[HOB] - Misty Mountains Raider - (PlayMagic BlueSky)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v5mflq/hob_misty_mountains_raider_playmagic_bluesky/",
+      "s": 0,
+      "c": 1784923600,
       "f": ""
     },
     {
@@ -71,20 +85,6 @@
       "u": "https://www.reddit.com/r/magicTCG/comments/1v5ei19/hob_dain_ironfoot_cantankerous_keepers_rvnxmango/",
       "s": 0,
       "c": 1784906642,
-      "f": ""
-    },
-    {
-      "t": "[HOB] - Misty Mountains Raider - (PlayMagic BlueSky)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v5mflq/hob_misty_mountains_raider_playmagic_bluesky/",
-      "s": 0,
-      "c": 1784923600,
-      "f": ""
-    },
-    {
-      "t": "[HOC] Flowering of the White Tree (Omar Rayyan via bsky)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v5cuk6/hoc_flowering_of_the_white_tree_omar_rayyan_via/",
-      "s": 0,
-      "c": 1784902996,
       "f": ""
     }
   ]
