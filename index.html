@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v5.87 · 2026-07-25">
+<meta name="oracle-build" content="v5.88 · 2026-07-25">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1514,7 +1514,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v5.87 \u00B7 2026-07-25', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v5.88 \u00B7 2026-07-25', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -1750,7 +1750,7 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
       if (aeEdge && aeEdge.closest && aeEdge.closest('.sheet-host') &&
           (aeEdge.tagName === 'INPUT' || aeEdge.tagName === 'TEXTAREA' || aeEdge.tagName === 'SELECT')) {
         setTimeout(function () {
-          if (document.activeElement === aeEdge) revealField(aeEdge); /* v5.87: clamped reveal, never above the top */
+          if (document.activeElement === aeEdge) nudgeIfHidden(aeEdge); /* v5.88: native-first; fallback only if iOS left it hidden */
         }, 60);
       }
     }
@@ -1786,15 +1786,19 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
     }
     return null;
   }
-  /* v5.87: ONE-SHOT CLAMPED reveal — replaces scrollIntoView({block:'center'}),
-     which over-scrolled fields low in the form ABOVE the visible top (owner v5.82
-     video: field top -103 / bot -57, clipped off the top, scroller sT 620).
-     Deterministic: scroll the field's OWN inner scroller so the field sits inside
-     the visible band [scrollerTop+margin … min(scrollerBottom, keyboardLine)-margin]
-     and — critically — NEVER above the top margin. Called exactly ONCE per reveal
-     (kb-open edge / focus), never on scroll or vv events, so it can't churn or fight
-     the user's scrolling. Touches the INNER scroller only; the window pin is separate. */
-  function revealField(el) {
+  /* v5.88 NATIVE-FIRST reveal. iOS natively scrolls the nearest scrollable ancestor
+     (the .sheet-body: overflow:auto, sized above the keyboard via --vvh) to bring a
+     focused input into view on EVERY focus. So we no longer manually scroll on focus:
+     the old revealField ran alongside iOS's native scroll and the two together read
+     as a jump when tapping DOWN through fields (owner v5.87 video: field climbing
+     327 to 373 to 448 on successive lower focuses). nudgeIfHidden is now a FALLBACK
+     ONLY: run once after focus settles, it corrects the field ONLY if iOS's native
+     scroll left it genuinely hidden (bottom under the keyboard line, or top clipped
+     above the visible top). If native revealed it (even near the edge) it NO-OPS, so
+     in the normal case there is no second motion. The clamp is preserved: it can
+     never lift the field's top above the top margin. Inner scroller only; the window
+     pin is separate. */
+  function nudgeIfHidden(el) {
     if (!el) return;
     var body = scrollParentOf(el);
     if (!body) return;
@@ -1802,43 +1806,24 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
     var b = body.getBoundingClientRect();
     var vvTop = vv ? vv.offsetTop : 0;
     var vvBottom = vv ? (vv.offsetTop + vv.height) : window.innerHeight;
-    var top = Math.max(b.top, vvTop) + 12;           /* visible top of the scroller + margin (always >= 12) */
-    var bottom = Math.min(b.bottom, vvBottom) - 12;  /* keyboard line (or scroller bottom) - margin */
-    var delta = 0;
-    if (f.top < top) delta = f.top - top;            /* field above the band → scroll content DOWN (negative) */
-    else if (f.bottom > bottom)                       /* field below the band → scroll UP, but clamp so */
-      delta = Math.min(f.bottom - bottom, f.top - top); /* the field top can NEVER pass above 'top' */
-    if (delta > 1 || delta < -1) body.scrollTop += delta;
-  }
-  /* v5.62 MODEL RESET: repairFocusScroll (the reactive, per-vv-event field
-     repositioner, evolved across v5.43–v5.60) is REMOVED. Five timing-patched
-     revisions each verified in simulation and then missed on real iOS, and its
-     re-entry vs the user's own scrolling produced the field-jerk/snap in the v5.60
-     video. The reveal is now a single native scrollIntoView on focus (see the
-     focusin handler); scroll position afterward is the user's, never the code's.
-     scrollParentOf is kept — the TEMP debug pill still uses it. */
-  /* TEMP v5.43 telemetry pill — READ-ONLY, interval-driven, cannot loop. */
-  var dbgEl = null;
-  setInterval(function () {
-    var ae = document.activeElement;
-    var inSheet = ae && ae.closest && ae.closest('.sheet-host') && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT');
-    if (!inSheet) { if (dbgEl) dbgEl.style.display = 'none'; return; }
-    if (!dbgEl) {
-      dbgEl = document.createElement('div');
-      dbgEl.id = 'kb-debug';
-      dbgEl.style.cssText = 'position:fixed;left:4px;z-index:9999;background:rgba(0,0,0,.85);color:#f0d580;font:10px/1.5 monospace;padding:5px 8px;border-radius:8px;pointer-events:none;white-space:pre;';
-      document.body.appendChild(dbgEl);
+    var visTop = Math.max(b.top, vvTop);
+    var visBottom = Math.min(b.bottom, vvBottom);
+    if (f.bottom > visBottom - 4) {                   /* still under the keyboard: nudge UP */
+      var delta = Math.ceil(f.bottom - (visBottom - 12));
+      delta = Math.min(delta, Math.max(0, f.top - (visTop + 12))); /* never lift the top above the top margin */
+      if (delta > 1) body.scrollTop += delta;
+    } else if (f.top < visTop + 4) {                  /* clipped above the top: nudge DOWN */
+      var d2 = Math.ceil((visTop + 12) - f.top);
+      if (d2 > 1) body.scrollTop -= d2;
     }
-    var body = scrollParentOf(ae);
-    var f = ae.getBoundingClientRect();
-    dbgEl.style.display = 'block';
-    dbgEl.style.top = ((vv ? vv.offsetTop : 0) + 4) + 'px';
-    dbgEl.textContent = 'TEMP kb-debug v5.87 baseH ' + baseH +
-      '\nvvH ' + Math.round(vv ? vv.height : -1) + '  vvTop ' + Math.round(vv ? vv.offsetTop : -1) + '  winH ' + window.innerHeight +
-      '\nscroller ' + (body ? ('sT ' + Math.round(body.scrollTop) + '  cH ' + body.clientHeight + '  sH ' + body.scrollHeight) : 'NONE') +
-      '\nfield top ' + Math.round(f.top) + '  bot ' + Math.round(f.bottom) + '  kbClass ' + document.documentElement.classList.contains('kb-open') +
-      '\nscrollY ' + Math.round(window.scrollY);
-  }, 700);
+  }
+  /* v5.62/v5.88 MODEL: repairFocusScroll (the reactive per-vv-event repositioner,
+     v5.43–v5.60) stays REMOVED; the once-per-focus manual reveal (v5.62–v5.87) is
+     now downgraded to NATIVE-FIRST + the nudgeIfHidden fallback above. scrollParentOf
+     is kept — nudgeIfHidden uses it.
+     v5.88: the TEMP kb-debug telemetry pill (v5.43) is REMOVED — the measurable bugs
+     (pan, blank band, off-top clip) are resolved on v5.87 telemetry and the owner
+     found the on-screen pill confusing. Nothing else referenced dbgEl. */
   document.addEventListener('focusout', function () {
     setTimeout(function () { window.scrollTo(0, 0); apply(); }, 50);
     setTimeout(apply, 350);
@@ -1858,7 +1843,7 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
           t.closest && t.closest('.sheet-host'))) return;
     if (!root.classList.contains('kb-open')) return; /* cold open → the apply() kb-open edge trigger handles it */
     setTimeout(function () {
-      if (document.activeElement === t) revealField(t); /* v5.87: clamped reveal, never above the top */
+      if (document.activeElement === t) nudgeIfHidden(t); /* v5.88: native-first; fallback only if iOS left it hidden */
     }, 80);
   });
   /* v5.50: in resizes-content mode the keyboard's arrival IS a window resize
@@ -4753,6 +4738,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v5.88', date: '2026-07-25', focus: 'ui', commander: null, summary: "Two changes to the iPhone Filters keyboard, both about smoothness. First, tapping down through fields (Creature Types → Oracle Text → Set & Legality) now scrolls the way the browser does it natively, in one smooth motion, instead of the app adding its own second scroll on top — that little extra hop after each tap is gone. The sheet is already sized to sit above the keyboard, so the browser's own 'bring the focused field into view' handles it; the app now only steps in as a safety net if a field is genuinely left under the keyboard, and otherwise stays out of the way. Second, the temporary on-screen debug readout (the little dark box that some of you saw pop up while typing in Filters) has been removed — it was a diagnostic aid for this long keyboard investigation and has served its purpose. The pieces confirmed working stay exactly as they are: the page stays pinned (no drift, no blank band) and the keyboard state is steady. Net: a calmer, more native feel when moving between filter fields, and no more debug box." },
     { build: 'v5.87', date: '2026-07-25', focus: 'ui', commander: null, summary: "Fixed the last iPhone Filters keyboard symptom: tapping a field low in a long filter list could throw that field up off the TOP of the sheet, out of sight. The page-pin fix from the previous build is confirmed working (the page no longer drifts and the blank band is gone), so that's untouched. The remaining problem was the reveal that brings your tapped field into view: it used the browser's 'center this element' scroll, which for a field far down the form scrolled too far and pushed it above the visible area. That's replaced with a precise, clamped reveal that places the field just below the top of the sheet and above the keyboard — and, by construction, it can never land the field above the top edge again. It still runs exactly once when you tap a field and then leaves your scrolling alone. Net: tap any field, high or low in the list, and it lands cleanly in view above the keyboard, never clipped. Debug pill stays on (now v5.87)." },
     { build: 'v5.86', date: '2026-07-25', focus: 'ui', commander: null, summary: "The Forge — the front door where you deal a spread of commanders to find your next deck — now labels every dealt commander by name. It deals full cards, but at the ~91-140px dealt size the card's own printed name is too small to read, so a fresh spread of eight unfamiliar Aristocrats or Reanimator commanders left you hovering each one (or squinting) to learn who you'd been dealt. Every dealt card now shows its full name in a two-line caption below the frame — the same card-scan treatment the recommendation rails and search grid already use (v5.81) — so you can scan a whole spread of discoveries at a glance and tap the one that catches your eye. The name area reserves a consistent two-line height, so the eight-across desktop and four-across phone grids stay perfectly aligned no matter how long a name runs, and the rank-popularity chip and color pips keep their strip just below it. Pure CSS plus one label; the loading skeletons reserve the same space so nothing jumps as the cards arrive." },
     { build: 'v5.85', date: '2026-07-25', focus: 'ui', commander: null, summary: "A commander's dossier now lets you jump straight from it into brewing an archetype it belongs to. The Schools row already told you which Forge schools the community files a commander under — tapping a commander from any tile shows you which other doors it also lives behind. Now those chips are doors you can open: tap 'Aristocrats 4.3k' on Teysa Karlov's dossier and the Forge deals a fresh spread of Aristocrats commanders, scrolled into view, so one glance at what a commander is becomes one tap into a whole school of others like it. Every chip carries a small ↪ and lights up on hover; it keeps whatever color filter the Forge had, and re-tapping a school (or Deal again) reshuffles as always. Works whether the dossier was opened from a tile, a search result, or your deck. Nothing else moved — the same gold-arcana pills, now clickable." },
