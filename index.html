@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v5.63 · 2026-07-25">
+<meta name="oracle-build" content="v5.66 · 2026-07-25">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -543,13 +543,18 @@
   .cov-card { border: 1px solid rgba(224,196,106,.28); border-radius: 18px; background: linear-gradient(180deg, rgba(224,196,106,.09), rgba(224,196,106,.03)); padding: 14px 15px 10px; margin: 0 0 18px; }
   .cov-title { display: flex; align-items: baseline; justify-content: space-between; font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: rgba(240,213,128,.85); margin-bottom: 11px; }
   .cov-title .cov-hint { font-weight: 620; letter-spacing: 0; text-transform: none; color: var(--muted); font-size: 11px; }
-  .cov-row { display: grid; grid-template-columns: 74px 1fr 44px; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .cov-row { display: grid; grid-template-columns: 74px 1fr 76px; align-items: center; gap: 10px; margin-bottom: 9px; }
   .cov-label { font-size: 12px; font-weight: 720; color: var(--text-dim); }
   .cov-bar { height: 9px; border-radius: 5px; background: rgba(255,255,255,.1); overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,.35); }
   .cov-fill { height: 100%; border-radius: 5px; background: var(--grad-gold); transition: width .5s cubic-bezier(.3,.9,.3,1); }
   .cov-fill.ok { background: linear-gradient(180deg, #7fd8a4, #4a9c6e); }
   .cov-num { font-size: 12px; font-weight: 780; color: var(--gold-bright); text-align: right; white-space: nowrap; }
   .cov-num.ok { color: #8fdcae; }
+  /* v5.64: critical-gap triage — packages under half their target read ember so the deck's biggest holes pop; the +N tag states the exact shortfall so the brewer never has to subtract. */
+  .cov-num.crit { color: #f4b98a; }
+  .cov-fill.crit { background: linear-gradient(180deg, #f0a878, #cf5f3a); }
+  .cov-need { margin-left: 5px; font-size: 10.5px; font-weight: 800; color: var(--gold-dim); }
+  .cov-num.crit .cov-need { color: #f4b98a; }
   .cov-row.fillable { cursor: pointer; border-radius: 8px; padding: 4px 8px; margin: 0 -8px 5px; box-shadow: inset 2px 0 0 rgba(240,213,128,.5); transition: background .15s ease, box-shadow .15s ease; }
   .cov-row.fillable:hover, .cov-row.fillable:focus-visible { background: rgba(224,196,106,.1); box-shadow: inset 2px 0 0 rgba(240,213,128,.95); outline: none; }
   .cov-go { color: var(--gold-dim); font-weight: 800; margin-left: 3px; }
@@ -1435,7 +1440,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v5.63 \u00B7 2026-07-25', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v5.66 \u00B7 2026-07-25', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -1582,6 +1587,7 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
   var raf = 0;
   var baseH = window.innerHeight; /* v5.47: last known no-keyboard layout height */
   var lastVvh = '', lastVvt = '', kbHoldT = 0; /* v5.53/v5.60: gate redundant --vvh/--vvt writes + hysteresis disarm timer */
+  var wasArmed = false; /* v5.65: previous kb-open state → detect the keyboard-OPEN edge */
 
   function apply() {
     raf = 0;
@@ -1648,6 +1654,31 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
     }
     var tpx = Math.round((vv && vv.offsetTop) || 0) + 'px';
     if (tpx !== lastVvt) { lastVvt = tpx; root.style.setProperty('--vvt', tpx); }
+    /* v5.65: reveal the focused Filters/Search field on the keyboard-OPEN edge.
+       The v5.62 model reveals a field once on focusin via a fixed 380ms timer;
+       on a slow keyboard open (or when iOS shows/hides the predictive bar) that
+       single timer can fire BEFORE --vvh settles, leaving the field low or under
+       the keyboard — and a field iOS still considers hidden makes it pan the page
+       on every keystroke (the reported "typing scrolls the content away / blanks
+       the screen"). Tie ONE extra native reveal to the actual kb-open transition
+       (false→true), fired AFTER --vvh was just written above, so the field lands
+       centered in the SETTLED band and iOS has nothing left to chase. Edge-gated
+       (fires once per open, never repeats while typing) and native scrollIntoView
+       only — so it cannot churn or fight the user's own scrolling, fully in line
+       with the v5.62 "size + one-shot native reveal, hands-off after" model. */
+    if (armed && !wasArmed) {
+      var aeEdge = document.activeElement;
+      if (aeEdge && aeEdge.closest && aeEdge.closest('.sheet-host') &&
+          (aeEdge.tagName === 'INPUT' || aeEdge.tagName === 'TEXTAREA' || aeEdge.tagName === 'SELECT')) {
+        setTimeout(function () {
+          if (document.activeElement === aeEdge && typeof aeEdge.scrollIntoView === 'function') {
+            try { aeEdge.scrollIntoView({ block: 'center', behavior: 'auto' }); }
+            catch (e) { aeEdge.scrollIntoView(); }
+          }
+        }, 60);
+      }
+    }
+    wasArmed = armed;
   }
   function sched() { if (!raf) raf = requestAnimationFrame(apply); }
   /* v5.43 iOS keyboard-focus repair, second attempt — REAL-DEVICE feedback:
@@ -1702,7 +1733,7 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
     var f = ae.getBoundingClientRect();
     dbgEl.style.display = 'block';
     dbgEl.style.top = ((vv ? vv.offsetTop : 0) + 4) + 'px';
-    dbgEl.textContent = 'TEMP kb-debug v5.63 baseH ' + baseH +
+    dbgEl.textContent = 'TEMP kb-debug v5.66 baseH ' + baseH +
       '\nvvH ' + Math.round(vv ? vv.height : -1) + '  vvTop ' + Math.round(vv ? vv.offsetTop : -1) + '  winH ' + window.innerHeight +
       '\nscroller ' + (body ? ('sT ' + Math.round(body.scrollTop) + '  cH ' + body.clientHeight + '  sH ' + body.scrollHeight) : 'NONE') +
       '\nfield top ' + Math.round(f.top) + '  bot ' + Math.round(f.bottom) + '  kbClass ' + document.documentElement.classList.contains('kb-open') +
@@ -1714,24 +1745,24 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
   });
   document.addEventListener('focusin', function (e) {
     setTimeout(sched, 50); /* size the sheet to the keyboard once it opens */
-    /* v5.62 MODEL: reveal the focused field EXACTLY ONCE, then hands-off. Native
-       scrollIntoView(block:'center') on the field scrolls its own scroller (the
-       .sheet-body, which is sized to sit ABOVE the keyboard) so the field lands
-       centered in the visible band — no custom math, no re-runs on scroll/vv, so
-       nothing can fight the user's scrolling or iOS. Delay adapts: if the keyboard
-       is already up (moving between fields) the sheet is already sized, so reveal
-       quickly; otherwise wait for the keyboard to open + the sheet to size. Scoped
-       to sheet fields; skipped if focus moved on. */
+    /* v5.66 CONSOLIDATION (one reveal per open, no two mechanisms fighting):
+       the COLD-open reveal is now owned by the keyboard-OPEN edge trigger in
+       apply() (fires after --vvh settles — strictly more reliable than a fixed
+       timer, which is why v5.62's 380ms cold path is REMOVED; keeping both fired
+       TWO scrollIntoViews on a single fresh focus). This handler now covers ONLY
+       the case the edge can't see: moving between fields while the keyboard is
+       ALREADY up (kb-open stays true, so there is no false→true edge). One native
+       scrollIntoView, hands-off after — same model as v5.62. */
     var t = e && e.target;
     if (!(t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT') &&
           t.closest && t.closest('.sheet-host'))) return;
-    var alreadyUp = root.classList.contains('kb-open');
+    if (!root.classList.contains('kb-open')) return; /* cold open → the apply() kb-open edge trigger handles it */
     setTimeout(function () {
       if (document.activeElement === t && typeof t.scrollIntoView === 'function') {
         try { t.scrollIntoView({ block: 'center', behavior: 'auto' }); }
         catch (err) { t.scrollIntoView(); }
       }
-    }, alreadyUp ? 80 : 380);
+    }, 80);
   });
   /* v5.50: in resizes-content mode the keyboard's arrival IS a window resize
      (not a vv-height delta), so give the focused field one extra debounced
@@ -4161,6 +4192,8 @@ function packageFillQuery(commander, key) {
 // Report. Below-target rows with a commander become tappable gap-fillers.
 function covRowEl(p, n, ok, commander, onFill) {
     const pct = Math.min(100, Math.round(n / (p.target * 1.25) * 100));
+    const gap = Math.max(0, p.target - n);
+    const crit = !ok && n < p.target * 0.5;
     const cq = (!ok && commander && onFill) ? packageFillQuery(commander, p.key) : null;
     const fillable = !!cq;
     const short = commander ? (commander.name || '').split(',')[0].split(' //')[0] : '';
@@ -4173,14 +4206,15 @@ function covRowEl(p, n, ok, commander, onFill) {
         role: fillable ? 'button' : undefined,
         tabIndex: fillable ? 0 : undefined,
         title: fillable ? label : undefined,
-        "aria-label": fillable ? (label + ' — ' + n + ' of ' + p.target + ', below target') : undefined
+        "aria-label": fillable ? (label + ' — ' + n + ' of ' + p.target + ', ' + gap + ' below target') : undefined
     },
         React.createElement("span", { className: "cov-label" }, p.label),
         React.createElement("div", { className: "cov-bar" },
-            React.createElement("div", { className: 'cov-fill' + (ok ? ' ok' : ''), style: { width: pct + '%' } }),
+            React.createElement("div", { className: 'cov-fill' + (ok ? ' ok' : (crit ? ' crit' : '')), style: { width: pct + '%' } }),
             React.createElement("span", { className: "cov-tick" })),
-        React.createElement("span", { className: 'cov-num' + (ok ? ' ok' : '') },
+        React.createElement("span", { className: 'cov-num' + (ok ? ' ok' : (crit ? ' crit' : '')) },
             n + '/' + p.target,
+            !ok && gap > 0 && React.createElement("span", { className: "cov-need" }, '+' + gap),
             fillable && React.createElement("span", { className: "cov-go", "aria-hidden": "true" }, "›")));
 }
 
@@ -4367,6 +4401,9 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v5.66', date: '2026-07-25', focus: 'ui', commander: null, summary: "Consolidated the iPhone Filters keyboard reveal down to a single mechanism. A prior change had added a second way to bring the focused field into view — tied to the moment the keyboard actually finishes opening, which is genuinely more reliable than the old fixed timer — but it was left running alongside the timer, so on a fresh tap BOTH fired and could scroll the field twice. Now there is exactly one reveal per keyboard open: the keyboard-open edge handles tapping a field with the keyboard closed (it waits for the sheet to finish sizing, so it can't fire too early), and a lightweight focus handler covers only the other case it can't see — moving between fields while the keyboard is already up. No two mechanisms overlap, nothing fires during typing, and the view is still hands-off afterward so you can scroll the form freely. The confirmed-good pieces are untouched: the page stays pinned (no blank band) and the keyboard state no longer flickers. Debug pill stays on (now v5.66)." },
+    { build: 'v5.65', date: '2026-07-25', focus: 'ui', commander: null, summary: "One more strengthening of the iPhone Filters keyboard — this time targeting the exact moment things go wrong. The v5.62 approach is the right one (size the sheet to the space above the keyboard, then reveal the field you tapped exactly once, then hands-off), but it revealed the field on a fixed timer after you tap, and on a slow keyboard open that timer could fire before the sheet had finished resizing — leaving the field sitting low or under the keyboard. And once iOS thinks the field you're typing in is hidden, it pans the whole page on every keystroke to chase the cursor, which is what you saw as the content scrolling away / the screen blanking while you type. The reveal is now also tied to the actual moment the keyboard finishes opening: the instant the sheet resizes to the settled height, the focused Filters/Search field is centred in the visible band a single time, so iOS has nothing left to chase and stops panning on each keystroke. It fires once per keyboard-open and never again while you type, uses the browser's own native scroll-into-view, and touches only the sheet's inner scroller — so it can't churn, loop, or fight your own scrolling, exactly like the v5.62 model it extends. A code-reasoned fix (a real phone is needed to confirm on-device); the debug pill stays on, now labelled v5.65, for one more confirming screenshot." },
+    { build: 'v5.64', date: '2026-07-25', focus: 'ui', commander: null, summary: "The Deck Doctor now reads as a triage list, not just five bars. Every package you're short on — Lands, Ramp, Card draw, Removal, Board wipes — states the exact shortfall as a '+N' beside the count, so '3/8 +5' means add five more and you never have to do the subtraction mid-brew. And any package sitting below HALF its target now glows ember instead of gold, so the deck's real holes jump out: on a half-built list, Removal at 3/8 and Board wipes at 1/3 read ember and demand attention, while a nearly-there package like Card draw at 8/10 stays a calm gold and a met one like Ramp (13/10) stays green. Nothing else changed — the rows are still tap-to-fill (tapping a short bar drops you into Add Cards on the best in-identity candidates for that exact need), and the readout appears in both the deck's Stats tab and the Scouting Report. A purely visual, brew-assist refinement to the surface where you decide what to add next: exact gaps plus at-a-glance severity, verified at desktop and a 360px phone width with no clipping." },
     { build: 'v5.63', date: '2026-07-25', focus: 'ui', commander: null, summary: "The Workshop now fills the whole window on desktop instead of opening as a small floating panel over a dimmed app. The Workshop and its read-only twin, the Scouting Report, are where you actually read a commander's synergy rails and assemble a deck — the heart of the app — yet on a monitor they popped up as a centered card floating in the middle of a greyed-out page, which felt cramped and jarring and squeezed the rails into a narrow strip. Opening one now feels like stepping into a dedicated view (think VS Code or Steam): it takes the full viewport, no dim backdrop, no rounded floating box. To keep it from smearing wall-to-wall on a wide screen, the toolbar and the rail grid are held to a comfortable centered column (up to 1600px), so the recommendation rails stay dense and legible and the page frames them cleanly. On a 1440px laptop it's effectively edge-to-edge; on a big monitor the content sits centered with generous margins. The card detail, Similar-commanders, and Random overlays keep their centered-panel look, and the iPhone experience is completely unchanged — this is a desktop-only refinement to the surface a brewer spends the most time in." },
     { build: 'v5.62', date: '2026-07-25', focus: 'ui', commander: null, summary: "Rewrote how the iPhone Filters keyboard is handled — an approach change, not another patch. The last several fixes were timing tricks that each looked right but kept missing on a real phone; the latest video showed the field you're typing in flying off-screen and snapping back while scrolling, because the code was constantly re-scrolling the view on every viewport event and fighting both you and iOS. That whole reactive layer is gone. Now it's simple and robust by design: the sheet is sized to the space above the keyboard so its contents scroll naturally, the field is brought into view exactly once when you tap it (using the browser's native scroll-into-view), and after that the scroll position is entirely yours — nothing yanks it back. The two things that were confirmed working on-device are kept untouched: the page no longer scrolls down / flashes a blank band (the window stays pinned), and the keyboard state no longer flickers (the hysteresis holds). Net: tap a field and it rises into view once, then you can scroll the filter form freely with no jerk or snap. Fewer moving parts overall. The debug pill stays on (now v5.62) for one more confirming screenshot." },
     { build: 'v5.61', date: '2026-07-25', focus: 'logic', commander: 'The Necrobloom', summary: "The Necrobloom — a recommendation-quality re-audit against EDHREC caught a rail that was quietly recommending the wrong deck. The Necrobloom floods the board with 0/1 Plant tokens on every land drop, upgrading to 2/2 Zombies once he controls seven differently-named lands — but because Zombie is a real creature type with lords in black, his go-wide 'Token Typal Payoffs' rail was serving up twelve Zombie tribal lords (Death Baron, Zombie Master, Ratadrabik of Urborg, Gisa the Hellraiser), the exact Zombie-tribal trap his own study notes warn against. Those landfall tokens are incidental swarm bodies, not a tribe, so the typal rail is now suppressed for any token minted by a landfall or land-enters trigger — the real payoff is going wide (token doublers, aristocrat drains like Corpse Knight and Mirkwood Bats, a Craterhoof or Field of the Dead finish), never a creature type. The fix is family-wide and was checked card-by-card on Scryfall: it also clears three fringe Elemental cards off Omnath, Locus of Rage and leaves genuine token-tribal commanders — Wilhelt, Gisa and Geralf, Krenko — with their real lords untouched. His other rails audited clean against EDHREC's top synergy cards: Extra Land Drops, Landfall Payoffs, Land Recursion & Replay, and Token Doublers all lead with the cards strong Necrobloom decks actually run." },
