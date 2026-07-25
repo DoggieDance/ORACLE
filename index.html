@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v5.85 · 2026-07-25">
+<meta name="oracle-build" content="v5.87 · 2026-07-25">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1394,6 +1394,13 @@
   /* v5.20 caption strip under each dealt card — carries what the old corner badges
      carried (v4.67 colors, v4.69 rank/gem, v5.09 I-Bite), OFF the card frame so the
      name / mana cost / type / P&T stay scannable. Static paint, no blur. */
+  /* v5.86: readable commander-name caption on Forge dealt cards. The discovery
+     front door deals FULL cards, but at the ~91-140px dealt width the printed name
+     is too small to scan — so, exactly like the rails/search grid got in v5.81,
+     show the name in a 2-line-clamped caption below the frame. min-height reserves
+     two lines so the 8-/4-col spread grid stays aligned regardless of name length. */
+  .arch-name { margin-top: 5px; font-size: 10.5px; font-weight: 720; line-height: 1.22; color: var(--text); text-align: left; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; min-height: 2.44em; }
+  @media (max-width: 639px) { .arch-name { font-size: 10px; margin-top: 4px; } }
   .arch-strip { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-top: 4px; min-height: 15px; padding: 0 1px; pointer-events: none; }
   .arch-strip-left { display: inline-flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; }
   .as-rank { display: inline-flex; align-items: center; font-size: 9px; font-weight: 800; letter-spacing: .02em; color: var(--gold-dim); white-space: nowrap; }
@@ -1507,7 +1514,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v5.85 \u00B7 2026-07-25', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v5.87 \u00B7 2026-07-25', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -1743,10 +1750,7 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
       if (aeEdge && aeEdge.closest && aeEdge.closest('.sheet-host') &&
           (aeEdge.tagName === 'INPUT' || aeEdge.tagName === 'TEXTAREA' || aeEdge.tagName === 'SELECT')) {
         setTimeout(function () {
-          if (document.activeElement === aeEdge && typeof aeEdge.scrollIntoView === 'function') {
-            try { aeEdge.scrollIntoView({ block: 'center', behavior: 'auto' }); }
-            catch (e) { aeEdge.scrollIntoView(); }
-          }
+          if (document.activeElement === aeEdge) revealField(aeEdge); /* v5.87: clamped reveal, never above the top */
         }, 60);
       }
     }
@@ -1782,6 +1786,30 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
     }
     return null;
   }
+  /* v5.87: ONE-SHOT CLAMPED reveal — replaces scrollIntoView({block:'center'}),
+     which over-scrolled fields low in the form ABOVE the visible top (owner v5.82
+     video: field top -103 / bot -57, clipped off the top, scroller sT 620).
+     Deterministic: scroll the field's OWN inner scroller so the field sits inside
+     the visible band [scrollerTop+margin … min(scrollerBottom, keyboardLine)-margin]
+     and — critically — NEVER above the top margin. Called exactly ONCE per reveal
+     (kb-open edge / focus), never on scroll or vv events, so it can't churn or fight
+     the user's scrolling. Touches the INNER scroller only; the window pin is separate. */
+  function revealField(el) {
+    if (!el) return;
+    var body = scrollParentOf(el);
+    if (!body) return;
+    var f = el.getBoundingClientRect();
+    var b = body.getBoundingClientRect();
+    var vvTop = vv ? vv.offsetTop : 0;
+    var vvBottom = vv ? (vv.offsetTop + vv.height) : window.innerHeight;
+    var top = Math.max(b.top, vvTop) + 12;           /* visible top of the scroller + margin (always >= 12) */
+    var bottom = Math.min(b.bottom, vvBottom) - 12;  /* keyboard line (or scroller bottom) - margin */
+    var delta = 0;
+    if (f.top < top) delta = f.top - top;            /* field above the band → scroll content DOWN (negative) */
+    else if (f.bottom > bottom)                       /* field below the band → scroll UP, but clamp so */
+      delta = Math.min(f.bottom - bottom, f.top - top); /* the field top can NEVER pass above 'top' */
+    if (delta > 1 || delta < -1) body.scrollTop += delta;
+  }
   /* v5.62 MODEL RESET: repairFocusScroll (the reactive, per-vv-event field
      repositioner, evolved across v5.43–v5.60) is REMOVED. Five timing-patched
      revisions each verified in simulation and then missed on real iOS, and its
@@ -1805,7 +1833,7 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
     var f = ae.getBoundingClientRect();
     dbgEl.style.display = 'block';
     dbgEl.style.top = ((vv ? vv.offsetTop : 0) + 4) + 'px';
-    dbgEl.textContent = 'TEMP kb-debug v5.82 baseH ' + baseH +
+    dbgEl.textContent = 'TEMP kb-debug v5.87 baseH ' + baseH +
       '\nvvH ' + Math.round(vv ? vv.height : -1) + '  vvTop ' + Math.round(vv ? vv.offsetTop : -1) + '  winH ' + window.innerHeight +
       '\nscroller ' + (body ? ('sT ' + Math.round(body.scrollTop) + '  cH ' + body.clientHeight + '  sH ' + body.scrollHeight) : 'NONE') +
       '\nfield top ' + Math.round(f.top) + '  bot ' + Math.round(f.bottom) + '  kbClass ' + document.documentElement.classList.contains('kb-open') +
@@ -1830,10 +1858,7 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
           t.closest && t.closest('.sheet-host'))) return;
     if (!root.classList.contains('kb-open')) return; /* cold open → the apply() kb-open edge trigger handles it */
     setTimeout(function () {
-      if (document.activeElement === t && typeof t.scrollIntoView === 'function') {
-        try { t.scrollIntoView({ block: 'center', behavior: 'auto' }); }
-        catch (err) { t.scrollIntoView(); }
-      }
+      if (document.activeElement === t) revealField(t); /* v5.87: clamped reveal, never above the top */
     }, 80);
   });
   /* v5.50: in resizes-content mode the keyboard's arrival IS a window resize
@@ -4728,6 +4753,8 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v5.87', date: '2026-07-25', focus: 'ui', commander: null, summary: "Fixed the last iPhone Filters keyboard symptom: tapping a field low in a long filter list could throw that field up off the TOP of the sheet, out of sight. The page-pin fix from the previous build is confirmed working (the page no longer drifts and the blank band is gone), so that's untouched. The remaining problem was the reveal that brings your tapped field into view: it used the browser's 'center this element' scroll, which for a field far down the form scrolled too far and pushed it above the visible area. That's replaced with a precise, clamped reveal that places the field just below the top of the sheet and above the keyboard — and, by construction, it can never land the field above the top edge again. It still runs exactly once when you tap a field and then leaves your scrolling alone. Net: tap any field, high or low in the list, and it lands cleanly in view above the keyboard, never clipped. Debug pill stays on (now v5.87)." },
+    { build: 'v5.86', date: '2026-07-25', focus: 'ui', commander: null, summary: "The Forge — the front door where you deal a spread of commanders to find your next deck — now labels every dealt commander by name. It deals full cards, but at the ~91-140px dealt size the card's own printed name is too small to read, so a fresh spread of eight unfamiliar Aristocrats or Reanimator commanders left you hovering each one (or squinting) to learn who you'd been dealt. Every dealt card now shows its full name in a two-line caption below the frame — the same card-scan treatment the recommendation rails and search grid already use (v5.81) — so you can scan a whole spread of discoveries at a glance and tap the one that catches your eye. The name area reserves a consistent two-line height, so the eight-across desktop and four-across phone grids stay perfectly aligned no matter how long a name runs, and the rank-popularity chip and color pips keep their strip just below it. Pure CSS plus one label; the loading skeletons reserve the same space so nothing jumps as the cards arrive." },
     { build: 'v5.85', date: '2026-07-25', focus: 'ui', commander: null, summary: "A commander's dossier now lets you jump straight from it into brewing an archetype it belongs to. The Schools row already told you which Forge schools the community files a commander under — tapping a commander from any tile shows you which other doors it also lives behind. Now those chips are doors you can open: tap 'Aristocrats 4.3k' on Teysa Karlov's dossier and the Forge deals a fresh spread of Aristocrats commanders, scrolled into view, so one glance at what a commander is becomes one tap into a whole school of others like it. Every chip carries a small ↪ and lights up on hover; it keeps whatever color filter the Forge had, and re-tapping a school (or Deal again) reshuffles as always. Works whether the dossier was opened from a tile, a search result, or your deck. Nothing else moved — the same gold-arcana pills, now clickable." },
     { build: 'v5.84', date: '2026-07-25', focus: 'logic', commander: 'Selvala, Heart of the Wilds', summary: "Selvala, Heart of the Wilds now brews as the explosive mana engine she is. Her only trigger a keyword matcher could read was 'whenever another creature enters', so the app dressed her as a go-wide/blink token deck — exactly backwards, since 1/1 tokens neither raise her power nor win her draw. Because her tap adds mana equal to your greatest creature's power, she now leads with cheap high-power bodies that fuel the mana and fire her draw, X-spell mana sinks to dump the flood (Finale of Devastation, Green Sun's Zenith, Genesis Wave, Walking Ballista, Goldvein Hydra), and untappers to tap her twice. The old go-wide and blink rails are gone." },
     { build: 'v5.83', date: '2026-07-25', focus: 'ui', commander: null, summary: "The EDHREC rank chip on every dealt Forge commander (and in search results and the Workshop rails) now reads as a popularity GRADIENT instead of a flat number. Format staples — the well-charted anchors of an archetype, EDHREC rank 1000 or better — glow warm gold; hidden gems — the underplayed commanders past rank 15,000 that this app exists to help you discover — keep their arcane purple and pick up a faint halo; everything in between stays calm. So when the Forge deals you eight commanders for a school, your eye instantly sorts the known pillars from the brew-waiting-to-happen discoveries without reading a single number. Hover any card (or its chip) for the exact rank and its full tier — Format staple, Heavily played, Popular, Established, or Hidden gem — and screen readers now announce that tier too. Pure text color and shadow: no layout shift, no new data, smooth at every width." },
@@ -5860,7 +5887,7 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
         err && React.createElement('div', { className: 'arch-err' }, err),
         active && !err && !dealing && spread && spread.length === 0 && React.createElement('div', { className: 'arch-err' }, (multiIds !== null && multiIds.length > 1) ? ('No commanders belong to all ' + multiIds.length + ' selected schools' + (ci ? ' within those colors' : '') + ' — drop one school.') : ('No ' + active.name + ' commanders fit inside those colors — loosen a color.')),
         active && !err && (dealing || (spread && spread.length > 0)) && React.createElement('div', { className: 'arch-spread', 'data-arch': active.id }, (!spread || spread.length === 0)
-            ? Array.from({ length: 8 }).map((_, i) => React.createElement('div', { key: 'sk' + i, className: 'arch-card', style: { '--i': i } }, React.createElement('div', { className: 'arch-imgwrap' }, React.createElement('div', { className: 'img-skeleton' }))))
+            ? Array.from({ length: 8 }).map((_, i) => React.createElement('div', { key: 'sk' + i, className: 'arch-card', style: { '--i': i } }, React.createElement('div', { className: 'arch-imgwrap' }, React.createElement('div', { className: 'img-skeleton' })), React.createElement('div', { className: 'arch-name', 'aria-hidden': true }, ' ')))
             : spread.map((c, i) => {
                 const img = cardImage(c, 'normal');
                 // v4.68 perf: dealt tiles render ~137px wide but 'normal' is 488px — a
@@ -5874,6 +5901,12 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
                 const bite = active && active.id === 'grouphug' ? hugBite(c) : null;
                 return React.createElement('div', { key: c.id, className: 'arch-card', style: { '--i': i }, role: 'button', tabIndex: 0, 'aria-label': c.name + (cid.length ? ' (' + cid.join('') + ')' : ' (colorless)') + (rc ? ' · EDHREC #' + Number(c.edhrec_rank).toLocaleString() + ' · ' + rc.tier : '') + (bite ? ' · group hug with a bite: ' + bite : ''), title: c.name + (rc ? ' · EDHREC #' + Number(c.edhrec_rank).toLocaleString() + ' · ' + rc.tier : ''), onClick: () => onOpenDetail(c), onKeyDown: (e) => { if (e.key === 'Enter') onOpenDetail(c); } },
                     React.createElement('div', { className: 'arch-imgwrap' }, img ? React.createElement(CardImg, { src: img, srcSet: imgSmall ? (imgSmall + ' 146w, ' + img + ' 488w') : undefined, sizes: '(min-width:900px) 140px, (min-width:640px) 23vw, 24vw', alt: c.name }) : React.createElement('div', { className: 'card-img-placeholder' }, React.createElement('div', { className: 'pn' }, c.name))),
+                    // v5.86: explicit commander-name caption. The dealt full card's own
+                    // printed name is too small to scan at the 91-140px dealt width, so
+                    // surface it in a 2-line-clamped label below the frame — card-scan
+                    // parity with the rails/search grid (v5.81). aria-hidden: the card's
+                    // own aria-label already announces the full name + tier.
+                    React.createElement('div', { className: 'arch-name', 'aria-hidden': true }, c.name),
                     // v5.20 card-scan integrity: rank / bite / colors moved OFF the card
                     // frame into a caption strip below (name + mana cost stay visible).
                     React.createElement('div', { className: 'arch-strip', 'aria-hidden': true },
