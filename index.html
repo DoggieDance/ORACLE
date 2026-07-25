@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v5.51 · 2026-07-24">
+<meta name="oracle-build" content="v5.52 · 2026-07-24">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1400,7 +1400,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v5.16 \u00B7 2026-07-23', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v5.52 \u00B7 2026-07-24', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -1666,7 +1666,7 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
     var f = ae.getBoundingClientRect();
     dbgEl.style.display = 'block';
     dbgEl.style.top = ((vv ? vv.offsetTop : 0) + 4) + 'px';
-    dbgEl.textContent = 'TEMP kb-debug v5.47 baseH ' + baseH +
+    dbgEl.textContent = 'TEMP kb-debug v5.52 baseH ' + baseH +
       '\nvvH ' + Math.round(vv ? vv.height : -1) + '  vvTop ' + Math.round(vv ? vv.offsetTop : -1) + '  winH ' + window.innerHeight +
       '\nscroller ' + (body ? ('sT ' + Math.round(body.scrollTop) + '  cH ' + body.clientHeight + '  sH ' + body.scrollHeight) : 'NONE') +
       '\nfield top ' + Math.round(f.top) + '  bot ' + Math.round(f.bottom) + '  kbClass ' + document.documentElement.classList.contains('kb-open') +
@@ -1695,12 +1695,130 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
     clearTimeout(rzT);
     rzT = setTimeout(function () { repairFocusScroll(false); }, 250);
   });
+  /* v5.52 FIX (root cause #2): the viewport engine had NO visualViewport
+     listener, so once the on-screen keyboard finished opening in OVERLAY mode
+     nothing re-ran apply(). Owner telemetry proves this device is overlay-mode
+     (winH 873 == baseH with the keyboard up, vv 519 — the LAYOUT viewport does
+     not resize, so the v5.50 window 'resize' handler never fires; visualViewport
+     is the ONLY signal the keyboard opened). The consequences were exactly the
+     reported bug: --vvh stayed at the no-keyboard height (873) so the sheet-host
+     ran UNDER the keyboard and its scroller's bottom (with the focused field)
+     sat below the visible viewport; and kb-open never armed, so repairFocusScroll's
+     scrollTo(0,0) guard never undid iOS's window pan (the blank band).
+     Bind sched (→apply) to visualViewport resize/scroll so --vvh/--vvt and
+     kb-open track the visible viewport live. apply() NEVER scrolls while a field
+     is focused (its scrollTo is gated on !editing) and only sets CSS vars +
+     toggles a class, so it cannot thrash — the v5.43 freeze came from running the
+     REPAIR on every vv event, not apply. Also give the focused field a debounced
+     discrete reveal on vv resize (window 'resize' won't fire in overlay mode);
+     debounce + repairFocusScroll's re-entrancy latch and 2px idempotence guard
+     keep it loop-proof. */
+  if (vv) {
+    var vvRepairT = 0;
+    var onVV = function () {
+      sched();
+      clearTimeout(vvRepairT);
+      vvRepairT = setTimeout(function () {
+        var ae = document.activeElement;
+        if (root.classList.contains('kb-open') && ae &&
+            (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT'))
+          repairFocusScroll(false);
+      }, 220);
+    };
+    vv.addEventListener('resize', onVV);
+    vv.addEventListener('scroll', onVV);
+  }
+  apply(); /* set correct initial --vvh/--vvt/kb-open at startup */
   /* Belt & suspenders: never let a residual document scroll persist. */
   window.addEventListener('scroll', function () {
     var ae = document.activeElement;
     var editing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA');
     if (!editing && window.scrollY) window.scrollTo(0, 0);
   }, { passive: true });
+}());
+</script>
+<script>
+/* ============================================================
+   v5.52 Auto-update guard (root cause #1: stale PWA cache).
+   There is NO service worker; on iOS the Home-Screen (standalone)
+   app caches this index.html aggressively over HTTP, so a user can
+   keep running a build that predates a shipped fix (owner was stuck
+   on v5.48 while the keyboard fix landed in v5.50). This checks the
+   LIVE index.html's oracle-build meta (cache:'no-store') on load and
+   whenever the app is resumed from the background, compares it to the
+   RUNNING build, and if live is strictly NEWER shows a small,
+   non-intrusive "New version available — tap to reload" pill.
+   Tapping reloads with a cache-busting query param (defeats the HTTP
+   cache that a plain reload can't on iOS standalone).
+   LOOP-PROOF BY CONSTRUCTION: the reload is user-initiated only (never
+   automatic), and after a fresh reload the running build == live so the
+   pill never re-shows. Checks are throttled to once/60s and fail silent
+   when offline. Same-origin fetch, so no CORS.
+   ============================================================ */
+(function () {
+  var metaEl = document.querySelector('meta[name="oracle-build"]');
+  function buildNum(s) {
+    /* "v5.51 · 2026-07-24" -> 5051 (major*1000 + minor), comparable */
+    var m = /v(\d+)\.(\d+)/.exec(s || '');
+    return m ? (parseInt(m[1], 10) * 1000 + parseInt(m[2], 10)) : -1;
+  }
+  var runningN = buildNum(metaEl && metaEl.content);
+  if (runningN < 0) return; /* can't read our own build → do nothing */
+  var pill = null, prompted = false, lastCheck = 0, checking = false;
+
+  function reloadFresh() {
+    try {
+      var base = location.href.replace(/[?#].*$/, '');
+      location.replace(base + '?u=' + Date.now());
+    } catch (e) { location.reload(); }
+  }
+  function showPill() {
+    if (prompted || !document.body) return;
+    prompted = true;
+    pill = document.createElement('div');
+    pill.id = 'oracle-update';
+    pill.setAttribute('role', 'status');
+    pill.style.cssText = 'position:fixed;left:50%;transform:translateX(-50%);' +
+      'bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:9998;' +
+      'display:flex;align-items:center;gap:12px;max-width:calc(100vw - 24px);' +
+      'padding:11px 8px 11px 15px;border-radius:14px;background:rgba(16,17,26,.96);' +
+      'border:1px solid rgba(224,196,106,.55);box-shadow:0 10px 34px rgba(0,0,0,.5);' +
+      'font:600 13px/1.3 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;' +
+      '-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);animation:fadeIn .25s;';
+    var msg = document.createElement('button');
+    msg.type = 'button';
+    msg.style.cssText = 'all:unset;cursor:pointer;color:#f0d580;font:inherit;';
+    msg.textContent = 'New version available — tap to reload';
+    msg.addEventListener('click', reloadFresh);
+    var x = document.createElement('button');
+    x.type = 'button';
+    x.setAttribute('aria-label', 'Dismiss update notice');
+    x.style.cssText = 'all:unset;cursor:pointer;color:#9a8f7a;font:600 16px/1 inherit;padding:4px 8px;';
+    x.textContent = '×';
+    x.addEventListener('click', function () { if (pill) { pill.remove(); pill = null; } });
+    pill.appendChild(msg); pill.appendChild(x);
+    document.body.appendChild(pill);
+  }
+  function check() {
+    var now = Date.now();
+    if (checking || prompted || (now - lastCheck) < 60000) return;
+    checking = true; lastCheck = now;
+    fetch('index.html?cb=' + now, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
+      .then(function (r) { return r.ok ? r.text() : null; })
+      .then(function (t) {
+        checking = false;
+        if (!t) return;
+        var m = /<meta name="oracle-build" content="([^"]+)"/.exec(t);
+        if (m && buildNum(m[1]) > runningN) showPill();
+      })
+      .catch(function () { checking = false; });
+  }
+  if (document.readyState === 'complete') setTimeout(check, 1500);
+  else window.addEventListener('load', function () { setTimeout(check, 1500); });
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') check();
+  });
+  window.addEventListener('pageshow', function (e) { if (e.persisted) check(); });
 }());
 </script>
 <script>
@@ -4138,6 +4256,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v5.52', date: '2026-07-24', focus: 'ui', commander: null, summary: "Two mobile fixes, one root cause each. FIRST, the app now updates itself. There's no service worker here, so on an iPhone the Home-Screen app cached this page hard and kept running an OLD build — the reason a keyboard fix shipped and the phone still showed the bug (it was stuck on v5.48 while the fix landed in v5.50). On load and every time you switch back to the app, Oracle now quietly checks the live site's build number; if a newer one has shipped, a small 'New version available — tap to reload' pill appears at the bottom and a tap reloads a fresh, cache-busted copy. It's throttled, silent when offline, and can't loop — the reload is always your tap, and once you're current the pill never reappears. SECOND, the keyboard scroll itself. On this phone the keyboard is an overlay: it shrinks only the visual viewport (to 519) while the window height never changes (873) — so the previous fix's window-resize trigger never fired, the sheet stayed sized to the full height and ran under the keyboard, and the field you were typing in sat below the visible area. The viewport engine now watches the visual viewport directly, so the Filters and Search sheets resize to the space above the keyboard the instant it appears, the keyboard state arms correctly, the stray iOS page-shift that caused the blank/frozen band is undone, and the focused field is nudged above the keyboard. The on-screen debug pill stays on (now labelled v5.52) for one more on-phone confirmation." },
     { build: 'v5.51', date: '2026-07-24', focus: 'ui', commander: null, summary: "Daily housekeeping — a health check; nothing moved on screen. Walked the whole app end to end as a brewer: Search and its filters, a commander's dossier and Oracle's Read, the Scouting Report's Traps / Game Plans / Engine Map with its synergy rails pulling real cards and prices, then the Deck view — adding a card, removing one (the undo toast appears as it should), the Shop tab's owned/to-buy math, and a live Playtest opening hand. All clean, console silent, and re-checked at phone (390px), tablet (768px), and desktop widths. The front-page Herald was verified against live sources this evening and every item still holds: The Hobbit (Aug 14), Mystery Booster: Commander Edition at Gen Con (Jul 30), Reality Fracture (Oct 2), the Stardew Valley 'Moonlight Jellies' Secret Lair (Jul 27), and the Hatsune Miku Commander deck (Aug 10) — accurate and current, so it stands unchanged rather than diluted. STUDY_DB is still fully oracle-id keyed with no stale name keys, and no safe CSS consolidation was outstanding. A healthy day: nothing to cut, no news to swap." },
     { build: 'v5.50', date: '2026-07-24', focus: 'ui', commander: null, summary: "An invisible error that fired on every window resize is gone. The last round of iPhone keyboard work added a small helper meant to nudge the field you're typing in back into view a beat after the on-screen keyboard reshapes the screen — but it got wired into the wrong part of the app, where the function it needed didn't exist. So instead of helping, it threw a quiet error every single time the window resized and never once did its job. The helper now lives right beside the function it calls, so the field you're editing in the search and filters sheets is kept above the keyboard on mobile as intended — and the resize error stops. It also clears out a stray listener that used to pile up a little more each time you opened Search. Nothing moved on screen: the console is quiet, there's a touch less work on every resize, and the phone keyboard finally behaves the way the last three fixes were aiming for." },
     { build: 'v5.49', date: '2026-07-24', focus: 'ui', commander: null, summary: "The Forge's color filter now wears its colors. The little W/U/B/R/G row you use to lock a school's deal to an in-color spread already lit each pip its true mana color once you SELECTED it — but sitting idle, all five read as identical gray letter-circles, telling you nothing at a glance. Each idle pip now carries a faint wash and a colored glyph in its real mana color — cream White, blue, purple-black, red, green — the same palette the pips under every dealt card already use, so the control reads instantly and ties back to the color identity shown on the commanders it filters. Selecting a color still fills the pip solid with its gold ring exactly as before; nothing else moved. Pure paint: no new markup weight, no per-frame work, and the whole thing vanishes cleanly if a pip is ever chosen." },
