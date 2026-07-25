@@ -1,6 +1,20 @@
 {
-  "updated": "2026-07-25T01:15:25.370Z",
+  "updated": "2026-07-25T16:15:25.407Z",
   "deals": [
+    {
+      "t": "Secrets of Strixhaven Draft Night ($70) & Deals on Dragonshield Sleeve Cases starting at $49.99! Playmakers GCC",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v6bzj5/secrets_of_strixhaven_draft_night_70_deals_on/",
+      "s": 0,
+      "c": 1784994908,
+      "f": ""
+    },
+    {
+      "t": "Codex found at B&N for 104 each.",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v66tmo/codex_found_at_bn_for_104_each/",
+      "s": 0,
+      "c": 1784981738,
+      "f": ""
+    },
     {
       "t": "Collector Store - Secrets of Strixhaven Bundle - $38. free shipping over $100",
       "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v5osef/collector_store_secrets_of_strixhaven_bundle_38/",
@@ -28,28 +42,21 @@
       "s": 0,
       "c": 1784888988,
       "f": ""
-    },
-    {
-      "t": "Jeskai Striker Deck + Foundation Pack + Lorwyn Eclipsed Pack + Tarkir Pack + Ixalan Set Pack + Gishath Promo Card for 49.99 (Limit 2 Per Transaction) [$77 value if bought items separately]",
-      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v4z7fp/jeskai_striker_deck_foundation_pack_lorwyn/",
-      "s": 0,
-      "c": 1784862328,
-      "f": ""
-    },
-    {
-      "t": "Best buy - all 4 LOTR commander decks restock at MSRP. 64.99USD each",
-      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v4v1kz/best_buy_all_4_lotr_commander_decks_restock_at/",
-      "s": 0,
-      "c": 1784851032,
-      "f": ""
     }
   ],
   "wire": [
     {
-      "t": "[HOB] Beorn‘s Hospitality (via Facebook)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v5izio/hob_beorns_hospitality_via_facebook/",
+      "t": "[HOC] Last March of the Ents",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v68glx/hoc_last_march_of_the_ents/",
       "s": 0,
-      "c": 1784916184,
+      "c": 1784986179,
+      "f": ""
+    },
+    {
+      "t": "[HOB] Galion, Elvenking's Butler (via Goodgamesmorley)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v65ybx/hob_galion_elvenkings_butler_via_goodgamesmorley/",
+      "s": 0,
+      "c": 1784979193,
       "f": ""
     },
     {
@@ -60,10 +67,17 @@
       "f": ""
     },
     {
-      "t": "[HOC] Arwen, Weaver of Hope (Boxtoppers, Danny Schwartz)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v5i5i1/hoc_arwen_weaver_of_hope_boxtoppers_danny_schwartz/",
+      "t": "[HOB] Beorn‘s Hospitality (via Facebook)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v5izio/hob_beorns_hospitality_via_facebook/",
       "s": 0,
-      "c": 1784914417,
+      "c": 1784916184,
+      "f": ""
+    },
+    {
+      "t": "[HOC] Arwen, Mortal Queen and Sauron, the Lidless Eye (via ANZ Super Series)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v5ru8f/hoc_arwen_mortal_queen_and_sauron_the_lidless_eye/",
+      "s": 0,
+      "c": 1784936261,
       "f": ""
     },
     {
@@ -71,20 +85,6 @@
       "u": "https://www.reddit.com/r/magicTCG/comments/1v5mflq/hob_misty_mountains_raider_playmagic_bluesky/",
       "s": 0,
       "c": 1784923600,
-      "f": ""
-    },
-    {
-      "t": "[HOC] Mithril Coat - Ellie Livingston via artists IG (@elliejoliv)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v5cmyj/hoc_mithril_coat_ellie_livingston_via_artists_ig/",
-      "s": 0,
-      "c": 1784902516,
-      "f": ""
-    },
-    {
-      "t": "[HOB] Dain Ironfoot, Cantankerous Keepers (@rvnxmango via Instagram)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v5ei19/hob_dain_ironfoot_cantankerous_keepers_rvnxmango/",
-      "s": 0,
-      "c": 1784906642,
       "f": ""
     }
   ]
