@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v6.13 · 2026-07-26">
+<meta name="oracle-build" content="v6.14 · 2026-07-26">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1338,6 +1338,15 @@
   .arch-tile { position: relative; overflow: hidden; text-align: left; padding: 12px 12px 11px; min-height: 76px; border: 1px solid var(--hair2); border-radius: 14px; background-color: var(--glass); background-image: linear-gradient(96deg, rgba(8,9,14,.93) 0%, rgba(8,9,14,.75) 43%, rgba(8,9,14,.45) 74%, rgba(8,9,14,.28) 100%), linear-gradient(0deg, rgba(8,9,14,.68) 0%, rgba(8,9,14,.12) 52%, transparent 72%), var(--art, none); background-size: cover; background-position: center 20%; background-repeat: no-repeat; cursor: pointer; transition: border-color .18s, transform .12s, box-shadow .18s; }
   .arch-tile .an { display: block; font-family: var(--display); font-size: clamp(11.5px, 1.05vw, 13px); text-wrap: balance; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--gold-bright); }
   .arch-tile .af { display: block; margin-top: 3px; font-family: var(--serif); font-style: italic; font-size: 11.5px; color: var(--muted); line-height: 1.35; }
+  /* v6.14 — marquee "face": the single most-built commander of each school (roster #1),
+     a recognizable anchor so the 13 archetypes read even without knowing the jargon
+     (Aristocrats → Teysa Karlov, Stax → Grand Arbiter). Upright gold distinguishes it
+     from the italic-serif flavor; padding-right keeps the ellipsis clear of the count
+     pill; honors the "My colors" lock exactly as the count does. */
+  .arch-tile .arch-lead { position: relative; z-index: 1; display: block; margin-top: 4px; padding-right: 40px; font-family: var(--serif); font-size: 11px; font-weight: 600; letter-spacing: .01em; color: var(--gold-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: skIn .5s var(--fluid) both; }
+  .arch-tile .arch-lead .lg { color: var(--gold); margin-right: 5px; font-size: 9.5px; opacity: .82; }
+  .arch-tile.active .arch-lead { color: var(--gold-bright); }
+  @media (hover: hover) and (pointer: fine) { .arch-tile:hover .arch-lead { color: var(--gold-bright); } }
   /* v6.00 — school breadth count: how many commanders live in each Forge school,
      a discovery read (vast, well-charted archetypes vs niche ones), consistent with
      the "View all N commanders" foot. Bottom-right corner over the tile's bottom scrim
@@ -1612,7 +1621,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v6.13 \u00B7 2026-07-26', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v6.14 \u00B7 2026-07-26', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -5030,6 +5039,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v6.14', date: '2026-07-26', focus: 'ui', commander: null, summary: "Every Forge school tile now names its marquee commander — the single most-built commander of that archetype — right under the flavor line, so the thirteen schools read at a glance even if the jargon is new to you: Aristocrats is led by Teysa Karlov, Stax by Grand Arbiter Augustin IV, Blink by Brago, Artifacts by Breya. The name comes from the same theme roster the count pill and the deal already use, so it costs no extra loading, and it honors your “My colors” lock exactly the way the count does — set an identity and each tile shows the top commander that actually fits your colors. A small gold crown marks the face; it fades in once the roster is ready and simply stays absent on the offline preview." },
     { build: 'v6.13', date: '2026-07-26', focus: 'ui', commander: null, summary: "Surprise me now respects the colors you brew in. When you lock a “My colors” identity, every school you tap already deals only commanders that fit your colors — but Surprise me, the one-tap “what should I brew next, in my colors?” button, could still land on a school that has nothing in your colors and hand you an empty spread (“No commanders fit inside those colors”). Now it skips those schools: under a color lock it only ever surprises you into a school that actually has commanders in your identity, so mono-white never rolls into an empty Chaos & Gambling and the button always deals a real spread of eight. It still tours every eligible school before repeating, and with no color lock set it behaves exactly as before, dealing across all thirteen." },
     { build: 'v6.12', date: '2026-07-26', focus: 'ui', commander: null, summary: "The Herald now has a one-tap door into a commander's synergy rails. The “For <commander>” row under Continue Brewing gave you six quick searches for the universal staples every deck runs — Removal, Draw, Ramp, Wipes, Protection, Tutors — but the thing Oracle is actually built around, this commander's on-theme recommendation rails (the cards a strong deck for THIS commander actually wants), had no route from the landing at all: you had to resume into the deck and then open the Workshop. That row now leads with a distinct gold Workshop pill — same spark icon as the deck screen's own Workshop button — that opens those synergy rails directly from the front page, in one tap. It reuses the exact overlay the deck screen already opens, so nothing about the report changes; it simply puts the heart of the app one tap closer, ahead of the generic staple searches, so the landing finally points at what makes each commander worth brewing rather than only the floor every deck shares. Only shows when you have an active commander, and the six staple chips are all still there, just after it." },
     { build: 'v6.11', date: '2026-07-26', focus: 'ui', commander: null, summary: "The Forge's school tiles now count in YOUR colors. Each tile already showed how many commanders a school holds (Tokens 946, Stax 217…), and the Forge already lets you lock a “My colors” preference so every deal draws only commanders that fit your identity — but the tile counts kept showing the full total even under that lock, promising a breadth the color filter would then contradict. Now, the moment you lock a color identity, every tile's count switches to the number that actually fits your colors: lock Golgari and Tokens reads ~141, Reanimator ~141, +1/+1 Counters ~166 — the deep lanes — while Blink drops to ~5 and Chaos & Gambling to ~2, so a glance across the thirteen tiles tells you where the depth is in the colors you brew. A school with nothing in your colors (mono-white Chaos & Gambling, say) reads a muted 0 instead of gold, so you skip a dead tap before you make it. Clear the color lock and every tile shows its full total again, exactly as before. It's the same in-color count the deal itself draws from, so the tiles, the deal, and the “View all N” footer now all speak one color-locked language." },
@@ -6070,6 +6080,28 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
         }
         return Object.keys(m).length ? m : null;
     }, [tileR, ci]);
+    // v6.14: marquee "face" per school — the single most-built commander in the
+    // (color-filtered) roster, a recognizable anchor for each archetype (Aristocrats
+    // → Teysa Karlov, Stax → Grand Arbiter) so a brewer can read the 13 tiles without
+    // knowing the jargon. Same roster + "My colors" filter as the count pill (v6.11),
+    // so the face always fits the locked colors and never contradicts the count. The
+    // roster is ordered loosely, so we scan for the max theme-deck count (e.d) rather
+    // than trusting position; MDFC back-faces (" // ") are stripped for a clean name.
+    const schoolLeads = useMemo(() => {
+        if (!tileR) return null;
+        const m = {};
+        for (const sch of FORGE_SCHOOLS) {
+            if (!sch.edhrecTags) continue;
+            const u = rosterUnion(tileR, sch.edhrecTags);
+            if (!u || !u.length) continue;
+            const pool = ci ? u.filter(e => (e.c || '').split('').every(L => ci.includes(L))) : u;
+            if (!pool.length) continue;
+            let top = pool[0];
+            for (const e of pool) if ((e.d || 0) > (top.d || 0)) top = e;
+            if (top && top.n) m[sch.id] = String(top.n).split(' // ')[0].trim();
+        }
+        return Object.keys(m).length ? m : null;
+    }, [tileR, ci]);
     // v6.03: the Forge exists to find your NEXT deck, so flag any dealt commander you
     // ALREADY brew. Build a Set of your decks' commander identities (cardKey = oracle_id,
     // the same key the deck engine uses) and match each dealt card against it. Read from
@@ -6312,6 +6344,7 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
         React.createElement('div', { className: 'arch-tiles' }, FORGE_SCHOOLS.map(a => React.createElement('button', { key: a.id, 'data-arch': a.id, className: 'arch-tile ' + ((multiIds !== null ? multiIds.includes(a.id) : activeId === a.id) ? 'active' : ''), 'aria-pressed': multiIds !== null ? multiIds.includes(a.id) : activeId === a.id, style: FORGE_ART[a.id] ? { '--art': 'url("' + FORGE_ART[a.id] + '")' } : undefined, onClick: () => tileTap(a) },
             React.createElement('span', { className: 'an' }, a.name),
             React.createElement('span', { className: 'af' }, a.flavor),
+            (schoolLeads && schoolLeads[a.id]) ? React.createElement('span', { className: 'arch-lead', 'aria-hidden': true, title: 'Most-built ' + a.name + ' commander' + (ci ? ' in your colors (' + ci + ')' : '') + ': ' + schoolLeads[a.id] }, React.createElement('span', { className: 'lg', 'aria-hidden': true }, '♛'), schoolLeads[a.id]) : null,
             (schoolSizes && schoolSizes[a.id] != null) ? React.createElement('span', { className: 'arch-size' + (schoolSizes[a.id] === 0 ? ' empty' : ''), 'aria-hidden': true, title: ci ? (schoolSizes[a.id].toLocaleString() + ' ' + a.name + ' commanders fit your colors (' + ci + ')') : (schoolSizes[a.id].toLocaleString() + ' ' + a.name + ' commanders to brew') }, fmtSchoolSize(schoolSizes[a.id])) : null))),
         React.createElement('div', { className: 'arch-ci' + (active ? '' : ' pre'), role: 'group', 'aria-label': 'Brew in your colors — filter the Forge by color identity' },
             React.createElement('span', { className: 'arch-ci-lab', title: 'A standing preference: every school deals — and Surprise me picks — only commanders whose color identity fits inside the chosen colors. Remembered across visits.' }, 'My colors'),
