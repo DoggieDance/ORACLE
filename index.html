@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v6.06 · 2026-07-26">
+<meta name="oracle-build" content="v6.09 · 2026-07-26">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1432,6 +1432,12 @@
   .arch-ci-pip:not(.on)[data-c="G"] { color: #66c087; border-color: rgba(79,168,110,.5); background: rgba(79,168,110,.11); }
   @media (hover: hover) and (pointer: fine) { .arch-ci-pip:not(.on):hover { filter: brightness(1.18); } }
   .arch-ci-any { margin-left: 2px; }
+  /* v6.08: the color filter is now a standing "brew in my colors" preference, shown
+     even before a school is dealt. Its cold state gets a touch more breathing room and
+     a serif hint teaching what it does; the hint disappears once colors are chosen. */
+  .arch-ci.pre { margin-top: 14px; }
+  .arch-ci-hint { font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); margin-left: 4px; }
+  @media (max-width: 640px) { .arch-ci-hint { flex-basis: 100%; margin-left: 0; margin-top: 2px; } }
   /* v5.20 caption strip under each dealt card — carries what the old corner badges
      carried (v4.67 colors, v4.69 rank/gem, v5.09 I-Bite), OFF the card frame so the
      name / mana cost / type / P&T stay scannable. Static paint, no blur. */
@@ -1582,7 +1588,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v6.06 \u00B7 2026-07-26', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v6.09 \u00B7 2026-07-26', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -5000,6 +5006,9 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v6.09', date: '2026-07-26', focus: 'ui', commander: null, summary: "The “For [commander]” quick-launcher under your active brew now covers the full set of Commander deckbuilding staples. Next to Removal, Draw, Ramp, and Board Wipes it adds two more one-tap searches every deck wants: Protection — keep your commander and key pieces alive (Swiftfoot Boots, Lightning Greaves, Teferi's Protection) — and Tutors — dig up the cards your deck is built around (Demonic Tutor, Vampiric Tutor, Enlightened Tutor), the tutor list cleaned of land-ramp so it means the cards you actually search for. Each is scoped to your commander's color identity, so the six staple categories every EDH primer teaches are one tap away the moment you're brewing." },
+    { build: 'v6.08', date: '2026-07-26', focus: 'ui', commander: null, summary: "The Forge now remembers the colors you brew in. Color identity is the first thing most Commander players commit to, so the Forge's color filter is no longer a per-deal afterthought that appears only after you've dealt a school — it's now a standing “My colors” preference, shown from the start and remembered across visits. Set it to the colors you play (say, Golgari) and every school you tap deals only commanders that fit inside them, and Surprise me picks an in-color school too — so “what should I brew next, in my colors?” is answered in one tap, even from a cold landing. Choose nothing and the Forge behaves exactly as before, dealing every color; a one-tap ✕ Any colors clears the lock whenever you want to browse wide again. Self-contained to the Forge — nothing else on the Herald moves." },
+    { build: 'v6.07', date: '2026-07-26', focus: 'ui', commander: null, summary: "Today's Commander now tells you how charted it is. The daily hero already said WHO the featured commander is and WHAT it plays (its top archetype game-plans), but nothing about how established it is — so a brewer couldn't tell whether the day's pick is a beloved staple with a thousand decklists to crib from or an underplayed hidden gem you'd be pioneering. The masthead now carries a small EDHREC-tier pill beside the plan pills, reading the commander's popularity band straight from its rank: bright-gold ✦ for the well-charted staples (Format staple, Heavily played), calm gold for the solid middle (Popular, Established), and an arcane-purple ◆ Hidden gem for the deep cuts — the exact popularity vocabulary the Forge's dealt cards already speak, now on the landing's biggest discovery surface. The precise rank rides along as a dimmer number (e.g. Popular · #5k) for the anchored bands. It's a compact read: it sits in the same wrapping row as the plan pills so it never crowds the nameplate on a phone, and it simply omits itself when Scryfall has no rank for the card. One more at-a-glance signal for the first question a brewer asks of any commander — is this worth building?" },
     { build: 'v6.06', date: '2026-07-26', focus: 'ui', commander: null, summary: "The Forge now deals recognizable commanders, not just deep cuts. Tap a school and the Forge deals a fresh spread of eight commanders to brew — but a broad school's roster is overwhelmingly long-tail (Tokens & Go-Wide alone holds nearly a thousand commanders, most of them played in only a handful of decks), so a plain random draw almost never surfaced the archetype's actual staples: you'd get eight obscure one-offs and no familiar anchor to get your bearings. The deal now blends by prominence. It splits each school into a band of genuinely-played commanders (the most-brewed ~20% by EDHREC deck count) and the deep tail, then fills about half the eight-card spread from each. So every deal now leads with recognizable faces a strong deck of that archetype actually runs — Najeela, Talrand or Neyali for tokens, Wilhelt and Slimefoot for aristocrats, Winota for stax — while still handing you four fresh deep cuts to discover. The anchors are shuffled within their band, so they vary from deal to deal (never the same four) and aren't clumped together in the spread, and the Deal-again freshness memory still walks the whole roster over repeated taps. Combine mode's intersections deal the same way and pick up that freshness too. Nothing about the layout, the caption strips, or the cards themselves changes — only which commanders you're handed." },
     { build: 'v6.05', date: '2026-07-26', focus: 'ui', commander: null, summary: "Today's Commander on the Herald now tells you what it wants to build, not just who it is. The daily hero at the top of the Herald has always shown the featured commander's name, art, and colors — but to learn what deck it actually plays you had to open its dossier. Now, right under the name, it shows one or two small gold archetype tags — the commander's top game plan, like Aristocrats · Combat Aggro or Goblin Typal · Go-Wide Tokens — so you can size up today's commander at a glance and decide whether it's worth brewing before you ever tap in. It's the same read the dossier's “Oracle's Read” gives, drawn straight from the recommendation engine, so the two always agree; it appears the moment the daily card loads, wraps neatly on a phone, and simply stays absent if the engine can't name a plan. Purely additive — nothing else about the masthead moves." },
     { build: 'v6.04', date: '2026-07-26', focus: 'ui', commander: null, summary: "You can now read a Forge commander's full card just by hovering it. The Forge deals a fresh spread of commanders to evaluate, but each dealt card is a thumbnail — you can make out the art, and the name caption tells you who it is, but the type line, mana cost, and rules text are far too small to read, so the only way to actually learn what a commander does was to click all the way into its full detail view and then back out, one at a time, breaking the flow of scanning a spread. Now, on desktop, hovering any dealt commander floats a large, fully legible copy of the card right beside your cursor — the same Moxfield/Scryfall move — so you can read its ability, cost, and stats in place and decide whether it's worth a closer look without ever leaving the spread. It reuses the same hover-preview the deck lists and card chips already use, so it feels identical everywhere in the app; it follows your cursor, tucks itself to whichever side has room, and vanishes the moment you move away or click through. Touch devices are unchanged — there's no hover on a phone, so a tap still opens the full commander as before. Purely additive: nothing about the deal, the layout, or the caption strip moves." },
@@ -5952,6 +5961,15 @@ function forgeSurprisePick(schools, activeId, seen) {
     seen.add(pick.id);
     return pick;
 }
+// v6.08: the Forge color-identity filter is now a PERSISTENT "brew in my colors"
+// preference. Color identity is the first constraint most Commander brewers commit
+// to, so a color-locked brewer sets it once and every school deal AND "Surprise me"
+// stays in-color — across sessions. Stored WUBRG-canonical; '' = any colors.
+const FORGE_CI_KEY = 'oracle_forge_ci_v1';
+function loadForgeCi() {
+    try { const s = localStorage.getItem(FORGE_CI_KEY) || ''; return 'WUBRG'.split('').filter(L => s.includes(L)).join(''); } catch (e) { return ''; }
+}
+function saveForgeCi(ci) { try { localStorage.setItem(FORGE_CI_KEY, ci || ''); } catch (e) {} }
 const CI_NAMES = { W: 'White', U: 'Blue', B: 'Black', R: 'Red', G: 'Green' };
 // v5.09: "I Bite!" detector for the Group Hug school. Some commanders that hand
 // out cards/value to the whole table ALSO punish it — clamping hand size, taxing
@@ -5979,7 +5997,9 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
     // v4.52: color-identity filter — letters kept in WUBRG order, '' = any colors.
     // Scryfall `id<=` is "identity fits inside these colors" (Moxfield semantics),
     // so a BG filter deals Golgari, mono-B, mono-G, and colorless commanders.
-    const [ci, setCi] = useState('');
+    // v6.08: lazy-init from the persisted "brew in my colors" preference so a
+    // color-committed brewer's identity is already applied on the first deal.
+    const [ci, setCi] = useState(loadForgeCi);
     // v5.44 Slice 4: multi-select INTERSECTION. null = classic single-school
     // mode (untouched); an array = Combine mode — tiles toggle membership and
     // the deal shows commanders present in EVERY selected school's roster
@@ -6188,6 +6208,7 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
     function toggleCi(letter) {
         const next = letter === '' ? '' : 'WUBRG'.split('').filter(L => (L === letter) !== ci.includes(L)).join('');
         setCi(next);
+        saveForgeCi(next); // v6.08: remember the brewer's colors across sessions
         if (multiIds !== null && multiIds.length) {
             dealIntersection(multiIds, next);
             return;
@@ -6242,13 +6263,17 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
             React.createElement('span', { className: 'an' }, a.name),
             React.createElement('span', { className: 'af' }, a.flavor),
             (schoolSizes && schoolSizes[a.id]) ? React.createElement('span', { className: 'arch-size', 'aria-hidden': true, title: schoolSizes[a.id].toLocaleString() + ' ' + a.name + ' commanders to brew' }, fmtSchoolSize(schoolSizes[a.id])) : null))),
-        active && React.createElement('div', { className: 'arch-ci', role: 'group', 'aria-label': 'Filter by color identity' },
-            React.createElement('span', { className: 'arch-ci-lab', title: 'Deals only commanders whose color identity fits inside the chosen colors' }, 'Colors'),
+        React.createElement('div', { className: 'arch-ci' + (active ? '' : ' pre'), role: 'group', 'aria-label': 'Brew in your colors — filter the Forge by color identity' },
+            React.createElement('span', { className: 'arch-ci-lab', title: 'A standing preference: every school deals — and Surprise me picks — only commanders whose color identity fits inside the chosen colors. Remembered across visits.' }, 'My colors'),
             'WUBRG'.split('').map(L => {
                 const on = ci.includes(L);
                 return React.createElement('button', { key: L, 'data-c': L, className: 'arch-ci-pip' + (on ? ' on' : ''), 'aria-pressed': on, title: CI_NAMES[L], style: on ? { background: PIP_HEX[L], color: PIP_DARK_TEXT[L] ? '#1a1408' : '#fff' } : undefined, onClick: () => toggleCi(L) }, L);
             }),
-            ci && React.createElement('button', { className: 'arch-deal arch-ci-any', onClick: () => toggleCi('') }, '✕ Any colors')),
+            ci && React.createElement('button', { className: 'arch-deal arch-ci-any', onClick: () => toggleCi('') }, '✕ Any colors'),
+            // v6.08: teach the standing-preference nature only in the cold, unset state
+            // (no school dealt, no colors chosen) so returning color-locked brewers see
+            // no extra copy — the lit pips are their own signal.
+            !active && !ci && React.createElement('span', { className: 'arch-ci-hint' }, 'lock the Forge to the colors you brew')),
         err && React.createElement('div', { className: 'arch-err' }, err),
         active && !err && !dealing && spread && spread.length === 0 && React.createElement('div', { className: 'arch-err' }, (multiIds !== null && multiIds.length > 1) ? ('No commanders belong to all ' + multiIds.length + ' selected schools' + (ci ? ' within those colors' : '') + ' — drop one school.') : ('No ' + active.name + ' commanders fit inside those colors — loosen a color.')),
         active && !err && (dealing || (spread && spread.length > 0)) && React.createElement('div', { className: 'arch-spread', 'data-arch': active.id }, (!spread || spread.length === 0)
@@ -6683,7 +6708,7 @@ function SearchScreen({ injectQuery, onInjectConsumed, forgeIntent, onForgeInten
                     React.createElement("span", { className: "rb-go", "aria-hidden": true }, "\u203A"))),
                 activeDeck && activeDeck.commander && (React.createElement("div", { className: "ctx-row" },
                     React.createElement("span", { className: "ctx-for" }, "For " + activeDeck.commander.name.split(',')[0].split(' //')[0]),
-                    [['Removal', 'otag:removal'], ['Draw', 'otag:card-advantage'], ['Ramp', '(otag:ramp OR otag:mana-rock)'], ['Wipes', 'otag:board-wipe']].map(([l, q]) => {
+                    [['Removal', 'otag:removal'], ['Draw', 'otag:card-advantage'], ['Ramp', '(otag:ramp OR otag:mana-rock)'], ['Wipes', 'otag:board-wipe'], ['Protection', 'otag:protection'], ['Tutors', 'otag:tutor -t:land -otag:ramp']].map(([l, q]) => {
                         const ci = (activeDeck.commander.color_identity || []).join('');
                         const cq = (ci ? 'id<=' + ci : 'id:c') + ' legal:commander ' + q;
                         return React.createElement("button", { key: l, className: "chip", onClick: () => { setQuery(cq); setActiveChip(''); setAc([]); haptic(); doSearch({ queryOverride: cq, chipOverride: '' }); } }, l);
