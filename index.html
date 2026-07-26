@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v6.02 · 2026-07-26">
+<meta name="oracle-build" content="v6.04 · 2026-07-26">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1202,6 +1202,10 @@
   .mast-cmdr-sub .pips { display: inline-flex; gap: 2px; }
   .mast-cmdr-sub .pip { width: 13px; height: 13px; font-size: 8px; }
   .mast-cmdr-cta { font-family: var(--ios-font); font-size: 9.5px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; color: var(--gold-bright); text-shadow: 0 1px 2px rgba(0,0,0,.65); }
+  /* v6.05 — archetype "read" pills under the daily hero name: what deck does
+     today's commander want? Gold-arcana micro-caps, matched to the label/CTA. */
+  .mast-cmdr-plans { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+  .mast-plan-pill { font-family: var(--ios-font); font-size: 9px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; color: rgba(242,226,176,.94); background: rgba(224,196,106,.15); border: 1px solid rgba(224,196,106,.36); border-radius: 999px; padding: 2px 7px; line-height: 1.3; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
   /* v5.24 S3 — Continue Brewing resume bar (one tap back into the active brew). */
   .resume-bar { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 14px; padding: 9px 14px 9px 9px; border: 1px solid rgba(224,196,106,.30); border-radius: 15px; background: linear-gradient(115deg, rgba(224,196,106,.10), rgba(18,17,27,.55) 55%); cursor: pointer; text-align: left; font-family: inherit; transition: border-color .15s, background .15s, transform .12s; -webkit-tap-highlight-color: transparent; }
   .resume-bar:hover { border-color: rgba(224,196,106,.55); background: linear-gradient(115deg, rgba(224,196,106,.16), rgba(18,17,27,.6) 55%); }
@@ -1434,6 +1438,17 @@
   .as-rank.gem { color: #d9ccff; }
   .as-bite { display: inline-flex; align-items: center; gap: 2px; font-size: 8.5px; font-weight: 900; letter-spacing: .03em; text-transform: uppercase; color: #eb9d5f; white-space: nowrap; }
   .as-bite::before { content: ""; width: 5px; height: 6px; background: linear-gradient(180deg, #ffe6a0, #e6924f); clip-path: polygon(0 0, 100% 0, 50% 100%); }
+  /* v6.03: "In a deck" ownership chip — the Forge is the front door for finding your
+     NEXT deck, so flag any dealt commander you already brew (matched by oracle-id against
+     your saved decks' commanders). Sits in the caption strip BELOW the frame beside the
+     rank chip, exactly like the .as-bite status chip — nothing touches the card frame
+     (v5.20 card-scan rule), and because the strip height is fixed the spread grid stays
+     aligned whether or not a card is owned. Leads the strip so owned cards read at a
+     glance down a spread's left edge; only the few owned cards render it. The gold ✓
+     always shows; the label collapses to the ✓ on phones to spare the tight strip. */
+  .as-owned { display: inline-flex; align-items: center; gap: 3px; flex: 0 0 auto; font-size: 8.5px; font-weight: 900; letter-spacing: .03em; text-transform: uppercase; color: #e8cd78; white-space: nowrap; }
+  .as-owned::before { content: "\2713"; font-size: 9.5px; font-weight: 900; line-height: 1; }
+  @media (max-width: 639px) { .as-owned { font-size: 7.5px; } .as-owned .lbl { display: none; } }
   .arch-strip .pips { display: inline-flex; gap: 1px; flex: 0 0 auto; }
   .arch-strip .pip { width: 11px; height: 11px; font-size: 7px; box-shadow: inset 0 -1px 2px rgba(0,0,0,.3); }
   /* v6.01: cost cluster — the shared mana-value badge sits WITH the color pips on the
@@ -1557,7 +1572,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v6.02 \u00B7 2026-07-26', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v6.04 \u00B7 2026-07-26', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -4975,6 +4990,8 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v6.04', date: '2026-07-26', focus: 'ui', commander: null, summary: "You can now read a Forge commander's full card just by hovering it. The Forge deals a fresh spread of commanders to evaluate, but each dealt card is a thumbnail — you can make out the art, and the name caption tells you who it is, but the type line, mana cost, and rules text are far too small to read, so the only way to actually learn what a commander does was to click all the way into its full detail view and then back out, one at a time, breaking the flow of scanning a spread. Now, on desktop, hovering any dealt commander floats a large, fully legible copy of the card right beside your cursor — the same Moxfield/Scryfall move — so you can read its ability, cost, and stats in place and decide whether it's worth a closer look without ever leaving the spread. It reuses the same hover-preview the deck lists and card chips already use, so it feels identical everywhere in the app; it follows your cursor, tucks itself to whichever side has room, and vanishes the moment you move away or click through. Touch devices are unchanged — there's no hover on a phone, so a tap still opens the full commander as before. Purely additive: nothing about the deal, the layout, or the caption strip moves." },
+    { build: 'v6.03', date: '2026-07-26', focus: 'ui', commander: null, summary: "The Forge now shows which dealt commanders you already brew. The Forge is where you go to find your NEXT deck — tap a school and it deals a fresh spread of commanders to evaluate — but nothing told you when one of those was a commander you'd already built a deck around, so a spread could hand you back a brew-in-progress as if it were a fresh discovery. Now any dealt commander that leads one of your saved decks carries a small gold “✓ In a deck” tag at the head of its caption strip, so scanning down a spread you can tell the genuine new options from the ones already on your shelf — the Steam-library “in your library” read applied to commander discovery. It's matched by the same card identity the deck engine uses (oracle id), so it's exact and catches a commander no matter which deck it leads; it reads straight from your saved decks with no extra lookups, sits below the card frame beside the popularity rank so the art and name stay clean (the card-scan rule holds), and because it lives in the fixed-height strip the eight-across desktop and four-across phone grids stay perfectly aligned whether a card is owned or not. On phones the tag collapses to just the ✓ to spare the tight strip, and it simply doesn't appear when you have no decks yet. Purely additive — nothing else about the Forge moves." },
     { build: 'v6.02', date: '2026-07-26', focus: 'logic', commander: 'Tovolar, Dire Overlord', summary: "Tovolar, Dire Overlord now gets werewolf rails instead of a mislabeled X-spells deck. His whole plan is a pack of beefy Wolves and Werewolves that flip the game to night, trample through, and draw a card on every hit — but the engine misread him twice: the {X} in his night-side firebreathing ability dressed him up as an X Spells and Big Mana deck, and his tribe-scoped combat-damage draw trigger tripped the cheap-evasive-swarm package meant for Edric. A new werewolf-pack detector gates off both misreads and leads with the typal pack, a Grow the Pack rail (wolf-token engines like Nightpack Ambusher and Sword of Body and Mind to blow past the three-werewolf night threshold), and a Trample the Pack Through rail (Garruk's Uprising, Kessig Wolf Run) so every swing refills your hand. A grammar fix along the way means the typal rail finally reads More Werewolves — and More Wolves, More Elves, More Dwarves — instead of More Werewolfs." },
     { build: 'v6.01', date: '2026-07-26', focus: 'ui', commander: null, summary: "The Forge deal now shows each commander's casting cost. When you tap a school, the Forge deals a fresh spread of eight commanders to evaluate — and each dealt card already told you how popular it is (the rank chip) and what colors it runs (the pips), but not how expensive it is to cast, which is a first-order brewing question: a two-mana commander comes online turn two and shrugs off removal, while a seven-mana one warps the whole deck around ramp and protection. Now the same compact mana-value badge used on the recommendation rails and search results sits in each dealt commander's strip, clustered on the right with the color pips so cost and colors read together while popularity stays on the left. It reads straight from the card data already fetched (no extra lookups), it lives below the card frame so it never covers the art or name (the card-scan rule holds), and it's tuned to sit level with the strip's pips. Pure additive display — nothing else about the Forge moves." },
     { build: 'v6.00', date: '2026-07-26', focus: 'ui', commander: null, summary: "Every Forge school now shows how many commanders live inside it. The Forge is where you go to find your next deck — tap a school and it deals a fresh spread of commanders to brew — but the thirteen school tiles gave no sense of a school's size, so there was no way to tell a vast, deeply-charted archetype from a niche one without tapping in. Each tile now carries a small commander count in its corner: Tokens & Go-Wide reads in the hundreds, Chaos & Gambling far fewer, so at a glance you can see which schools are broad wells of options and which are tighter, more specialized pools. The number is read from the exact same theme roster the deal and the “View all N commanders” link already use, so it's the true count you'd see after dealing — not an estimate. It loads quietly in the background and fades in when ready, sits in the bottom corner so it never covers a school's name, and simply stays hidden if the roster isn't available (the local preview), so nothing else about the Forge changes." },
@@ -5695,15 +5712,30 @@ function MastHero({ onOpenDetail }) {
             }).catch(() => { });
         return () => { alive = false; };
     }, []);
+    // v6.05 — the daily hero says WHO but not WHAT it brews. Add a compact archetype
+    // read (the commander's top engine game-plans) so a brewer can evaluate today's
+    // featured commander straight from the landing — the same engine the dossier's
+    // "Oracle's Read" (v4.92) runs, trimmed to the lead plan(s). Memoised on hero
+    // (which is cached per day) and wrapped so a malformed card can never break the
+    // masthead. Runs before the early return to keep hook order stable.
+    const heroPlans = useMemo(() => {
+        if (!hero || !hero.card) return null;
+        try {
+            const m = buildEngineModel(hero.card);
+            const ps = ((m.gamePlans && m.gamePlans.plans) || []).slice(0, 2).map(p => p && p.name).filter(Boolean);
+            return ps.length ? ps : null;
+        } catch (e) { return null; }
+    }, [hero]);
     if (!hero) return null;
     const cid = (hero.card && hero.card.color_identity) || [];
     return React.createElement(React.Fragment, null,
         React.createElement('div', { className: 'mast-ambi', 'aria-hidden': true, style: { backgroundImage: 'url(' + hero.img + ')' } }),
         React.createElement('div', { className: 'mast-clip' },
             React.createElement('div', { className: 'mast-hero', style: { backgroundImage: 'url(' + hero.img + ')' } })),
-        hero.card ? React.createElement('button', { className: 'mast-cmdr', onClick: () => { if (onOpenDetail) { onOpenDetail(hero.card); haptic(); } }, 'aria-label': "Today's commander: " + hero.name + ' — open the dossier' },
+        hero.card ? React.createElement('button', { className: 'mast-cmdr', onClick: () => { if (onOpenDetail) { onOpenDetail(hero.card); haptic(); } }, 'aria-label': "Today's commander: " + hero.name + (heroPlans ? ' — plays ' + heroPlans.join(', ') : '') + ' — open the dossier' },
             React.createElement('span', { className: 'mast-cmdr-label' }, "Today's Commander"),
             React.createElement('span', { className: 'mast-cmdr-name' }, hero.name),
+            heroPlans && React.createElement('span', { className: 'mast-cmdr-plans', 'aria-hidden': true }, heroPlans.map((p, i) => React.createElement('span', { key: i, className: 'mast-plan-pill' }, p))),
             React.createElement('span', { className: 'mast-cmdr-sub' },
                 React.createElement('span', { className: 'pips' }, cid.length ? cid.map(x => React.createElement('span', { key: x, className: 'pip ' + x }, x)) : React.createElement('span', { className: 'pip C' }, '\u25C7')),
                 React.createElement('span', { className: 'mast-cmdr-cta' }, 'Open the dossier \u203A')))
@@ -5929,6 +5961,17 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
         });
         return () => { alive = false; };
     }, []);
+    // v6.03: the Forge exists to find your NEXT deck, so flag any dealt commander you
+    // ALREADY brew. Build a Set of your decks' commander identities (cardKey = oracle_id,
+    // the same key the deck engine uses) and match each dealt card against it. Read from
+    // loadDecks() (persisted to localStorage on every deck change via App's save effect),
+    // memoised on `spread` so it refreshes on each fresh deal and stays stable within a
+    // render — self-contained to the Forge (no prop threading), silent-degrade to empty.
+    const brewedKeys = useMemo(() => {
+        const s = new Set();
+        try { (loadDecks() || []).forEach(d => { if (d && d.commander) s.add(cardKey(d.commander)); }); } catch (e) {}
+        return s;
+    }, [spread]);
     const seq = useRef(0);
     const rootRef = useRef(null); // v5.85: scroll the Forge into view on a dossier cross-link
     const qFor = (a, f) => f ? a.q + ' id<=' + f.toLowerCase() : a.q;
@@ -6179,7 +6222,15 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
                 // v5.09: only the Group Hug school shows the "I Bite!" warning — the
                 // idiom is meaningless under other schools, so gate on the active tile.
                 const bite = active && active.id === 'grouphug' ? hugBite(c) : null;
-                return React.createElement('div', { key: c.id, className: 'arch-card', style: { '--i': i }, role: 'button', tabIndex: 0, 'aria-label': c.name + (cid.length ? ' (' + cid.join('') + ')' : ' (colorless)') + (rc ? ' · EDHREC #' + Number(c.edhrec_rank).toLocaleString() + ' · ' + rc.tier : '') + (bite ? ' · group hug with a bite: ' + bite : '') + (Number.isFinite(c.cmc) ? ' · mana value ' + c.cmc : ''), title: c.name + (rc ? ' · EDHREC #' + Number(c.edhrec_rank).toLocaleString() + ' · ' + rc.tier : ''), onClick: () => onOpenDetail(c), onKeyDown: (e) => { if (e.key === 'Enter') onOpenDetail(c); } },
+                // v6.03: does the brewer already have a deck led by this commander?
+                const owned = brewedKeys.has(cardKey(c));
+                // v6.04: desktop hover floats the full READABLE card via the shared
+                // CardPeek singleton, so a brewer can read a dealt commander's oracle
+                // text in-place and evaluate the spread without leaving it (the 137px
+                // dealt face is a thumbnail — its rules text is illegible). CardPeek
+                // gates on (hover:hover)+(pointer:fine), so touch devices show nothing
+                // and a tap still opens the detail overlay; peek is dismissed on open.
+                return React.createElement('div', { key: c.id, className: 'arch-card' + (owned ? ' owned' : ''), style: { '--i': i }, role: 'button', tabIndex: 0, 'aria-label': c.name + (cid.length ? ' (' + cid.join('') + ')' : ' (colorless)') + (rc ? ' · EDHREC #' + Number(c.edhrec_rank).toLocaleString() + ' · ' + rc.tier : '') + (owned ? ' · in one of your decks' : '') + (bite ? ' · group hug with a bite: ' + bite : '') + (Number.isFinite(c.cmc) ? ' · mana value ' + c.cmc : ''), title: c.name + (rc ? ' · EDHREC #' + Number(c.edhrec_rank).toLocaleString() + ' · ' + rc.tier : '') + (owned ? ' · in one of your decks' : ''), onMouseEnter: (e) => CardPeek.show(e, c), onMouseMove: CardPeek.move, onMouseLeave: CardPeek.hide, onClick: () => { CardPeek.hide(); onOpenDetail(c); }, onKeyDown: (e) => { if (e.key === 'Enter') { CardPeek.hide(); onOpenDetail(c); } } },
                     React.createElement('div', { className: 'arch-imgwrap' }, img ? React.createElement(CardImg, { src: img, srcSet: imgSmall ? (imgSmall + ' 146w, ' + img + ' 488w') : undefined, sizes: '(min-width:900px) 140px, (min-width:640px) 23vw, 24vw', alt: c.name }) : React.createElement('div', { className: 'card-img-placeholder' }, React.createElement('div', { className: 'pn' }, c.name))),
                     // v5.86: explicit commander-name caption. The dealt full card's own
                     // printed name is too small to scan at the 91-140px dealt width, so
@@ -6191,6 +6242,7 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
                     // frame into a caption strip below (name + mana cost stay visible).
                     React.createElement('div', { className: 'arch-strip', 'aria-hidden': true },
                         React.createElement('span', { className: 'arch-strip-left' },
+                            owned && React.createElement('span', { className: 'as-owned', title: (c.name || '').split(',')[0] + ' is in one of your decks' }, React.createElement('span', { className: 'lbl' }, 'In a deck')),
                             rc && React.createElement('span', { className: 'as-rank' + (rc.gem ? ' gem' : (rc.staple ? ' staple' : '')) }, (rc.gem ? '✦ #' : '#') + rc.label),
                             bite && React.createElement('span', { className: 'as-bite', title: 'Group hug with teeth — this commander also ' + bite }, 'Bites')),
                         React.createElement('span', { className: 'arch-strip-right' },
