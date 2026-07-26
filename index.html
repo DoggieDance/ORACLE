@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v6.09 · 2026-07-26">
+<meta name="oracle-build" content="v6.13 · 2026-07-26">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -962,6 +962,7 @@
     .syn-card:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(0,0,0,.45); border-color: rgba(255,255,255,.18); }
     .tab:hover:not(.on) { background: rgba(255,255,255,.06); color: var(--text); }
     .chip:hover { background: rgba(255,255,255,.08); color: var(--text); }
+    .ctx-scout:hover { border-color: rgba(224,196,106,.85); background: rgba(224,196,106,.16); color: var(--gold-hi); }
     .deck-action:hover, .syn-add:hover { border-color: rgba(224,196,106,.45); color: var(--gold-bright); }
     .sheet-action:hover, .back-btn:hover { color: var(--gold-hi); }
     .card-img-wrap:hover img { transform: scale(1.025); }
@@ -1224,7 +1225,21 @@
   .rb-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
   .rb-label { font-family: var(--ios-font); font-size: 8.5px; font-weight: 750; letter-spacing: .2em; text-transform: uppercase; color: var(--gold-dim); }
   .rb-name { font-family: var(--display); font-size: clamp(14px, 1.8vw, 17px); font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .rb-count { font-family: var(--ios-font); font-size: 11px; font-weight: 750; color: var(--gold-bright); flex: 0 0 auto; }
+  /* v6.10: the resume bar now carries a compact mirror of the Workshop deck-count hero —
+     a state-aware to-go / over-limit read + a thin fill bar — so the landing shows brew
+     progress at a glance (fresh skeleton → nearly done → complete → overbuilt), one
+     progress vocabulary shared with the deck view. */
+  .rb-status { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex: 0 0 auto; min-width: 62px; }
+  .rb-count { font-family: var(--ios-font); font-size: 12px; font-weight: 800; color: var(--gold-bright); line-height: 1; letter-spacing: .01em; }
+  .rb-count.done { color: var(--green-ok); }
+  .rb-count.over { color: var(--red-bad); }
+  .rb-hint { font-family: var(--ios-font); font-size: 8px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; color: var(--gold-dim); line-height: 1; white-space: nowrap; }
+  .rb-hint.done { color: var(--green-ok); }
+  .rb-hint.over { color: var(--red-bad); }
+  .rb-track { width: 72px; height: 5px; border-radius: 3px; background: rgba(0,0,0,.4); box-shadow: inset 0 1px 2px rgba(0,0,0,.5); overflow: hidden; }
+  .rb-fill { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #8a6f2c, var(--gold-lo) 60%, var(--gold-hi)); box-shadow: 0 0 8px rgba(224,196,106,.22); transition: width .7s var(--fluid), background .3s ease, box-shadow .3s ease; }
+  .rb-fill.done { background: linear-gradient(90deg, #2c6b47, var(--green-ok)); box-shadow: 0 0 8px rgba(88,184,126,.28); }
+  .rb-fill.over { background: linear-gradient(90deg, #7a2f24, var(--red-bad)); box-shadow: 0 0 8px rgba(224,96,76,.28); }
   .rb-go { font-size: 18px; color: var(--gold-dim); flex: 0 0 auto; line-height: 1; }
   /* v5.25 S4 — Reading Room band + skeleton loaders on the news art. The two
      columns keep their own col-heads; this band groups them as one editorial
@@ -1251,6 +1266,12 @@
   @keyframes rrReveal { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
   .ctx-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 7px; margin-top: 15px; }
   .ctx-for { font-family: var(--serif); font-style: italic; font-size: 13.5px; color: var(--gold-dim); margin-right: 3px; }
+  /* v6.12 — the "For <commander>" row's primary action: one tap from the landing
+     into the commander's synergy rails (the Workshop). Leads the row as a gold
+     pill so it reads as the on-theme engine, distinct from the muted staple chips
+     that follow. Echoes the deck screen's own Workshop button (same PixelSpark). */
+  .ctx-scout { display: inline-flex; align-items: center; gap: 5px; background: var(--gold-glow); border: 1px solid rgba(224,196,106,.5); border-radius: 20px; padding: 7px 14px; font-family: var(--ios-font); font-size: 12.5px; font-weight: 720; letter-spacing: .01em; color: var(--gold-bright); cursor: pointer; white-space: nowrap; transition: all .15s; }
+  .ctx-scout svg { flex: none; }
   .landing-cols { display: grid; gap: 24px; margin-top: 28px; }
   @media (min-width: 900px) { .arch-sec { margin-top: 36px; } .landing-cols { grid-template-columns: 1fr 1fr; gap: 44px; margin-top: 36px; } .mast { height: 358px; } .mast-title::before { font-size: 12px; margin-bottom: 11px; } }
   .col-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(224,196,106,.3); }
@@ -1324,6 +1345,9 @@
      clears the corner. Subtle metadata pill, not chrome. */
   .arch-tile .arch-size { position: absolute; right: 8px; bottom: 8px; z-index: 2; font-size: 9px; font-weight: 800; letter-spacing: .03em; font-variant-numeric: tabular-nums; color: var(--gold-dim); background: rgba(8,9,14,.62); border: 1px solid rgba(224,196,106,.2); border-radius: 999px; padding: 1px 6px; line-height: 1.3; pointer-events: none; animation: skIn .5s var(--fluid) both; }
   .arch-tile.active .arch-size { color: var(--gold-bright); border-color: rgba(224,196,106,.45); background: rgba(8,9,14,.5); }
+  /* v6.11: a school with ZERO commanders in the locked "My colors" reads muted, not gold — signals "nothing here in your colors" so the dead tap is preempted rather than looking like a broken count. */
+  .arch-tile .arch-size.empty { color: var(--muted); border-color: var(--hair2); background: rgba(8,9,14,.5); font-weight: 700; }
+  .arch-tile.active .arch-size.empty { color: var(--muted); border-color: var(--hair2); }
   .arch-tile.active { border-color: rgba(224,196,106,.7); box-shadow: inset 0 0 0 1px rgba(224,196,106,.28), inset 0 1px 0 rgba(255,255,255,.06), 0 8px 20px rgba(0,0,0,.4); }
   @media (hover: hover) and (pointer: fine) { .arch-tile:hover { border-color: rgba(224,196,106,.5); transform: translateY(-2px); } }
   /* v4.66 VISUAL FLAIR — per-school arcana signature. Each Forge tile carries a faint
@@ -1588,7 +1612,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v6.09 \u00B7 2026-07-26', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v6.13 \u00B7 2026-07-26', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -5006,6 +5030,10 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v6.13', date: '2026-07-26', focus: 'ui', commander: null, summary: "Surprise me now respects the colors you brew in. When you lock a “My colors” identity, every school you tap already deals only commanders that fit your colors — but Surprise me, the one-tap “what should I brew next, in my colors?” button, could still land on a school that has nothing in your colors and hand you an empty spread (“No commanders fit inside those colors”). Now it skips those schools: under a color lock it only ever surprises you into a school that actually has commanders in your identity, so mono-white never rolls into an empty Chaos & Gambling and the button always deals a real spread of eight. It still tours every eligible school before repeating, and with no color lock set it behaves exactly as before, dealing across all thirteen." },
+    { build: 'v6.12', date: '2026-07-26', focus: 'ui', commander: null, summary: "The Herald now has a one-tap door into a commander's synergy rails. The “For <commander>” row under Continue Brewing gave you six quick searches for the universal staples every deck runs — Removal, Draw, Ramp, Wipes, Protection, Tutors — but the thing Oracle is actually built around, this commander's on-theme recommendation rails (the cards a strong deck for THIS commander actually wants), had no route from the landing at all: you had to resume into the deck and then open the Workshop. That row now leads with a distinct gold Workshop pill — same spark icon as the deck screen's own Workshop button — that opens those synergy rails directly from the front page, in one tap. It reuses the exact overlay the deck screen already opens, so nothing about the report changes; it simply puts the heart of the app one tap closer, ahead of the generic staple searches, so the landing finally points at what makes each commander worth brewing rather than only the floor every deck shares. Only shows when you have an active commander, and the six staple chips are all still there, just after it." },
+    { build: 'v6.11', date: '2026-07-26', focus: 'ui', commander: null, summary: "The Forge's school tiles now count in YOUR colors. Each tile already showed how many commanders a school holds (Tokens 946, Stax 217…), and the Forge already lets you lock a “My colors” preference so every deal draws only commanders that fit your identity — but the tile counts kept showing the full total even under that lock, promising a breadth the color filter would then contradict. Now, the moment you lock a color identity, every tile's count switches to the number that actually fits your colors: lock Golgari and Tokens reads ~141, Reanimator ~141, +1/+1 Counters ~166 — the deep lanes — while Blink drops to ~5 and Chaos & Gambling to ~2, so a glance across the thirteen tiles tells you where the depth is in the colors you brew. A school with nothing in your colors (mono-white Chaos & Gambling, say) reads a muted 0 instead of gold, so you skip a dead tap before you make it. Clear the color lock and every tile shows its full total again, exactly as before. It's the same in-color count the deal itself draws from, so the tiles, the deal, and the “View all N” footer now all speak one color-locked language." },
+    { build: 'v6.10', date: '2026-07-26', focus: 'ui', commander: null, summary: "The Continue Brewing bar on the Herald now shows how your active deck is coming along. Instead of a bare card count, it carries the same progress read as the Workshop: a state-aware line — “14 to go” while you're filling out the deck, “Complete” at exactly 100, or “12 over” once you've overbuilt and it's time to start cutting — plus a thin fill bar that runs gold as you build, turns green when the deck hits 100, and shifts red when you're over the limit. Commander decks are a build-up-then-cut loop, so seeing at a glance whether a brew is a fresh skeleton, nearly done, or ready to trim — right from the landing, before you even open it — is one less click back into the build. The whole read is a compact mirror of the deck page's own progress hero, so both surfaces now speak one language." },
     { build: 'v6.09', date: '2026-07-26', focus: 'ui', commander: null, summary: "The “For [commander]” quick-launcher under your active brew now covers the full set of Commander deckbuilding staples. Next to Removal, Draw, Ramp, and Board Wipes it adds two more one-tap searches every deck wants: Protection — keep your commander and key pieces alive (Swiftfoot Boots, Lightning Greaves, Teferi's Protection) — and Tutors — dig up the cards your deck is built around (Demonic Tutor, Vampiric Tutor, Enlightened Tutor), the tutor list cleaned of land-ramp so it means the cards you actually search for. Each is scoped to your commander's color identity, so the six staple categories every EDH primer teaches are one tap away the moment you're brewing." },
     { build: 'v6.08', date: '2026-07-26', focus: 'ui', commander: null, summary: "The Forge now remembers the colors you brew in. Color identity is the first thing most Commander players commit to, so the Forge's color filter is no longer a per-deal afterthought that appears only after you've dealt a school — it's now a standing “My colors” preference, shown from the start and remembered across visits. Set it to the colors you play (say, Golgari) and every school you tap deals only commanders that fit inside them, and Surprise me picks an in-color school too — so “what should I brew next, in my colors?” is answered in one tap, even from a cold landing. Choose nothing and the Forge behaves exactly as before, dealing every color; a one-tap ✕ Any colors clears the lock whenever you want to browse wide again. Self-contained to the Forge — nothing else on the Herald moves." },
     { build: 'v6.07', date: '2026-07-26', focus: 'ui', commander: null, summary: "Today's Commander now tells you how charted it is. The daily hero already said WHO the featured commander is and WHAT it plays (its top archetype game-plans), but nothing about how established it is — so a brewer couldn't tell whether the day's pick is a beloved staple with a thousand decklists to crib from or an underplayed hidden gem you'd be pioneering. The masthead now carries a small EDHREC-tier pill beside the plan pills, reading the commander's popularity band straight from its rank: bright-gold ✦ for the well-charted staples (Format staple, Heavily played), calm gold for the solid middle (Popular, Established), and an arcane-purple ◆ Hidden gem for the deep cuts — the exact popularity vocabulary the Forge's dealt cards already speak, now on the landing's biggest discovery surface. The precise rank rides along as a dimmer number (e.g. Popular · #5k) for the anchored bands. It's a compact read: it sits in the same wrapping row as the plan pills so it never crowds the nameplate on a phone, and it simply omits itself when Scryfall has no rank for the card. One more at-a-glance signal for the first question a brewer asks of any commander — is this worth building?" },
@@ -5656,7 +5684,7 @@ function App() {
                     "My Decks",
                     decks.length > 0 && React.createElement("span", { className: "badge" }, decks.length))),
             React.createElement("button", { className: "build-badge", "aria-label": "What's new in Oracle", onClick: () => { setWhatsNewOn(true); haptic(); } }, BUILD)),
-        tab === 'search' && (React.createElement(SearchScreen, { injectQuery: searchInject, onInjectConsumed: () => setSearchInject(null), forgeIntent: forgeIntent, onForgeIntentConsumed: () => setForgeIntent(null), activeDeck: activeDeck, onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onAdd: addCard, ciViolation: ciViolation, commanderCI: commanderCI, upgrades: upgrades, onOpenRandom: () => { setRandomOn(true); haptic(); }, onGoDeck: () => { setTab('deck'); haptic(); } })),
+        tab === 'search' && (React.createElement(SearchScreen, { injectQuery: searchInject, onInjectConsumed: () => setSearchInject(null), forgeIntent: forgeIntent, onForgeIntentConsumed: () => setForgeIntent(null), activeDeck: activeDeck, onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onAdd: addCard, ciViolation: ciViolation, commanderCI: commanderCI, upgrades: upgrades, onOpenRandom: () => { setRandomOn(true); haptic(); }, onGoDeck: () => { setTab('deck'); haptic(); }, onOpenSynergy: () => { setSynergyOn(true); haptic(); } })),
         tab === 'deck' && (React.createElement(DeckScreen, { deck: activeDeck, deckList: deckList, deckTotal: deckTotal, onChangeQty: changeQty, onRemove: removeCard, onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onClearCommander: clearCommander, onDrawHand: startPlaytest, onGoSearch: () => setTab('search'), onFillGap: (q) => { setSearchInject({ q: q, t: Date.now(), sort: 'edhrec' }); setTab('search'); haptic(); }, onOpenSynergy: () => { setSynergyOn(true); haptic(); }, onOpenSimilar: () => { if (activeDeck && activeDeck.commander) { setSimilarFor(activeDeck.commander); haptic(); } }, onOpenBasics: () => { setBasicsOn(true); haptic(); }, onOpenRandom: () => { setRandomOn(true); haptic(); }, onToggleOwned: toggleOwned, onSetOwnedAll: setOwnedAll, ciViolation: ciViolation, showToast: showToast, upgrades: upgrades, decksAll: decks, onCrossDeck: crossDeck })),
         tab === 'decks' && (React.createElement(DecksScreen, { decks: decks, activeDeckId: activeDeckId, onSelect: (id) => { setActiveDeckId(id); setTab('deck'); haptic(); }, onCreate: createDeck, onDelete: deleteDeck, onImport: importDeckList, onRandom: () => { setRandomOn(true); haptic(); } })),
         synergyOn && activeDeck && activeDeck.commander && React.createElement(SynergyOverlay, { onViewAll: (q, sort) => { setSearchInject({ q: q, t: Date.now(), sort: sort }); setSynergyOn(false); setTab('search'); haptic(); }, commander: activeDeck.commander, deck: activeDeck, deckList: deckList, onClose: () => setSynergyOn(false), onAdd: (c) => addCard(c, false), onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onOpenSimilar: (c) => { setSimilarFor(c); haptic(); }, onOpenRandom: () => { setRandomOn(true); haptic(); } }),
@@ -5953,9 +5981,17 @@ function forgeDealPick(items, idOf, n, key, weightOf) {
 // then clears for a fresh lap. A school-level echo of forgeDealPick's per-deal
 // freshness (v5.48): the well of ideas surfaces every school before recycling.
 const SURPRISE_SEEN = new Set();
-function forgeSurprisePick(schools, activeId, seen) {
-    let pool = schools.filter(s => s.id !== activeId && !seen.has(s.id));
-    if (!pool.length) { seen.clear(); pool = schools.filter(s => s.id !== activeId); } // toured all → fresh lap
+// v6.13: optional `isEligible(school)` predicate lets the caller exclude schools that
+// would deal an EMPTY spread — specifically, under the "My colors" lock a school with
+// zero in-color commanders (e.g. mono-White → Chaos & Gambling = 0) must never be the
+// surprise, or the one-tap "what should I brew next, in my colors?" answer dead-ends on
+// "No commanders fit inside those colors." Both the primary pool and the fresh-lap pool
+// honor it; if nothing is eligible the pick is null and surprise() no-ops (never a dead
+// deal). No predicate (unlocked) = the exact prior all-schools tour.
+function forgeSurprisePick(schools, activeId, seen, isEligible) {
+    const ok = s => s.id !== activeId && (!isEligible || isEligible(s));
+    let pool = schools.filter(s => ok(s) && !seen.has(s.id));
+    if (!pool.length) { seen.clear(); pool = schools.filter(ok); } // toured all eligible → fresh lap
     if (!pool.length) return null;
     const pick = pool[Math.floor(Math.random() * pool.length)];
     seen.add(pick.id);
@@ -6011,21 +6047,29 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
     // tile number is exactly the count you'd see after dealing. Async + silent-degrade:
     // tiles render immediately; the count fades in when the roster is ready, and stays
     // absent on the local file:// preview where tile-rosters.json can't be fetched.
-    const [schoolSizes, setSchoolSizes] = useState(null);
+    // v6.11: the breadth read now HONORS the "My colors" lock. When a color identity is
+    // set, each tile counts only the commanders whose identity FITS inside it — the exact
+    // filter the deal runs (see line ~6086) — so a color-committed brewer scanning the 13
+    // tiles sees the real depth in THEIR colors (e.g. Tokens 946→~250 in Golgari), and any
+    // school with none shows 0 (muted) so a dead tap is preempted. Recomputes on every color
+    // toggle via useMemo; unlocked (ci==='') shows the full total exactly as v6.00 did.
+    const [tileR, setTileR] = useState(null);
     useEffect(() => {
         let alive = true;
-        loadTileRosters().then(R => {
-            if (!alive || !R) return;
-            const m = {};
-            for (const sch of FORGE_SCHOOLS) {
-                if (!sch.edhrecTags) continue;
-                const u = rosterUnion(R, sch.edhrecTags);
-                if (u && u.length) m[sch.id] = u.length;
-            }
-            if (alive && Object.keys(m).length) setSchoolSizes(m);
-        });
+        loadTileRosters().then(R => { if (alive && R) setTileR(R); });
         return () => { alive = false; };
     }, []);
+    const schoolSizes = useMemo(() => {
+        if (!tileR) return null;
+        const m = {};
+        for (const sch of FORGE_SCHOOLS) {
+            if (!sch.edhrecTags) continue;
+            const u = rosterUnion(tileR, sch.edhrecTags);
+            if (!u || !u.length) continue;
+            m[sch.id] = ci ? u.filter(e => (e.c || '').split('').every(L => ci.includes(L))).length : u.length;
+        }
+        return Object.keys(m).length ? m : null;
+    }, [tileR, ci]);
     // v6.03: the Forge exists to find your NEXT deck, so flag any dealt commander you
     // ALREADY brew. Build a Set of your decks' commander identities (cardKey = oracle_id,
     // the same key the deck engine uses) and match each dealt card against it. Read from
@@ -6228,7 +6272,13 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
         // v5.89: tour every school before repeating (SURPRISE_SEEN), never re-deal
         // the one already on the table — turns repeated taps into a full sweep of
         // the thirteen schools of brewing rather than a coin-flip that can stall.
-        const pick = forgeSurprisePick(FORGE_SCHOOLS, activeId, SURPRISE_SEEN);
+        // v6.13: under a "My colors" lock, skip schools with ZERO in-color commanders
+        // so a surprise never lands on a dead-end empty spread. schoolSizes (v6.11) is
+        // the exact in-color count per school; null (roster not yet loaded) or an
+        // unknown id → allow, so this only ever tightens when we have real counts and
+        // a lock is set — unlocked behavior is byte-for-byte the prior all-schools tour.
+        const elig = (ci && schoolSizes) ? (s => schoolSizes[s.id] == null || schoolSizes[s.id] > 0) : null;
+        const pick = forgeSurprisePick(FORGE_SCHOOLS, activeId, SURPRISE_SEEN, elig);
         if (pick)
             deal(pick);
     }
@@ -6262,7 +6312,7 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
         React.createElement('div', { className: 'arch-tiles' }, FORGE_SCHOOLS.map(a => React.createElement('button', { key: a.id, 'data-arch': a.id, className: 'arch-tile ' + ((multiIds !== null ? multiIds.includes(a.id) : activeId === a.id) ? 'active' : ''), 'aria-pressed': multiIds !== null ? multiIds.includes(a.id) : activeId === a.id, style: FORGE_ART[a.id] ? { '--art': 'url("' + FORGE_ART[a.id] + '")' } : undefined, onClick: () => tileTap(a) },
             React.createElement('span', { className: 'an' }, a.name),
             React.createElement('span', { className: 'af' }, a.flavor),
-            (schoolSizes && schoolSizes[a.id]) ? React.createElement('span', { className: 'arch-size', 'aria-hidden': true, title: schoolSizes[a.id].toLocaleString() + ' ' + a.name + ' commanders to brew' }, fmtSchoolSize(schoolSizes[a.id])) : null))),
+            (schoolSizes && schoolSizes[a.id] != null) ? React.createElement('span', { className: 'arch-size' + (schoolSizes[a.id] === 0 ? ' empty' : ''), 'aria-hidden': true, title: ci ? (schoolSizes[a.id].toLocaleString() + ' ' + a.name + ' commanders fit your colors (' + ci + ')') : (schoolSizes[a.id].toLocaleString() + ' ' + a.name + ' commanders to brew') }, fmtSchoolSize(schoolSizes[a.id])) : null))),
         React.createElement('div', { className: 'arch-ci' + (active ? '' : ' pre'), role: 'group', 'aria-label': 'Brew in your colors — filter the Forge by color identity' },
             React.createElement('span', { className: 'arch-ci-lab', title: 'A standing preference: every school deals — and Surprise me picks — only commanders whose color identity fits inside the chosen colors. Remembered across visits.' }, 'My colors'),
             'WUBRG'.split('').map(L => {
@@ -6338,7 +6388,7 @@ const NEWS = [
 ];
 // (v4.49 housekeeping: removed dead SEEKER_PATHS const — the v4.47 Herald landing
 // no longer renders the seeker tiles; restore from the 2026-07-22 backup if revived.)
-function SearchScreen({ injectQuery, onInjectConsumed, forgeIntent, onForgeIntentConsumed, activeDeck, onOpenDetail, onOpenPrintings, onAdd, ciViolation, commanderCI, upgrades, onOpenRandom, onGoDeck }) {
+function SearchScreen({ injectQuery, onInjectConsumed, forgeIntent, onForgeIntentConsumed, activeDeck, onOpenDetail, onOpenPrintings, onAdd, ciViolation, commanderCI, upgrades, onOpenRandom, onGoDeck, onOpenSynergy }) {
     const [query, setQuery] = useState('');
     const [activeChip, setActiveChip] = useState('');
     const [cards, setCards] = useState([]);
@@ -6699,20 +6749,53 @@ function SearchScreen({ injectQuery, onInjectConsumed, forgeIntent, onForgeInten
                 // overbuild-then-cut iterate loop is the core workflow, so the landing's
                 // second surface is one tap back into the active brew. Hidden when no
                 // active deck exists (no empty shell).
-                activeDeck && activeDeck.commander && (React.createElement("button", { className: "resume-bar", onClick: () => { if (onGoDeck) onGoDeck(); }, "aria-label": "Continue brewing " + (activeDeck.name || activeDeck.commander.name) },
-                    React.createElement("span", { className: "rb-art", "aria-hidden": true, style: { backgroundImage: 'url(' + (cardImage(activeDeck.commander, 'art_crop') || '') + ')' } }),
-                    React.createElement("span", { className: "rb-main" },
-                        React.createElement("span", { className: "rb-label" }, "Continue brewing"),
-                        React.createElement("span", { className: "rb-name" }, activeDeck.name || activeDeck.commander.name)),
-                    React.createElement("span", { className: "rb-count" }, (1 + Object.values(activeDeck.cards || {}).reduce((t, e) => t + (e && e.qty ? e.qty : 1), 0)) + "/100"),
-                    React.createElement("span", { className: "rb-go", "aria-hidden": true }, "\u203A"))),
-                activeDeck && activeDeck.commander && (React.createElement("div", { className: "ctx-row" },
-                    React.createElement("span", { className: "ctx-for" }, "For " + activeDeck.commander.name.split(',')[0].split(' //')[0]),
-                    [['Removal', 'otag:removal'], ['Draw', 'otag:card-advantage'], ['Ramp', '(otag:ramp OR otag:mana-rock)'], ['Wipes', 'otag:board-wipe'], ['Protection', 'otag:protection'], ['Tutors', 'otag:tutor -t:land -otag:ramp']].map(([l, q]) => {
-                        const ci = (activeDeck.commander.color_identity || []).join('');
-                        const cq = (ci ? 'id<=' + ci : 'id:c') + ' legal:commander ' + q;
-                        return React.createElement("button", { key: l, className: "chip", onClick: () => { setQuery(cq); setActiveChip(''); setAc([]); haptic(); doSearch({ queryOverride: cq, chipOverride: '' }); } }, l);
-                    }))),
+                activeDeck && activeDeck.commander && (() => {
+                    // v6.10 (Herald / BUILDING pillar): the Continue-Brewing resume bar carries
+                    // the SAME deck-progress read as the Workshop deck-count hero \u2014 a state-aware
+                    // to-go / over-limit line + a thin fill bar \u2014 so the landing shows at a glance
+                    // whether the active brew is a fresh skeleton, nearly done, complete, or
+                    // overbuilt (the documented overbuild-then-cut loop), not just a bare count.
+                    const total = 1 + Object.values(activeDeck.cards || {}).reduce((t, e) => t + (e && e.qty ? e.qty : 1), 0);
+                    const st = total === 100 ? 'done' : (total > 100 ? 'over' : '');
+                    const hint = total === 100 ? 'Complete' : (total < 100 ? (100 - total) + ' to go' : (total - 100) + ' over');
+                    const pct = Math.max(0, Math.min(100, total));
+                    const aria = "Continue brewing " + (activeDeck.name || activeDeck.commander.name) + " \u2014 " + total + " of 100 cards" + (total === 100 ? ", complete" : (total < 100 ? ", " + (100 - total) + " to go" : ", " + (total - 100) + " over limit"));
+                    return React.createElement("button", { className: "resume-bar", onClick: () => { if (onGoDeck) onGoDeck(); }, "aria-label": aria },
+                        React.createElement("span", { className: "rb-art", "aria-hidden": true, style: { backgroundImage: 'url(' + (cardImage(activeDeck.commander, 'art_crop') || '') + ')' } }),
+                        React.createElement("span", { className: "rb-main" },
+                            React.createElement("span", { className: "rb-label" }, "Continue brewing"),
+                            React.createElement("span", { className: "rb-name" }, activeDeck.name || activeDeck.commander.name)),
+                        React.createElement("span", { className: "rb-status", "aria-hidden": true },
+                            React.createElement("span", { className: 'rb-count ' + st }, total + "/100"),
+                            React.createElement("span", { className: 'rb-hint ' + st }, hint),
+                            React.createElement("span", { className: "rb-track" },
+                                React.createElement("span", { className: 'rb-fill ' + st, style: { width: pct + '%' } }))),
+                        React.createElement("span", { className: "rb-go", "aria-hidden": true }, "\u203A"));
+                })(),
+                activeDeck && activeDeck.commander && (() => {
+                    const cn = activeDeck.commander.name.split(',')[0].split(' //')[0];
+                    return React.createElement("div", { className: "ctx-row" },
+                        React.createElement("span", { className: "ctx-for" }, "For " + cn),
+                        // v6.12 (Herald / BUILDING pillar): the six chips below are generic
+                        // staple SEARCHES (removal/draw/ramp/wipes/protection/tutors) — the
+                        // universal floor every deck runs. But the product's stated heart —
+                        // THIS commander's on-theme synergy rails (the Workshop / Scouting
+                        // Report, "the cards a strong deck for this commander actually wants")
+                        // — had NO one-tap route from the landing: you had to resume into the
+                        // deck, then open the Workshop. Lead the row with a distinct gold pill
+                        // that opens those rails directly, reusing the EXACT overlay the deck
+                        // screen's Workshop button opens (setSynergyOn via onOpenSynergy) — no
+                        // new engine, no new state. Only rendered with an active commander, so
+                        // the overlay's activeDeck gate is always satisfied.
+                        React.createElement("button", { key: 'ws', className: "ctx-scout", title: "Open the Workshop — " + cn + "'s synergy rails, the on-theme cards a strong deck wants", "aria-label": "Open the Workshop for " + cn + " — the on-theme synergy cards a strong deck wants", onClick: () => { onOpenSynergy && onOpenSynergy(); } },
+                            React.createElement(PixelSpark, { size: 12 }),
+                            "Workshop"),
+                        [['Removal', 'otag:removal'], ['Draw', 'otag:card-advantage'], ['Ramp', '(otag:ramp OR otag:mana-rock)'], ['Wipes', 'otag:board-wipe'], ['Protection', 'otag:protection'], ['Tutors', 'otag:tutor -t:land -otag:ramp']].map(([l, q]) => {
+                            const ci = (activeDeck.commander.color_identity || []).join('');
+                            const cq = (ci ? 'id<=' + ci : 'id:c') + ' legal:commander ' + q;
+                            return React.createElement("button", { key: l, className: "chip", onClick: () => { setQuery(cq); setActiveChip(''); setAc([]); haptic(); doSearch({ queryOverride: cq, chipOverride: '' }); } }, l);
+                        }));
+                })(),
                 React.createElement(ArchetypeShelf, { onOpenDetail: onOpenDetail, forgeIntent: forgeIntent, onForgeIntentConsumed: onForgeIntentConsumed, onSearchAll: (q) => { setQuery(q); setActiveChip(''); setAc([]); haptic(); doSearch({ queryOverride: q, chipOverride: '' }); } }),
                 // v5.25 S4 (makeover): the news surfaces read as ONE grouped Reading Room
                 // band beneath the brewing surfaces (hero / resume / Forge come first).
