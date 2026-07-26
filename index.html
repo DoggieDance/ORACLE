@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v6.16 · 2026-07-26">
+<meta name="oracle-build" content="v6.20 · 2026-07-26">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -445,6 +445,12 @@
   .view-printings-btn { width: 100%; min-height: 47px; margin: 0 0 13px; border: 1px solid rgba(224,196,106,.4); border-radius: 15px; background: rgba(224,196,106,.1); color: #f2d987; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; font-weight: 760; }
   .view-printings-btn:active { transform: scale(.985); background: rgba(224,196,106,.18); }
   .view-printings-btn svg { width: 17px; height: 17px; }
+  /* v6.19: primary "Brew this — new deck" CTA in the dossier. Full-width gold fill
+     marks it as the discovery→build front door (distinct from the compact half-width
+     "Set Commander", which mutates the ACTIVE deck). Reuses the shared gold gradient. */
+  .view-printings-btn.brew-new { border-color: #e5c66e; background: var(--grad-gold); color: var(--gold-ink); font-weight: 800; }
+  .view-printings-btn.brew-new:active { filter: brightness(1.04); }
+  .view-printings-btn.brew-new .bn-sub { font-weight: 650; opacity: .72; margin-left: 3px; }
   .upgrade-callout { display: flex; align-items: center; gap: 11px; width: 100%; margin: 0 0 13px; padding: 11px 13px; border: 1px solid rgba(120,182,236,.45); border-radius: 15px; background: linear-gradient(180deg, rgba(82,152,220,.17), rgba(82,152,220,.07)); color: #d8ebff; text-align: left; }
   .upgrade-callout:active { transform: scale(.99); }
   .upgrade-callout .uc-spark { flex-shrink: 0; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; color: #bfe0ff; }
@@ -1221,6 +1227,7 @@
   .resume-bar { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 14px; padding: 9px 14px 9px 9px; border: 1px solid rgba(224,196,106,.30); border-radius: 15px; background: linear-gradient(115deg, rgba(224,196,106,.10), rgba(18,17,27,.55) 55%); cursor: pointer; text-align: left; font-family: inherit; transition: border-color .15s, background .15s, transform .12s; -webkit-tap-highlight-color: transparent; }
   .resume-bar:hover { border-color: rgba(224,196,106,.55); background: linear-gradient(115deg, rgba(224,196,106,.16), rgba(18,17,27,.6) 55%); }
   .resume-bar:active { transform: scale(.99); }
+  .resume-bar:focus-visible { outline: 2px solid rgba(224,196,106,.6); outline-offset: 2px; }
   .rb-art { width: 58px; height: 42px; flex: 0 0 auto; border-radius: 9px; background-size: cover; background-position: center 18%; background-color: #10111a; border: 1px solid var(--hair2); }
   .rb-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
   .rb-label { font-family: var(--ios-font); font-size: 8.5px; font-weight: 750; letter-spacing: .2em; text-transform: uppercase; color: var(--gold-dim); }
@@ -1231,6 +1238,17 @@
      green when every core role has met its target. */
   .rb-need { font-family: var(--ios-font); font-size: 10px; font-weight: 700; letter-spacing: .015em; color: var(--gold-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; margin-top: 1px; }
   .rb-need.ok { color: var(--green-ok); }
+  /* v6.18: the most-urgent-gap read is now ACTIONABLE. Before, "Needs 5 more
+     removal" was inert decoration (the whole bar just went to the deck); now the
+     gap itself is a quiet chip that, in one tap, fires the SAME colour-scoped
+     staple search the "For <commander>" chip would — routing a returning brewer
+     from diagnosis straight to candidates, without leaving the landing. It only
+     lights on hover/focus so the bar still reads calm, and stopPropagation keeps
+     the surrounding bar's tap-back-into-deck intact. */
+  .rb-need-act { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; max-width: 100%; margin-top: 1px; margin-left: -6px; padding: 1px 6px; background: none; border: 0; border-radius: 7px; font-family: var(--ios-font); font-size: 10px; font-weight: 700; letter-spacing: .015em; color: var(--gold-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; transition: color .15s, background .15s; -webkit-tap-highlight-color: transparent; }
+  .rb-need-act:hover, .rb-need-act:focus-visible { color: var(--gold-bright); background: var(--gold-glow); outline: none; }
+  .rb-need-cue { font-size: 11px; line-height: 1; opacity: 0; transform: translateX(-3px); transition: opacity .15s, transform .15s; }
+  .rb-need-act:hover .rb-need-cue, .rb-need-act:focus-visible .rb-need-cue { opacity: .95; transform: none; }
   /* v6.10: the resume bar now carries a compact mirror of the Workshop deck-count hero —
      a state-aware to-go / over-limit read + a thin fill bar — so the landing shows brew
      progress at a glance (fresh skeleton → nearly done → complete → overbuilt), one
@@ -1629,7 +1647,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v6.16 \u00B7 2026-07-26', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v6.20 \u00B7 2026-07-26', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -5047,6 +5065,10 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v6.20', date: '2026-07-26', focus: 'ui', commander: 'The Astonishing Ant-Man', summary: "The +1/+1 Counters school no longer deals you The Astonishing Ant-Man — he was miscategorized. He banks a +1/+1 counter every time you draw, but only to spend them minting 1/1 Insect tokens, so his real deck is a go-wide token engine, not a +1/+1 counters build (Oracle's own deep study of him says exactly this). Dealing him under +1/+1 Counters pointed brewers at the wrong shell. He's still one tap away where he belongs — the Tokens & Go-Wide school, whose query already includes him — so nothing is lost, only re-filed. The fix was made surgically, by name, rather than by a broad rule: the tempting pattern here (draw a card, get a counter, later cash it in) also describes genuine counters commanders like Baxter, Iron Man, and Blue Marvel, so a blanket rule would have wrongly dropped them. Ghave, Marath, and Fain — who put counters on your OTHER creatures as the actual plan — stay put too. Verified against live data: the change removes exactly Ant-Man and nothing else — every other counters commander stays." },
+    { build: 'v6.19', date: '2026-07-26', focus: 'ui', commander: null, summary: "Found a commander you want to build? You can now spin up a fresh deck around it in one tap. Every commander's dossier — the card view you reach from the daily Herald hero, a Forge deal, Find similar commanders, or a search result — now leads with a gold “⚒ Brew this — new deck” button that creates a brand-new deck built around that commander and drops you straight into it. Before, the dossier only offered “Set Commander”, which quietly swapped the commander of whatever deck you had open — so discovering a new commander mid-brew and hitting it would clobber your in-progress deck — or a longer detour through Consult the Oracle → Forge a deck around it. Now the discover-to-build leap the Herald is built for is a single tap, it names the fresh deck after the commander, and it never touches the deck you're already working on. “Set Commander” stays exactly as it was for when you do want to set the commander of your current deck." },
+    { build: 'v6.18', date: '2026-07-26', focus: 'ui', commander: null, summary: "The Continue Brewing bar's most-urgent-gap line is now a one-tap shortcut to the cards that fill it. The bar already diagnosed what your active brew needs next — “Needs 5 more removal”, “Needs 3 more card draw” — but that line was just a read; to act on it you had to open the deck, find the Deck Doctor, and search from there. Now the gap itself is a quiet button: tap it and Oracle runs the same colour-scoped staple search the “For <commander>” chip would, so you land straight on removal (or draw, ramp, or board wipes) that's legal in your commander's colors, sorted by how played it is. The gap chip only lights up on hover or focus so the bar still reads calm, and tapping anywhere else on the bar still drops you back into the deck exactly as before — the shortcut sits inside the existing tap target without stealing it. It reuses the same Deck Doctor engine that names the gap and the same search the staple chips run, so diagnosis and remedy can never point at different cards. Keyboard users get it too: the bar is now focusable with a visible ring, and the gap is a real button in the tab order." },
+    { build: 'v6.17', date: '2026-07-26', focus: 'ui', commander: null, summary: "Tapping a Forge school now takes you straight to the cards it deals. The Forge lays out eight commanders when you pick a school, but on a tall page — and especially on a phone, where the thirteen tiles stack two-to-a-row — that fresh spread rendered below the fold, so tapping a school could look like nothing happened until you scrolled down to find your deal. Now, the moment a deal settles, Oracle scrolls the eight commanders into view, so every tap on a school (or Surprise me, or a Combine) lands you on the spread it just dealt. The scroll is minimal and only moves as far as it needs to — if the cards are already on screen (a Deal-again on desktop, say), nothing jumps. The dossier's 'brew this school' cross-links benefit too: clicking a school on a commander's page now carries you to its dealt spread, not just to the top of the Forge. Nothing about the tiles, the deal, or the layout changed — the cards just come to you." },
     { build: 'v6.16', date: '2026-07-26', focus: 'ui', commander: null, summary: "You can now read a Forge school's flagship commander without leaving the Herald. Each of the thirteen school tiles names the archetype's most-built commander under its flavor line (Aristocrats → Teysa Karlov, Reanimator → Teval), but a name alone doesn't tell you what the card actually does if it's new to you. Now, on desktop, hovering that flagship name floats a large, fully legible copy of its card right beside your cursor — the same hover-preview the deck lists, card chips, and dealt Forge cards already use — so you can read the archetype's face, its cost and its rules text in place, and size up a school before you ever tap in to deal. It fetches the card once on first hover and remembers it, tucks itself to whichever side of the cursor has room, and vanishes when you move away; a dotted underline hints the name reads its card. Touch devices are unchanged — a phone has no hover, and tapping the tile still deals the school's spread exactly as before. Purely additive: nothing about the tiles, the deal, or the layout moves." },
     { build: 'v6.15', date: '2026-07-26', focus: 'ui', commander: null, summary: "The Continue Brewing bar now tells you what your deck needs next, not just how far along it is. Under the deck's name it shows the single most urgent Deck Doctor gap — the spell role your active brew is most short on, like “Needs 5 more removal” or “Needs 3 more card draw” — so a returning brewer sees the most useful next move from the landing, before ever opening the deck. It reads from the exact same Deck Doctor engine the Stats tab uses (the Command Zone category targets: ~10 ramp, ~10 draw, ~8 removal, ~3 wipes), so the two never disagree. Lands are left out of this one-line nudge on purpose — the N/100 count already tells you to keep adding cards, and the actionable prompt is which spell role is neglected; the full five-row Deck Doctor, lands included, is still one tap away in the deck's Stats. Once every core role has met its target the line turns green and reads “Core roles covered.”" },
     { build: 'v6.14', date: '2026-07-26', focus: 'ui', commander: null, summary: "Every Forge school tile now names its marquee commander — the single most-built commander of that archetype — right under the flavor line, so the thirteen schools read at a glance even if the jargon is new to you: Aristocrats is led by Teysa Karlov, Stax by Grand Arbiter Augustin IV, Blink by Brago, Artifacts by Breya. The name comes from the same theme roster the count pill and the deal already use, so it costs no extra loading, and it honors your “My colors” lock exactly the way the count does — set an identity and each tile shows the top commander that actually fits your colors. A small gold crown marks the face; it fades in once the roster is ready and simply stays absent on the offline preview." },
@@ -5711,7 +5733,7 @@ function App() {
         scoutFor && React.createElement(SynergyOverlay, { scout: true, focusRail: scoutFocus, commander: scoutFor, deck: activeDeck, deckList: deckList, onViewAll: (q, sort) => { setSearchInject({ q: q, t: Date.now(), sort: sort }); setScoutFor(null); setScoutFocus(null); setTab('search'); haptic(); }, onClose: () => { setScoutFor(null); setScoutFocus(null); }, onAdd: (c) => addCard(c, false), onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onOpenSimilar: (c) => { setSimilarFor(c); haptic(); }, onOpenRandom: () => { setRandomOn(true); haptic(); }, onBuild: buildFromCommander }),
         similarFor && React.createElement(SimilarOverlay, { source: similarFor, onClose: () => setSimilarFor(null), onOpenDetail: setDetailCard, onBuild: buildFromCommander }),
         randomOn && React.createElement(RandomOverlay, { onClose: () => setRandomOn(false), commanderCI: commanderCI, onOpenDetail: setDetailCard, onBuild: buildFromCommander, onSetCommander: (c) => { setCommander(c); setRandomOn(false); } }),
-        detailCard && (React.createElement(DetailOverlay, { card: detailCard, onClose: () => setDetailCard(null), onAdd: (c) => addCard(c, false), onSetCommander: (c) => { setCommander(c); }, onViewPrintings: (card) => setPrintingsCard(card), onSimilar: (c) => { setDetailCard(null); setSimilarFor(c); haptic(); }, onConsult: (c, railKey) => { setDetailCard(null); setScoutFor(c); setScoutFocus(railKey || null); haptic(); }, onOpenSchool: (id) => { setDetailCard(null); setForgeIntent({ id: id, t: Date.now() }); setTab('search'); haptic(); }, inDeck: activeDeck && activeDeck.cards[cardKey(detailCard)], isCommander: activeDeck && activeDeck.commander && cardKey(activeDeck.commander) === cardKey(detailCard), ciViolation: ciViolation, upgrade: detailCard && upgrades[detailCard.oracle_id] })),
+        detailCard && (React.createElement(DetailOverlay, { card: detailCard, onClose: () => setDetailCard(null), onAdd: (c) => addCard(c, false), onSetCommander: (c) => { setCommander(c); }, onBuild: buildFromCommander, onViewPrintings: (card) => setPrintingsCard(card), onSimilar: (c) => { setDetailCard(null); setSimilarFor(c); haptic(); }, onConsult: (c, railKey) => { setDetailCard(null); setScoutFor(c); setScoutFocus(railKey || null); haptic(); }, onOpenSchool: (id) => { setDetailCard(null); setForgeIntent({ id: id, t: Date.now() }); setTab('search'); haptic(); }, inDeck: activeDeck && activeDeck.cards[cardKey(detailCard)], isCommander: activeDeck && activeDeck.commander && cardKey(activeDeck.commander) === cardKey(detailCard), ciViolation: ciViolation, upgrade: detailCard && upgrades[detailCard.oracle_id] })),
         printingsCard && (React.createElement(PrintingsSheet, { card: printingsCard, deck: activeDeck, onClose: () => setPrintingsCard(null), onChoose: choosePrinting })),
         basicsOn && activeDeck && React.createElement(BasicsSheet, { deck: activeDeck, commanderCI: commanderCI, onAddQty: addCardQty, onClose: () => setBasicsOn(false), showToast: showToast }),
         playtesting && React.createElement(PlaytestBoard, { deck: activeDeck, deckList: deckList, onClose: () => setPlaytesting(false) }),
@@ -5886,6 +5908,32 @@ function rosterUnion(R, slugs) {
     }
     return seen.size ? Array.from(seen.values()) : null;
 }
+// v6.20: STUDY_DB-grounded mis-file exclusions (backlog: +1/+1 over-inclusion).
+// EDHREC's theme roster can tag a commander into a school its ACTUAL gameplan
+// contradicts. STUDY_DB is the ground truth (RAILS/STUDY_DB and the Forge tiles are
+// two views of the same truth and must never disagree about a commander), so this
+// client-side layer drops confirmed mis-files from the school. The roster snapshot
+// is machine-generated weekly; this corrects it in the READER until the generator
+// does. Keyed school id -> Set(oracle_id); the commander stays in every school it
+// genuinely belongs to. Verify each entry against its STUDY_DB note before adding.
+const TILE_EXCLUDE = {
+    // The Astonishing Ant-Man: each draw banks a +1/+1 counter on HIMSELF, then those
+    // counters are removed to mint 1/1 Insect tokens — STUDY_DB/RAILS ground-truth him
+    // as a go-wide TOKEN engine ("counters are ammunition, not a go-tall theme"), NOT a
+    // +1/+1 counters deck. He stays in Tokens & Go-Wide (roster tag 'tokens' + the query
+    // both keep him there), so nothing is lost — only re-filed to the correct school.
+    counters: new Set(['6c7e4e51-099a-4398-a4b7-e2f0ddd36429'])
+};
+// A school's roster with its confirmed mis-files removed — the SINGLE choke point every
+// roster-driven surface (deal, intersection, count pill, marquee face) reads, so they can
+// never disagree about a commander's membership. Returns rosterUnion's value untouched
+// when the school has no exclusions.
+function schoolRoster(R, sch) {
+    const u = rosterUnion(R, sch && sch.edhrecTags);
+    if (!u) return u;
+    const ex = sch && TILE_EXCLUDE[sch.id];
+    return ex ? u.filter(e => !ex.has(e.o)) : u;
+}
 function rosterSchoolsFor(R, oid) {
     // v5.45 (Slice 5 v1): which Forge schools carry this commander, with its
     // strongest theme deck count — the factual "why this commander fits"
@@ -5906,7 +5954,7 @@ function rosterSchoolsFor(R, oid) {
                 }
             }
         }
-        if (found)
+        if (found && !(TILE_EXCLUDE[sch.id] && TILE_EXCLUDE[sch.id].has(oid)))
             out.push({ id: sch.id, name: sch.name, d: best });
     }
     out.sort((a, b) => b.d - a.d);
@@ -5922,7 +5970,7 @@ const FORGE_SCHOOLS = [
     { id: 'spellslinger', name: 'Spellslinger', flavor: 'The storm speaks in cantrips', edhrecTags: ['spellslinger'], q: 'is:commander legal:commander o:"instant or sorcery"' }, // 104
     { id: 'tokens', name: 'Tokens & Go-Wide', flavor: 'One becomes ten becomes legion', edhrecTags: ['tokens'], q: 'is:commander legal:commander o:create o:token (o:"creature token" OR o:"twice that many" OR o:"one or more tokens" OR o:"that\'s a copy of" OR o:"tokens that are copies" OR o:populate OR o:"whenever you create a token" OR o:"if you created a token" OR o:"create your first token" OR o:"whenever one or more tokens enter" OR o:"a token enters the battlefield under your control")' }, // 501 — v5.30: TIGHTENED (backlog leak-fix). Old o:create o:token (665) caught any commander making even one incidental token — mostly pure Treasure/Clue/Food/Blood/Gold/Map/Powerstone ramp + aristocrats (Atsushi, Captain Lannery Storm, Old Gnawbone, Ziatora…) whose real plan isn't going wide. Now the token plan must be CREATURE-relevant: creature tokens (o:"creature token", all 432 kept), OR token doublers/multipliers (o:"twice that many"/"one or more tokens" — Adrix and Nev, Mondrak), OR token-COPY go-wide (o:"that's a copy of"/"tokens that are copies"/populate — Miirym, Delina, Cadric, Ashling, Calix, Orvar, Anikthea), OR token-MATTERS payoffs (o:"whenever you create a token"/"if you created a token"/… — Bennie Bracks, Rosie Cotton). Audited all 166 dropped card-by-card vs live Scryfall 2026-07-24: every drop is pure artifact-token ramp / aristocrats; ZERO legit go-wide lost. Payoff-only leaders (Jetmir) were never in the tile — they make no tokens — a separate widen item. 665→501.
     { id: 'reanimator', name: 'Reanimator', flavor: 'The grave is a second hand', edhrecTags: ['reanimator'], q: 'is:commander legal:commander (o:"from your graveyard to the battlefield" or o:"from your graveyard onto the battlefield" or o:"creature card from a graveyard onto the battlefield" or o:"has unearth" or o:"have unearth" or o:encore)' }, // 92
-    { id: 'counters', name: '+1/+1 Counters', flavor: 'Growth upon growth upon growth', edhrecTags: ['plus-1-plus-1-counters'], q: 'is:commander legal:commander (o:/put[s]? (a|one or more|X|two) \\+1\\/\\+1 counter/ or (o:proliferate -o:/(-1\\/-1|poison|loyalty|charge|energy|stun) counter/ -o:blight) or keyword:bolster or keyword:adapt or keyword:mentor or keyword:training or keyword:outlast or keyword:evolve)' }, // 482 — v5.31 WIDEN (backlog blind-spot): added six keyword arms (bolster/adapt/mentor/training/outlast/evolve). These keywords place +1/+1 counters ONLY in their reminder text, which o: does not search, so the literal put-arm missed every commander whose counters come from a keyword. Net +14, all audited card-by-card vs live Scryfall 2026-07-24 and all genuine +1/+1 counters commanders: Anafenza Kin-Tree Spirit, Aurelia Exemplar of Justice, Danny Pink, Darwin Adaptive Mutant, Dromoka the Eternal, Felisa Fang of Silverquill, Iroh Dragon of the West, Jetfire, Optimus Prime, Ray Fillet, Tajic Legion's Edge, Torens Fist of the Angels, Vikya Scorching Stalwart, Zegana Utopian Speaker (several — Danny Pink, Felisa, Iroh, Ray Fillet, Zegana — even carry explicit +1/+1-counter-matters payoff text). ZERO -1/-1/poison/loyalty/charge/energy/stun/proliferate-only leaks (the keywords place only +1/+1 counters); additive OR so all 468 prior members retained. outlast adds 0 today but is kept as a genuine +1/+1 keyword to future-proof. v5.11: qualified the bare o:proliferate arm (backlog leak-fix, slice 1 of 2). The old unqualified arm leaked commanders whose proliferate serves a RIVAL counter type, not +1/+1. Audited all 14 commanders the proliferate arm uniquely adds (the other 457 come from the +1/+1 put-arm) card-by-card vs live Scryfall 2026-07-23: kept the generic proliferate engines usable in +1/+1 (Atraxa, Kilo, Ezuri Stalker, Agent Frank Horrigan, Tekuthal) and the explicit +1/+1 payoffs the put-arm missed (Tromell "enters with an additional +1/+1 counter", Cayth fabricate, Brimaz incubate = +1/+1 counters, Tidus/Venser); dropped ONLY the mis-filed rival-type ones — Yawgmoth ("-1/-1 counter"), Lulu ("stun counter"), and High Perfect Morcant (blight = -1/-1). Exclusions consolidated into ONE alternation regex to stay under Scryfall's regex-operator cap; -o:blight is a plain clause (blight is the -1/-1 keyword and Morcant's "-1/-1" lives only in reminder text, which o: does not search). 471->468, ZERO drop from the +1/+1 put-arm, ZERO additions; every generic/legit member retained. Exclusions are scoped INSIDE the proliferate sub-clause, so a genuine +1/+1 putter that also references a rival type stays via the put-arm OR. REMAINING (slice 2, future run): the put-arm (~457) still catches commanders with only INCIDENTAL +1/+1 counters whose real plan is elsewhere (e.g. The Astonishing Ant-Man = draw->tokens) — needs careful per-commander auditing so nothing legit is lost.
+    { id: 'counters', name: '+1/+1 Counters', flavor: 'Growth upon growth upon growth', edhrecTags: ['plus-1-plus-1-counters'], q: 'is:commander legal:commander (o:/put[s]? (a|one or more|X|two) \\+1\\/\\+1 counter/ or (o:proliferate -o:/(-1\\/-1|poison|loyalty|charge|energy|stun) counter/ -o:blight) or keyword:bolster or keyword:adapt or keyword:mentor or keyword:training or keyword:outlast or keyword:evolve) -!"The Astonishing Ant-Man"' }, // 481 — v6.20 SLICE-2 (backlog: put-arm INCIDENTAL over-inclusion). Excluded The Astonishing Ant-Man by exact name — STUDY_DB/RAILS ground-truth him as a go-wide TOKEN engine (each draw banks a +1/+1 counter on HIMSELF, then those counters are removed to mint 1/1 Insects; "counters are ammunition, not a go-tall theme"), NOT a counters deck; he stays fully discoverable via the Tokens tile (verified he matches its query). Verified live Scryfall 2026-07-26: 482->481, removed EXACTLY Ant-Man, ZERO collateral. PRODUCTION deals from the EDHREC roster (roster-driven; EDHREC ALSO tags him plus-1-plus-1-counters), so he is dropped there too via the client-side TILE_EXCLUDE mis-file layer (see schoolRoster above) — this q change covers the query fallback / local-preview path and keeps the canonical definition honest. Exact-name exclusion (NOT a regex/pattern) was deliberate — the draw->counter->token shape ALSO matches GENUINE counters commanders: Baxter (creatures-with-a-counter gain flying), Iron Man (puts +1/+1 counters on target creatures + "modified" payoff), Blue Marvel (self-grow) — a broad pattern would wrongly drop them. Fain/Ghave/Marath share "spend counters for tokens" wording but put counters on OTHER creatures as the plan and are LEGIT +1/+1 commanders, kept. REMAINING (put-arm incidental audit continues — multi-run, per-commander vs STUDY_DB ground truth; find others whose study note contradicts the tile). v5.31 WIDEN (backlog blind-spot): added six keyword arms (bolster/adapt/mentor/training/outlast/evolve). These keywords place +1/+1 counters ONLY in their reminder text, which o: does not search, so the literal put-arm missed every commander whose counters come from a keyword. Net +14, all audited card-by-card vs live Scryfall 2026-07-24 and all genuine +1/+1 counters commanders: Anafenza Kin-Tree Spirit, Aurelia Exemplar of Justice, Danny Pink, Darwin Adaptive Mutant, Dromoka the Eternal, Felisa Fang of Silverquill, Iroh Dragon of the West, Jetfire, Optimus Prime, Ray Fillet, Tajic Legion's Edge, Torens Fist of the Angels, Vikya Scorching Stalwart, Zegana Utopian Speaker (several — Danny Pink, Felisa, Iroh, Ray Fillet, Zegana — even carry explicit +1/+1-counter-matters payoff text). ZERO -1/-1/poison/loyalty/charge/energy/stun/proliferate-only leaks (the keywords place only +1/+1 counters); additive OR so all 468 prior members retained. outlast adds 0 today but is kept as a genuine +1/+1 keyword to future-proof. v5.11: qualified the bare o:proliferate arm (backlog leak-fix, slice 1 of 2). The old unqualified arm leaked commanders whose proliferate serves a RIVAL counter type, not +1/+1. Audited all 14 commanders the proliferate arm uniquely adds (the other 457 come from the +1/+1 put-arm) card-by-card vs live Scryfall 2026-07-23: kept the generic proliferate engines usable in +1/+1 (Atraxa, Kilo, Ezuri Stalker, Agent Frank Horrigan, Tekuthal) and the explicit +1/+1 payoffs the put-arm missed (Tromell "enters with an additional +1/+1 counter", Cayth fabricate, Brimaz incubate = +1/+1 counters, Tidus/Venser); dropped ONLY the mis-filed rival-type ones — Yawgmoth ("-1/-1 counter"), Lulu ("stun counter"), and High Perfect Morcant (blight = -1/-1). Exclusions consolidated into ONE alternation regex to stay under Scryfall's regex-operator cap; -o:blight is a plain clause (blight is the -1/-1 keyword and Morcant's "-1/-1" lives only in reminder text, which o: does not search). 471->468, ZERO drop from the +1/+1 put-arm, ZERO additions; every generic/legit member retained. Exclusions are scoped INSIDE the proliferate sub-clause, so a genuine +1/+1 putter that also references a rival type stays via the put-arm OR. REMAINING (slice 2, future run): the put-arm (~457) still catches commanders with only INCIDENTAL +1/+1 counters whose real plan is elsewhere (e.g. The Astonishing Ant-Man = draw->tokens) — needs careful per-commander auditing so nothing legit is lost.
     { id: 'lands', name: 'Lands Matter', flavor: 'The earth itself takes sides', edhrecTags: ['lands-matter', 'landfall'], q: 'is:commander legal:commander (o:landfall or o:"play an additional land" or o:"lands you control" or o:"land card from your graveyard" or o:"land cards from your graveyard" or o:"lands from your graveyard" or o:"land card in your graveyard" or o:"every land type" or o:"are lands in addition" or o:"discard one or more land cards") -o:"nonland card" -o:"treefolk, or land"' }, // 81
     { id: 'voltron', name: 'Voltron', flavor: 'All power to a single blade', edhrecTags: ['voltron'], q: 'is:commander legal:commander (o:equipped or o:"equipment" or o:/aura(s)? (attached|you control)/ or o:"enchanted creature" or o:attach)' }, // 116
     { id: 'artifacts', name: 'Artifacts', flavor: 'The engine builds the engine', edhrecTags: ['artifacts'], q: 'is:commander legal:commander (o:/artifact(s)? (you control|spell|creature|card)/ or o:affinity or o:metalcraft or o:improvise or o:"create a treasure" or o:/artifact enters/)' }, // 245
@@ -6084,7 +6132,7 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
         const m = {};
         for (const sch of FORGE_SCHOOLS) {
             if (!sch.edhrecTags) continue;
-            const u = rosterUnion(tileR, sch.edhrecTags);
+            const u = schoolRoster(tileR, sch);
             if (!u || !u.length) continue;
             m[sch.id] = ci ? u.filter(e => (e.c || '').split('').every(L => ci.includes(L))).length : u.length;
         }
@@ -6102,7 +6150,7 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
         const m = {};
         for (const sch of FORGE_SCHOOLS) {
             if (!sch.edhrecTags) continue;
-            const u = rosterUnion(tileR, sch.edhrecTags);
+            const u = schoolRoster(tileR, sch);
             if (!u || !u.length) continue;
             const pool = ci ? u.filter(e => (e.c || '').split('').every(L => ci.includes(L))) : u;
             if (!pool.length) continue;
@@ -6127,6 +6175,30 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
     }, [spread]);
     const seq = useRef(0);
     const rootRef = useRef(null); // v5.85: scroll the Forge into view on a dossier cross-link
+    // v6.17 (discovery friction fix): on a tall tile grid — most acutely the 2-col mobile
+    // layout — a fresh deal renders well BELOW the fold (measured live at desktop width: the
+    // spread top sits at ~1079px vs a 778px viewport, ~300px past the fold, and further down
+    // on mobile), so tapping a school LOOKED like it did nothing until you scrolled down to
+    // hunt for the eight dealt commanders. After a deal settles into real cards, bring the
+    // spread into view. block:'nearest' scrolls the MINIMUM amount and is a no-op when the
+    // spread is already visible, so a Deal-again with the cards already on screen never jumps.
+    // NB the app's ".screen" scroll container silently ignores behavior:'smooth' on a
+    // programmatic scrollIntoView (verified live — smooth is a no-op on this container, while
+    // the default instant scroll reliably reveals the spread), so we use the instant scroll;
+    // it also inherently honors prefers-reduced-motion (no animation to reduce). Keyed on
+    // [spread, dealing] so every deal path (single-school, query-fallback, Combine, and the
+    // v5.85 dossier cross-link) is covered by ONE effect with no per-path wiring.
+    const spreadRef = useRef(null);
+    useEffect(() => {
+        if (dealing || !spread || spread.length === 0) return; // reveal cards, not skeletons/empties
+        const el = spreadRef.current;
+        if (!el || !el.scrollIntoView) return;
+        const raf = requestAnimationFrame(() => {
+            try { el.scrollIntoView({ block: 'nearest' }); }
+            catch (e) { try { el.scrollIntoView(false); } catch (_) { } }
+        });
+        return () => cancelAnimationFrame(raf);
+    }, [spread, dealing]);
     // v6.16: hover-peek the school tile's marquee flagship (v6.14 gave the name; this
     // floats the readable card so a brewer can EVALUATE the archetype's face in place,
     // no click/navigation). Reuses the shared MissPeek.cache (keyed by oracle_id) and the
@@ -6179,7 +6251,7 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
             // only when the snapshot is missing (silent degrade, local preview).
             if (a.edhrecTags) {
                 const R = await loadTileRosters();
-                const roster = R ? rosterUnion(R, a.edhrecTags) : null;
+                const roster = R ? schoolRoster(R, a) : null;
                 if (roster && roster.length) {
                     const pool0 = f ? roster.filter(e => (e.c || '').split('').every(L => f.includes(L))) : roster;
                     if (my !== seq.current)
@@ -6246,7 +6318,7 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
             const schools = ids.map(id => FORGE_SCHOOLS.find(x => x.id === id)).filter(Boolean);
             let pool = null;
             for (const sch of schools) {
-                const roster = rosterUnion(R, sch.edhrecTags) || [];
+                const roster = schoolRoster(R, sch) || [];
                 if (pool === null)
                     pool = roster;
                 else {
@@ -6396,7 +6468,7 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
             !active && !ci && React.createElement('span', { className: 'arch-ci-hint' }, 'lock the Forge to the colors you brew')),
         err && React.createElement('div', { className: 'arch-err' }, err),
         active && !err && !dealing && spread && spread.length === 0 && React.createElement('div', { className: 'arch-err' }, (multiIds !== null && multiIds.length > 1) ? ('No commanders belong to all ' + multiIds.length + ' selected schools' + (ci ? ' within those colors' : '') + ' — drop one school.') : ('No ' + active.name + ' commanders fit inside those colors — loosen a color.')),
-        active && !err && (dealing || (spread && spread.length > 0)) && React.createElement('div', { className: 'arch-spread', 'data-arch': active.id }, (!spread || spread.length === 0)
+        active && !err && (dealing || (spread && spread.length > 0)) && React.createElement('div', { className: 'arch-spread', 'data-arch': active.id, ref: spreadRef }, (!spread || spread.length === 0)
             ? Array.from({ length: 8 }).map((_, i) => React.createElement('div', { key: 'sk' + i, className: 'arch-card', style: { '--i': i } }, React.createElement('div', { className: 'arch-imgwrap' }, React.createElement('div', { className: 'img-skeleton' })), React.createElement('div', { className: 'arch-name', 'aria-hidden': true }, ' ')))
             : spread.map((c, i) => {
                 const img = cardImage(c, 'normal');
@@ -6850,13 +6922,24 @@ function SearchScreen({ injectQuery, onInjectConsumed, forgeIntent, onForgeInten
                         if (!_gap || g > _gap.g || (g === _gap.g && r < _gap.r)) _gap = { key: p.key, g: g, r: r };
                     });
                     const needText = _gap ? ('Needs ' + _gap.g + ' more ' + (_ROLE[_gap.key] || _gap.key)) : 'Core roles covered';
+                    // v6.18 (Herald / BUILDING pillar): make that diagnosed gap ACTIONABLE by
+                    // reusing packageFillQuery \u2014 the SAME colour-scoped staple query the Deck
+                    // Doctor's own gap rows fire (and identical to the "For <commander>" ctx-row
+                    // chips). So tapping "Needs N more removal" lands the brewer on the very cards
+                    // that fill it, and diagnosis + remedy can never point at different cards.
+                    const fillQ = _gap ? packageFillQuery(activeDeck.commander, _gap.key) : null;
+                    const _rbShort = activeDeck.commander.name.split(',')[0].split(' //')[0];
                     const aria = "Continue brewing " + (activeDeck.name || activeDeck.commander.name) + " \u2014 " + total + " of 100 cards" + (total === 100 ? ", complete" : (total < 100 ? ", " + (100 - total) + " to go" : ", " + (total - 100) + " over limit")) + (_gap ? "; needs " + _gap.g + " more " + (_ROLE[_gap.key] || _gap.key) : "; core roles covered");
-                    return React.createElement("button", { className: "resume-bar", onClick: () => { if (onGoDeck) onGoDeck(); }, "aria-label": aria },
+                    return React.createElement("div", { className: "resume-bar", role: "button", tabIndex: 0, onClick: () => { if (onGoDeck) onGoDeck(); }, onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (onGoDeck) onGoDeck(); } }, "aria-label": aria },
                         React.createElement("span", { className: "rb-art", "aria-hidden": true, style: { backgroundImage: 'url(' + (cardImage(activeDeck.commander, 'art_crop') || '') + ')' } }),
                         React.createElement("span", { className: "rb-main" },
                             React.createElement("span", { className: "rb-label" }, "Continue brewing"),
                             React.createElement("span", { className: "rb-name" }, activeDeck.name || activeDeck.commander.name),
-                            React.createElement("span", { className: 'rb-need' + (_gap ? '' : ' ok'), "aria-hidden": true }, needText)),
+                            (fillQ
+                                ? React.createElement("button", { className: 'rb-need rb-need-act', title: 'Find ' + (_ROLE[_gap.key] || _gap.key) + " in " + _rbShort + "'s colors", "aria-label": 'Find ' + _gap.g + ' more ' + (_ROLE[_gap.key] || _gap.key) + " \u2014 search cards legal in " + _rbShort + "'s colors", onClick: (e) => { e.stopPropagation(); setQuery(fillQ); setActiveChip(''); setAc([]); haptic(); doSearch({ queryOverride: fillQ, chipOverride: '' }); } },
+                                    needText,
+                                    React.createElement("span", { className: "rb-need-cue", "aria-hidden": true }, "\u203a"))
+                                : React.createElement("span", { className: 'rb-need' + (_gap ? '' : ' ok'), "aria-hidden": true }, needText))),
                         React.createElement("span", { className: "rb-status", "aria-hidden": true },
                             React.createElement("span", { className: 'rb-count ' + st }, total + "/100"),
                             React.createElement("span", { className: 'rb-hint ' + st }, hint),
@@ -7954,7 +8037,7 @@ function SynergyOverlay({ onViewAll, commander, deck, deckList, onClose, onAdd, 
 }
 
 // ============ DETAIL OVERLAY ============
-function DetailOverlay({ card, onClose, onAdd, onSetCommander, onViewPrintings, onSimilar, onConsult, onOpenSchool, inDeck, isCommander, ciViolation, upgrade }) {
+function DetailOverlay({ card, onClose, onAdd, onSetCommander, onBuild, onViewPrintings, onSimilar, onConsult, onOpenSchool, inDeck, isCommander, ciViolation, upgrade }) {
     useEscape(onClose);
     const [faceIdx, setFaceIdx] = useState(0);
     // v5.45: roster-driven Forge Schools row (silent when absent/not loaded).
@@ -8065,6 +8148,9 @@ function DetailOverlay({ card, onClose, onAdd, onSetCommander, onViewPrintings, 
                     "Cooler art available \u00B7 " + upgrade.kind,
                     React.createElement("span", { className: "uc-sub" }, upgrade.set + (upgrade.delta > 0 ? '  \u00B7  +$' + upgrade.delta.toFixed(2) : (upgrade.delta < 0 ? '  \u00B7  saves $' + Math.abs(upgrade.delta).toFixed(2) : '  \u00B7  same price')))),
                 React.createElement("span", { className: "uc-chevron" }, "\u203A")),
+            canBeCommander && onBuild && !isCommander && React.createElement("button", { className: "view-printings-btn brew-new", onClick: () => onBuild(card), title: 'Start a fresh deck around ' + ((card.name || '').split(',')[0].split(' //')[0]) + ' — keeps any deck you\'re already building' },
+                "⚒ Brew this",
+                React.createElement("span", { className: "bn-sub" }, "— new deck")),
             canBeCommander && onConsult && !isCommander && React.createElement("button", { className: "view-printings-btn consult-btn", onClick: () => onConsult(card) },
                 React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" },
                     React.createElement("path", { d: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" }),
