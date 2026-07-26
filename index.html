@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v6.14 · 2026-07-26">
+<meta name="oracle-build" content="v6.16 · 2026-07-26">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1225,6 +1225,12 @@
   .rb-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
   .rb-label { font-family: var(--ios-font); font-size: 8.5px; font-weight: 750; letter-spacing: .2em; text-transform: uppercase; color: var(--gold-dim); }
   .rb-name { font-family: var(--display); font-size: clamp(14px, 1.8vw, 17px); font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* v6.15: the resume bar's Deck Doctor read — the active brew's single most urgent
+     spell-role gap (ramp/draw/removal/wipes), so the landing answers "what next?"
+     not just "how many left". Reads gold-dim like a quiet prescription; flips to
+     green when every core role has met its target. */
+  .rb-need { font-family: var(--ios-font); font-size: 10px; font-weight: 700; letter-spacing: .015em; color: var(--gold-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; margin-top: 1px; }
+  .rb-need.ok { color: var(--green-ok); }
   /* v6.10: the resume bar now carries a compact mirror of the Workshop deck-count hero —
      a state-aware to-go / over-limit read + a thin fill bar — so the landing shows brew
      progress at a glance (fresh skeleton → nearly done → complete → overbuilt), one
@@ -1347,6 +1353,8 @@
   .arch-tile .arch-lead .lg { color: var(--gold); margin-right: 5px; font-size: 9.5px; opacity: .82; }
   .arch-tile.active .arch-lead { color: var(--gold-bright); }
   @media (hover: hover) and (pointer: fine) { .arch-tile:hover .arch-lead { color: var(--gold-bright); } }
+  /* v6.16: hint that the marquee flagship name reads its card on hover (peek). */
+  @media (hover: hover) and (pointer: fine) { .arch-tile .arch-lead:hover { color: var(--gold-bright); text-decoration: underline dotted rgba(224,196,106,.55); text-underline-offset: 2px; cursor: zoom-in; } }
   /* v6.00 — school breadth count: how many commanders live in each Forge school,
      a discovery read (vast, well-charted archetypes vs niche ones), consistent with
      the "View all N commanders" foot. Bottom-right corner over the tile's bottom scrim
@@ -1621,7 +1629,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v6.14 \u00B7 2026-07-26', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v6.16 \u00B7 2026-07-26', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -5039,6 +5047,8 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v6.16', date: '2026-07-26', focus: 'ui', commander: null, summary: "You can now read a Forge school's flagship commander without leaving the Herald. Each of the thirteen school tiles names the archetype's most-built commander under its flavor line (Aristocrats → Teysa Karlov, Reanimator → Teval), but a name alone doesn't tell you what the card actually does if it's new to you. Now, on desktop, hovering that flagship name floats a large, fully legible copy of its card right beside your cursor — the same hover-preview the deck lists, card chips, and dealt Forge cards already use — so you can read the archetype's face, its cost and its rules text in place, and size up a school before you ever tap in to deal. It fetches the card once on first hover and remembers it, tucks itself to whichever side of the cursor has room, and vanishes when you move away; a dotted underline hints the name reads its card. Touch devices are unchanged — a phone has no hover, and tapping the tile still deals the school's spread exactly as before. Purely additive: nothing about the tiles, the deal, or the layout moves." },
+    { build: 'v6.15', date: '2026-07-26', focus: 'ui', commander: null, summary: "The Continue Brewing bar now tells you what your deck needs next, not just how far along it is. Under the deck's name it shows the single most urgent Deck Doctor gap — the spell role your active brew is most short on, like “Needs 5 more removal” or “Needs 3 more card draw” — so a returning brewer sees the most useful next move from the landing, before ever opening the deck. It reads from the exact same Deck Doctor engine the Stats tab uses (the Command Zone category targets: ~10 ramp, ~10 draw, ~8 removal, ~3 wipes), so the two never disagree. Lands are left out of this one-line nudge on purpose — the N/100 count already tells you to keep adding cards, and the actionable prompt is which spell role is neglected; the full five-row Deck Doctor, lands included, is still one tap away in the deck's Stats. Once every core role has met its target the line turns green and reads “Core roles covered.”" },
     { build: 'v6.14', date: '2026-07-26', focus: 'ui', commander: null, summary: "Every Forge school tile now names its marquee commander — the single most-built commander of that archetype — right under the flavor line, so the thirteen schools read at a glance even if the jargon is new to you: Aristocrats is led by Teysa Karlov, Stax by Grand Arbiter Augustin IV, Blink by Brago, Artifacts by Breya. The name comes from the same theme roster the count pill and the deal already use, so it costs no extra loading, and it honors your “My colors” lock exactly the way the count does — set an identity and each tile shows the top commander that actually fits your colors. A small gold crown marks the face; it fades in once the roster is ready and simply stays absent on the offline preview." },
     { build: 'v6.13', date: '2026-07-26', focus: 'ui', commander: null, summary: "Surprise me now respects the colors you brew in. When you lock a “My colors” identity, every school you tap already deals only commanders that fit your colors — but Surprise me, the one-tap “what should I brew next, in my colors?” button, could still land on a school that has nothing in your colors and hand you an empty spread (“No commanders fit inside those colors”). Now it skips those schools: under a color lock it only ever surprises you into a school that actually has commanders in your identity, so mono-white never rolls into an empty Chaos & Gambling and the button always deals a real spread of eight. It still tours every eligible school before repeating, and with no color lock set it behaves exactly as before, dealing across all thirteen." },
     { build: 'v6.12', date: '2026-07-26', focus: 'ui', commander: null, summary: "The Herald now has a one-tap door into a commander's synergy rails. The “For <commander>” row under Continue Brewing gave you six quick searches for the universal staples every deck runs — Removal, Draw, Ramp, Wipes, Protection, Tutors — but the thing Oracle is actually built around, this commander's on-theme recommendation rails (the cards a strong deck for THIS commander actually wants), had no route from the landing at all: you had to resume into the deck and then open the Workshop. That row now leads with a distinct gold Workshop pill — same spark icon as the deck screen's own Workshop button — that opens those synergy rails directly from the front page, in one tap. It reuses the exact overlay the deck screen already opens, so nothing about the report changes; it simply puts the heart of the app one tap closer, ahead of the generic staple searches, so the landing finally points at what makes each commander worth brewing rather than only the floor every deck shares. Only shows when you have an active commander, and the six staple chips are all still there, just after it." },
@@ -6098,7 +6108,9 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
             if (!pool.length) continue;
             let top = pool[0];
             for (const e of pool) if ((e.d || 0) > (top.d || 0)) top = e;
-            if (top && top.n) m[sch.id] = String(top.n).split(' // ')[0].trim();
+            // v6.16: carry the oracle_id (e.o) alongside the display name so the tile's
+            // marquee face can hover-peek the flagship's readable card (recognize → read).
+            if (top && top.n) m[sch.id] = { n: String(top.n).split(' // ')[0].trim(), o: top.o };
         }
         return Object.keys(m).length ? m : null;
     }, [tileR, ci]);
@@ -6115,6 +6127,31 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
     }, [spread]);
     const seq = useRef(0);
     const rootRef = useRef(null); // v5.85: scroll the Forge into view on a dossier cross-link
+    // v6.16: hover-peek the school tile's marquee flagship (v6.14 gave the name; this
+    // floats the readable card so a brewer can EVALUATE the archetype's face in place,
+    // no click/navigation). Reuses the shared MissPeek.cache (keyed by oracle_id) and the
+    // CardPeek singleton — the exact fetch-on-hover pattern the combo "missing" chips use
+    // (v5.56). leadHover guards against a slow fetch popping a stale peek after mouseleave.
+    // CardPeek.show self-gates on (hover:hover)+(pointer:fine), so touch shows nothing.
+    const leadHover = useRef(null);
+    const peekLead = (ev, lead) => {
+        if (!lead || !lead.o) return;
+        leadHover.current = lead.o;
+        const cx = ev.clientX, cy = ev.clientY;
+        const hit = MissPeek.cache[lead.o];
+        if (hit && hit !== 'loading') { CardPeek.show({ clientX: cx, clientY: cy }, hit); return; }
+        if (hit === 'loading') return;
+        MissPeek.cache[lead.o] = 'loading';
+        fetch(API + '/cards/search?q=' + encodeURIComponent('oracleid:' + lead.o) + '&unique=cards', { headers: HEADERS })
+            .then(r => r.ok ? r.json() : null)
+            .then(j => {
+                const c = j && j.data && j.data[0];
+                if (c) { MissPeek.cache[lead.o] = c; if (leadHover.current === lead.o) CardPeek.show({ clientX: cx, clientY: cy }, c); }
+                else delete MissPeek.cache[lead.o];
+            })
+            .catch(() => { delete MissPeek.cache[lead.o]; });
+    };
+    const unpeekLead = () => { leadHover.current = null; CardPeek.hide(); };
     const qFor = (a, f) => f ? a.q + ' id<=' + f.toLowerCase() : a.q;
     const keyFor = (a, f) => a.id + (f ? '|' + f : '');
     async function fetchArchPage(q, page) {
@@ -6344,7 +6381,7 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
         React.createElement('div', { className: 'arch-tiles' }, FORGE_SCHOOLS.map(a => React.createElement('button', { key: a.id, 'data-arch': a.id, className: 'arch-tile ' + ((multiIds !== null ? multiIds.includes(a.id) : activeId === a.id) ? 'active' : ''), 'aria-pressed': multiIds !== null ? multiIds.includes(a.id) : activeId === a.id, style: FORGE_ART[a.id] ? { '--art': 'url("' + FORGE_ART[a.id] + '")' } : undefined, onClick: () => tileTap(a) },
             React.createElement('span', { className: 'an' }, a.name),
             React.createElement('span', { className: 'af' }, a.flavor),
-            (schoolLeads && schoolLeads[a.id]) ? React.createElement('span', { className: 'arch-lead', 'aria-hidden': true, title: 'Most-built ' + a.name + ' commander' + (ci ? ' in your colors (' + ci + ')' : '') + ': ' + schoolLeads[a.id] }, React.createElement('span', { className: 'lg', 'aria-hidden': true }, '♛'), schoolLeads[a.id]) : null,
+            (schoolLeads && schoolLeads[a.id]) ? React.createElement('span', { className: 'arch-lead', 'aria-hidden': true, title: 'Most-built ' + a.name + ' commander' + (ci ? ' in your colors (' + ci + ')' : '') + ': ' + schoolLeads[a.id].n + ' — hover to read the card', onMouseEnter: (e) => peekLead(e, schoolLeads[a.id]), onMouseMove: CardPeek.move, onMouseLeave: unpeekLead }, React.createElement('span', { className: 'lg', 'aria-hidden': true }, '♛'), schoolLeads[a.id].n) : null,
             (schoolSizes && schoolSizes[a.id] != null) ? React.createElement('span', { className: 'arch-size' + (schoolSizes[a.id] === 0 ? ' empty' : ''), 'aria-hidden': true, title: ci ? (schoolSizes[a.id].toLocaleString() + ' ' + a.name + ' commanders fit your colors (' + ci + ')') : (schoolSizes[a.id].toLocaleString() + ' ' + a.name + ' commanders to brew') }, fmtSchoolSize(schoolSizes[a.id])) : null))),
         React.createElement('div', { className: 'arch-ci' + (active ? '' : ' pre'), role: 'group', 'aria-label': 'Brew in your colors — filter the Forge by color identity' },
             React.createElement('span', { className: 'arch-ci-lab', title: 'A standing preference: every school deals — and Surprise me picks — only commanders whose color identity fits inside the chosen colors. Remembered across visits.' }, 'My colors'),
@@ -6792,12 +6829,34 @@ function SearchScreen({ injectQuery, onInjectConsumed, forgeIntent, onForgeInten
                     const st = total === 100 ? 'done' : (total > 100 ? 'over' : '');
                     const hint = total === 100 ? 'Complete' : (total < 100 ? (100 - total) + ' to go' : (total - 100) + ' over');
                     const pct = Math.max(0, Math.min(100, total));
-                    const aria = "Continue brewing " + (activeDeck.name || activeDeck.commander.name) + " \u2014 " + total + " of 100 cards" + (total === 100 ? ", complete" : (total < 100 ? ", " + (100 - total) + " to go" : ", " + (total - 100) + " over limit"));
+                    // v6.15 (Herald / BUILDING pillar): surface the active deck's single most
+                    // urgent Deck Doctor gap right on the resume bar, so a returning brewer sees
+                    // WHAT the brew needs next \u2014 not just how many cards remain. Reuses the exact
+                    // Deck Doctor engine (PACKAGES + computeCoverage) the Stats tab renders, so the
+                    // read can never disagree with it. Lands are excluded from this one-line nudge:
+                    // the N/100 count already carries the "add more cards (incl. lands)" story, and
+                    // the actionable discovery prompt is which SPELL role (ramp/draw/removal/wipes)
+                    // is most neglected \u2014 the full five-row Deck Doctor (lands included) stays one
+                    // tap away in the deck's Stats tab. Most urgent = largest raw shortfall
+                    // (target \u2212 have); ties break to the proportionally emptier role.
+                    const _cov = computeCoverage(Object.values(activeDeck.cards || {}));
+                    const _ROLE = { ramp: 'ramp', draw: 'card draw', removal: 'removal', wipes: 'board wipes' };
+                    let _gap = null;
+                    PACKAGES.forEach(p => {
+                        if (p.key === 'lands') return;
+                        const n = _cov[p.key] || 0, g = p.target - n;
+                        if (g <= 0) return;
+                        const r = n / p.target;
+                        if (!_gap || g > _gap.g || (g === _gap.g && r < _gap.r)) _gap = { key: p.key, g: g, r: r };
+                    });
+                    const needText = _gap ? ('Needs ' + _gap.g + ' more ' + (_ROLE[_gap.key] || _gap.key)) : 'Core roles covered';
+                    const aria = "Continue brewing " + (activeDeck.name || activeDeck.commander.name) + " \u2014 " + total + " of 100 cards" + (total === 100 ? ", complete" : (total < 100 ? ", " + (100 - total) + " to go" : ", " + (total - 100) + " over limit")) + (_gap ? "; needs " + _gap.g + " more " + (_ROLE[_gap.key] || _gap.key) : "; core roles covered");
                     return React.createElement("button", { className: "resume-bar", onClick: () => { if (onGoDeck) onGoDeck(); }, "aria-label": aria },
                         React.createElement("span", { className: "rb-art", "aria-hidden": true, style: { backgroundImage: 'url(' + (cardImage(activeDeck.commander, 'art_crop') || '') + ')' } }),
                         React.createElement("span", { className: "rb-main" },
                             React.createElement("span", { className: "rb-label" }, "Continue brewing"),
-                            React.createElement("span", { className: "rb-name" }, activeDeck.name || activeDeck.commander.name)),
+                            React.createElement("span", { className: "rb-name" }, activeDeck.name || activeDeck.commander.name),
+                            React.createElement("span", { className: 'rb-need' + (_gap ? '' : ' ok'), "aria-hidden": true }, needText)),
                         React.createElement("span", { className: "rb-status", "aria-hidden": true },
                             React.createElement("span", { className: 'rb-count ' + st }, total + "/100"),
                             React.createElement("span", { className: 'rb-hint ' + st }, hint),
