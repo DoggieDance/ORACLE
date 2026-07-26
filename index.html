@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v6.04 · 2026-07-26">
+<meta name="oracle-build" content="v6.06 · 2026-07-26">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1206,6 +1206,16 @@
      today's commander want? Gold-arcana micro-caps, matched to the label/CTA. */
   .mast-cmdr-plans { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
   .mast-plan-pill { font-family: var(--ios-font); font-size: 9px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; color: rgba(242,226,176,.94); background: rgba(224,196,106,.15); border: 1px solid rgba(224,196,106,.36); border-radius: 999px; padding: 2px 7px; line-height: 1.3; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+  /* v6.07 — popularity read on Today's Commander. An EDHREC-tier pill beside the
+     archetype plans (Format staple → Hidden gem), echoing the Forge dealt-card
+     rank vocabulary: gem = arcane purple (an underplayed brew waiting to happen),
+     staple = bright gold (well-charted), the middle bands calm gold — so a brewer
+     can gauge how established the day's featured commander is before opening the
+     dossier. Sits in the same wrapping row as the plan pills (mobile-safe). */
+  .mast-rank-pill { display: inline-flex; align-items: baseline; gap: 3px; font-family: var(--ios-font); font-size: 9px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: rgba(240,222,168,.92); background: rgba(8,9,14,.4); border: 1px solid rgba(224,196,106,.3); border-radius: 999px; padding: 2px 7px; line-height: 1.3; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+  .mast-rank-pill.staple { color: var(--gold-bright); border-color: rgba(224,196,106,.5); background: rgba(224,196,106,.13); }
+  .mast-rank-pill.gem { color: #d9ccff; border-color: rgba(150,130,220,.42); background: rgba(150,130,220,.12); }
+  .mast-rank-pill .rk-num { font-weight: 750; opacity: .66; font-variant-numeric: tabular-nums; }
   /* v5.24 S3 — Continue Brewing resume bar (one tap back into the active brew). */
   .resume-bar { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 14px; padding: 9px 14px 9px 9px; border: 1px solid rgba(224,196,106,.30); border-radius: 15px; background: linear-gradient(115deg, rgba(224,196,106,.10), rgba(18,17,27,.55) 55%); cursor: pointer; text-align: left; font-family: inherit; transition: border-color .15s, background .15s, transform .12s; -webkit-tap-highlight-color: transparent; }
   .resume-bar:hover { border-color: rgba(224,196,106,.55); background: linear-gradient(115deg, rgba(224,196,106,.16), rgba(18,17,27,.6) 55%); }
@@ -1572,7 +1582,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v6.04 \u00B7 2026-07-26', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v6.06 \u00B7 2026-07-26', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -4990,6 +5000,8 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v6.06', date: '2026-07-26', focus: 'ui', commander: null, summary: "The Forge now deals recognizable commanders, not just deep cuts. Tap a school and the Forge deals a fresh spread of eight commanders to brew — but a broad school's roster is overwhelmingly long-tail (Tokens & Go-Wide alone holds nearly a thousand commanders, most of them played in only a handful of decks), so a plain random draw almost never surfaced the archetype's actual staples: you'd get eight obscure one-offs and no familiar anchor to get your bearings. The deal now blends by prominence. It splits each school into a band of genuinely-played commanders (the most-brewed ~20% by EDHREC deck count) and the deep tail, then fills about half the eight-card spread from each. So every deal now leads with recognizable faces a strong deck of that archetype actually runs — Najeela, Talrand or Neyali for tokens, Wilhelt and Slimefoot for aristocrats, Winota for stax — while still handing you four fresh deep cuts to discover. The anchors are shuffled within their band, so they vary from deal to deal (never the same four) and aren't clumped together in the spread, and the Deal-again freshness memory still walks the whole roster over repeated taps. Combine mode's intersections deal the same way and pick up that freshness too. Nothing about the layout, the caption strips, or the cards themselves changes — only which commanders you're handed." },
+    { build: 'v6.05', date: '2026-07-26', focus: 'ui', commander: null, summary: "Today's Commander on the Herald now tells you what it wants to build, not just who it is. The daily hero at the top of the Herald has always shown the featured commander's name, art, and colors — but to learn what deck it actually plays you had to open its dossier. Now, right under the name, it shows one or two small gold archetype tags — the commander's top game plan, like Aristocrats · Combat Aggro or Goblin Typal · Go-Wide Tokens — so you can size up today's commander at a glance and decide whether it's worth brewing before you ever tap in. It's the same read the dossier's “Oracle's Read” gives, drawn straight from the recommendation engine, so the two always agree; it appears the moment the daily card loads, wraps neatly on a phone, and simply stays absent if the engine can't name a plan. Purely additive — nothing else about the masthead moves." },
     { build: 'v6.04', date: '2026-07-26', focus: 'ui', commander: null, summary: "You can now read a Forge commander's full card just by hovering it. The Forge deals a fresh spread of commanders to evaluate, but each dealt card is a thumbnail — you can make out the art, and the name caption tells you who it is, but the type line, mana cost, and rules text are far too small to read, so the only way to actually learn what a commander does was to click all the way into its full detail view and then back out, one at a time, breaking the flow of scanning a spread. Now, on desktop, hovering any dealt commander floats a large, fully legible copy of the card right beside your cursor — the same Moxfield/Scryfall move — so you can read its ability, cost, and stats in place and decide whether it's worth a closer look without ever leaving the spread. It reuses the same hover-preview the deck lists and card chips already use, so it feels identical everywhere in the app; it follows your cursor, tucks itself to whichever side has room, and vanishes the moment you move away or click through. Touch devices are unchanged — there's no hover on a phone, so a tap still opens the full commander as before. Purely additive: nothing about the deal, the layout, or the caption strip moves." },
     { build: 'v6.03', date: '2026-07-26', focus: 'ui', commander: null, summary: "The Forge now shows which dealt commanders you already brew. The Forge is where you go to find your NEXT deck — tap a school and it deals a fresh spread of commanders to evaluate — but nothing told you when one of those was a commander you'd already built a deck around, so a spread could hand you back a brew-in-progress as if it were a fresh discovery. Now any dealt commander that leads one of your saved decks carries a small gold “✓ In a deck” tag at the head of its caption strip, so scanning down a spread you can tell the genuine new options from the ones already on your shelf — the Steam-library “in your library” read applied to commander discovery. It's matched by the same card identity the deck engine uses (oracle id), so it's exact and catches a commander no matter which deck it leads; it reads straight from your saved decks with no extra lookups, sits below the card frame beside the popularity rank so the art and name stay clean (the card-scan rule holds), and because it lives in the fixed-height strip the eight-across desktop and four-across phone grids stay perfectly aligned whether a card is owned or not. On phones the tag collapses to just the ✓ to spare the tight strip, and it simply doesn't appear when you have no decks yet. Purely additive — nothing else about the Forge moves." },
     { build: 'v6.02', date: '2026-07-26', focus: 'logic', commander: 'Tovolar, Dire Overlord', summary: "Tovolar, Dire Overlord now gets werewolf rails instead of a mislabeled X-spells deck. His whole plan is a pack of beefy Wolves and Werewolves that flip the game to night, trample through, and draw a card on every hit — but the engine misread him twice: the {X} in his night-side firebreathing ability dressed him up as an X Spells and Big Mana deck, and his tribe-scoped combat-damage draw trigger tripped the cheap-evasive-swarm package meant for Edric. A new werewolf-pack detector gates off both misreads and leads with the typal pack, a Grow the Pack rail (wolf-token engines like Nightpack Ambusher and Sword of Body and Mind to blow past the three-werewolf night threshold), and a Trample the Pack Through rail (Garruk's Uprising, Kessig Wolf Run) so every swing refills your hand. A grammar fix along the way means the typal rail finally reads More Werewolves — and More Wolves, More Elves, More Dwarves — instead of More Werewolfs." },
@@ -5728,14 +5740,24 @@ function MastHero({ onOpenDetail }) {
     }, [hero]);
     if (!hero) return null;
     const cid = (hero.card && hero.card.color_identity) || [];
+    // v6.07 — popularity read: how charted is today's featured commander? Reuse the
+    // Forge dealt-card rank helper so the masthead speaks the app's one popularity
+    // vocabulary (staple gold / gem purple / the human tier band). Silent-degrade:
+    // forgeRankChip returns null when Scryfall has no EDHREC rank → the pill omits.
+    const heroRank = hero.card && hero.card.edhrec_rank;
+    const heroRankChip = forgeRankChip(heroRank);
     return React.createElement(React.Fragment, null,
         React.createElement('div', { className: 'mast-ambi', 'aria-hidden': true, style: { backgroundImage: 'url(' + hero.img + ')' } }),
         React.createElement('div', { className: 'mast-clip' },
             React.createElement('div', { className: 'mast-hero', style: { backgroundImage: 'url(' + hero.img + ')' } })),
-        hero.card ? React.createElement('button', { className: 'mast-cmdr', onClick: () => { if (onOpenDetail) { onOpenDetail(hero.card); haptic(); } }, 'aria-label': "Today's commander: " + hero.name + (heroPlans ? ' — plays ' + heroPlans.join(', ') : '') + ' — open the dossier' },
+        hero.card ? React.createElement('button', { className: 'mast-cmdr', onClick: () => { if (onOpenDetail) { onOpenDetail(hero.card); haptic(); } }, 'aria-label': "Today's commander: " + hero.name + (heroPlans ? ' — plays ' + heroPlans.join(', ') : '') + (heroRankChip ? ' — ' + heroRankChip.tier + ' (EDHREC #' + Number(heroRank).toLocaleString() + ')' : '') + ' — open the dossier' },
             React.createElement('span', { className: 'mast-cmdr-label' }, "Today's Commander"),
             React.createElement('span', { className: 'mast-cmdr-name' }, hero.name),
-            heroPlans && React.createElement('span', { className: 'mast-cmdr-plans', 'aria-hidden': true }, heroPlans.map((p, i) => React.createElement('span', { key: i, className: 'mast-plan-pill' }, p))),
+            (heroPlans || heroRankChip) && React.createElement('span', { className: 'mast-cmdr-plans', 'aria-hidden': true },
+                heroPlans && heroPlans.map((p, i) => React.createElement('span', { key: 'p' + i, className: 'mast-plan-pill' }, p)),
+                heroRankChip && React.createElement('span', { key: 'rank', className: 'mast-rank-pill' + (heroRankChip.gem ? ' gem' : (heroRankChip.staple ? ' staple' : '')), title: 'EDHREC #' + Number(heroRank).toLocaleString() + ' · ' + heroRankChip.tier + ' commander' },
+                    (heroRankChip.gem ? '◆ ' : (heroRankChip.staple ? '✦ ' : '')) + heroRankChip.tier,
+                    !heroRankChip.gem && React.createElement('span', { className: 'rk-num' }, ' #' + heroRankChip.label))),
             React.createElement('span', { className: 'mast-cmdr-sub' },
                 React.createElement('span', { className: 'pips' }, cid.length ? cid.map(x => React.createElement('span', { key: x, className: 'pip ' + x }, x)) : React.createElement('span', { className: 'pip C' }, '\u25C7')),
                 React.createElement('span', { className: 'mast-cmdr-cta' }, 'Open the dossier \u203A')))
@@ -5881,14 +5903,37 @@ const ARCH_CACHE = {}; // key (school id + optional '|CI') -> { total, pages: { 
 // per school + color-filter, so switching color (or school) starts a fresh walk and
 // returning to a prior filter resumes where it left off.
 const ARCH_SEEN = {};
-function forgeDealPick(items, idOf, n, key) {
+function shuffleInPlace(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = arr[i]; arr[i] = arr[j]; arr[j] = t; } return arr; }
+function forgeDealPick(items, idOf, n, key, weightOf) {
     const target = Math.min(n, items.length);
     if (target === 0) return [];
     let seen = ARCH_SEEN[key] || (ARCH_SEEN[key] = new Set());
     let fresh = items.filter(it => !seen.has(idOf(it)));
     if (fresh.length < target) { seen.clear(); fresh = items.slice(); } // pool exhausted → fresh cycle
-    for (let i = fresh.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = fresh[i]; fresh[i] = fresh[j]; fresh[j] = t; }
-    const chosen = fresh.slice(0, target);
+    let chosen;
+    if (weightOf && fresh.length > target) {
+        // v6.06: prominence-BLENDED deal. A broad school's roster is mostly long-tail
+        // deep cuts (Tokens: 946 commanders, median 67 theme-decks, only ~222 with d>=200),
+        // so a UNIFORM pick of 8 surfaces <1 recognizable face on average — a weak discovery
+        // read that buries the archetype's actual staples under obscure one-offs. Split the
+        // FRESH pool by theme-deck count (weightOf) into a PROMINENT band (top ~20%, min 12)
+        // and the DEEP tail, then fill about half the spread from each: every deal now anchors
+        // on genuinely-played commanders AND still offers fresh deep-cut discoveries. Both bands
+        // are shuffled and the merged result re-shuffled, so the anchors vary deal-to-deal
+        // (never the same four) and prominent/deep aren't visually grouped. Freshness memory
+        // (ARCH_SEEN) still cycles the whole roster over repeated Deal-again taps.
+        const sorted = fresh.slice().sort((a, b) => (weightOf(b) || 0) - (weightOf(a) || 0));
+        const cut = Math.min(sorted.length, Math.max(12, Math.ceil(sorted.length * 0.20)));
+        const prominent = shuffleInPlace(sorted.slice(0, cut));
+        const deep = shuffleInPlace(sorted.slice(cut));
+        const promN = Math.min(prominent.length, Math.ceil(target / 2));
+        const picks = prominent.slice(0, promN);
+        for (const it of deep) { if (picks.length >= target) break; picks.push(it); }
+        for (const it of prominent.slice(promN)) { if (picks.length >= target) break; picks.push(it); }
+        chosen = shuffleInPlace(picks).slice(0, target);
+    } else {
+        chosen = shuffleInPlace(fresh.slice()).slice(0, target);
+    }
     for (const it of chosen) seen.add(idOf(it));
     return chosen;
 }
@@ -6012,7 +6057,7 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
                         setDealing(false);
                         return;
                     }
-                    const chosen = forgeDealPick(pool0, e => e.o, 8, key); // v5.48: avoid recently-dealt commanders (cycles through the roster)
+                    const chosen = forgeDealPick(pool0, e => e.o, 8, key, e => e.d); // v5.48: avoid recently-dealt commanders (cycles through the roster). v6.06: e.d weight = prominence-blended spread (recognizable anchors + deep cuts)
                     const cr = await fetch(API + '/cards/collection', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ identifiers: chosen.map(e => ({ oracle_id: e.o })) }) });
                     if (!cr.ok)
                         throw new Error('HTTP ' + cr.status);
@@ -6086,14 +6131,11 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
                 setDealing(false);
                 return;
             }
-            const picks = pool0.slice();
-            for (let i = picks.length - 1; i > 0; i--) {
-                const j2 = Math.floor(Math.random() * (i + 1));
-                const t = picks[i];
-                picks[i] = picks[j2];
-                picks[j2] = t;
-            }
-            const chosen = picks.slice(0, 8);
+            // v6.06: Combine-mode deals go through the same prominence-blended picker as
+            // single-school deals (anchors + deep cuts) and gain freshness memory keyed per
+            // combo+color, so re-dealing an intersection walks fresh commanders too.
+            const interKey = 'inter|' + ids.slice().sort().join('+') + (f ? '|' + f : '');
+            const chosen = forgeDealPick(pool0, e => e.o, 8, interKey, e => e.d);
             const cr = await fetch(API + '/cards/collection', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify({ identifiers: chosen.map(e => ({ oracle_id: e.o })) }) });
             if (!cr.ok)
                 throw new Error('HTTP ' + cr.status);
