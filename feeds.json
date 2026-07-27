@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-26T18:15:51.883Z",
+  "updated": "2026-07-27T01:15:42.953Z",
   "deals": [
     {
       "t": "Marvel precons set $209.95 in Amazon",
@@ -46,6 +46,27 @@
   ],
   "wire": [
     {
+      "t": "[HOC] Bilbo's Ring (Boxtoppers, Mark Poole)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v73tly/hoc_bilbos_ring_boxtoppers_mark_poole/",
+      "s": 0,
+      "c": 1785072238,
+      "f": ""
+    },
+    {
+      "t": "[WSJ] The Future of the Toy Industry Isn’t Toys. It’s Magic.",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v77362/wsj_the_future_of_the_toy_industry_isnt_toys_its/",
+      "s": 0,
+      "c": 1785079939,
+      "f": ""
+    },
+    {
+      "t": "[HOB] Roll-Roll-Roll-Roll",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v6n7sk/hob_rollrollrollroll/",
+      "s": 0,
+      "c": 1785021878,
+      "f": ""
+    },
+    {
       "t": "[HOC] Last March of the Ents",
       "u": "https://www.reddit.com/r/magicTCG/comments/1v68glx/hoc_last_march_of_the_ents/",
       "s": 0,
@@ -53,38 +74,17 @@
       "f": ""
     },
     {
-      "t": "[HOB] Galion, Elvenking's Butler (via Goodgamesmorley)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v65ybx/hob_galion_elvenkings_butler_via_goodgamesmorley/",
+      "t": "Weekend Free Discussion Thread",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v579un/weekend_free_discussion_thread/",
       "s": 0,
-      "c": 1784979193,
+      "c": 1784888104,
       "f": ""
     },
     {
-      "t": "[HOB] Bard's Company (via ScreenHub)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v5rw4f/hob_bards_company_via_screenhub/",
+      "t": "John Avon Giveaway - Mega Magic Playmat Bundle!",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v770p7/john_avon_giveaway_mega_magic_playmat_bundle/",
       "s": 0,
-      "c": 1784936397,
-      "f": ""
-    },
-    {
-      "t": "[HOB] Beorn‘s Hospitality (via Facebook)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v5izio/hob_beorns_hospitality_via_facebook/",
-      "s": 0,
-      "c": 1784916184,
-      "f": ""
-    },
-    {
-      "t": "[HOC] Arwen, Mortal Queen and Sauron, the Lidless Eye (via ANZ Super Series)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v5ru8f/hoc_arwen_mortal_queen_and_sauron_the_lidless_eye/",
-      "s": 0,
-      "c": 1784936261,
-      "f": ""
-    },
-    {
-      "t": "[HOB] - Misty Mountains Raider - (PlayMagic BlueSky)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v5mflq/hob_misty_mountains_raider_playmagic_bluesky/",
-      "s": 0,
-      "c": 1784923600,
+      "c": 1785079785,
       "f": ""
     }
   ]
