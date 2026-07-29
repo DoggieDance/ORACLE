@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v6.33 · 2026-07-29">
+<meta name="oracle-build" content="v6.34 · 2026-07-29">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1312,7 +1312,6 @@
   .hd-blurb { margin-top: 2px; font-family: var(--serif); font-style: italic; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
   .bz-title { margin-top: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .bz-meta { margin-top: 5px; }
-  .bz-price { padding: 1px 8px; border: 1px solid rgba(224,196,106,.42); border-radius: 8px; background: rgba(224,196,106,.1); color: #f0d580; font-size: 10px; font-weight: 800; }
   .bz-flag { padding: 1px 7px; border-radius: 7px; font-size: 8.5px; font-weight: 800; letter-spacing: .08em; color: var(--gold-ink); background: var(--gold-dim); text-transform: uppercase; }
   .bz-score { color: var(--gold-dim); }
   @media (hover: hover) and (pointer: fine) { .hd-item:hover .hd-title, .bz-item:hover .bz-title, .hd-lead:hover .hd-title { color: var(--gold-bright); } }
@@ -5187,6 +5186,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v6.34', date: '2026-07-29', focus: 'ui', commander: null, summary: "Housekeeping — the Reading Room slims to what a brewer actually reads: Dispatches (curated set and commander news) and The Wire (spoiler headlines). The Bazaar, a feed of sealed-product box deals, is retired — a price ticker for booster boxes doesn't help you brew a deck, and its baked prices only ever went stale between updates. The Oracle Herald picks up a fresh, source-verified entry: Secret Lair x Stardew Valley's Superdrop of the Moonlight Jellies (dropped July 27), whose 'Stardew Valley' is a new Commander-legal land that makes Food and turns gifting cards across the table into a real strategy. Also swept the now-dead .bz-price style and the Bazaar's baked data, so the file shrank for once. Verified live this run: search, card dossier, Workshop synergy rails, deck view, Shop, and Playtest all render clean with an error-free console." },
     { build: 'v6.33', date: '2026-07-29', focus: 'ui', commander: null, summary: "Two fixes to the counter-type browser the owner caught. First, the type counts were badly undercounting — the v6.31 sub-shelves were classified WITHIN the 793-member +1/+1 roster, so a 'poison' shelf only caught commanders ALSO tagged +1/+1 (Poison read 3). Each sub-shelf is now sourced from that counter type's OWN commander population via its own Scryfall query, independent of the +1/+1 roster: Poison 16 (the real infect/toxic set — Atraxa, Skithiryx, Vishgraz, Ixhel, Fynn, Skrelv, Serpent Society, Ria Ivor…), Experience 16, Energy 9, −1/−1 8 (Yawgmoth, Hapatra, Scorpion God, Volrath…), Rad 5, Charge 2. (Scryfall's per-mechanic query was chosen over EDHREC's raw theme roster because the latter carries generic-value-commander noise — EDHREC's energy roster lists Kenrith and Yarok, who aren't energy.) Second, the naming now matches the contents: the tile is an umbrella called 'Counters' (flavor 'Growth, decay, and everything between') that opens to the type chips, with '+1/+1 Growth' as the default/largest shelf under it — so a tile named for growth no longer opens onto −1/−1 and poison. Multi-membership is preserved: a commander appears in every type its card qualifies for (Ezuri and Toph sit in both Experience and +1/+1 Growth; Atraxa in both Poison and the growth roster). Each type shelf's footer links to its full Scryfall list. Verified live at desktop and 390px." },
     { build: 'v6.32', date: '2026-07-29', focus: 'logic', commander: 'Baylen, the Haymaker', summary: "Baylen, the Haymaker deep study — the workshop now reads him as the token-fueled engine he actually is. His card makes ZERO tokens; all three abilities TAP untapped tokens you control (two for any-color mana, three to draw, four to put three +1/+1 counters on Baylen and give him trample), so he's a go-wide Naya deck's mana rock, card engine, and finisher in one. The old rails treated him as a generic go-tall +1/+1 counters commander and missed the token half entirely. Now he leads with a Token Engine rail — the go-wide producers that fuel every tap, since he needs a wide board of untapped bodies, not counter-placers — then a distinct Double-Duty Doublers rail for the ONLY two cards in Magic that double BOTH your tokens AND your +1/+1 counters (Doubling Season and Primal Vigor: twice the bodies to tap, and six counters on him instead of three), and a Counters on Baylen payoff rail that leverages the pile stacking on one body — counter doublers (Hardened Scales, Conclave Mentor, Kami of Whispered Hopes), the aura Hydra's Growth that doubles his counters every combat, and move-counter banks (The Ozolith, Ozolith the Shattered Spire, Resourceful Defense) that hoard the pile so removal can't reset the finish. His study note now carries the game plan and five traps (makes no tokens himself; the counters land on him alone; his tokens must stay untapped; the do-both doublers aren't token-only or counter-only doublers; he's tokens-first, filed under Tokens & Go-Wide not +1/+1 Growth — which is exactly why he's the Tokens marquee and the counters tile doesn't lead with him). The pattern is shape-gated (a token COST plus a self-counter), so it generalizes to any future token-consuming self-pump commander and was verified not to misfire on token producers (Adeline), on self-counter non-token commanders (Animar, Ghave, Marath, Marchesa, Ant-Man), or on the only other tap-tokens commander (Hazel of the Rootbloom)." },
     { build: 'v6.31', date: '2026-07-29', focus: 'ui', commander: null, summary: "The +1/+1 Counters school is now +1/+1 Growth, and you can browse the counters roster BY COUNTER TYPE. EDHREC lumps every counter mechanic under one theme, so a −1/−1 attrition commander (Yawgmoth) or a poison commander (Fynn) used to sit right next to your go-tall growth payoffs. A live Scryfall census of the full 793-commander roster sorted each one by the counter its OWN card actually uses. The tile now opens on the +1/+1 growth flagship, with a compact row of type chips beneath it — −1/−1 (7), Poison (3), Energy (4), Charge (4), Experience (7), Rad (3) — each dealing that archetype's commanders distinctly. Multi-type commanders keep their home: Ezuri, Toph, The Wise Mothman and Inspirit are +1/+1 growth AND also appear in their experience / rad / charge shelf. Twenty pure rival-type commanders were pulled out of the growth flagship into their proper shelf, so a go-tall brewer is never pointed at a −1/−1 or energy deck by mistake (roster 727 → 711). Accuracy comes first: membership still starts from EDHREC's roster, so power-and-modified payoffs that never literally say '+1/+1 counter' (Agatha of the Vile Cauldron, Me the Immortal) are kept, not dropped — a blind text filter would lose them. One-off flavor counters (oil, stun, finality, shield…) are incidental cross-references on growth commanders, not real archetypes, so they get no noisy near-empty shelf. Verified card-by-card on live Scryfall and in-browser at desktop and 390px mobile widths." },
@@ -5877,18 +5877,13 @@ function App() {
             React.createElement("span", { className: "toast-msg" }, toast.msg || toast),
             toast.action && React.createElement("button", { className: "toast-action", onClick: () => { const fn = toast.action.fn; clearTimeout(toastTimer.current); setToast(''); fn(); } }, toast.action.label))));
 }
-// ============ FRONT PAGE — altar masthead, Bazaar, Wire ============
-// DEALS and WIRE are refreshed by the daily scheduled task alongside NEWS
-// (Reddit blocks live browser fetches — feeds are baked, not fetched).
-// Bazaar policy: in-stock only; drop posts whose flair or title matches
-// /sold out|expired|dead|ended/i.
-let DEALS = [
-    { t: "Ultra Pro Flash Sale", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1v0dlrd/ultra_pro_flash_sale/", s: 55, c: 1784425577, f: "MULTIPLE DEALS" },
-    { t: "Hobbit @ $149.99 + shipping/tax", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1uzlabv/hobbit_14999_shippingtax/", s: 54, c: 1784346925, f: "" },
-    { t: "Marvel Play Boxes $95 each @ripnshipgaming", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1uz5qta/marvel_play_boxes_95_each_ripnshipgaming/", s: 46, c: 1784308154, f: "" },
-    { t: "Amazon Canada | The Hobbit Collector Booster Box | $639 CAD, 2 per customer", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1v023r7/amazon_canada_magic_the_gathering_the_hobbit/", s: 31, c: 1784396175, f: "" },
-    { t: "Hobbit Gift Bundles up on Amazon (at $199.99)", u: "https://www.reddit.com/r/sealedmtgdeals/comments/1v02yzs/hobbit_gift_bundles_up_on_amazon_but_at_19999/", s: 0, c: 1784398200, f: "" },
-];
+// ============ FRONT PAGE — altar masthead, Wire ============
+// WIRE is refreshed by the daily scheduled task alongside NEWS
+// (Reddit blocks live browser fetches — the feed is baked, not fetched).
+// v6.34 KEEP: The Bazaar (r/sealedmtgdeals deals feed) was removed by the
+// daily necessity audit — a sealed-product price feed is market/finance noise
+// with no brewing value, and baked prices go perpetually stale. Reversible via
+// index-backup-20260729-1840.html.
 let WIRE = [
     { t: "[HOB] Thranduil, the Elvenking (Debut Stream @ MagicCon Amsterdam)", u: "https://www.reddit.com/r/magicTCG/comments/1uzz9rv/hob_thranduil_the_elvenking_debut_stream_magiccon/", s: 1779, c: 1784389497, f: "Official Spoiler" },
     { t: "[HOB] Supper for Spiders (Debut Stream @ MagicCon Amsterdam)", u: "https://www.reddit.com/r/magicTCG/comments/1uzzic7/hob_supper_for_spiders_debut_stream_magiccon/", s: 1627, c: 1784390080, f: "Official Spoiler" },
@@ -5985,14 +5980,6 @@ function BazaarRow(p, i, chip, pr, chipCls) {
             chip && React.createElement('span', { className: 'bz-flag' + (chipCls ? ' ' + chipCls : '') }, chip),
             p.s > 0 && React.createElement('span', { className: 'bz-score' }, '\u25B2 ' + fmScore(p.s)),
             React.createElement("span", { className: 'bz-age' }, fmAge(p.c))));
-}
-function BazaarCol() {
-    function price(t) { const m = t.match(/\$\s?\d[\d,]*(?:\.\d\d)?/); return m ? m[0].replace(/\s/, '') : null; }
-    return React.createElement('div', { className: 'col' },
-        React.createElement('div', { className: 'col-head' },
-            React.createElement('span', { className: 'col-title' }, React.createElement('span', { className: 'cg' }, '\u263F'), 'The Bazaar'),
-            React.createElement('a', { className: 'col-sub', href: 'https://www.reddit.com/r/sealedmtgdeals/', target: '_blank', rel: 'noopener' }, 'r/sealedmtgdeals \u2197')),
-        DEALS.slice(0, 3).map((p, i) => BazaarRow(p, i, p.f && p.f.length <= 14 ? p.f : null, price(p.t))));
 }
 function WireCol() {
     return React.createElement('div', { className: 'col wire-col' },
@@ -6920,6 +6907,7 @@ function ArchetypeShelf({ onOpenDetail, onSearchAll, forgeIntent, onForgeIntentC
 // changes, format-warping cards. Newest first, kept short so brewing tools stay primary.
 const NEWS = [
     { date: '2026-08-14', tag: 'Set Release', title: 'The Hobbit lands August 14', blurb: 'Tolkien goes Standard-legal — Smaug, Wicked Worm headlines preview week; eternal-legal legends in HOC for brewers.', img: 'https://cards.scryfall.io/art_crop/front/f/e/fe2fe8fa-3b99-44c1-bab9-922e5c864952.jpg?1784377043', url: 'https://playgroup.gg/sets/the-hobbit' },
+    { date: '2026-07-27', tag: 'Secret Lair', title: 'Stardew Valley crosses into Commander', blurb: 'The Superdrop of the Moonlight Jellies debuts Stardew Valley, a new Commander-legal land that makes Food and turns gifting cards across the table into a strategy.', img: 'https://cards.scryfall.io/art_crop/front/9/9/9979db80-83f6-41ed-aea2-0c222e923add.jpg?1785322037', url: 'https://magic.wizards.com/en/news/announcements/secret-lair-superdrop-of-the-moonlight-jellies' },
     { date: '2026-07-30', tag: 'New Cards', title: 'Mystery Booster Commander Edition', blurb: '59 brand-new legends plus 8 rule-breaking cards debut at Gen Con July 30 — fresh commanders to brew around.', img: 'https://cards.scryfall.io/art_crop/front/e/4/e4b1aa1e-b4e3-4346-8937-76b312501c70.jpg?1783921283', url: 'https://mtgrocks.com/mtg-mystery-booster-commander-edition/' },
     { date: '2026-07-17', tag: 'Set Preview', title: 'Reality Fracture previews at MagicCon Amsterdam', blurb: 'Fall set lands Oct 2 — six Commander precons ride along.', img: 'https://cards.scryfall.io/art_crop/front/5/3/53bd9149-e157-4f0b-becf-0b64f47dbad3.jpg?1783905901', url: 'https://edhrec.com/articles/reality-fracture-reveals-from-magiccon-amsterdam-panel' },
     { date: '2026-08-10', tag: 'Commander', title: 'Hatsune Miku Commander Deck', blurb: 'Playable out of the box, Aug 10.', img: 'https://cards.scryfall.io/art_crop/front/b/7/b7320233-1c83-4f61-8c08-cc8361867256.jpg?1783931016', url: 'https://www.thegamer.com/magiccon-amsterdam-2026-secret-lair-reveals/' },
@@ -7395,8 +7383,7 @@ function SearchScreen({ injectQuery, onInjectConsumed, forgeIntent, onForgeInten
                                 React.createElement("div", { className: "hd-title" }, n.title),
                                 n.blurb && React.createElement("div", { className: "hd-blurb" }, n.blurb))))),
                     React.createElement("div", { className: "col-stack" },
-                        React.createElement(WireCol, null),
-                        React.createElement(BazaarCol, null))))),
+                        React.createElement(WireCol, null))))),
             status === 'loading' && React.createElement(Skeletons, { n: 10, wrap: "card-grid", lines: 2 }),
             status === 'error' && React.createElement("div", { className: "state-msg" },
                 React.createElement("div", { className: "symbol" }, "\u26A0"),
@@ -9449,17 +9436,17 @@ function BasicsSheet({ deck, commanderCI, onAddQty, onClose, showToast }) {
 try {
     const __oracleRoot = ReactDOM.createRoot(document.getElementById('root'));
     __oracleRoot.render(React.createElement(App, null));
-    // Safe feed hydration: the Bazaar/Wire feeds live in feeds.json (refreshed
+    // Safe feed hydration: the Wire feed lives in feeds.json (refreshed
     // out-of-band, separate file from this app so builds can never collide with
-    // feed updates). Fetch once on load; on success, swap the baked-in DEALS/WIRE
-    // fallbacks and re-render (preact diffs, so app state is preserved). Any
-    // failure leaves the baked arrays in place, so the Herald always renders.
+    // feed updates). Fetch once on load; on success, swap the baked-in WIRE
+    // fallback and re-render (preact diffs, so app state is preserved). Any
+    // failure leaves the baked array in place, so the Herald always renders.
+    // (v6.34: f.deals ignored — the Bazaar surface was retired by the daily audit.)
     fetch('feeds.json?ts=' + Date.now(), { cache: 'no-store' })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (f) {
             if (!f) return;
             var changed = false;
-            if (Array.isArray(f.deals) && f.deals.length) { DEALS = f.deals; changed = true; }
             if (Array.isArray(f.wire) && f.wire.length) { WIRE = f.wire; changed = true; }
             if (changed) __oracleRoot.render(React.createElement(App, null));
         })
