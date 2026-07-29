@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-29T00:15:44.848Z",
+  "updated": "2026-07-29T05:15:43.101Z",
   "deals": [
     {
       "t": "Collector Store The Hobbit - Play Booster Box [$149.99], Collector Booster Box [$739.99], Bundle [$67.99], etc",
@@ -46,46 +46,46 @@
   ],
   "wire": [
     {
-      "t": "[HOB] Smaug, Wicked Worm (Email preview)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1v9ekay/hob_smaug_wicked_worm_email_preview/",
-      "s": 0,
-      "c": 1785280507,
-      "f": ""
-    },
-    {
       "t": "[HOB] Gleaming Splendor",
       "u": "https://www.reddit.com/r/magicTCG/comments/1v8zi06/hob_gleaming_splendor/",
-      "s": 0,
+      "s": 3243,
       "c": 1785247505,
-      "f": ""
+      "f": "Official Spoiler"
     },
     {
       "t": "[HOB] Nasty Little Rabbit (via IGN)",
       "u": "https://www.reddit.com/r/magicTCG/comments/1v937jh/hob_nasty_little_rabbit_via_ign/",
-      "s": 0,
+      "s": 2066,
       "c": 1785255605,
-      "f": ""
+      "f": "Official Spoiler"
     },
     {
       "t": "[HOB] Hobbit Hole (WeeklyMTG)",
       "u": "https://www.reddit.com/r/magicTCG/comments/1v94fvy/hob_hobbit_hole_weeklymtg/",
-      "s": 0,
+      "s": 1681,
       "c": 1785258232,
-      "f": ""
+      "f": "Official Spoiler"
+    },
+    {
+      "t": "[HOB] Smaug, Wicked Worm (Email preview)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1v9ekay/hob_smaug_wicked_worm_email_preview/",
+      "s": 1419,
+      "c": 1785280507,
+      "f": "Official Spoiler"
     },
     {
       "t": "[HOB] Little Bear; Ordinary Bear; Gigantic Big Bear; Large Bear (WeeklyMTG)",
       "u": "https://www.reddit.com/r/magicTCG/comments/1v950w3/hob_little_bear_ordinary_bear_gigantic_big_bear/",
-      "s": 0,
+      "s": 1418,
       "c": 1785259454,
-      "f": ""
+      "f": "Official Spoiler"
     },
     {
       "t": "[HOB] Elven Passage (WeeklyMTG)",
       "u": "https://www.reddit.com/r/magicTCG/comments/1v94lan/hob_elven_passage_weeklymtg/",
-      "s": 0,
+      "s": 1328,
       "c": 1785258548,
-      "f": ""
+      "f": "Official Spoiler"
     }
   ]
 }
