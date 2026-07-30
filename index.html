@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v6.44 · 2026-07-30">
+<meta name="oracle-build" content="v6.45 · 2026-07-30">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1656,7 +1656,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v6.44 \u00B7 2026-07-30', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v6.45 \u00B7 2026-07-30', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3871,9 +3871,31 @@ function buildEngineModel(commander) {
         // transform into a cheap-1-power-evasive SWARM package — but his pack is beefy
         // midrange werewolves, not Slither Blades. Detect day/night + wolf-tribe-matters
         // wording; fires on Tovolar alone (NOT Arlinn/Immerwolf/The Celestus — verified).
-        werewolfPack: /daybound|nightbound/.test(o) && /wolf or werewolf|wolves and\/or werewolves|werewolves? you control|wolves? you control/.test(o)
+        werewolfPack: /daybound|nightbound/.test(o) && /wolf or werewolf|wolves and\/or werewolves|werewolves? you control|wolves? you control/.test(o),
+        // v6.45 PROTECTION-SACRIFICE (Koma / Silvar / Slobad / Gyome / Elder Arthur Maxson family):
+        // a "Sacrifice a/another X:" COST whose rider is purely DEFENSIVE -- a tap-down soft-lock
+        // or a TEMPORARY indestructible/hexproof/protection grant -- is insurance for a token /
+        // artifact / go-wide engine, NOT an aristocrats death outlet. The bare sac atom otherwise
+        // dresses these commanders as Fodder -> Death Payoffs. Guarded OFF whenever a REAL death
+        // payoff exists: a dies/drain atom, a "whenever you sacrifice" value trigger, or a rider
+        // that deals damage / drains life / draws cards -- so Ellie, Prossh, Yawgmoth, Ghave,
+        // Chatterfang, Slimefoot and Korvold keep their genuine aristocrats rails.
+        sacProtect: found.some(f => f.atom.key === 'sac')
+            && /sacrifice (a|an|another|two|three|x|that|each)[^:.]{0,44}:/.test(o)
+            && /tap target|activated abilities can't be activated|doesn't untap|gains (indestructible|hexproof|shroud|protection)[^.]{0,30}until (end of turn|your next turn)/.test(o)
+            && !found.some(f => f.atom.key === 'death' || f.atom.key === 'drain')
+            && !/each (opponent|player) loses|opponents? lose|whenever [^.]{0,50}dies|when [^.]{0,50}dies|whenever you sacrifice|loses \d+ life|deals \d+ damage to (target player|any target|each opponent|a player|target opponent)|draw (a card|two cards|that many cards|cards equal)/.test(o)
     };
     let foundForPlans = found;
+    if (P.sacProtect) {
+        // Strip the aristocrats scaffolding (sac Fodder + Death Payoffs, death triggers, drain)
+        // so the true token / artifact / go-wide engine leads. Mirrors the spellTokenSacMana strip.
+        for (let i = out.length - 1; i >= 0; i--) {
+            const k = out[i].key || '';
+            if (/^sac:/.test(k) || /^death:/.test(k) || k === 'drain' || /^drain:/.test(k)) out.splice(i, 1);
+        }
+        foundForPlans = foundForPlans.filter(f => f.atom.key !== 'sac' && f.atom.key !== 'death' && f.atom.key !== 'drain');
+    }
     if (P.xRestricted) {
         for (let i = out.length - 1; i >= 0; i--) if (out[i].title === 'Worth Copying') out.splice(i, 1);
     }
@@ -5320,6 +5342,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v6.45', date: '2026-07-30', focus: 'verify', commander: 'Koma, Cosmos Serpent', summary: "VERIFY Koma, Cosmos Serpent -- the v6.44 STUDY killed his phantom Voltron lead but MISSED the other half of the double misread: his Scouting Report still led Fodder -> Death Payoffs and the game plan still read 'Aristocrats -- drain the table with death triggers', directly contradicting his own TRAPS ('NOT aristocrats -- no death trigger; Blood Artist / Zulaport do almost nothing'). Root cause, generalizable: a 'Sacrifice a/another X:' COST whose rider is purely DEFENSIVE -- a tap-down soft-lock or a TEMPORARY indestructible/hexproof/protection grant -- trips the bare sac atom, which auto-attaches the aristocrats Fodder + Death Payoffs family. Added a P.sacProtect transform that strips the sac/death/drain rails and the Aristocrats plan for such commanders, guarded OFF whenever a real death payoff exists (a dies/drain atom, a 'whenever you sacrifice' trigger, or a rider that deals damage / drains life / draws cards). Koma now leads Go-Wide Tokens (his EDHREC #1 theme). Generalizes to Silvar, Devourer of the Free, Slobad, Goblin Tinkerer (now leads Artifacts), Gyome, Master Chef (Food), and Elder Arthur Maxson (Token Typal) -- all protection-sacrifice commanders formerly mislabeled aristocrats. Counter-case: Ellie Vengeful Hunter (sac deals 2 damage), Prossh, Yawgmoth, Ghave, Chatterfang, Slimefoot and Korvold all KEEP their genuine aristocrats rails; Bruvac, Marisi, Zaxara unchanged." },
     { build: 'v6.44', date: '2026-07-30', focus: 'study', commander: 'Koma, Cosmos Serpent', summary: "STUDY Koma, Cosmos Serpent -- his Scouting Report led with a false 'Voltron Protection & Gear' rail (plus aristocrats Death Payoffs), a double misread. Root cause, generalizable: the keyword-Voltron detector fired on the word 'indestructible' even when it only appears as a TEMPORARY grant -- Koma's 'Sacrifice another Serpent: ... Koma gains indestructible until end of turn' is a one-shot trick, not a static keyword. Extended the Voltron branch's oSelf strip to drop 'gains ... until end of turn / your next turn / end of combat' protection grants, so the branch fires only on STATIC keywords. Fixes 15 commanders that got a phantom Voltron lead from a temp grant -- Winota Joiner of Forces, Trostani Three Whispers, Theoden King of Rohan, Slobad Goblin Tinkerer, Soul of Windgrace, Lena Selfless Champion, Hercules, Okoye, Old Hob, Tyvar the Pummeler, Patriot, Peggy Carter, The Duke, Urdnan -- each a tokens/go-wide/artifacts/lands engine, not a beater. True static-keyword Voltron (Sigarda Host of Herons, Toski Bearer of Secrets) is untouched, and non-Voltron commanders (Bruvac, Marisi, Zaxara) are unchanged. Added a STUDY_DB entry framing Koma as a Simic ramp -> Coil-token-doubling -> control/stax tap-lock engine (EDHREC: Tokens/Clones/Control/Ramp/Stax), not Voltron or death-drain aristocrats." },
     { build: 'v6.43', date: '2026-07-30', focus: 'verify', commander: 'Kynaios and Tiro of Meletis', summary: "VERIFY pass on the v6.42 Group Hug work, read card-by-card live on Scryfall + EDHREC. The three rails held up card-for-card — Turn Abundance Against Them, Pillowfort & Deterrence and Group Hug Engines reproduce K&T's High-Synergy DRAW cluster (Rhystic Study, Smothering Tithe, Propaganda, Howling Mine, Rites of Flourishing, Dictate of Kruphix, Kami of the Crescent Moon) exactly. But EDHREC's #3 K&T high-synergy card, Tempt with Discovery, and a Top card, Collective Voyage, had NO rail: they're symmetric GROUP RAMP — the shared LAND drops K&T also hands the table — and the draw/pillowfort/engine queries never touched them, even though the STUDY_DB note already flags them as 'the ramp you exploit hardest.' Added a fourth family rail, Share the Ramp, keyed all-literal on each-player/opponent-scoped library searches, so it only ever pulls SHARED ramp (Tempt with Discovery, Collective Voyage, Veteran Explorer, New Frontiers, Avatar of Growth, Rootweaver Druid, Old-Growth Dryads) and never one-sided ramp like Cultivate/Farseek ('search YOUR library'). Live-verified EDHREC-sorted: K&T -> 12 cards, and it generalizes to every Group-Hug-leading commander in its own colors (Phelddagrif -> 11, degrades cleanly to 2 for green-less Kwain). Also corrected a stray claim from the study run: Selvala, Explorer Returned fires Group Hug AND Wheels at equal weight and leads Wheels, so she keeps her wheel rails. Unrelated commanders untouched — the rail lives only under the Group Hug atom, which never fires on wheels/stax/donate (Nekusar, Xyris, The Locust God, Zedruu, Grand Arbiter all verified clear)." },
     { build: 'v6.42', date: '2026-07-30', focus: 'logic', commander: 'Kynaios and Tiro of Meletis', summary: "Group Hug finally has an engine. It was a defining, popular political archetype with no atom, so Kynaios and Tiro rendered with ZERO synergy rails, and Phelddagrif / Kwain / Braids (Conjurer Adept) were mislabeled by the incidental tokens/life/artifact they hand to OPPONENTS. Added a shared Group Hug atom keyed on the giving-the-table signature (each player may draw|put a land, target opponent may draw, each opponent who ... draws) — carefully kept OFF the wheels-punisher clause 'that player draws an additional card' so Nekusar/Xyris stay wheels, and off 'target opponent creates/gains' so goad/politics commanders (Hansk, Vazi) don't leak in. The commander is the ENABLER, so the rails lead with the PAYOFF: Turn Abundance Against Them (Rhystic Study, Smothering Tithe, Mystic Remora, Consecrated Sphinx — profit from the draws you cause), then Pillowfort & Deterrence (Propaganda, Ghostly Prison, Windborn Muse — you empower three opponents, so protect yourself), then Group Hug Engines (Howling Mine, Temple Bell, Dictate of Kruphix, Rites of Flourishing). All three queries reproduce EDHREC's K&T High-Synergy list card-for-card, live-verified EDHREC-sorted. Generalizes across the whole family (Kwain, Phelddagrif, Braids Conjurer Adept, Selvala Explorer Returned, The Second Doctor, Ms. Bumbleflower); unrelated commanders are untouched because the atom only fires on table-wide giving. Deep 4-trap STUDY_DB note for K&T." },
