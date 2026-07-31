@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-30T21:15:42.560Z",
+  "updated": "2026-07-31T06:15:25.527Z",
   "deals": [
     {
       "t": "The Hobbit Collector Booster Box - $700 [Laughing Dragon]",
@@ -46,6 +46,20 @@
   ],
   "wire": [
     {
+      "t": "[HOB] Old Fat Spider Can't See Me (via AwesomeJoshua)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vb367o/hob_old_fat_spider_cant_see_me_via_awesomejoshua/",
+      "s": 0,
+      "c": 1785438797,
+      "f": ""
+    },
+    {
+      "t": "[HOB] Bofur, Reliable Guardian (via BagginsTV)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vb6a2d/hob_bofur_reliable_guardian_via_bagginstv/",
+      "s": 0,
+      "c": 1785445557,
+      "f": ""
+    },
+    {
       "t": "[HOB] Kíli the Resourceful (GenCon)",
       "u": "https://www.reddit.com/r/magicTCG/comments/1vaw4e0/hob_kíli_the_resourceful_gencon/",
       "s": 0,
@@ -60,31 +74,17 @@
       "f": ""
     },
     {
-      "t": "[HOB]Troop of Ponies (GenCon)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vaxtb3/hobtroop_of_ponies_gencon/",
+      "t": "[HOB] Wargling | Warg Tactics | Reverent Howl | Ravening Warg (via The Tea Beard)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vb32sa/hob_wargling_warg_tactics_reverent_howl_ravening/",
       "s": 0,
-      "c": 1785427399,
+      "c": 1785438593,
       "f": ""
     },
     {
-      "t": "[HOB] \"Daín, Ruler of the Iron Hills\" (@MTGArenaJP)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vawhvf/hob_daín_ruler_of_the_iron_hills_mtgarenajp/",
+      "t": "[HOC] Grima, Saruman’s Footman",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vb3vhm/hoc_grima_sarumans_footman/",
       "s": 0,
-      "c": 1785424540,
-      "f": ""
-    },
-    {
-      "t": "[HOC] Raise the Palisade",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vauv6l/hoc_raise_the_palisade/",
-      "s": 0,
-      "c": 1785420885,
-      "f": ""
-    },
-    {
-      "t": "[HOB] Dreaded Bat-Cloud (Jane Don’t)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vaxar7/hob_dreaded_batcloud_jane_dont/",
-      "s": 0,
-      "c": 1785426300,
+      "c": 1785440315,
       "f": ""
     }
   ]
