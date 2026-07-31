@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v6.70 · 2026-07-31">
+<meta name="oracle-build" content="v6.71 · 2026-07-31">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1412,12 +1412,22 @@
      the gold-arcana tile language (.fs-card/.fs-thumb/.fs-cap/.fs-rarity above); these
      rules add the per-set frame, the set header, the type-filter chips, the type-group
      labels and the price caption. This is the SPOILERS_V2 style marker. */
-  .fs-sets { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 32px; margin-top: 18px; }
-  .fs-set { position: relative; }
+  .fs-sets { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 30px; margin-top: 18px; }
+  /* v6.71 PHASE 2: each set is a distinct "shelf" — a subtle gold left-accent (the
+     Forge tile language) ties its header + chips + groups together; imminent sets
+     (<=~2wk out / freshly out) get a brighter accent to read as "spoiling now". */
+  .fs-set { position: relative; padding-left: 15px; }
+  .fs-set::before { content: ''; position: absolute; left: 0; top: 2px; bottom: 4px; width: 2px; border-radius: 2px; background: linear-gradient(180deg, rgba(224,196,106,.5), rgba(224,196,106,.05)); pointer-events: none; }
+  .fs-set.fs-set-soon::before { background: linear-gradient(180deg, rgba(240,213,128,.92), rgba(224,196,106,.12)); }
   .fs-set-head { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; padding-bottom: 11px; border-bottom: 1px solid rgba(224,196,106,.14); }
-  .fs-set-symbol { width: 20px; height: 20px; object-fit: contain; flex: 0 0 auto; filter: brightness(0) invert(1); opacity: .78; }
+  /* v6.71 PHASE 2: set symbol set in a small gold-tinted emblem chip (premium masthead read). */
+  .fs-set-symbol { width: 16px; height: 16px; padding: 4px; box-sizing: content-box; object-fit: contain; flex: 0 0 auto; border: 1px solid rgba(224,196,106,.22); border-radius: 8px; background: rgba(224,196,106,.06); filter: brightness(0) invert(1); opacity: .85; }
   .fs-set-name { font-family: var(--display); font-size: clamp(13.5px, 1.2vw, 16px); font-weight: 700; letter-spacing: .04em; color: var(--gold-bright); }
   .fs-set-meta { font-family: var(--ios-font); font-size: 10.5px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; color: var(--muted2); }
+  /* v6.71 PHASE 2: date-driven release countdown pill — reinforces the evergreen
+     spoiler-season urgency; imminent sets get the filled gold "spoiling now" variant. */
+  .fs-countdown { font-family: var(--ios-font); font-size: 10px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: #f0d888; background: linear-gradient(180deg, rgba(224,196,106,.16), rgba(224,196,106,.05)); border: 1px solid rgba(224,196,106,.34); border-radius: 999px; padding: 2px 9px; white-space: nowrap; flex: 0 0 auto; }
+  .fs-countdown.fs-cd-soon { color: #12121a; background: linear-gradient(180deg, var(--gold-bright), var(--gold)); border-color: rgba(224,196,106,.7); }
   a.fs-set-link { margin-left: auto; font-family: var(--ios-font); font-size: 10.5px; font-weight: 750; letter-spacing: .05em; color: var(--gold-dim); text-decoration: none; white-space: nowrap; transition: color .16s ease; }
   a.fs-set-link:hover { color: var(--gold-bright); }
   a.fs-set-link:focus-visible { outline: none; color: var(--gold-bright); text-decoration: underline; text-underline-offset: 3px; }
@@ -1432,7 +1442,9 @@
   .fs-type-label .fs-more { font-family: var(--ios-font); font-size: 9px; font-weight: 650; letter-spacing: .04em; text-transform: none; color: var(--muted2); }
   .fs-set .fs-grid { margin-top: 12px; }
   .fs-type-group .fs-grid { margin-top: 0; }
-  .fs-price { font-family: var(--ios-font); font-size: 10.5px; font-weight: 750; letter-spacing: .02em; color: var(--gold-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* v6.71 PHASE 2: preorder price rendered as a compact gold value-pill, so the
+     hype/price ordering (priciest first) reads at a glance within each type group. */
+  .fs-price { display: inline-flex; align-self: flex-start; align-items: center; font-family: var(--ios-font); font-size: 10px; font-weight: 800; letter-spacing: .02em; color: #f0d888; background: rgba(224,196,106,.1); border: 1px solid rgba(224,196,106,.28); border-radius: 999px; padding: 1px 8px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   /* ============ v4.50 THE FORGE — archetype brewing tiles ============ */
   /* Six schools of brewing on the landing; tapping one deals 8 fresh
@@ -1750,7 +1762,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v6.70 \u00B7 2026-07-31', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v6.71 \u00B7 2026-07-31', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -5787,6 +5799,8 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v6.71', date: '2026-07-31', focus: 'ui', commander: '—', summary: "SPOILERS V2 PHASE 2 — polish + verified: a premium finishing pass on the evergreen Fresh Spoilers board (Phase 1's date-driven multi-set fetch is untouched). (1) SHELVES — each spoiling set now reads as a distinct shelf: a subtle gold LEFT-ACCENT (the Forge tile language) ties its header + type chips + card groups together, brighter for imminent sets. (2) DATE-DRIVEN COUNTDOWN — every set header gains a release-countdown pill from a new pure helper fsRelease(set, now) ('in 2 weeks' / 'in 2 months' / 'out today' / 'out 3d ago'), derived purely from released_at vs the current date so it stays correct forever with no code changes; imminent sets (<=~2 weeks out OR freshly released) get the filled-gold 'spoiling now' pill + brighter shelf accent, distant sets the quiet outline pill. (3) EMBLEM — the set symbol now sits in a small gold-tinted chip (premium masthead read). (4) PRICE VALUE-PILL — the preorder price renders as a compact gold pill so the hype/price ordering (priciest-first) reads at a glance within each type group, while unpriced cards keep the quiet type caption so priced cards visibly lead. Verified LIVE in Chrome against real Scryfall on 2026-07-31: date-driven detection returns 6 sets soonest-first (The Hobbit Commander + The Hobbit 'in 2 weeks', Mystery Booster: Commander Edition + Reality Fracture + Reality Fracture Commander 'in 2 months', Star Trek 'in 3 months' — confirmed the set list AND countdowns are computed from dates, NOT hardcoded); cards group by type correctly; the price->rarity sort is right (The One Ring $142 > Arcane Signet $55 lead Hobbit-Commander Artifacts; the $50 Creatures lead the unpriced mythic); thumbnails load; the empty ('No sets are currently spoiling…') and error ('Fresh spoilers are unavailable right now…') states render as tasteful graceful serif notes. Crisp at desktop AND 390px — at narrow width the header wraps to two clean lines (name + countdown, then count/date + Scryfall link), the type chips wrap to two rows, and the grid drops to 2 columns with the price + countdown pills intact; screenshots taken at both. GENERALIZES / EVERGREEN: because fsRelease is pure + date-driven, the countdown, imminent-emphasis, shelf accents and price pills apply to EVERY currently-spoiling set and to every FUTURE set automatically — the board self-updates with zero code changes as sets release and new ones start previewing. node --check 6/6 blocks clean; meta == console banner == CHANGELOG[0].build == v6.71; did NOT study a commander (spoilers-phase run); mobile viewport/keyboard IIFE + roster pipeline untouched; git untouched; backup taken (index-backup-20260731-1133-preSpoilersV2P2.html). SPOILERS V2 is now COMPLETE — the next scheduled run resumes the normal commander-study cycle." },
+    { build: 'v6.70', date: '2026-07-31', focus: 'ui', commander: '—', summary: "SPOILERS V2 PHASE 1 — reorganize: the Fresh Spoilers band went from a single set's newest 8 cards to an evergreen, self-updating spoiler BOARD. On mount it fetches Scryfall /sets and computes the currently-spoiling set list purely from live data + the CURRENT date (new Date()) — every set that's unreleased OR out within the last ~2 weeks, is a real paper spoiler set type (expansion/core/commander/draft_innovation/masters — no tokens/promos/memorabilia/digital-alchemy), already has previews, and is within ~12 months out. There are NO hardcoded set codes, names or dates anywhere, so when a set releases and the next starts previewing the board shifts on its own with no code changes or manual swaps; if nothing qualifies it shows a graceful 'no sets currently spoiling' note. It now renders a labeled section PER set (soonest-releasing first, capped at 6), each grouped and filterable by card type (Creatures / Instants / Sorceries / Artifacts / Enchantments / Planeswalkers / Lands / Battles) via chips, and each type group hype-sorted by preorder price (prices.usd desc) then rarity (mythic>rare>uncommon>common) then newest — cards with no price fall to rarity order. Curated + performant: top few cards per type in the All view, a see-all-on-Scryfall link per set, lazy-loaded thumbnails, session cache + in-flight dedupe + polite throttle, and per-set failure isolation (one set's failed fetch is skipped, never breaks the board). Reuses the gold-arcana art-crop tile language; caption now leads with the preorder price. SPOILERS_V2 marker added (JS + CSS). Verified live vs real Scryfall this run: date-driven detection returns 6 sets on 2026-07-31 (Hobbit Commander + Hobbit soonest, then MBC:CE, Reality Fracture + its Commander, Star Trek), grouping-by-type and the price→rarity sort both correct (The One Ring $142 leads Hobbit Commander Artifacts). node --check 6/6; meta == banner == CHANGELOG[0] == v6.70; did NOT study a commander (spoilers phase run); mobile viewport IIFE + roster pipeline untouched; git untouched; backup taken. NEXT = SPOILERS V2 PHASE 2 (polish + verify live in Chrome at desktop and 390px)." },
     { build: 'v6.69', date: '2026-07-31', focus: 'logic', commander: 'Atraxa, Praetors\' Voice', summary: "STUDY Atraxa, Praetors' Voice - incidental-lifelink guard. Her only build-around text is the end-step proliferate, but her printed 'lifelink' keyword made the lifegain atom fire, stamping her (and ~105 other commanders) with a phantom Lifegain identity chip + gameplan (Atraxa read as '+1/+1 Counters, Lifegain'). extractAtoms now feeds the lifegain atom a dedicated oLife string that strips the BARE self 'lifelink' keyword while PRESERVING granted lifelink ('creatures you control have lifelink' = a real lifegain enabler) and every genuine gain-life clause ('whenever you gain life', 'gain N life'). Atraxa now reads as pure Proliferate / +1/+1 / superfriends. Generalizes to every incidental-lifelink commander - Mangara, Danitha, Elenda, K'rrik, Sephara, Gisela, Dragonlord Dromoka all shed the phantom Lifegain - and is NEUTRAL for real lifegain (Vito, Heliod, Karlov, Trelasarra, Oloro keep it via gain-life text; Lyra keeps it via team-grant lifelink). Unrelated Krenko/Talrand/Gitrog unchanged. The existing RAILS.proliferate family (Counter Fuel / Proliferate Amplifiers / Counter Wincons) already renders her engine correctly, so only the false lifegain read needed removing. node --check 6/6; verified live vs Scryfall." },
     { build: 'v6.68', date: '2026-07-31', focus: 'verify', commander: 'Morophon, the Boundless', summary: "VERIFY Morophon — read the three changeling rails card-by-card against live EDHREC-sorted Scryfall and caught a real placement bug that hurts every chosen-type tribal commander: Path of Ancestry (the single most-played tribal fixing land) was ERRATA'd off 'the chosen type' to 'a creature type that your commander shares', so it silently leaked into the Typal Anthems rail (via the shares-a-type arm meant for Shared Animosity) and disappeared from the Tribal Fixing rail where players look for it. Fixed at the family level — the Fixing rail now recognizes the whole 'shares a creature type with your commander' template plus chosen-type utility LANDS, so Path of Ancestry, Three Tree City, Multiversal Passage and Thran Portal all land in Fixing; the Anthems rail excludes the commander-referencing wording so Shared Animosity, Coat of Arms and the banners stay put. Generalizes identically to Mistform Ultimus, Pol Jamaar, Rukarumel, Omo and Kolvori (all six changeling-family commanders share these rails); unrelated commanders (Krenko, Talrand, Atraxa) never fire the changeling atom and render byte-identical. Verified live in Chrome vs real Scryfall (Morophon wubrg, Pol Jamaar mono-U, Kolvori GWU all lead Fixing with Path of Ancestry; zero off-theme leaks in the new lands arm). node --check 6/6; meta == banner == changelog synced; git untouched; backup taken." },
     { build: 'v6.67', date: '2026-07-31', focus: 'herald', commander: '—', summary: "HERALD PHASE 3 — final flair + verify: a premium finishing pass on the Fresh Spoilers gallery, presentation only (the P1 Scryfall fetch stays untouched). Each art tile now catches a single foil light-sweep just after it enters — a 'fresh off the press' spoiler-season shimmer, one-shot and scoped so it never disturbs the loading skeleton. The section header rule became a refined gold gradient that fades to the right, the ✦ mark gained a soft gold glow, and every tile carries a subtle top-edge highlight for depth. Keyboard focus is now a clear gold ring on the tiles, the set link, and the Community chips (:focus-visible), so tabbing through the gallery reads as well as pointing at it. All new motion honors prefers-reduced-motion (the sweep is removed entirely), and every graceful-degradation path is preserved (missing art → tasteful dark tile; fetch failure → the same 'unavailable' note, never a broken box). Verified LIVE in Chrome against real Scryfall at both desktop and 390px mobile — current cards, thumbnails load, fallback graceful, no overflow. No touch to the mobile viewport IIFE or the roster pipeline; git untouched; backup taken; node --check 6/6. Did NOT study a commander this run (Herald phase run)." },
@@ -6772,6 +6786,27 @@ function fsSetDate(set) {
     if (!d || isNaN(d.getTime())) return '';
     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 }
+// Relative release countdown — date-driven and evergreen (derives purely from the
+// set's released_at vs the current date), so every set's label stays correct forever
+// with no code changes. `soon` marks imminent sets (releasing within ~2 weeks OR
+// freshly released) so they can read as "spoiling now". Returns { label, soon }.
+function fsRelease(set, now) {
+    const iso = set && set.released_at;
+    if (!iso) return null;
+    const rel = new Date(iso + 'T00:00:00Z');
+    if (isNaN(rel.getTime())) return null;
+    now = now || new Date();
+    const t0 = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    const r0 = Date.UTC(rel.getUTCFullYear(), rel.getUTCMonth(), rel.getUTCDate());
+    const d = Math.round((r0 - t0) / 86400000);
+    let label;
+    if (d <= -1) label = 'out ' + Math.abs(d) + 'd ago';
+    else if (d === 0) label = 'out today';
+    else if (d <= 13) label = 'in ' + d + (d === 1 ? ' day' : ' days');
+    else if (d <= 42) label = 'in ' + Math.round(d / 7) + ' weeks';
+    else { const mo = Math.round(d / 30.44); label = 'in ' + mo + (mo === 1 ? ' month' : ' months'); }
+    return { label: label, soon: d <= 14 };
+}
 // One card tile — reuses the gold-arcana art-crop tile language; caption leads with
 // the preorder price (the hype signal) and falls back to the type when unpriced.
 function fsTile(c, i) {
@@ -6795,11 +6830,13 @@ function SpoilerSet({ entry }) {
     const [active, setActive] = useState('All');
     const activeGroup = groups.find(g => g.type === active);
     const total = cards.length;
+    const rel = fsRelease(set);
     const seeAll = set.scryfall_uri || ('https://scryfall.com/sets/' + set.code);
-    return React.createElement('section', { className: 'fs-set' },
+    return React.createElement('section', { className: 'fs-set' + (rel && rel.soon ? ' fs-set-soon' : '') },
         React.createElement('div', { className: 'fs-set-head' },
             set.icon_svg_uri ? React.createElement('img', { className: 'fs-set-symbol', src: set.icon_svg_uri, alt: '', 'aria-hidden': 'true', loading: 'lazy' }) : null,
             React.createElement('span', { className: 'fs-set-name' }, set.name),
+            rel ? React.createElement('span', { className: 'fs-countdown' + (rel.soon ? ' fs-cd-soon' : ''), title: fsSetDate(set) ? ('Releases ' + fsSetDate(set)) : undefined }, rel.label) : null,
             React.createElement('span', { className: 'fs-set-meta' }, total + (total === 1 ? ' preview' : ' previews') + (fsSetDate(set) ? (' · ' + fsSetDate(set)) : '')),
             React.createElement('a', { className: 'fs-set-link', href: seeAll, target: '_blank', rel: 'noopener' }, 'all on Scryfall ↗')),
         React.createElement('div', { className: 'fs-types' },
