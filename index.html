@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v6.66 · 2026-07-31">
+<meta name="oracle-build" content="v6.68 · 2026-07-31">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1347,9 +1347,11 @@
      the P1 fetch logic is untouched. This is the FRESH_SPOILERS style block. */
   .fs-band { margin-top: 34px; position: relative; }
   .fs-band::before { content: ''; position: absolute; left: -6%; right: -6%; top: -20px; height: 148px; background: radial-gradient(ellipse 58% 100% at 22% 0%, rgba(224,196,106,.075), transparent 72%); pointer-events: none; z-index: 0; }
-  .fs-head { position: relative; z-index: 1; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(224,196,106,.3); }
+  .fs-head { position: relative; z-index: 1; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding-bottom: 10px; }
+  /* v6.67 P3: the header rule is a refined gold gradient that fades to the right (premium arcana finish) rather than a flat hairline border. */
+  .fs-head::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: linear-gradient(90deg, rgba(224,196,106,.6), rgba(224,196,106,.16) 55%, transparent); }
   .fs-title { display: flex; align-items: baseline; gap: 9px; font-family: var(--display); font-size: clamp(13px, 1.1vw, 14.5px); font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: var(--gold-bright); min-width: 0; }
-  .fs-title .cg { color: var(--gold-dim); flex: 0 0 auto; }
+  .fs-title .cg { color: var(--gold-bright); flex: 0 0 auto; text-shadow: 0 0 10px rgba(240,213,128,.5); }
   .fs-live { display: inline-flex; align-items: center; gap: 6px; font-family: var(--ios-font); font-size: 9px; font-weight: 750; letter-spacing: .13em; text-transform: uppercase; color: var(--gold-dim); flex: 0 0 auto; }
   .fs-live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold-bright); animation: fsPulse 2.1s var(--fluid) infinite; }
   @keyframes fsPulse { 0% { box-shadow: 0 0 0 0 rgba(240,213,128,.5); } 70% { box-shadow: 0 0 0 7px rgba(240,213,128,0); } 100% { box-shadow: 0 0 0 0 rgba(240,213,128,0); } }
@@ -1357,10 +1359,16 @@
   a.fs-setlink:hover { color: var(--gold-bright); }
   span.fs-setlink { font-family: var(--serif); font-style: italic; font-size: 11.5px; color: var(--muted2); flex: 0 0 auto; }
   .fs-grid { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 14px; margin-top: 16px; }
-  .fs-card { display: flex; flex-direction: column; text-decoration: none; border: 1px solid var(--hair); border-radius: 13px; overflow: hidden; background: linear-gradient(180deg, rgba(224,196,106,.05), rgba(255,255,255,.012)); transition: border-color .18s ease, transform .18s var(--fluid), box-shadow .18s ease; animation: skIn .5s var(--fluid) both; animation-delay: calc(var(--i, 0) * 55ms); }
+  .fs-card { display: flex; flex-direction: column; text-decoration: none; border: 1px solid var(--hair); border-radius: 13px; overflow: hidden; background: linear-gradient(180deg, rgba(224,196,106,.05), rgba(255,255,255,.012)); box-shadow: inset 0 1px 0 rgba(255,255,255,.045); transition: border-color .18s ease, transform .18s var(--fluid), box-shadow .18s ease; animation: skIn .5s var(--fluid) both; animation-delay: calc(var(--i, 0) * 55ms); }
   .fs-thumb { position: relative; display: block; width: 100%; aspect-ratio: 626 / 396; background: #10111a; overflow: hidden; }
   .fs-thumb .card-img-loader img { object-position: center 32%; transition: opacity .22s ease, transform .4s var(--fluid); }
   .fs-thumb::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 52%, rgba(8,9,14,.5)); pointer-events: none; }
+  /* v6.67 P3: a single foil light-sweep glides across each art tile just after it enters —
+     a "fresh off the press" spoiler-season shimmer. Scoped :not(.fs-skel) so it never touches
+     the loading skeleton's own ::before shimmer; sits above the art (z1) but under the rarity
+     pip (z2); one-shot (fill both, no loop); fully removed under prefers-reduced-motion. */
+  .fs-card:not(.fs-skel) .fs-thumb::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(115deg, transparent 34%, rgba(244,233,193,.14) 47%, rgba(255,255,255,.07) 50%, rgba(244,233,193,.10) 53%, transparent 66%); transform: translateX(-130%); animation: fsSheen 1.15s var(--fluid) both; animation-delay: calc(var(--i, 0) * 55ms + .34s); }
+  @keyframes fsSheen { to { transform: translateX(130%); } }
   .fs-rarity { position: absolute; top: 8px; right: 8px; width: 9px; height: 9px; border-radius: 50%; z-index: 2; border: 1px solid rgba(8,9,14,.55); box-shadow: 0 0 7px currentColor; }
   .fs-rarity.common { color: #cfd3da; background: #cfd3da; }
   .fs-rarity.uncommon { color: #9fb7c6; background: #9fb7c6; }
@@ -1374,6 +1382,12 @@
     .fs-card:hover .fs-name { color: var(--gold-bright); }
     .fs-card:hover .fs-thumb .card-img-loader img { transform: scale(1.06); }
   }
+  /* v6.67 P3: keyboard focus is now a clear gold ring on every interactive spoiler element
+     (tiles, the set link) — matches the hover language, so tabbing through the gallery is
+     as legible as pointing at it. :focus-visible only, so mouse clicks stay ring-free. */
+  .fs-card:focus-visible { outline: none; border-color: rgba(224,196,106,.7); box-shadow: 0 0 0 2px rgba(224,196,106,.5), 0 10px 26px rgba(0,0,0,.4); }
+  .fs-card:focus-visible .fs-name { color: var(--gold-bright); }
+  a.fs-setlink:focus-visible { outline: none; color: var(--gold-bright); text-decoration: underline; text-underline-offset: 3px; }
   .fs-note { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--muted); padding: 16px 2px; }
   .fs-note.fs-err { color: var(--muted2); }
   /* loading skeleton tiles — a spoiler-season shimmer while the previews summon */
@@ -1382,12 +1396,14 @@
   .fs-skel .fs-thumb::after { display: none; }
   .fs-skel .fs-cap-line { height: 9px; border-radius: 4px; background: rgba(255,255,255,.06); }
   .fs-skel .fs-cap-line.short { width: 55%; height: 8px; }
-  @media (prefers-reduced-motion: reduce) { .fs-card { animation: none; } .fs-live-dot { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .fs-card { animation: none; } .fs-live-dot { animation: none; } .fs-card:not(.fs-skel) .fs-thumb::before { display: none; animation: none; } }
   .community-row { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 26px; }
   .community-label { font-family: var(--display); font-size: 11px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--gold-dim); margin-right: 4px; }
   a.community-chip { display: inline-flex; align-items: center; gap: 6px; font-family: var(--ios-font); font-size: 12px; font-weight: 700; letter-spacing: .01em; color: var(--gold-bright); text-decoration: none; padding: 6px 14px; border: 1px solid rgba(224,196,106,.4); border-radius: 20px; background: linear-gradient(180deg, rgba(224,196,106,.08), rgba(224,196,106,.03)); transition: transform .15s var(--fluid), border-color .15s ease, box-shadow .15s ease, background .15s ease; }
   a.community-chip::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--gold-dim); flex: 0 0 auto; transition: background .15s ease; }
   @media (hover: hover) and (pointer: fine) { a.community-chip:hover { background: var(--gold-glow); border-color: rgba(224,196,106,.7); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,.32); } a.community-chip:hover::before { background: var(--gold-bright); } }
+  a.community-chip:focus-visible { outline: none; border-color: rgba(224,196,106,.8); box-shadow: 0 0 0 2px rgba(224,196,106,.5); }
+  a.community-chip:focus-visible::before { background: var(--gold-bright); }
   @media (prefers-reduced-motion: reduce) { a.community-chip { transition: border-color .15s ease, background .15s ease; } }
 
   /* ============ v4.50 THE FORGE — archetype brewing tiles ============ */
@@ -1706,7 +1722,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v6.66 \u00B7 2026-07-31', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v6.68 \u00B7 2026-07-31', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3559,13 +3575,21 @@ const RAILS = {
     // creature type, so they pay off for WHATEVER tribe the deck names. Each q wrapped in an
     // OUTER paren so the id<= colour/legality base ANDs across every OR arm (Trelasarra
     // precedence lesson). Live-QA'd EDHREC-sorted on Scryfall 2026-07-31.
+    // VERIFY 2026-07-31 (Morophon): Path of Ancestry — the single most-played tribal FIXING
+    // land — was ERRATA'd off "the chosen type" to "creature spell that shares a creature type
+    // with your commander", so it (a) leaked into the ANTHEMS rail via the shares-a-type arm
+    // (meant for Shared Animosity) and (b) vanished from FIXING. Fix generalizes the whole
+    // "shares a creature type with your commander" template into FIXING and adds chosen-type
+    // utility LANDS (t:land o:"the chosen type") so Path of Ancestry, Three Tree City,
+    // Multiversal Passage and Thran Portal land in Fixing; anthems rail now excludes the
+    // commander-referencing wording. Helps all six changeling-family commanders identically.
     changeling: {
         eTest: /choose a creature type|is every creature type|are the chosen type|creature spell of the chosen type|of the chosen type cost/,
         pTest: /of the chosen type get \+|draw a card for each creature you control of that type|creatures you control of the chosen type get/,
         rails: [
             { role: 'enabler', title: 'Changelings & Type-Setters', sub: 'Everything is your tribe', q: '(keyword:changeling OR o:"is every creature type" OR o:"are every creature type" OR o:"the chosen type in addition" OR o:"are the chosen type")', why: 'changelings count as EVERY creature type and type-setters (Maskwood Nexus, Arcane Adaptation, Xenograft, Conspiracy) make your whole board the type you named — Realmwalker, Taurean Mauler, Mirror Entity and Universal Automaton slot into any tribe' },
-            { role: 'payoff', title: 'Typal Anthems & Banners', sub: 'Lift the whole tribe', q: '((o:"of the chosen type get" OR o:"shares a creature type" OR o:"each other creature that shares" OR (o:"the chosen type" (o:draw OR o:"put a +1/+1"))) -keyword:changeling -o:"are the chosen type" -o:"is every creature type")', why: 'Coat of Arms, Shared Animosity, Vanquisher\'s Banner, Door of Destinies, Kindred Discovery and Icon of Ancestry all scale with a SHARED or chosen type, so they pay off no matter which tribe you name' },
-            { role: 'enabler', title: 'Tribal Fixing & Cost Reducers', sub: 'Name it, cast it', q: '(((o:"the chosen type" (o:"cost {1} less" OR o:"cost {2} less" OR o:"add one mana" OR o:"any color")) OR o:"creature spell of the chosen type") -o:"get +1/+1")', why: 'Cavern of Souls, Path of Ancestry, Unclaimed Territory, Herald\'s Horn and Urza\'s Incubator fix mana for and discount the tribe you name — the glue that makes a five-colour or off-colour typal pile castable' }
+            { role: 'payoff', title: 'Typal Anthems & Banners', sub: 'Lift the whole tribe', q: '((o:"of the chosen type get" OR o:"shares a creature type" OR o:"each other creature that shares" OR (o:"the chosen type" (o:draw OR o:"put a +1/+1"))) -keyword:changeling -o:"are the chosen type" -o:"is every creature type" -o:"with your commander")', why: 'Coat of Arms, Shared Animosity, Vanquisher\'s Banner, Door of Destinies, Kindred Discovery and Icon of Ancestry all scale with a SHARED or chosen type, so they pay off no matter which tribe you name' },
+            { role: 'enabler', title: 'Tribal Fixing & Cost Reducers', sub: 'Name it, cast it', q: '((o:"shares a creature type with your commander" OR o:"creature spell of the chosen type" OR (t:land o:"the chosen type") OR (o:"the chosen type" (o:"cost {1} less" OR o:"cost {2} less" OR o:"add one mana" OR o:"any color"))) -o:"get +1/+1")', why: 'Cavern of Souls, Path of Ancestry, Unclaimed Territory, Herald\'s Horn and Urza\'s Incubator fix mana for and discount the tribe you name — the glue that makes a five-colour or off-colour typal pile castable' }
         ]
     },
     // LIFEGAIN FINISHER family (Trelasarra, Moon Dancer study 2026-07-31): the lifegain atom
@@ -5723,6 +5747,8 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v6.68', date: '2026-07-31', focus: 'verify', commander: 'Morophon, the Boundless', summary: "VERIFY Morophon — read the three changeling rails card-by-card against live EDHREC-sorted Scryfall and caught a real placement bug that hurts every chosen-type tribal commander: Path of Ancestry (the single most-played tribal fixing land) was ERRATA'd off 'the chosen type' to 'a creature type that your commander shares', so it silently leaked into the Typal Anthems rail (via the shares-a-type arm meant for Shared Animosity) and disappeared from the Tribal Fixing rail where players look for it. Fixed at the family level — the Fixing rail now recognizes the whole 'shares a creature type with your commander' template plus chosen-type utility LANDS, so Path of Ancestry, Three Tree City, Multiversal Passage and Thran Portal all land in Fixing; the Anthems rail excludes the commander-referencing wording so Shared Animosity, Coat of Arms and the banners stay put. Generalizes identically to Mistform Ultimus, Pol Jamaar, Rukarumel, Omo and Kolvori (all six changeling-family commanders share these rails); unrelated commanders (Krenko, Talrand, Atraxa) never fire the changeling atom and render byte-identical. Verified live in Chrome vs real Scryfall (Morophon wubrg, Pol Jamaar mono-U, Kolvori GWU all lead Fixing with Path of Ancestry; zero off-theme leaks in the new lands arm). node --check 6/6; meta == banner == changelog synced; git untouched; backup taken." },
+    { build: 'v6.67', date: '2026-07-31', focus: 'herald', commander: '—', summary: "HERALD PHASE 3 — final flair + verify: a premium finishing pass on the Fresh Spoilers gallery, presentation only (the P1 Scryfall fetch stays untouched). Each art tile now catches a single foil light-sweep just after it enters — a 'fresh off the press' spoiler-season shimmer, one-shot and scoped so it never disturbs the loading skeleton. The section header rule became a refined gold gradient that fades to the right, the ✦ mark gained a soft gold glow, and every tile carries a subtle top-edge highlight for depth. Keyboard focus is now a clear gold ring on the tiles, the set link, and the Community chips (:focus-visible), so tabbing through the gallery reads as well as pointing at it. All new motion honors prefers-reduced-motion (the sweep is removed entirely), and every graceful-degradation path is preserved (missing art → tasteful dark tile; fetch failure → the same 'unavailable' note, never a broken box). Verified LIVE in Chrome against real Scryfall at both desktop and 390px mobile — current cards, thumbnails load, fallback graceful, no overflow. No touch to the mobile viewport IIFE or the roster pipeline; git untouched; backup taken; node --check 6/6. Did NOT study a commander this run (Herald phase run)." },
     { build: 'v6.66', date: '2026-07-31', focus: 'herald', commander: '—', summary: "HERALD PHASE 2 — polish: the Fresh Spoilers feed goes from a plain text list to a handsome spoiler gallery, purely a visual pass (the P1 Scryfall fetch is untouched). Each of the newest set's freshest cards now renders as an art-crop thumbnail tile — the set's real artwork (via Scryfall image_uris.art_crop, double-faced cards handled through the front face and lazily loaded with a shimmer skeleton) over a caption bar carrying the card name plus a short primary type and a colored rarity pip (common/uncommon/rare/mythic). Tiles lay out in a responsive gold-bordered grid with a subtle gradient fill, a staggered entrance animation, and a lift-on-hover with a gentle art zoom and gold glow. The band gains a faint gold aura and a 'spoiler season' live pulse beside the title; the set link now shows the set's card count; and the loading state is a row of shimmering skeleton tiles rather than a bare line. The Community subreddit row was polished too — leading dots, a soft gradient fill, and a lift-on-hover. All decoration honors prefers-reduced-motion and degrades gracefully (missing art → tasteful dark tile; fetch failure → the same 'unavailable' note, never a broken box). No touch to the mobile viewport IIFE or the roster pipeline; git untouched; backup taken; node --check 6/6. Did NOT study a commander this run (Herald phase run)." },
     { build: 'v6.65', date: '2026-07-31', focus: 'herald', commander: '—', summary: "HERALD PHASE 1 — convert: shipped the FUNCTIONAL Fresh Spoilers live feed in the Reading Room, fed from Scryfall's public API (find the newest real set via /sets, then list its cards newest-first via /cards/search set:<code> order=released dir=desc, rendering 8 with name + set, each linking to the card). In-session cached (module memo + in-flight promise dedupe), two calls politely spaced, degrades gracefully to a tasteful 'unavailable' note on any failure — never a broken box. Added a Community subreddit chip row (r/EDH, r/CompetitiveEDH, r/BudgetBrews, r/magicTCG, r/sealedmtgdeals; each opens a new tab). FRESH_SPOILERS marker added. No touch to the mobile viewport IIFE or the roster pipeline; git untouched; backup taken; node --check 6/6." },
     { build: 'v6.64', date: '2026-07-31', focus: 'study', commander: 'Morophon, the Boundless', summary: "STUDY Morophon, the Boundless — the iconic five-color CHANGELING / chosen-type typal commander rendered with ZERO atoms and ZERO synergy rails, because detectTribe needs a FIXED creature-type word and Morophon (and the whole 'name a type on the fly' family) never supplies one. Added a generalizable 'changeling' atom (w7) keyed on the deliberate typal-lord wording (choose a creature type / is every creature type / creatures you control of the chosen type) plus a RAILS.changeling family with three role-split, type-AGNOSTIC rails: Changelings & Type-Setters (keyword:changeling + Maskwood Nexus / Arcane Adaptation / Xenograft / Conspiracy — bodies that ARE or SET your chosen type), Typal Anthems & Banners (Coat of Arms / Shared Animosity / Vanquisher's Banner / Door of Destinies / Kindred Discovery / Icon of Ancestry — payoffs that scale with a shared or chosen type), and Tribal Fixing & Cost Reducers (Cavern of Souls / Path of Ancestry / Unclaimed Territory / Herald's Horn / Urza's Incubator). Every arm keys on 'the chosen type' / changeling / a shared creature type, so the rails pay off for WHATEVER tribe the deck names. GENERALIZES to the whole chosen/any-type family — verified live on Scryfall the atom fires for exactly six commanders and each gains the rails: Morophon, Mistform Ultimus, Pol Jamaar (draw per chosen type), Rukarumel (turns your board into the chosen type), Omo (every-type counters), and Kolvori's Ringhart Crest (chosen-type ramp). COUNTER-CASE / NO-REGRESSION: the atom is additive (no sup) and, scanned across the top ~700 EDHREC commanders, fires for ONLY Morophon among the popular set — card-type choosers (Stenn, Umori, Alrund), type-diversity (Volo) and unrelated commanders (Krenko, Talrand, Atraxa) all correctly DON'T fire; placed after 'legendary' in the atom list so a w7 tie keeps Kolvori's Legends lead. node --check clean on all six script blocks; STUDY_DB Morophon teardown added (insight + 3 traps). Deferred: Rukarumel's incidental tribe:sliver label (detectTribe matches 'Slivers you control') is pre-existing and untouched — the new type-agnostic rails render alongside it." },
