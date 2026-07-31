@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-31T06:15:25.527Z",
+  "updated": "2026-07-31T13:15:13.065Z",
   "deals": [
     {
       "t": "The Hobbit Collector Booster Box - $700 [Laughing Dragon]",
@@ -46,6 +46,13 @@
   ],
   "wire": [
     {
+      "t": "[HOB] Long-Bodied Grey Dog (GenCon)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vbpx9w/hob_longbodied_grey_dog_gencon/",
+      "s": 0,
+      "c": 1785501861,
+      "f": ""
+    },
+    {
       "t": "[HOB] Old Fat Spider Can't See Me (via AwesomeJoshua)",
       "u": "https://www.reddit.com/r/magicTCG/comments/1vb367o/hob_old_fat_spider_cant_see_me_via_awesomejoshua/",
       "s": 0,
@@ -60,6 +67,13 @@
       "f": ""
     },
     {
+      "t": "[HOB] Celebrate the Mountain-King (CEDH Hut)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vbqhtm/hob_celebrate_the_mountainking_cedh_hut/",
+      "s": 0,
+      "c": 1785503311,
+      "f": ""
+    },
+    {
       "t": "[HOB] Kíli the Resourceful (GenCon)",
       "u": "https://www.reddit.com/r/magicTCG/comments/1vaw4e0/hob_kíli_the_resourceful_gencon/",
       "s": 0,
@@ -71,20 +85,6 @@
       "u": "https://www.reddit.com/r/magicTCG/comments/1vay5p8/hob_stonegiant_of_high_pass/",
       "s": 0,
       "c": 1785428124,
-      "f": ""
-    },
-    {
-      "t": "[HOB] Wargling | Warg Tactics | Reverent Howl | Ravening Warg (via The Tea Beard)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vb32sa/hob_wargling_warg_tactics_reverent_howl_ravening/",
-      "s": 0,
-      "c": 1785438593,
-      "f": ""
-    },
-    {
-      "t": "[HOC] Grima, Saruman’s Footman",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vb3vhm/hoc_grima_sarumans_footman/",
-      "s": 0,
-      "c": 1785440315,
       "f": ""
     }
   ]
