@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v6.71 · 2026-07-31">
+<meta name="oracle-build" content="v6.72 · 2026-08-01">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1762,7 +1762,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v6.71 \u00B7 2026-07-31', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v6.72 \u00B7 2026-08-01', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3083,7 +3083,21 @@ function extractAtoms(card) {
     const oSelf = o
         .replace(/(other )?(creatures|planeswalkers|permanents|\w+s) you control (have|gain|get)[^.]*\./g, ' ')
         .replace(/\b(?:gains?|gets?|have|has)\b[^.]*?until (?:end of turn|your next turn|the end of your next turn|end of combat)/g, ' ');
-    if (!hasGear && (['hexproof', 'indestructible', 'double strike', 'shroud'].some(k => kws.indexOf(k) !== -1) || (!kws.length && /\b(hexproof|indestructible|shroud|double strike)\b/.test(oSelf)))) {
+    // INCIDENTAL-INDESTRUCTIBLE (GOD) GUARD (Kruphix, God of Horizons study): a God's printed
+    // static "indestructible" is a devotion-gated DURABILITY keyword (Theros/Amonkhet Gods stay
+    // alive so their devotion engine survives) — NOT a Voltron identity. On its own it must never
+    // summon the Voltron FAMILY (rail + plan). All 33 commander-legal indestructible Gods were
+    // firing a phantom Voltron — leading the plan for Kruphix/Ephara and cluttering Athreos/Bontu/
+    // Erebos/Nylea — which the engine otherwise had to unwind God-by-God in the P.* layer
+    // (Purphoros' entersGoWide, Xenagos' combatDoubler both splice voltron back out). Fix it ONCE
+    // at the source: for a God, drop the bare "indestructible" from the Voltron keyword signal so
+    // its real theme (devotion / aristocrats / tokens) leads. A God that ALSO carries a genuine
+    // Voltron keyword (hexproof / shroud / double strike) or gear still fires Voltron; non-God
+    // incidental-indestructible commanders (Toski, Sigarda, Zurgo) keep the keyword and are untouched.
+    const godType = /\bgod\b/.test(String(card.type_line || '').toLowerCase());
+    const voltronKws = godType ? ['hexproof', 'double strike', 'shroud'] : ['hexproof', 'indestructible', 'double strike', 'shroud'];
+    const voltronRe = godType ? /\b(hexproof|shroud|double strike)\b/ : /\b(hexproof|indestructible|shroud|double strike)\b/;
+    if (!hasGear && (voltronKws.some(k => kws.indexOf(k) !== -1) || (!kws.length && voltronRe.test(oSelf)))) {
         found.push({ atom: ATOM_VOLTRON, snippet: '' });
     }
     const have = {};
@@ -3343,7 +3357,13 @@ const RAILS = {
         // t:planeswalker floods the payoff to 176 generic walkers and buries the finishers.
         rails: [
             { role: 'enabler', title: 'Counter Fuel', sub: 'Seeds to grow', q: '(o:"charge counter" OR (o:"enters with" (o:"+1/+1 counter" OR o:"charge counter")) OR o:"enters with x" OR keyword:toxic OR keyword:infect)', why: 'proliferate only copies counters that already exist \u2014 chalices, ballistas, and charge artifacts seed +1/+1 and charge counters, and a single toxic/infect touch plants the poison counter proliferate grows to ten' },
-            { role: 'amplifier', title: 'Proliferate Amplifiers', sub: 'More of everything, again', q: '(o:proliferate)', why: 'stacked proliferate sources compound every counter on the table' },
+            // v6.72 (Atraxa VERIFY): the amplifier rail was o:proliferate ONLY, so counter
+            // DOUBLERS (Doubling Season, Vorinclex, Hardened Scales, Branching Evolution) —
+            // the signature cards of every proliferate deck — appeared in NONE of the three
+            // rails. Broadened to the same doubler-detection the counters family uses,
+            // refined with o:"put on" (vs bare o:counter) so token doublers whose only counter
+            // text is incidental (Mondrak's indestructible-counter ability) don't leak in.
+            { role: 'amplifier', title: 'Counter Doublers & Proliferate', sub: 'Double it, then copy it', q: '(o:proliferate OR o:"one more counter" OR (o:"twice that many" o:"put on") OR o:"additional +1/+1 counter" OR (o:"that many plus" o:counter))', why: 'Doubling Season, Vorinclex, Branching Evolution, and Kami of Whispered Hopes double every counter placed and Hardened Scales adds one more, then stacked proliferate sources copy the whole pile again — the same doubler engine the counters family runs, so every proliferate-family commander finally surfaces its signature amplifiers rather than literal proliferate alone' },
             { role: 'payoff', title: 'Counter Wincons', sub: 'Race a finisher home', q: '((o:"win the game" (o:counter OR o:proliferate)) OR o:corrupted OR (o:"poison counter" -o:proliferate))', why: 'the destination proliferate races toward \u2014 counter-accumulation win conditions (Darksteel Reactor, Simic Ascendancy, Azor\'s Elocutors, The Book of Exalted Deeds) that proliferate finishes twice as fast, plus corrupted and poison-counter payoffs that turn a single venom touch into a ten-counter kill' }
         ]
     },
@@ -4340,6 +4360,24 @@ function buildEngineModel(commander) {
         werewolfPack: /daybound|nightbound/.test(o) && /wolf or werewolf|wolves and\/or werewolves|werewolves? you control|wolves? you control/.test(o)
     };
     let foundForPlans = found;
+    // MANA-BATTERY family (Kruphix, God of Horizons study): a commander whose OWN static keeps
+    // mana across steps/phases is a big-mana BATTERY — ramp, bank the overflow, then empty it into
+    // an oversized X-spell or a hand of haymakers. Fires on the mana-retention wording ALONE, so it
+    // catches Kruphix ("if you would lose unspent mana, it becomes colorless instead"), Omnath,
+    // Locus of Mana ("you don't lose unspent green mana") and Leyline Tyrant ("you don't lose
+    // unspent red mana") but NOT no-max-hand-size look-alikes like Nezahal. Its incidental God
+    // statics — the devotion on/off gate and the indestructible keyword (already stripped by the
+    // God guard above) — mislabel it as Devotion/Voltron; drop those trap rails/plans and add the
+    // battery's real halves: a place to dump the mana, and doublers to overfill it.
+    const manaBattery = /lose unspent (?:\w+ )?mana|unspent (?:\w+ )?mana[^.]{0,25}becomes colorless/.test(o);
+    if (manaBattery) {
+        for (let i = out.length - 1; i >= 0; i--) { const k = out[i].key || ''; if (k === 'voltron' || /^devotion/.test(k)) out.splice(i, 1); }
+        foundForPlans = foundForPlans.filter(f => f.atom.key !== 'devotion' && f.atom.key !== 'voltron');
+        out.unshift(
+            { key: 'mb-sink', role: 'payoff', title: 'Mana Sinks — Empty the Battery', sub: 'Where the mana goes', q: base + ' ((m:{X}) OR o:"any amount of mana")', why: firstName + ' banks unspent mana across turns, so the deck lives or dies on SINKS big enough to spend it — X-spells that scale off the whole pool (Finale of Devastation, Blue Sun’s Zenith, Hydroid Krasis, Pull from Tomorrow) and "any amount of mana" outlets turn a full battery into a win.' },
+            { key: 'mb-charge', role: 'enabler', title: 'Mana Doublers & Amplifiers', sub: 'Overfill the battery', q: base + ' (o:"double the amount" OR o:"twice that much mana" OR o:"adds an additional" OR (o:"for each" o:"you control" o:"add {"))', why: 'the battery only pays off if you pour in more than one turn can spend — doublers and per-permanent mana (Mana Reflection, Nyxbloom Ancient, Zendikar Resurgent, Gaea’s Cradle, Growing Rites of Itlimoc) overflow the pool and the surplus carries.' }
+        );
+    }
     if (P.xRestricted) {
         for (let i = out.length - 1; i >= 0; i--) if (out[i].title === 'Worth Copying') out.splice(i, 1);
     }
@@ -5523,6 +5561,13 @@ function buildEngineModel(commander) {
         gamePlans.plans = gamePlans.plans.filter(p => p.name !== 'Creature Storm' && p.name !== 'Spellslinger');
         if (!gamePlans.plans.some(p => p.name === 'Cast-Creatures Value')) gamePlans.plans.unshift({ name: 'Cast-Creatures Value', win: 'chain cheap creatures — each cast draws a card and drops an extra land — until the deck flows into your hand, then close with a landfall payoff, a bounce-loop, or a draw-your-deck win', base: 'Value' });
     }
+    // MANA-BATTERY plan (Kruphix study): devotion/voltron were filtered from the plan pool above,
+    // so lead with the big-mana battery the deck actually runs instead of an empty or God-static plan.
+    // Generalizes to every mana-retention commander (Omnath Locus of Mana, Leyline Tyrant).
+    if (manaBattery && !gamePlans.plans.some(p => p.name === 'Mana Battery')) {
+        gamePlans.plans.unshift({ name: 'Mana Battery', win: 'ramp hard, then STORE it — unspent mana carries between steps and (for Kruphix) your hand has no cap, so bank mana and cards across turns and empty the battery into an oversized X-spell or a fistful of haymakers before the table can answer', base: 'Big Mana X' });
+        gamePlans.plans = gamePlans.plans.slice(0, 3);
+    }
     return {
         sections: out,
         traps: traps.slice(0, 5),
@@ -5799,6 +5844,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v6.72', date: '2026-08-01', focus: 'verify', commander: 'Atraxa, Praetors\' Voice', summary: "VERIFY Atraxa, Praetors' Voice - counter-doubler gap in the proliferate family. Her three rails (Counter Fuel / Proliferate Amplifiers / Counter Wincons) surfaced literal proliferate but the signature counter DOUBLERS - Doubling Season, Vorinclex, Hardened Scales, Branching Evolution - appeared in NONE of them because the amplifier rail query was o:proliferate only. Broadened RAILS.proliferate's amplifier rail to the same doubler engine the counters family uses (proliferate OR one-more-counter OR twice-that-many put-on OR additional +1/+1 counter OR that-many-plus counter), refined with o:put-on so token doublers whose only counter text is incidental (Mondrak) don't leak in. Atraxa's amplifier rail now leads Hardened Scales / Doubling Season / Branching Evolution / Kami of Whispered Hopes; generalizes to every proliferate-family commander - Roalesk 73->145, Flux Channeler stays lean (few blue doublers, no leaks). Also re-confirmed the v6.69 incidental-lifelink guard: Atraxa reads pure proliferate with no phantom Lifegain chip/gameplan. Unrelated Krenko/Talrand never fire proliferate, byte-identical. node --check 6/6; verified live vs Scryfall + rendered in Chrome." },
     { build: 'v6.71', date: '2026-07-31', focus: 'ui', commander: '—', summary: "SPOILERS V2 PHASE 2 — polish + verified: a premium finishing pass on the evergreen Fresh Spoilers board (Phase 1's date-driven multi-set fetch is untouched). (1) SHELVES — each spoiling set now reads as a distinct shelf: a subtle gold LEFT-ACCENT (the Forge tile language) ties its header + type chips + card groups together, brighter for imminent sets. (2) DATE-DRIVEN COUNTDOWN — every set header gains a release-countdown pill from a new pure helper fsRelease(set, now) ('in 2 weeks' / 'in 2 months' / 'out today' / 'out 3d ago'), derived purely from released_at vs the current date so it stays correct forever with no code changes; imminent sets (<=~2 weeks out OR freshly released) get the filled-gold 'spoiling now' pill + brighter shelf accent, distant sets the quiet outline pill. (3) EMBLEM — the set symbol now sits in a small gold-tinted chip (premium masthead read). (4) PRICE VALUE-PILL — the preorder price renders as a compact gold pill so the hype/price ordering (priciest-first) reads at a glance within each type group, while unpriced cards keep the quiet type caption so priced cards visibly lead. Verified LIVE in Chrome against real Scryfall on 2026-07-31: date-driven detection returns 6 sets soonest-first (The Hobbit Commander + The Hobbit 'in 2 weeks', Mystery Booster: Commander Edition + Reality Fracture + Reality Fracture Commander 'in 2 months', Star Trek 'in 3 months' — confirmed the set list AND countdowns are computed from dates, NOT hardcoded); cards group by type correctly; the price->rarity sort is right (The One Ring $142 > Arcane Signet $55 lead Hobbit-Commander Artifacts; the $50 Creatures lead the unpriced mythic); thumbnails load; the empty ('No sets are currently spoiling…') and error ('Fresh spoilers are unavailable right now…') states render as tasteful graceful serif notes. Crisp at desktop AND 390px — at narrow width the header wraps to two clean lines (name + countdown, then count/date + Scryfall link), the type chips wrap to two rows, and the grid drops to 2 columns with the price + countdown pills intact; screenshots taken at both. GENERALIZES / EVERGREEN: because fsRelease is pure + date-driven, the countdown, imminent-emphasis, shelf accents and price pills apply to EVERY currently-spoiling set and to every FUTURE set automatically — the board self-updates with zero code changes as sets release and new ones start previewing. node --check 6/6 blocks clean; meta == console banner == CHANGELOG[0].build == v6.71; did NOT study a commander (spoilers-phase run); mobile viewport/keyboard IIFE + roster pipeline untouched; git untouched; backup taken (index-backup-20260731-1133-preSpoilersV2P2.html). SPOILERS V2 is now COMPLETE — the next scheduled run resumes the normal commander-study cycle." },
     { build: 'v6.70', date: '2026-07-31', focus: 'ui', commander: '—', summary: "SPOILERS V2 PHASE 1 — reorganize: the Fresh Spoilers band went from a single set's newest 8 cards to an evergreen, self-updating spoiler BOARD. On mount it fetches Scryfall /sets and computes the currently-spoiling set list purely from live data + the CURRENT date (new Date()) — every set that's unreleased OR out within the last ~2 weeks, is a real paper spoiler set type (expansion/core/commander/draft_innovation/masters — no tokens/promos/memorabilia/digital-alchemy), already has previews, and is within ~12 months out. There are NO hardcoded set codes, names or dates anywhere, so when a set releases and the next starts previewing the board shifts on its own with no code changes or manual swaps; if nothing qualifies it shows a graceful 'no sets currently spoiling' note. It now renders a labeled section PER set (soonest-releasing first, capped at 6), each grouped and filterable by card type (Creatures / Instants / Sorceries / Artifacts / Enchantments / Planeswalkers / Lands / Battles) via chips, and each type group hype-sorted by preorder price (prices.usd desc) then rarity (mythic>rare>uncommon>common) then newest — cards with no price fall to rarity order. Curated + performant: top few cards per type in the All view, a see-all-on-Scryfall link per set, lazy-loaded thumbnails, session cache + in-flight dedupe + polite throttle, and per-set failure isolation (one set's failed fetch is skipped, never breaks the board). Reuses the gold-arcana art-crop tile language; caption now leads with the preorder price. SPOILERS_V2 marker added (JS + CSS). Verified live vs real Scryfall this run: date-driven detection returns 6 sets on 2026-07-31 (Hobbit Commander + Hobbit soonest, then MBC:CE, Reality Fracture + its Commander, Star Trek), grouping-by-type and the price→rarity sort both correct (The One Ring $142 leads Hobbit Commander Artifacts). node --check 6/6; meta == banner == CHANGELOG[0] == v6.70; did NOT study a commander (spoilers phase run); mobile viewport IIFE + roster pipeline untouched; git untouched; backup taken. NEXT = SPOILERS V2 PHASE 2 (polish + verify live in Chrome at desktop and 390px)." },
     { build: 'v6.69', date: '2026-07-31', focus: 'logic', commander: 'Atraxa, Praetors\' Voice', summary: "STUDY Atraxa, Praetors' Voice - incidental-lifelink guard. Her only build-around text is the end-step proliferate, but her printed 'lifelink' keyword made the lifegain atom fire, stamping her (and ~105 other commanders) with a phantom Lifegain identity chip + gameplan (Atraxa read as '+1/+1 Counters, Lifegain'). extractAtoms now feeds the lifegain atom a dedicated oLife string that strips the BARE self 'lifelink' keyword while PRESERVING granted lifelink ('creatures you control have lifelink' = a real lifegain enabler) and every genuine gain-life clause ('whenever you gain life', 'gain N life'). Atraxa now reads as pure Proliferate / +1/+1 / superfriends. Generalizes to every incidental-lifelink commander - Mangara, Danitha, Elenda, K'rrik, Sephara, Gisela, Dragonlord Dromoka all shed the phantom Lifegain - and is NEUTRAL for real lifegain (Vito, Heliod, Karlov, Trelasarra, Oloro keep it via gain-life text; Lyra keeps it via team-grant lifelink). Unrelated Krenko/Talrand/Gitrog unchanged. The existing RAILS.proliferate family (Counter Fuel / Proliferate Amplifiers / Counter Wincons) already renders her engine correctly, so only the false lifegain read needed removing. node --check 6/6; verified live vs Scryfall." },
