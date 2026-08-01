@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-01T16:15:42.951Z",
+  "updated": "2026-08-01T18:15:42.844Z",
   "deals": [
     {
       "t": "MSH Jumpstart $120, ECL Play $109, MSH Scene 2 set $40, Hobbit Bundle $70",
@@ -46,6 +46,20 @@
   ],
   "wire": [
     {
+      "t": "[HOB] Troop of Ponies (Non-Borderless Traditional Art)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vbx8qz/hob_troop_of_ponies_nonborderless_traditional_art/",
+      "s": 0,
+      "c": 1785518387,
+      "f": ""
+    },
+    {
+      "t": "[HOB] Bolg's Company",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vbtg91/hob_bolgs_company/",
+      "s": 0,
+      "c": 1785510185,
+      "f": ""
+    },
+    {
       "t": "[HOB] Long-Bodied Grey Dog (GenCon)",
       "u": "https://www.reddit.com/r/magicTCG/comments/1vbpx9w/hob_longbodied_grey_dog_gencon/",
       "s": 0,
@@ -53,38 +67,24 @@
       "f": ""
     },
     {
-      "t": "[HOB] Old Fat Spider Can't See Me (via AwesomeJoshua)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vb367o/hob_old_fat_spider_cant_see_me_via_awesomejoshua/",
+      "t": "[HOB] Battle of Five Armies Full Scene",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vbu9yz/hob_battle_of_five_armies_full_scene/",
       "s": 0,
-      "c": 1785438797,
+      "c": 1785511986,
       "f": ""
     },
     {
-      "t": "[HOB] Bofur, Reliable Guardian (via BagginsTV)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vb6a2d/hob_bofur_reliable_guardian_via_bagginstv/",
+      "t": "[HOB] Snowslope Hunter (Via card image gallery)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vbvxg5/hob_snowslope_hunter_via_card_image_gallery/",
       "s": 0,
-      "c": 1785445557,
+      "c": 1785515529,
       "f": ""
     },
     {
-      "t": "[HOB] Celebrate the Mountain-King (CEDH Hut)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vbqhtm/hob_celebrate_the_mountainking_cedh_hut/",
+      "t": "[HOB] Stony-Voiced Goblins (via Card Gallery)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vbu1rg/hob_stonyvoiced_goblins_via_card_gallery/",
       "s": 0,
-      "c": 1785503311,
-      "f": ""
-    },
-    {
-      "t": "[HOB] Kíli the Resourceful (GenCon)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vaw4e0/hob_kíli_the_resourceful_gencon/",
-      "s": 0,
-      "c": 1785423708,
-      "f": ""
-    },
-    {
-      "t": "[HOB] Stone-Giant of High Pass",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vay5p8/hob_stonegiant_of_high_pass/",
-      "s": 0,
-      "c": 1785428124,
+      "c": 1785511494,
       "f": ""
     }
   ]
