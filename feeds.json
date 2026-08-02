@@ -1,6 +1,13 @@
 {
-  "updated": "2026-08-02T00:15:43.066Z",
+  "updated": "2026-08-02T02:15:42.372Z",
   "deals": [
+    {
+      "t": "Magic Flash Sale Ultra Pro",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vd55av/magic_flash_sale_ultra_pro/",
+      "s": 0,
+      "c": 1785635693,
+      "f": ""
+    },
     {
       "t": "MSH Jumpstart $120, ECL Play $109, MSH Scene 2 set $40, Hobbit Bundle $70",
       "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vc2h2l/msh_jumpstart_120_ecl_play_109_msh_scene_2_set_40/",
@@ -34,13 +41,6 @@
       "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v9b29z/collector_store_the_hobbit_play_booster_box_14999/",
       "s": 0,
       "c": 1785272462,
-      "f": ""
-    },
-    {
-      "t": "Magic: The Gathering - Tarkir: Dragonstorm Play Booster Box $109 at Double Infinity (lowest on TCG is $147) and several other deals listed below",
-      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1v8pevu/magic_the_gathering_tarkir_dragonstorm_play/",
-      "s": 0,
-      "c": 1785218191,
       "f": ""
     }
   ],
