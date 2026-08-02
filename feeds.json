@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-01T22:15:12.764Z",
+  "updated": "2026-08-02T00:15:43.066Z",
   "deals": [
     {
       "t": "MSH Jumpstart $120, ECL Play $109, MSH Scene 2 set $40, Hobbit Bundle $70",
@@ -67,13 +67,6 @@
       "f": ""
     },
     {
-      "t": "[HOB] Battle of Five Armies Full Scene",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vbu9yz/hob_battle_of_five_armies_full_scene/",
-      "s": 0,
-      "c": 1785511986,
-      "f": ""
-    },
-    {
       "t": "Maro on \"medium-size\" UB sets: \"I can’t predict the future, but let’s just say we’re moving away from that for now.\"",
       "u": "https://www.reddit.com/r/magicTCG/comments/1vcxql8/maro_on_mediumsize_ub_sets_i_cant_predict_the/",
       "s": 0,
@@ -85,6 +78,13 @@
       "u": "https://www.reddit.com/r/magicTCG/comments/1vctu0r/ross_has_entered_the_magic_market/",
       "s": 0,
       "c": 1785606623,
+      "f": ""
+    },
+    {
+      "t": "Via Ben Bateman’s IG.",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vd0jki/via_ben_batemans_ig/",
+      "s": 0,
+      "c": 1785622850,
       "f": ""
     }
   ]
