@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v6.98 · 2026-08-04">
+<meta name="oracle-build" content="v7.00 · 2026-08-04">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1762,7 +1762,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v6.98 \u00B7 2026-08-04', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v7.00 \u00B7 2026-08-04', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -2884,7 +2884,18 @@ const ATOMS = [
     // new ARCHETYPES.vehicles plan so the whole family stops rendering the wrong game plan.
     { key: 'vehicles', w: 5, chip: 'Vehicles', title: 'Vehicles & Crew', sub: 'Artifacts that attack', test: /\bcrew\b|\bvehicles?\b(?! spell)/, q: 't:vehicle', oq: '(o:vehicle OR o:crew)', why: 'builds around Vehicles — evasive artifact threats that only become creatures once crewed' },
     { key: 'landfall', w: 5, chip: 'Landfall', title: 'Landfall & Extra Lands', sub: 'Lands as fuel', test: /landfall|whenever a land (you control )?enters|play (?:an|two|three|four|a|another|any number of)? ?additional lands?|any number of lands|(number of )?(plains|islands?|swamps?|mountains?|forests?) you control/, q: '(o:landfall OR o:"play an additional land" OR o:"whenever a land you control enters")', oq: '(o:landfall OR o:"additional land")', why: 'triggers off lands' },
-    { key: 'mill', w: 5, chip: 'Mill', title: 'Mill & Self-Mill', sub: 'Feed the yard', test: /\bmills?\b|surveil|put into your graveyard from your library|from your library into your graveyard/, q: '(o:mill OR o:surveil)', oq: 'o:mill', why: 'mills cards' },
+    // v6.99 (Old Stickfingers study): SELF-MILL BY BULK REVEAL. A whole template of self-mill
+    // predates the word "mill" and never uses it — "reveal cards from the top of your library …
+    // put ALL/THE REST of them into your graveyard" (Old Stickfingers, Shigeki Jukai Visionary,
+    // and the Satyr Wayfinder / Grisly Salvage / Mulch card pool they build around). Old
+    // Stickfingers' ENTIRE card is that clause plus "power and toughness equal to the number of
+    // creature cards in your graveyard", yet he fired NO mill atom and fell through to the bare
+    // w2 graveyard read: one generic "Graveyard Value" pile and NO game plan. Scoped to the BULK
+    // quantifiers (all / the rest / the remaining / those / them / the others) so single-card
+    // "put that card into your graveyard" filtering — explore (Amalia, Astrid Peth), Hakbal's
+    // land-reveal, Nylea's look-at-top — does NOT read as a self-mill deck. Strict ADD to the
+    // existing alternation: no commander loses the mill atom.
+    { key: 'mill', w: 5, chip: 'Mill', title: 'Mill & Self-Mill', sub: 'Feed the yard', test: /\bmills?\b|surveil|put into your graveyard from your library|from your library into your graveyard|put (?:all|the rest|the remaining|those|them|the others)[^.]{0,70}(?:into|in) your graveyard/, q: '(o:mill OR o:surveil)', oq: 'o:mill', why: 'mills cards' },
     { key: 'oppdiscard', w: 5, chip: 'Discard (them)', title: 'Opponent Discard', sub: 'Empty their hands', test: /each opponent discards|opponents? discards?|target (player|opponent) discards|that player discards|each player discards|(whenever|when) an opponent [^.]{0,60}discards/, q: '(o:"each opponent discards" OR o:"target player discards" OR o:"whenever an opponent discards")', oq: '(o:"each opponent discards" OR o:"opponent discards")', why: 'attacks opposing hands' },
     // discard sup:['...','draw2'] (The Locust God study 2026-08-01): an incidental LOOT line
     // ("draw a card, then discard a card") on a draw-matters commander (The Locust God, Niv-Mizzet)
@@ -3033,7 +3044,20 @@ const ATOMS = [
     // wheels, not draw-matters. Ties with burn (w6): burn is earlier in ATOMS, so Niv-Mizzet keeps
     // its Burn lead and gains a full Draw-Matters shelf rather than the old thin stub.
     { key: 'draw2', w: 6, chip: 'Draw matters', title: 'Draw-Matters Payoffs', sub: 'Every card fires a trigger', sup: ['wheels'], test: /whenever you draw|you draw your (first|second)|your second card/, q: '((o:"whenever you draw" OR o:"draw your second") -o:/mills?/)', oq: '((o:"whenever you draw" OR o:"second card") -o:/mills?/)', why: 'turns every card drawn into a trigger — the deck draws far more than one card a turn so the payoff keeps firing' },
-    { key: 'graveyard', w: 2, chip: 'Graveyard', title: 'Graveyard Value', sub: 'Recur & rebuy', test: /graveyard/, q: '(o:"from your graveyard" OR keyword:delve OR keyword:escape)', oq: 'o:graveyard', why: 'uses the graveyard' },
+    // v6.99 (Old Stickfingers study): `graveyard` is the app's largest bucket (266 of the top
+    // 1,575 commanders fire it) and was the last big atom with NO rail family and NO game plan —
+    // 153 commanders whose ONLY graveyard read is this one got a single generic "Graveyard Value"
+    // pile, and ~20 of them (Old Stickfingers, Squee, Multani, Saffi, Hanna, Horde of Notions,
+    // The Master, Sméagol…) rendered PLAN-LESS. Two fixes here, both at the logic level:
+    // (1) sup: ['mill','reanimate'] — this w2 read is the GENERIC fallback, so it must defer to
+    //     the specific graveyard atoms that already OWN a rail family (RAILS.mill "Mill Engines /
+    //     Graveyard Payoffs", RAILS.reanimate). On the 113 commanders that fire both, the generic
+    //     pile was pure duplicate noise stacked under a better family; it now disappears. `discard`
+    //     is deliberately NOT in the list — discard FILLS the yard (it's an enabler for this plan,
+    //     not a rival family) and has no RAILS entry to fall back on.
+    // (2) RAILS.graveyard + ARCHETYPES.graveyard (below) give the surviving 153 a real three-part
+    //     package instead of one pile. Atom q/oq/w/chip/title/sub/why left byte-identical.
+    { key: 'graveyard', w: 2, chip: 'Graveyard', title: 'Graveyard Value', sub: 'Recur & rebuy', sup: ['mill', 'reanimate'], test: /graveyard/, q: '(o:"from your graveyard" OR keyword:delve OR keyword:escape)', oq: 'o:graveyard', why: 'uses the graveyard' },
     { key: 'artifacts', w: 2, chip: 'Artifacts', title: 'Artifacts Matter', sub: 'The machine hums', test: /artifacts? you control|for each artifact|number of artifacts|metalcraft|affinity|improvise|artifact spells?|artifact creature|artifact tokens?|artifact card|whenever an artifact|an artifact enters|artifacts? enter|sacrifice an artifact|artifact's|each artifact/, q: '(t:artifact OR o:"artifact you control")', oq: 'o:artifact', why: 'cares about artifacts' },
     { key: 'enchantments', w: 2, chip: 'Enchantments', title: 'Enchantments Matter', sub: 'Constellation rising', test: /enchantment/, q: '(t:enchantment OR o:constellation)', oq: 'o:enchantment', why: 'cares about enchantments' },
     { key: 'flying', w: 2, chip: 'Flyers', title: 'Flyers Matter', sub: 'Rule the skies', test: /creatures? (you control )?with flying/, q: '(t:creature keyword:flying)', oq: 'o:"with flying"', why: 'rewards flyers' }
@@ -3086,7 +3110,21 @@ function extractAtoms(card) {
     const o = oracleOf(card).toLowerCase().replace(/\([^)]*\)/g, ' ')
         // graveyard-BYPASS clauses ("exile it instead of putting it into your graveyard",
         // Feather/Lilah-class) are a negation, not a graveyard theme — strip before matching
-        .replace(/instead of putting (it|that card|them) into (your|a|an?y opponent's|its owner's|their owners?') graveyards?[^.]*/g, ' ');
+        .replace(/instead of putting (it|that card|them) into (your|a|an?y opponent's|its owner's|their owners?') graveyards?[^.]*/g, ' ')
+        // v6.99 (Old Stickfingers study) — GRAVEYARD-RESET clauses are the SAME negation in a
+        // different template, and the earlier strip missed all of them. "When ~ is put into a
+        // graveyard from anywhere, its owner shuffles their graveyard into their library"
+        // (Kozilek, Ulamog), "If ~ would be put into a graveyard from anywhere, reveal it and
+        // shuffle it into its owner's library instead" (Progenitus, Emrakul, Blightsteel Colossus,
+        // Gaea's Blessing class) and cycling's "shuffle it into your library from your graveyard"
+        // (Yidaro, Kogla and Yidaro) all say the card LEAVES the yard — they are anti-graveyard
+        // text, yet each fired the w2 graveyard atom and, with no stronger atom to lose to,
+        // printed a phantom "Graveyard Value" rail as the commander's LEAD read. Kozilek and
+        // Progenitus rendered a graveyard deck off a shuffle-back trigger. Whole-clause strip
+        // (trigger through the shuffle/exile) so nothing of the reset survives to re-match.
+        .replace(/(?:when|whenever|if) [^.]{0,60}(?:is |would be )put into (?:a|your|its owner's|their) graveyard from anywhere[^.]{0,170}(?:shuffles?|exiles?)[^.]{0,80}\./g, ' ')
+        .replace(/shuffles? (?:their|your|its owner's) graveyard into (?:their|your|its owner's) library/g, ' ')
+        .replace(/shuffle (?:it|this card) into your library from your graveyard/g, ' ');
     const kws = (card.keywords || []).map(k => String(k).toLowerCase());
     const found = [];
     const tribe = detectTribe(o);
@@ -3273,6 +3311,11 @@ STUDY_DB["d15642e4-e61c-4d29-af48-de837991245e"] = {"insight": "Tymna the Weaver
 // Satoru Umezawa (Satoru study): UB ninjutsu that GRANTS ninjutsu to every creature in hand -> cheat bombs in.
 STUDY_DB["ed1d21ba-ddfe-4f82-9e37-93f9e2c7ba33"] = {"insight": "Satoru Umezawa is a Dimir (UB) NINJUTSU commander: he grants ninjutsu {2}{U}{B} to every creature card in your hand, turning ninjutsu into a universal cheat-into-play engine -- return an unblocked attacker, then drop ANY creature onto the battlefield tapped and attacking for a fixed cost, ignoring its real mana cost (and his own ninjutsu-activation trigger digs three for the next piece). The deck is two halves: cheap unblockable/evasive one-drops (Slither Blade, Changeling Outcast, Ornithopter, Gingerbrute, Dimir Infiltrator) to open a lane, and a top-end of splashy ETB / combat-damage bombs to sneak in (Blightsteel Colossus, Archon of Cruelty, Fallen Shinobi, Massacre Wurm, Rune-Scarred Demon), glued together with UB tutors, card draw, and interaction.", "traps": ["Ninjutsu returns the attacker to your HAND and puts the new body in tapped and ATTACKING, so a sneak target wants an ETB or an attack/combat-damage trigger (Archon of Cruelty, Fallen Shinobi) -- a vanilla or purely static fatty cheated in adds nothing the turn it lands.", "You need the lane first: with no cheap unblockable or evasive enabler connecting, ninjutsu never fires -- do not stack seven-drops with no one-drop carriers to open the hole.", "He is NOT a hand-size / hellbent payoff -- 'each creature card in your hand has ninjutsu' is a GRANT, not a reward for holding cards; skip Hand Size Matters and max-hand-size filler.", "The bomb is PUT onto the battlefield, never cast -- on-cast payoffs (cast triggers, storm, 'whenever you cast a creature spell') stay silent, so value has to come off the body, its ETB, or its swing."]};
 STUDY_DB["ce8af7dd-49df-4419-9776-4157efc60b0f"] = {"insight": "Satya, Aetherflux Genius is a Jeskai (WUR) ENERGY commander - Energy is her #1 EDHREC theme by a landslide (3618 decks vs Clones 521 / Tokens 500 / Artifacts 458). Every attack she banks {E}{E} AND stamps out a tapped-and-attacking copy of your best nontoken creature, then keeps that copy only if you pay {E} equal to its mana value - so she is a self-contained energy engine that both GENERATES and SPENDS {E} each combat. Build her to make energy faster than she burns it: cheap generators (Aether Hub, Servant of the Conduit, Voltaic Servant, Whirler Virtuoso) bank the reserve, then sink the surplus into payoffs (Aetherworks Marvel for free spells, Bristling Hydra, Aethersquall Ancient) while the free copies re-trigger ETBs and pressure the table.", "traps": ["The copies are a byproduct of attacking and cost {E} to keep, so do not build her as a clones/blink pile that ignores energy - with no generation she cannot retain her big copies and stalls out. Her engine and #1 theme is Energy, not raw cloning.", "The classic energy trap is hoarding {E} with nothing to spend it on: energy counters do nothing by themselves, so without a dense pay-{E} payoff suite the reserve just piles up while you durdle. Balance generators with sinks.", "Her copy is up to one OTHER target nontoken creature you control and only fires on attack, so she needs to connect and a board of high-value nontoken bodies worth copying - protect her (menace and haste help) and run impactful creatures rather than a wide token/anthem shell that gives her nothing worth stamping out."]};
+// STUDY (Old Stickfingers) 2026-08-04 — appended as a statement, keyed by oracle_id. The ENGINE
+// fix (self-mill-by-bulk-reveal template on the mill atom + graveyard-reset bypass strip + shared
+// YARD_FILL_Q + RAILS.graveyard + ARCHETYPES.graveyard) is what lifts the whole graveyard family;
+// this entry adds his own insight + traps.
+STUDY_DB["1d85eec2-80db-466c-bd48-d2a12866e8bd"] = {"insight": "Old Stickfingers is a Golgari (BG) SELF-MILL REANIMATOR, and his own card is the enabler — you never hard-cast him for value. Cast him for a big X and he reveals until X creature cards hit the bin, then he's a Lhurgoyf whose power and toughness equal the creature cards in your graveyard, so ONE cast both loads the yard and gives you a threat. EDHREC (3,117 decks) reads Reanimator 347 / Graveyard 195 / Mill 175 / Self-Mill 128, and the highest-synergy cards are almost entirely reanimation spells — Animate Dead 42%, Brawn 40%, Reanimate 40%, Life // Death 38%, Victimize 38%, Persist 36%, Dread Return 34% — not mill outlets, because HE does the milling. Build it in three layers: (1) more ways to fill and refill the yard for the turns he isn't on the battlefield (Stitcher's Supplier, Grisly Salvage, Satyr Wayfinder, Skull Prophet, Buried Alive, Altar of Dementia, Perpetual Timepiece, dredge); (2) the reanimation suite that cashes what he buried, ideally one spell per fatty (Animate Dead, Reanimate, Victimize, Persist, Living Death for the mass rebuy); and (3) the fatties worth burying — Brawn's trample-from-the-yard, Jarad as a free sac-and-drain outlet, Syr Konrad turning every mill and every death into damage. Cast him for X=0 as a 2-mana body when you just need the commander down; the X is a knob, not a cost.", "traps": ["He is NOT a mill-them wincon — the mill is aimed at YOUR library. Opponent-mill payoffs (Mindcrank, Bruvac, Fraying Sanity) do nothing for this deck, and milling the table just hands three graveyards to your own removal.", "His power and toughness are a live count of CREATURE cards in your graveyard, so he shrinks the moment you reanimate — a fatty you raise leaves the yard and takes a point off him. He is a body that happens to be big, not a Voltron target; do not stack gear on a creature whose size is a resource you spend.", "Everything in the deck is one Bojuka Bog, Soul-Guide Lantern or Rest in Peace away from nothing, and he is the only card that rebuilds. Run a second, cheaper self-mill engine and a way to re-cast him so a single hate piece isn't game over.", "Reveal is not mill — the non-creature cards go to the BOTTOM of your library, not the graveyard, so instants, sorceries and lands you wanted binned for delirium, escape or Life from the Loam will not arrive off his trigger. Pack real self-mill for those.", "He is cast for {X}{B}{G}, so the X is paid on the STACK — counterspells and 'can't be cast' effects blow out the whole setup for the turn. Bury your best targets with Entomb or Buried Alive when the table is holding up mana instead of committing a big X."]};
 const ROLE_LABEL = { enabler: 'Enabler', payoff: 'Payoff', amplifier: 'Amplifier', gate: 'Gate', staple: 'Staple', synergy: 'Synergy' };
 // ============================================================
 // ENGINE v3 — role-based rails (from the commander study ledger).
@@ -3302,7 +3345,106 @@ const TOKEN_MULT_VERB = '(o:"twice that many" OR o:"three times that many")';
 // genuine multipliers. Kept as a named constant, like TOKEN_MULT_VERB above, so any future
 // family that converts "that much" into life is scoped the same way instead of re-deriving it.
 const DAMAGE_MIRROR_EXCL = '-o:"deals damage" -o:"dealt damage" -o:"damage is dealt" -o:"combat damage"';
+// v6.99 (Old Stickfingers study) — SHARED "fill the yard" pool, hoisted like TOKEN_MULT_VERB
+// and DAMAGE_MIRROR_EXCL above. Every graveyard family in the app needs the SAME enabler half
+// (self-mill, surveil, dredge, and the search-to-graveyard tutors Entomb / Buried Alive), and
+// until now three near-copies of it lived in three different places: pr-stock (P.permRecast —
+// Muldrotha, Lurrus), cr-stock (P.creatureRecast — Karador, Chainer) and nothing at all for the
+// generic graveyard family. They had drifted — pr-stock was missing the "mill three/four/five"
+// arm cr-stock had, so Muldrotha's Stock the Yard rail could not reach Stitcher's Supplier
+// (41% of her EDHREC decks) or Hedge Shredder. One constant = one place to improve the whole
+// class: this run also adds keyword:dredge, which lifts every graveyard family at once
+// (Golgari Grave-Troll, Stinkweed Imp, Golgari Thug — all EDHREC staples of these decks).
+// Live-QA'd EDHREC-sorted in BG 2026-08-04: 287 cards, top = Takenuma / Entomb / Buried Alive /
+// Ripples of Undeath / Stitcher's Supplier / Aftermath Analyst / Hedge Shredder / Grisly Salvage.
+const YARD_FILL_Q = '(o:"you mill" OR o:"mill three" OR o:"mill four" OR o:"mill five" OR o:surveil OR keyword:dredge OR (o:"your library" o:"into your graveyard"))';
+// v7.00 (Old Stickfingers VERIFY) — MILL HAS A DIRECTION, and the engine did not know it.
+// RAILS.mill's enabler was the bare `o:mill`, which cannot tell SELF-mill (fill MY yard, the
+// setup half of every reanimator/graveyard deck) from MILL-THEM (attack THEIR library, a
+// wincon). Measured over the 111 commander-legal commanders that fire the mill atom: 78 are
+// self-mill, 31 are mill-them, 1 is both — and all 111 were handed the SAME undifferentiated
+// pile, so each half got the other half's dead cards. Old Stickfingers' lead rail dealt
+// Mindcrank and Altar of the Brood (pure opponent-mill, literally nothing in a self-mill deck,
+// and his own STUDY_DB trap #1 says so), while Bruvac / Phenax / Mirko Vosk / Szadek /
+// Captain N'ghathrod got Stitcher's Supplier and dredge, which do nothing for milling the table.
+// Direction is read off the commander's own text with the same templating Magic uses: a mill
+// clause with an OPPONENT/PLAYER subject ("each opponent mills", "target player mills", "that
+// player mills", "would mill") is opponent-directed; "you mill", surveil, dredge, the bulk-reveal
+// self-mill template and the SYMMETRIC "each player mills" (which fills your own yard just as
+// hard — Altar of Dementia, Mesmeric Orb, Gyruda, Zellix, Stitcher Geralf, Syr Konrad) are self-
+// directed; and a bare "mill N cards" with no subject means YOU by Magic's own templating, so it
+// defaults to self. Both can be true (Sivriss, Nightmare Speaker) — then both halves are dealt.
+const MILL_OPP_TEST = /(?:each|target|an|another)\s+opponents?\b[^.]{0,30}\bmills?\b|\bopponents?\s+mills?\b|\btarget player mills\b|\bthat player mills\b|\bwould mill\b/;
+const MILL_SELF_TEST = /\byou mill\b|\bsurveil\b|\beach player mills\b|into your graveyard from your library|from your library into your graveyard|put (?:all|the rest|the remaining|those|them|the others)[^.]{0,70}(?:into|in) your graveyard|\bdredge\b/;
+const millsSelf = o => MILL_SELF_TEST.test(o) || (/\bmills?\b/.test(o) && !MILL_OPP_TEST.test(o));
+const millsOpp = o => MILL_OPP_TEST.test(o);
+// SELF-mill card pool = the shared YARD_FILL_Q plus the player-agnostic mill wordings you can
+// point at yourself ("each player mills", "target player mills", "that permanent's controller
+// mills"). Live-QA'd EDHREC-sorted in BG 2026-08-04: 333 cards led by Entomb / Buried Alive /
+// Stitcher's Supplier / Altar of Dementia / Mesmeric Orb / Grisly Salvage / Satyr Wayfinder —
+// and the strictly-opponent-directed cards the old `o:mill` leaked (Mindcrank, Altar of the
+// Brood) are gone, while genuinely dual-use ones stay (Breach the Multiverse mills EACH player
+// ten; Palantír of Orthanc literally reads "you mill X cards").
+const SELF_MILL_Q = '(' + YARD_FILL_Q + ' OR o:"each player mills" OR o:"target player mills" OR o:"controller mills" OR o:"players mill")';
+// MILL-THEM pool. Live-QA'd in UB: 207 enablers (Ruin Crab, Hedron Crab, Psychic Corrosion,
+// Fractured Sanity, Maddening Cacophony, Drown in Dreams, Ashiok Dream Render, Court of Cunning)
+// and 41 payoffs (Bruvac the Grandiloquent, Undead Alchemist, Guiltfeeder, Jace's Phantasm,
+// Soaring Thought-Thief, Psychic Spiral, Into the Story) — the doublers and the their-yard
+// payoffs that only a mill-THEM deck wants, a class no rail in the app reached before.
+const OPP_MILL_Q = '(o:"each opponent mills" OR o:"target player mills" OR o:"target opponent mills" OR o:"each player mills" OR o:"that player mills" OR o:"opponents mill" OR o:"players mill" OR o:"opponent mills")';
+const OPP_MILL_PAYOFF_Q = '((o:"would mill" o:instead) OR o:"mills that many" OR o:"in their graveyard" OR o:"in each opponent\'s graveyard" OR o:"library contains no cards" OR o:"has no cards in their library")';
+// v7.00 — REANIMATION, the class the whole graveyard half of the app could not reach. Every
+// existing yard rail keys off o:"from YOUR graveyard", but Magic's reanimation spells are
+// templated "from A graveyard" / "creature card IN a graveyard" (Animate Dead, Reanimate,
+// Necromancy, Dance of the Dead) — so the single most-played card class in every reanimator
+// deck was invisible to the engine. Gated on landing a body ON THE BATTLEFIELD, which keeps
+// graveyard HATE out (Soul-Guide Lantern, Ghost Vacuum, Scavenging Ooze and Deathrite Shaman
+// all EXILE and are correctly excluded). Live-QA'd EDHREC-sorted in BG 2026-08-04: 149 cards,
+// top = Reanimate / Animate Dead / Dread Return / Necromancy / Persist / Stitch Together /
+// Dance of the Dead / Liliana, Death's Majesty — card-for-card EDHREC's Old Stickfingers list.
+const REANIMATE_Q = '((o:"creature card from a graveyard" OR o:"creature card from your graveyard" OR o:"creature cards from your graveyard" OR o:"creature card in a graveyard" OR o:"creature card in your graveyard") (o:"to the battlefield" OR o:"onto the battlefield"))';
+// YARD SIZE as the payoff (escape / delve / threshold / delirium / count-the-yard beaters) —
+// hoisted out of RAILS.graveyard's amplifier so the statZone transform below can reuse the
+// same already-QA'd string instead of re-deriving it. 250 cards in BG.
+const YARD_SIZE_PAYOFF_Q = '(keyword:delve OR keyword:escape OR keyword:threshold OR keyword:delirium OR o:"cards in your graveyard")';
+// Spells-out-of-the-yard rebuy, for a commander whose stat counts INSTANTS/SORCERIES in the
+// graveyard (Melek, Reforged Researcher). 149 in UR: Faithless Looting, Mizzix's Mastery,
+// Past in Flames, Deep Analysis, Think Twice, Echo of Eons.
+const SPELL_REBUY_Q = '(keyword:flashback OR keyword:jump-start OR keyword:retrace OR ((t:instant OR t:sorcery) o:"from your graveyard" (o:cast OR o:return)))';
+// Land recursion, shared with the P.landGrave transform below (same string, one place).
+const LAND_RECUR_Q = '(o:"lands from your graveyard" OR o:"land cards from your graveyard" OR (o:"land card" o:"from your graveyard"))';
 const RAILS = {
+    // GRAVEYARD family (Old Stickfingers study 2026-08-04). `graveyard` was the largest
+    // plan-less bucket left in the app: 266 of the top 1,575 commanders fire it, it had an ATOM
+    // but NO rail family and NO ARCHETYPES entry, so it dealt ONE generic "Graveyard Value —
+    // Recur & rebuy" pile off o:"from your graveyard" and ~20 commanders whose lead read it was
+    // rendered with no game plan at all. Exactly the shape `drain` was in before v6.97.
+    // The members are genuinely diverse (self-mill value, permanent recursion, yard-size
+    // beaters), so the split is by ROLE rather than by sub-theme — the three questions EVERY
+    // graveyard deck has to answer, ground-truthed against EDHREC's Old Stickfingers (3,117
+    // decks: Reanimator 347 / Graveyard 195 / Mill 175 / Self-Mill 128) and Muldrotha (24.4K):
+    //   (1) HOW DOES THE YARD GET FULL — Stitcher's Supplier, Grisly Salvage, Satyr Wayfinder,
+    //       Entomb, Buried Alive, Perpetual Timepiece, dredge (shared YARD_FILL_Q above);
+    //   (2) HOW DO CARDS COME BACK OUT — Eternal Witness, Animate Dead, Reanimate, Victimize,
+    //       Dread Return, Life from the Loam, Ramunap Excavator, Gravecrawler, Oversold Cemetery;
+    //   (3) WHAT PAYS OFF A FULL YARD — the rail nothing in the engine surfaced before: escape,
+    //       delve, threshold, delirium and the "equal to the number of cards in your graveyard"
+    //       beaters (Lord of Extinction, Splinterfright, Mortivore, Cabal Ritual, Songs of the
+    //       Damned). Yard SIZE as a resource, which no other atom's query can reach.
+    // Guarded by sup:['mill','reanimate'] on the atom, so a commander with a MORE specific
+    // graveyard family keeps that family and never stacks this one on top of it. All three
+    // queries live-QA'd EDHREC-sorted in BG 2026-08-04 (287 / 671 / 257 cards).
+    graveyard: {
+        // commander fills the yard itself -> deal the payoffs first; commander only spends the
+        // yard -> deal the fill first. Same needed-half-first idiom as selftap / xspells.
+        eTest: /\bmills?\b|surveil|into your graveyard from your library|put (?:all|the rest|the remaining|those|them|the others)[^.]{0,70}(?:into|in) your graveyard/,
+        pTest: /from your graveyard|cards? in your graveyard/,
+        rails: [
+            { role: 'enabler', title: 'Fill the Yard', sub: 'The bin is the deck', q: YARD_FILL_Q, why: 'nothing in a graveyard deck works until the graveyard is full, so self-mill and surveil (Stitcher’s Supplier, Grisly Salvage, Satyr Wayfinder, Hedge Shredder) plus the search-to-graveyard tutors (Entomb, Buried Alive) are the real mana base of the deck — dredge cards refill it for free every draw step' },
+            { role: 'payoff', title: 'Rebuy From the Yard', sub: 'Every card, twice', q: '(o:"from your graveyard" (o:return OR o:cast OR o:play))', why: 'the yard is only a resource if cards come back out of it — Eternal Witness, Animate Dead, Reanimate, Victimize and Dread Return buy back the best card in the pile, Life from the Loam and Ramunap Excavator loop lands, and Gravecrawler and Oversold Cemetery return themselves every turn for free' },
+            { role: 'amplifier', title: 'Pay Off a Full Yard', sub: 'Size is the payoff', q: YARD_SIZE_PAYOFF_Q, why: 'the pile itself is a second mana source and a scaling threat — escape and delve spells cash the yard for cost, threshold and delirium turn it into a switch, and the count-the-yard beaters (Lord of Extinction, Splinterfright, Mortivore, Cabal Ritual, Songs of the Damned) convert a full graveyard straight into damage or mana' }
+        ]
+    },
     // Ninjutsu family (Satoru study): promoted from a single-line 'Unblockable Enablers'
     // atom into a 2-rail family so EVERY ninjutsu commander gets a coherent package -- the
     // evasive carriers that open a lane, plus the big ETB/saboteur bombs ninjutsu cheats
@@ -4099,12 +4241,19 @@ const RAILS = {
             { role: 'payoff', title: 'Cast-from-Exile Payoffs', sub: 'Every exile cast pays', q: '(o:"spell from exile" OR o:"card from exile" OR o:"cards from exile" OR o:"land from exile")', why: 'standing rewards that see the same plays — cascade granters and per-cast payoffs stack on every impulse' }
         ]
     },
+    // MILL family — DIRECTION-SPLIT at v7.00 (see MILL_OPP_TEST / MILL_SELF_TEST above). The
+    // two halves of "mill" are opposite decks that happen to share a keyword, and the rails are
+    // now conditional on which one the commander actually is. A self-mill commander gets the
+    // fill-and-cash package (and NOT Mindcrank); a mill-them commander gets the library-attack
+    // package (and NOT dredge). A commander that does both gets both.
     mill: {
         eTest: /\bmills?\b/,
         pTest: /from (your|a) graveyard|for each card in (your|a) graveyard/,
         rails: [
-            { role: 'enabler', title: 'Mill Engines', sub: 'Fill the yard', q: 'o:mill', why: 'stocks the graveyard fast' },
-            { role: 'payoff', title: 'Graveyard Payoffs', sub: 'The yard is a hand', q: '(o:"from your graveyard" OR keyword:delve OR keyword:escape)', why: 'turns the stocked graveyard into value' }
+            { role: 'enabler', title: 'Self-Mill Engines', sub: 'Fill your own yard', test: millsSelf, q: SELF_MILL_Q, why: 'the mill is aimed at YOUR library, so the enablers are the self-mill and surveil bodies plus the search-to-graveyard tutors — Stitcher’s Supplier, Grisly Salvage, Satyr Wayfinder, Entomb, Buried Alive, Altar of Dementia — and dredge refills the yard for free every draw step; opponent-mill cards (Mindcrank, Altar of the Brood) do nothing here' },
+            { role: 'payoff', title: 'Graveyard Payoffs', sub: 'The yard is a hand', test: millsSelf, q: '(o:"from your graveyard" OR keyword:delve OR keyword:escape)', why: 'turns the stocked graveyard into value' },
+            { role: 'enabler', title: 'Mill Them Out', sub: 'Attack their library', test: millsOpp, q: OPP_MILL_Q, why: 'the mill is aimed at THEIR libraries, so the deck wants repeatable, cheap library attackers — Ruin Crab and Hedron Crab off every land drop, Psychic Corrosion and Court of Cunning as standing engines, Fractured Sanity, Maddening Cacophony and Drown in Dreams for the big chunks' },
+            { role: 'payoff', title: 'Mill Doublers & Their-Yard Payoffs', sub: 'Empty the last card', test: millsOpp, q: OPP_MILL_PAYOFF_Q, why: 'milling is only a clock if it doubles or pays — Bruvac the Grandiloquent and the "would mill … instead" doublers halve the work, and Guiltfeeder, Jace’s Phantasm, Soaring Thought-Thief and Undead Alchemist turn the graveyards you are building into a body that closes the game before decking does' }
         ]
     },
     // ENCHANTRESS family (Sythis study): the enchantments atom was emitting ONE generic
@@ -4281,6 +4430,16 @@ const ARCHETYPES = {
     reanimate: { name: 'Graveyard', win: 'cheat cost by reanimating haymakers' },
     mill: { name: 'Graveyard', win: 'cheat cost by reanimating haymakers' },
     permrecast: { name: 'Permanent Recursion', win: 'replay a permanent from your graveyard every turn — grind the table out of cards and rebuys' },
+    // v6.99 (Old Stickfingers study): the graveyard atom fires on 266 of the top 1,575 commanders
+    // but had NO ARCHETYPES entry, so ~20 whose lead read it was — Old Stickfingers, Squee,
+    // Multani, Saffi Eriksdotter, Hanna, Horde of Notions, The Master Transcendent, Sméagol,
+    // Scion of the Ur-Dragon, Dragonlord Kolaghan — rendered with NO game plan at all. Same
+    // ATOM->ARCHETYPES plan-gap class as vehicles (v6.79), extracombat (v6.83), goad (v6.85),
+    // monarch/mutate/energy/blood (v6.87) and coinflip (v6.75). Deliberately a DISTINCT name from
+    // mill/reanimate's 'Graveyard' ("cheat cost by reanimating haymakers") — this plan is the
+    // grindy value half of the colour pie, not the big-cheat half, and the sup:['mill','reanimate']
+    // guard on the atom means the two can never both be dealt to the same commander.
+    graveyard: { name: 'Graveyard Value', win: 'treat the graveyard as a second hand — fill it faster than the table can interact with it, rebuy your best cards out of it every turn, and let escape, delve and the count-the-yard threats turn the pile itself into mana and damage' },
     oppdiscard: { name: 'Hand Attack', win: 'strip every hand, punish every card that falls' },
     etb: { name: 'Blink & Value', win: 'out-value the table with looped ETBs' },
     // draw2 (The Locust God study 2026-08-01): the draw-matters atom had a RAIL family but no game
@@ -4385,6 +4544,43 @@ function buildGamePlans(found) {
     }
     return { plans: top, blends };
 }
+// v6.99 (Old Stickfingers study) — MULTI-RAIL-SAFE REFRAME. Several P.* transforms take the
+// graveyard read and re-point it at a narrower theme (P.landGrave -> "Land Recursion & Replay",
+// P.handLock -> "Delirium — Fill the Yard"). While the graveyard atom dealt exactly ONE rail
+// those transforms could rewrite it in place with a plain loop; now that RAILS.graveyard deals
+// THREE, the same loop stamped the identical title onto every one of them and printed the
+// section two or three times (measured: The Gitrog Monster, Titania Voice of Gaea, The
+// Necrobloom, Multani, Szarel, Hazezon, Yuma, Norman Osborn all grew a duplicate rail).
+// Collapse instead: reframe the FIRST graveyard rail, delete the rest, return whether one was
+// found. Any future family hung off an atom that a P.* transform reframes gets this for free.
+// v7.00 — PUSH-ONCE. A transform that adds a rail can collide with a rail the atom family
+// already dealt: Roxi, Publicist to the Stars fires the graveyard family (which owns "Pay Off a
+// Full Yard") AND has a graveyard-count stat, so the statZone transform below stamped the same
+// shelf on her report twice. Any transform that pushes a shelf a rail family can also own should
+// route through here — it is the same collision class the standing cross-family de-dupe backlog
+// item describes, solved at the push site so it can never render. Matches on TITLE or on the
+// exact query, so a renamed duplicate of the same card list is caught too.
+function pushUniqueRail(out, sec) {
+    for (let i = 0; i < out.length; i++) {
+        if (out[i].title === sec.title || (out[i].q && out[i].q === sec.q)) return false;
+    }
+    out.push(sec);
+    return true;
+}
+function reframeYardRail(out, patch) {
+    let at = -1;
+    for (let i = 0; i < out.length; i++) {
+        const s = out[i];
+        if (!(/^graveyard/.test(s.key || '') || s.title === 'Graveyard Value')) continue;
+        if (at === -1) { at = i; Object.keys(patch).forEach(k => { s[k] = patch[k]; }); }
+    }
+    if (at === -1) return false;
+    for (let i = out.length - 1; i > at; i--) {
+        const s = out[i];
+        if (/^graveyard/.test(s.key || '') || s.title === 'Graveyard Value') out.splice(i, 1);
+    }
+    return true;
+}
 function buildEngineModel(commander) {
     const ciArr = commander.color_identity || [];
     const ci = ciArr.join('');
@@ -4402,8 +4598,18 @@ function buildEngineModel(commander) {
         if (spec) {
             const hasE = spec.eTest ? spec.eTest.test(o) : false;
             const hasP = spec.pTest ? spec.pTest.test(o) : false;
+            // v7.00 — CONDITIONAL RAILS (shared mechanism, not a mill-specific hack). A rail may
+            // carry its own `test` — a RegExp or a predicate over the commander's oracle text —
+            // and is dealt only when it matches. This is what lets ONE family serve two opposite
+            // readings of the same mechanic (mill: fill MY yard vs empty THEIRS) without splitting
+            // the atom, and it is available to every present and future family: the same shape
+            // will serve sacrifice (fodder vs outlet), counters (proliferate vs -1/-1), tokens
+            // (creature vs treasure) and any other mechanic whose direction lives in the text.
+            // Fail-safe: if the filter empties the family, fall back to the full list, so a rail
+            // family can never silently vanish from a report because a test was too narrow.
+            let rails = spec.rails.filter(r => !r.test || (typeof r.test === 'function' ? r.test(o) : r.test.test(o)));
+            if (!rails.length) rails = spec.rails.slice();
             // needed half first: commander pays off -> needs enablers, and vice versa
-            let rails = spec.rails.slice();
             if (hasP && !hasE) rails.sort((x, y) => (x.role === 'enabler' ? -1 : 1) - (y.role === 'enabler' ? -1 : 1));
             else if (hasE && !hasP) rails.sort((x, y) => (x.role === 'payoff' ? -1 : 1) - (y.role === 'payoff' ? -1 : 1));
             rails.forEach((r, i) => {
@@ -4447,6 +4653,20 @@ function buildEngineModel(commander) {
         countPower: /where x is [^.]{0,36}power/.test(o),
         countToughness: /where x is [^.]{0,36}toughness/.test(o),
         selfPow: o.indexOf(firstName.toLowerCase() + "'s power") !== -1 || /where x is this creature's power/.test(o),
+        // v7.00 (Old Stickfingers VERIFY) — THE COUNTED RESOURCE, NOT THE PRINTED STAT.
+        // P.selfPow fires on any reference to the commander's own power and pushes a "Pump the
+        // Commander" rail of Equipment and Auras. That is right for a creature whose power is a
+        // number you RAISE — and exactly wrong for the Lhurgoyf class, whose power is a live
+        // COUNT of a zone. Old Stickfingers is "power and toughness each equal to the number of
+        // creature cards in your graveyard", so the engine handed him Skullclamp, Shadowspear,
+        // Commander's Plate, Colossus Hammer and Hammer of Nazahn — while EDHREC's list for him
+        // is almost pure reanimation and his own STUDY_DB trap says in as many words "do not
+        // stack gear on a creature whose size is a resource you spend". Capture WHAT is counted
+        // (the noun right before "cards in your graveyard") and point the rail at the resource
+        // instead: creatures -> reanimation, lands -> land recursion, instants/sorceries ->
+        // spell rebuy, anything else -> the yard-size payoffs. A commander whose power is a
+        // count of X wants MORE X, not +2/+2.
+        statZone: ((/(?:power|toughness)[^.]{0,80}equal to (?:twice )?the number of (?:[^.]{0,60}?\b)?([a-z]+) cards? (?:in|from) (?:your|a|all|each) graveyard/.exec(o) || [])[1] || ''),
         // XENAGOS COMBAT POWER-DOUBLER (Xenagos study): the commander's own combat/attack
         // trigger gives ONE creature +X/+X where X is that creature's power — doubling its
         // power for a one-shot swing. A Gruul haymaker engine, NOT a devotion deck (the
@@ -4978,14 +5198,11 @@ function buildEngineModel(commander) {
     // payoff (the hand-size lock forces cleanup discards that nobody was paying off).
     if (P.handLock) {
         let hasDiscardPay = false;
+        reframeYardRail(out, { role: 'enabler', title: 'Delirium \u2014 Fill the Yard', sub: 'Turn on the lock',
+            q: base + ' (otag:self-mill OR keyword:dredge)',
+            why: firstName + ' cares about the number of CARD TYPES in your graveyard, not recursion \u2014 self-mill and dredge (Stitcher\u2019s Supplier, Grisly Salvage, Aftermath Analyst, Life from the Loam) dump many types in fast to push delirium toward the 4\u20137 that shrink every opponent\u2019s maximum hand size. Keep the yard full and varied; do NOT rebuy cards out of it.' });
         for (let i = 0; i < out.length; i++) {
-            const s = out[i];
-            if (/^graveyard/.test(s.key || '') || s.title === 'Graveyard Value') {
-                s.role = 'enabler'; s.title = 'Delirium \u2014 Fill the Yard'; s.sub = 'Turn on the lock';
-                s.q = base + ' (otag:self-mill OR keyword:dredge)';
-                s.why = firstName + ' cares about the number of CARD TYPES in your graveyard, not recursion \u2014 self-mill and dredge (Stitcher\u2019s Supplier, Grisly Salvage, Aftermath Analyst, Life from the Loam) dump many types in fast to push delirium toward the 4\u20137 that shrink every opponent\u2019s maximum hand size. Keep the yard full and varied; do NOT rebuy cards out of it.';
-            }
-            if (/[Dd]iscard/.test(s.title || '')) hasDiscardPay = true;
+            if (/[Dd]iscard/.test(out[i].title || '')) hasDiscardPay = true;
         }
         if (!hasDiscardPay) {
             out.push({
@@ -5005,20 +5222,13 @@ function buildEngineModel(commander) {
     // Life from the Loam, Splendid Reclamation, Titania. Generalizes to Titania, The Gitrog
     // Monster, and Lord Windgrace (each cares about lands in the yard).
     if (P.landGrave) {
-        let hasRecur = false;
-        for (let i = 0; i < out.length; i++) {
-            const s = out[i];
-            if (/^graveyard/.test(s.key || '') || s.title === 'Graveyard Value') {
-                s.role = 'enabler'; s.title = 'Land Recursion & Replay'; s.sub = 'Replayed lands re-trigger';
-                s.q = base + ' (o:"lands from your graveyard" OR o:"land cards from your graveyard" OR (o:"land card" o:"from your graveyard"))';
-                s.why = firstName + ' cares about LANDS in the graveyard, not generic recursion — Crucible of Worlds, Ramunap Excavator, Ancient Greenwarden, Splendid Reclamation, and Life from the Loam replay lands out of the yard, and every land that re-enters is another landfall trigger. Fill the yard by dredging and self-milling, then loop the lands back onto the battlefield.';
-                hasRecur = true;
-            }
-        }
+        const hasRecur = reframeYardRail(out, { role: 'enabler', title: 'Land Recursion & Replay', sub: 'Replayed lands re-trigger',
+            q: base + ' ' + LAND_RECUR_Q,
+            why: firstName + ' cares about LANDS in the graveyard, not generic recursion — Crucible of Worlds, Ramunap Excavator, Ancient Greenwarden, Splendid Reclamation, and Life from the Loam replay lands out of the yard, and every land that re-enters is another landfall trigger. Fill the yard by dredging and self-milling, then loop the lands back onto the battlefield.' });
         if (!hasRecur) {
             out.push({
                 key: 'landgrave:enabler', role: 'enabler', title: 'Land Recursion & Replay', sub: 'Replayed lands re-trigger',
-                q: base + ' (o:"lands from your graveyard" OR o:"land cards from your graveyard" OR (o:"land card" o:"from your graveyard"))',
+                q: base + ' ' + LAND_RECUR_Q,
                 why: firstName + ' loops lands out of the graveyard — Crucible of Worlds, Ramunap Excavator, and Splendid Reclamation replay them, and every land that re-enters is another landfall trigger.'
             });
         }
@@ -5327,7 +5537,11 @@ function buildEngineModel(commander) {
     if (P.permRecast && !P.tribalRecast) {
         for (let i = out.length - 1; i >= 0; i--) if (/^graveyard/.test(out[i].key || '')) out.splice(i, 1);
         out.push(
-            { key: 'pr-stock', role: 'enabler', title: 'Stock the Yard', sub: 'Your graveyard is your hand', q: base + ' (o:"you mill" OR o:surveil OR (o:"your library" o:"into your graveyard"))', why: firstName + ' can only replay permanents already IN your graveyard, so filling it fast is the whole setup \u2014 Entomb and Buried Alive tutor your best permanent straight down, and surveil / self-mill keep a stack of rebuys waiting.' },
+            // v6.99: re-pointed at the shared YARD_FILL_Q (was a narrower hand-rolled copy that
+            // lacked the "mill three/four/five" arm and dredge, so Stitcher's Supplier \u2014 41% of
+            // Muldrotha's EDHREC decks \u2014 and Hedge Shredder could not surface here). Strict
+            // superset of the old string: pure add, nothing this rail used to find is lost.
+            { key: 'pr-stock', role: 'enabler', title: 'Stock the Yard', sub: 'Your graveyard is your hand', q: base + ' ' + YARD_FILL_Q, why: firstName + ' can only replay permanents already IN your graveyard, so filling it fast is the whole setup \u2014 Entomb and Buried Alive tutor your best permanent straight down, and surveil / self-mill keep a stack of rebuys waiting.' },
             { key: 'pr-recast', role: 'payoff', title: 'Recastable Value Permanents', sub: 'Bodies worth replaying', q: base + ' (t:creature (o:"enters," OR o:"dies,"))', why: firstName + ' recasts one permanent of EACH type from the yard every turn, so the payoff is cheap permanents whose value is the trigger \u2014 Solemn Simulacrum, Eternal Witness, and aristocrat drains (Blood Artist, Zulaport Cutthroat) pay again on every enter and every death; artifacts and enchantments recur too.' },
             { key: 'pr-outlet', role: 'amplifier', title: 'Free Sac Outlets', sub: 'Sacrifice, recast, repeat', q: base + ' (o:"sacrifice a creature:" OR o:"sacrifice another creature:" OR o:"sacrifice a permanent:" OR o:"sacrifice an artifact:")', why: firstName + ' turns the graveyard into a revolving door, so free sac outlets (Ashnod\u2019s Altar, Viscera Seer, Phyrexian Altar) cash in a permanent for value now and replay it from the yard next turn \u2014 every outlet closes a loop, and self-saccing bodies (Sakura-Tribe Elder, Fleshbag Marauder) refill the yard as they go.' },
             { key: 'pr-lands', role: 'enabler', title: 'Replay Your Lands', sub: 'A land from the yard each turn', q: base + ' (o:"play lands from your graveyard" OR o:"land card from your graveyard" OR o:"additional land")', why: firstName + ' also replays a land from the graveyard each turn, so Crucible of Worlds, Ramunap Excavator, and Conduit of Worlds loop fetch- and sac-lands for value, and extra land drops (Exploration, Azusa) deploy the rebuys.' }
@@ -5350,7 +5564,8 @@ function buildEngineModel(commander) {
     if (P.creatureRecast && !P.permRecast && !P.tribalRecast) {
         for (let i = out.length - 1; i >= 0; i--) if (/^graveyard/.test(out[i].key || '')) out.splice(i, 1);
         out.push(
-            { key: 'cr-stock', role: 'enabler', title: 'Stock the Yard', sub: 'Creatures in the bin are rebuys', q: base + ' (o:"mill three" OR o:"mill four" OR o:"mill five" OR o:"you mill" OR o:surveil OR (o:"your library" o:"into your graveyard"))', why: firstName + ' can only recast creatures already IN your graveyard, and gets cheaper for each one there — so filling it fast is the whole setup. Entomb and Buried Alive tutor your best creatures straight down, and self-mill (Stitcher’s Supplier, Satyr Wayfinder, Grisly Salvage) stacks a pile of rebuys.' },
+            // v6.99: re-pointed at the shared YARD_FILL_Q — same arms as before plus dredge.
+            { key: 'cr-stock', role: 'enabler', title: 'Stock the Yard', sub: 'Creatures in the bin are rebuys', q: base + ' ' + YARD_FILL_Q, why: firstName + ' can only recast creatures already IN your graveyard, and gets cheaper for each one there — so filling it fast is the whole setup. Entomb and Buried Alive tutor your best creatures straight down, and self-mill (Stitcher’s Supplier, Satyr Wayfinder, Grisly Salvage) stacks a pile of rebuys.' },
             { key: 'cr-outlet', role: 'enabler', title: 'Free Sac Outlets', sub: 'Sacrifice, recast, repeat', q: base + ' (o:"sacrifice a creature:" OR o:"sacrifice another creature:" OR o:"sacrifice a permanent:")', why: 'a recast creature that dies falls right back into the yard for next turn, so free outlets (Ashnod’s Altar, Viscera Seer, Carrion Feeder, Phyrexian Altar) turn each value body into a repeatable loop — sac it now, replay it from the graveyard next turn.' },
             { key: 'cr-recast', role: 'payoff', title: 'Recur Value Creatures', sub: 'Bodies worth replaying', q: base + ' (t:creature (o:"enters," OR o:"dies,"))', why: firstName + ' replays one creature from the yard every turn, so the payoff is cheap creatures whose value IS the trigger — Solemn Simulacrum, Eternal Witness, Karmic Guide, and Sun Titan pay again on every enter, and their deaths feed the next recast.' },
             { key: 'cr-drain', role: 'payoff', title: 'Drain the Table', sub: 'Death triggers close it out', q: base + ' ((o:"another creature dies" OR o:"creature you control dies" OR o:"a creature dies" OR o:"one or more creatures you control died") (o:"each opponent loses" OR o:"loses 1 life" OR o:"you gain 1 life" OR o:"deals 1 damage to"))', why: 'every loop death is a drain — Blood Artist, Zulaport Cutthroat, Bastion of Remembrance, and Syr Konrad turn the recast-and-sacrifice engine into a table-wide life swing you win through without ever attacking.' }
@@ -5732,7 +5947,19 @@ function buildEngineModel(commander) {
     if (P.countToughness) {
         out.push({ key: 'tough', role: 'enabler', title: 'High-Toughness Bodies', sub: 'Big butts dig deepest', q: base + ' (t:creature tou>=5)', why: 'X reads toughness \u2014 every point is reach.' });
     }
-    if (P.selfPow) {
+    if (P.selfPow && P.statZone) {
+        // stat is a ZONE COUNT -> deal the rail that grows the COUNTED RESOURCE, never gear.
+        const z = P.statZone;
+        if (/instant|sorcery/.test(z)) {
+            pushUniqueRail(out, { key: 'statzone', role: 'enabler', title: 'Spells in the Yard', sub: 'The bin is the stat', q: base + ' ' + SPELL_REBUY_Q, why: firstName + "'s size is a live count of the instants and sorceries in your graveyard, so the deck grows by CASTING and re-casting spells \u2014 flashback, jump-start and retrace (Faithless Looting, Past in Flames, Deep Analysis, Think Twice, Mizzix's Mastery) each leave a card in the bin and buy it back, which is worth far more here than any +2/+2 from Equipment." });
+        } else if (/\bland/.test(z)) {
+            if (!P.landGrave) pushUniqueRail(out, { key: 'statzone', role: 'enabler', title: 'Lands in the Yard', sub: 'The bin is the stat', q: base + ' ' + LAND_RECUR_Q, why: firstName + "'s size is a live count of the land cards in your graveyard, so fetchlands, sacrifice lands and self-mill grow him for free \u2014 and Crucible of Worlds, Ramunap Excavator and Life from the Loam replay them for value without ever needing gear." });
+        } else if (/creature|permanent/.test(z) || detectTribe(z + ' creature cards')) {
+            pushUniqueRail(out, { key: 'statzone', role: 'payoff', title: 'Cash In What You Buried', sub: 'Raise the biggest thing in the bin', q: base + ' ' + REANIMATE_Q, why: firstName + "'s power and toughness are a live COUNT of the creature cards in your graveyard, so gear is the trap here \u2014 he is already the biggest thing on the board and his size is a resource you SPEND, not one you buy. The payoff is reanimation: Reanimate, Animate Dead, Dread Return, Necromancy, Persist and Stitch Together turn the pile he just made into a battlefield, and each fatty you raise is worth far more than the point of power it costs him." });
+        } else {
+            pushUniqueRail(out, { key: 'statzone', role: 'amplifier', title: 'Pay Off a Full Yard', sub: 'Size is the payoff', q: base + ' ' + YARD_SIZE_PAYOFF_Q, why: firstName + "'s size is a live count of your graveyard, so every card that ALSO scales off the pile is doubling up on a resource you are already maximizing \u2014 escape and delve spells cash the yard for cost, threshold and delirium turn it into a switch, and Cabal Ritual, Songs of the Damned and the count-the-yard beaters convert it straight into mana and damage." });
+        }
+    } else if (P.selfPow) {
         out.push({ key: 'selfpump', role: 'enabler', title: 'Pump the Commander', sub: 'Grow the number', q: base + ' (((t:aura OR t:equipment) o:"gets +") OR (o:"+1/+1 counter" o:target))', why: 'X reads ' + firstName + "'s power \u2014 every +1 raises it." });
     } else if (P.countPower) {
         out.push({ key: 'heavy', role: 'enabler', title: 'Heavy Hitters', sub: 'One giant sets X', q: base + ' (t:creature pow>=6)', why: 'X reads the greatest power in the attack \u2014 one huge body carries the count.' });
@@ -6292,6 +6519,8 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v7.00', date: '2026-08-04', focus: 'verify', commander: 'Old Stickfingers', summary: "VERIFY Old Stickfingers - re-read the v6.99 graveyard family card-by-card on live Scryfall against EDHREC and found the two misfires the study run flagged but left, plus a third the study never saw. Three logic-level fixes, no per-commander patches. (1) MILL HAS A DIRECTION and the engine did not know it. RAILS.mill's enabler was the bare `o:mill`, which cannot tell SELF-mill (fill MY yard - the setup half of every reanimator deck) from MILL-THEM (attack THEIR library - a wincon). Measured over the 111 commander-legal commanders that fire the mill atom: 78 self-mill, 31 mill-them, 1 both - and ALL 111 were handed the same undifferentiated pile, so each half carried the other half's dead cards. Old Stickfingers' LEAD rail dealt Mindcrank and Altar of the Brood (pure opponent-mill, and his own STUDY_DB trap #1 says in as many words that opponent-mill does nothing for him), while Bruvac, Phenax, Captain N'ghathrod, The Mindskinner, Zellix and Geth got Stitcher's Supplier and dredge. Direction is now read off the commander's own text with Magic's own templating (MILL_OPP_TEST / MILL_SELF_TEST): an OPPONENT/PLAYER subject is opponent-directed; 'you mill', surveil, dredge, the bulk-reveal template and the SYMMETRIC 'each player mills' (which fills your own yard just as hard - Altar of Dementia, Mesmeric Orb, Syr Konrad, Gyruda, Zellix, Stitcher Geralf) are self-directed; a bare 'mill N cards' with no subject means YOU, so it defaults to self. Both can be true and then both halves are dealt. (2) THE SHARED MECHANISM that makes it possible: rails may now carry their own `test` (RegExp or predicate over the oracle text) and are dealt only when it matches, with a fail-safe fallback to the full family if the filter empties it. This is NOT a mill-specific hack - it is available to every present and future family (sacrifice fodder vs outlet, proliferate vs -1/-1, creature vs treasure tokens) and is what lets ONE atom serve two opposite readings of the same mechanic without splitting it. (3) THE COUNTED RESOURCE, NOT THE PRINTED STAT. P.selfPow pushed an Equipment/Aura 'Pump the Commander' rail on any commander that references its own power - correct for a number you RAISE, exactly wrong for the Lhurgoyf class whose power is a live COUNT of a zone. Old Stickfingers was handed Skullclamp, Shadowspear, Commander's Plate, Colossus Hammer and Hammer of Nazahn while EDHREC's list for him is almost pure reanimation. New P.statZone captures WHAT is counted and points the rail at that resource: creatures/tribe -> reanimation, lands -> land recursion (suppressed when P.landGrave already owns it), instants/sorceries -> spell rebuy, anything else -> yard-size payoffs. (4) THE CLASS THE ENGINE COULD NOT REACH. Every yard rail keyed off o:'from YOUR graveyard', but Magic templates reanimation as 'from A graveyard' / 'creature card IN a graveyard' - so Animate Dead (42% of his EDHREC decks), Reanimate (40%), Necromancy, Dance of the Dead and Persist (36%) were invisible to the entire app. New REANIMATE_Q is gated on landing a body ON THE BATTLEFIELD, which keeps graveyard HATE out (Soul-Guide Lantern, Ghost Vacuum, Scavenging Ooze, Deathrite Shaman all exile and are correctly excluded). Live-QA'd in BG: 149 cards led by Reanimate / Animate Dead / Dread Return / Necromancy / Persist / Stitch Together / Dance of the Dead / Liliana Death's Majesty. (5) PUSH-ONCE. The statZone transform collided with a rail its own family could own (Roxi, Publicist to the Stars rendered 'Pay Off a Full Yard' TWICE). New shared pushUniqueRail() de-dupes at the push site by title or exact query - the first piece of the standing cross-family de-dupe backlog item, solved where it can never render. RESULT: Old Stickfingers 'Mill Engines | Graveyard Payoffs | Pump the Commander' -> 'Self-Mill Engines | Graveyard Payoffs | Cash In What You Buried', verified LIVE card-by-card in the deployed app's Scouting Report. GENERALIZES: 44 self-mill commanders get the right fill pool (Syr Konrad, Sidisi Brood Tyrant, Emry, Shigeki, Teval, Grist, Lumra, Gisa and Geralf, Old Rutstein, Titania Nature's Force, Vorinclex, Uurg); 14 mill-them commanders get a library-attack package they never had and lose the self-mill payoff rail that did nothing for them (Bruvac the Grandiloquent, Phenax, Captain N'ghathrod, The Mindskinner, Zellix, Geth Lord of the Vault, The Mouth of Sauron, Sheoldred // The True Scriptures, Hope Estheim, The Ancient One, Go-Shintai of Lost Wisdom, The Cyber-Controller, Neerdiv, Jace Vryn's Prodigy); and 6 counted-stat commanders swap gear for the resource they actually count - Old Stickfingers and Abomination of Llanowar and Exdeath -> reanimation, Melek Reforged Researcher -> spell rebuy, Uurg -> duplicate land rail suppressed, Roxi -> duplicate shelf removed. COUNTER-CASE / NO REGRESSION: full old-vs-new sweep over all 1,600 EDHREC-ranked commanders run in the deployed app's own realm with the shipped logic installed - EXACTLY 59 changed, ZERO errors, ZERO plans lost, ZERO plans gained, ZERO rail families lost, duplicate-title commanders held at the SAME pre-existing 10 old and new, and the one section-count drop is the intended Uurg de-dupe. 18 unrelated commanders byte-identical old-vs-new in the same harness including every recent study subject: Krenko Mob Boss, Atraxa, Baral, Edgar Markov, Kaalia, Yuriko, Korvold, Miirym, Muldrotha, Karador, Lurrus, Chainer, The Gitrog Monster, Talrand, Thalia Heretic Cathar, Kambal, Rafiq, Sythis. node --check PASS on all 6 inline script blocks; HTML intact (1 <html> / 1 <body> / 1 </html>); spoiler-board markers retained (SPOILERS_V2 = 6); meta == console banner == CHANGELOG[0] == v7.00 - 2026-08-04. Backup index-backup-20260804-1535-preVerifyStickfingers.html; both deploy-source folders re-synced byte-exact; mobile viewport IIFE + archetype-tile roster pipeline + git untouched." },
+    { build: 'v6.99', date: '2026-08-04', focus: 'study', commander: 'Old Stickfingers', summary: "STUDY Old Stickfingers - built the GRAVEYARD family, the last big plan-less bucket in the app (graveyard fires on 266 of the top 1,575 commanders and had an ATOM but NO rails and NO plan, so 153 commanders got one generic 'Graveyard Value' pile and ~20 rendered PLAN-LESS). Six logic-level changes, no per-commander patches. (1) MILL ATOM - added the self-mill-by-BULK-REVEAL template ('reveal cards from the top of your library ... put ALL/THE REST into your graveyard'), a whole class of self-mill that predates the word 'mill'; Old Stickfingers' entire card is that clause plus a count-the-yard body, yet he fired no mill atom at all. Scoped to bulk quantifiers so single-card explore filtering (Amalia, Astrid Peth), Hakbal and Nylea stay out. Strict ADD - no commander loses the atom. (2) GRAVEYARD-RESET BYPASS - 'shuffles their graveyard into their library' (Kozilek, Ulamog), 'would be put into a graveyard from anywhere ... shuffle it into its owner's library instead' (Progenitus) and cycling's 'shuffle it into your library from your graveyard' (Yidaro, Kogla and Yidaro) are ANTI-graveyard text, but each fired the w2 atom and printed a phantom graveyard rail as the commander's LEAD read. Whole-clause strip alongside the existing 'instead of putting it into your graveyard' negation. (3) SHARED YARD_FILL_Q - hoisted like TOKEN_MULT_VERB / DAMAGE_MIRROR_EXCL. Three near-copies of 'fill the yard' had drifted across pr-stock (Muldrotha, Lurrus) and cr-stock (Karador, Chainer); one constant, plus keyword:dredge. Scryfall-verified strict superset in BGU: 343 -> 479 cards, ZERO lost, and Muldrotha's rail finally reaches Stitcher's Supplier (41% of her EDHREC decks), Takenuma, Aftermath Analyst, Life from the Loam and Golgari Grave-Troll. (4) RAILS.graveyard - a 3-rail role split answering the three questions every graveyard deck has: Fill the Yard / Rebuy From the Yard / Pay Off a Full Yard (escape, delve, threshold, delirium and the count-the-yard beaters - a payoff class NO other atom's query could reach). All three live-QA'd EDHREC-sorted in BG (287 / 671 / 257). (5) ARCHETYPES.graveyard 'Graveyard Value' plan - same ATOM->plan gap class as vehicles v6.79, extracombat v6.83, goad v6.85, coinflip v6.75. (6) reframeYardRail() - P.landGrave and P.handLock rewrote the graveyard rail IN PLACE, which stamped one title onto all three new rails; the shared helper reframes the first and drops the rest, making the whole P.* reframe layer multi-rail-safe for any future family. Measured old-vs-new over all 1,575 EDHREC-ranked commanders in the deployed app's own realm: 191 changed, 18 gained a game plan, ZERO lost a plan, ZERO errors, and duplicate sections held at the ONE pre-existing case (Krenko Baron) instead of the eight the naive version produced. Old Stickfingers: 'Graveyard Value | Pump the Commander' with no plan -> 'Mill Engines | Graveyard Payoffs | Pump the Commander' with the Graveyard plan, card-for-card the EDHREC list (Stitcher's Supplier, Skull Prophet, Altar of Dementia, Syr Konrad, Eternal Witness, Dread Return). GENERALIZES to Muldrotha, Lurrus, Karador and Chainer (better fill rail), Shigeki, Multani, Squee, Saffi Eriksdotter, Hanna, Horde of Notions, The Master Transcendent, Smeagol, Scion of the Ur-Dragon and Dragonlord Kolaghan (plan-less -> planned), The Gitrog Monster and Titania (gain the Graveyard Value plan, duplicate rail fixed), and Kozilek, Ulamog, Progenitus and Kogla and Yidaro (phantom graveyard read removed). COUNTER-CASE: Krenko, Atraxa, Baral, Edgar Markov, Kaalia, Yuriko, Korvold and Miirym are byte-identical old-vs-new in the same harness. node --check PASS on all 6 script blocks; meta == banner == CHANGELOG[0] == v6.99; mobile viewport IIFE + archetype-tile roster pipeline + git untouched." },
     { build: 'v6.98', date: '2026-08-04', focus: 'verify', commander: 'Kambal, Consul of Allocation', summary: "VERIFY Kambal, Consul of Allocation \u2014 re-read all three v6.97 RAILS.drain shelves card-by-card on live Scryfall against EDHREC ground truth. 'Drain Triggers' and 'Mass Drain Finishers' came back clean (Blood Artist, Zulaport Cutthroat, Blind Obedience, Crypt Ghast, Elas il-Kor / Gray Merchant, Exsanguinate, Debt to the Deathless, Torment of Hailfire \u2014 all genuine, and the flagged o:\"they lose\" boundary turned out to be tight: its 20 unique cards are Sheoldred, Shrieking Affliction, Cruel Reality, Doom Foretold, Bloodchief Ascension, Suture Priest and friends, no leaks). But 'Loss Multipliers' was NOT zero-junk as v6.97 claimed: 7 of its 48 cards Magic-wide are DAMAGE-MIRROR punishers, not drain payoffs. Magic prints two unrelated effects with the same \"<player> loses that much life\" tail \u2014 a genuine LIFE-conversion multiplier where \"that much\" is life gained or lost (Sanguine Bond, Vito, Enduring Tenacity, Tainted Remedy, Plague Drone, Vizkopa Guildmage), and a combat punisher where \"that much\" is DAMAGE dealt (Ragged Veins, Visions of Brutality, Flayed Nim, Souls of the Faultless, Archfiend of Spite, Barbed Servitor, Sower of Discord). The second class does nothing in a deck that never attacks, and Ragged Veins / Visions of Brutality actually point the life loss at their OWN controller. FIX (one shared, reusable constant \u2014 not a per-commander patch): new DAMAGE_MIRROR_EXCL, a named exclusion for the damage-conversion template, sitting beside TOKEN_MULT_VERB and scoping the \"loses that much life\" ARM of the Loss Multipliers query only. Measured live: 48 \u2192 41 Magic-wide, exactly those 7 cut, ZERO genuine multipliers lost, zero additions. Rail 1 still subtracts the UNSCOPED clause list \u2014 a superset of what rail 2 now admits \u2014 so the family stays a strict partition and the 7 mirrors fall out of the family entirely instead of sliding into the enabler shelf (verified: none appear in rail 1 or rail 3). GENERALIZES to all 84 commanders that fire the drain atom, in every identity, because two of the seven (Visions of Brutality, devoid; Barbed Servitor, colorless artifact) are colorless and leaked into EVERY drain commander regardless of colors: Kambal BW 27\u219220, Vito mono-B 25\u219219, Talion UB 25\u219219, Zurgo Stormrender Mardu 45\u219238, Sorin of House Markov WB 27\u219220, Kokusho mono-B 25\u219219. On the shelf the user actually sees (top 14 by EDHREC) Kambal went from 12/14 genuine to 14/14, with Sower of Discord and Barbed Servitor replaced by Plague Drone and Oft-Nabbed Goat. COUNTER-CASE / NO REGRESSION: run through the real shipped extractAtoms + buildEngineModel + buildGamePlans, all 6 drain commanders keep identical rail sets, order and game plans with only the one Loss Multipliers query string changed, and 6 unrelated commanders \u2014 Krenko (goblins, 15 rails), Atraxa (proliferate, 9), Talrand (spellslinger, 10), Thalia Heretic Cathar (taxes, 8), Aurelia (extra combats, 10) and Trelasarra (lifegain, 9, whose own lifegain 'Drain Finishers' rail is a separate query) \u2014 are byte-identical old-vs-new across atoms, every rail, every query and every plan. Also re-checked the drain ATOM's pTest for the same flaw and left it alone: exactly ONE commander in Magic matches that clause (Vito) and his is genuine, so no commander is mis-ordered by it and the atom, its q/oq and the roster-pipeline input stay untouched." },
     { build: 'v6.97', date: '2026-08-04', focus: 'study', commander: 'Kambal, Consul of Allocation', summary: "STUDY Kambal, Consul of Allocation \u2014 the LIFE-DRAIN / group-slug family. The `drain` atom had NEITHER a rail family NOR an ARCHETYPES plan, the only atom in the app in that state, so 75 commanders fell to ONE generic pile (o:\"each opponent loses\") and 14 of them \u2014 Kambal (#1.3k), Talion, Obzedat, Seizan, Maralen, Valgavoth, Dragonlord Kolaghan, Zurgo Stormrender, Betor, Baba Lysaga, Arnyn, Doctor Doom, Patron of the Nezumi, Dee Kay \u2014 rendered with a completely BLANK Oracle's Read. EDHREC ground truth for Kambal (Sanguine Bond, Blind Obedience, Vito, Exquisite Blood, Suture Priest, Marauding Blight-Priest / Exsanguinate, Debt to the Deathless, Blood Artist) says the archetype splits by ROLE into three shelves, so RAILS.drain is new: 'Drain Triggers' (repeatable drip, whenever/upkeep-scoped), 'Loss Multipliers' (gain\u2192loss converters, life-loss doublers and lifegain denial \u2014 27 in BW, zero junk) and 'Mass Drain Finishers' (one-shot table kills). Rails 1 and 3 partition the space by construction and rail 1 subtracts the rail-2 clause, so no card appears twice. ARCHETYPES.drain ('Life Drain') closes the plan gap and 5 BLENDS entries wire it into the blend graph. Also fixed a whole-app blind spot: Scryfall's o: does not search reminder text, where extort's entire drain clause lives, so all 17 commander-legal extort cards (Blind Obedience \u2014 Kambal's #3 synergy card \u2014 Crypt Ghast, Pontiff of Blight, Basilica Screecher, Tithe Drinker, Treasury Thrull) were invisible to every life-loss query; keyword:extort in the rail and \\bextort\\b in the atom test fix it, adding the drain read to Sorin of House Markov and The Kingpin of Crime. Blast radius measured over all 3,348 commander-legal commanders: EXACTLY 77 changed (the 75 drain-firers + the 2 extort commanders), zero commanders outside the family touched, and the 10 plan displacements all replace a vague third plan with the accurate Life Drain read." },
     { build: 'v6.96', date: '2026-08-04', focus: 'verify', commander: 'Thalia, Heretic Cathar', summary: "VERIFY Thalia, Heretic Cathar (STAX/TAXES family). Read all three v6.95 rails card-by-card against live Scryfall + EDHREC and found a real leak in the rail that LEADS her report. 'Profit Through the Lock' carried a bare o:'unless its controller pays' OR-arm sitting OUTSIDE the trigger+reward pair, so it matched on its own — and that phrase is not a payoff template, it is the soft-counterspell / pay-or-else TAX template (Mana Tithe, Flusterstorm, Spell Pierce, Mana Leak, Daze, Condescend, Judge's Familiar, Erratic Portal, Amulet of Safekeeping, Strict Proctor). Measured leak: Grand Arbiter Augustin IV 158 cards of which only 28 were real profit engines (82% junk), Thalia HC 25 -> 13 (52%), Drana and Linvala 32 -> 18, Thalia + The Gitrog Monster 35 -> 21, all-colours 187 -> 47. FIX (logic-level, whole family, two rail-query strings, no per-commander patch): (1) moved the pay-or-else arm to the 'Tax & Friction' ENABLER rail where it belongs — nothing is lost, only relocated (mono-W 61 -> 68, UW 89 -> 213, mono-G 17 -> 19; the six mono-W cards already there via otag:pillowfort do not duplicate, and the UW rail still leads Propaganda / Ghostly Prison / Sphere of Safety); (2) closed the matching UNDER-match by adding the 'whenever an opponent searches' trigger, so Archivist of Oghma and Wan Shi Tong — the hatebear-profit pair that punishes the tutoring a stax deck already slows down — land in the payoff rail (exactly 2 cards Magic-wide, zero leak). Generalizes to all 28 taxes-firing commanders. Counter-case in a Node VM running the REAL edited engine: the 5 taxes commanders change only in those two query strings (titles, counts and needed-half ordering preserved), and Krenko / Atraxa / Talrand are byte-identical. node --check 6/6; meta == banner == CHANGELOG[0] == v6.96." },
