@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-04T06:15:25.002Z",
+  "updated": "2026-08-04T22:15:25.622Z",
   "deals": [
     {
       "t": "[CRG Games] 8% Back in Store Credit August Promo",
@@ -46,6 +46,13 @@
   ],
   "wire": [
     {
+      "t": "[SLD] Secret Lair Commander Deck: Hatsune Miku Full Decklist",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vfep8v/sld_secret_lair_commander_deck_hatsune_miku_full/",
+      "s": 0,
+      "c": 1785859690,
+      "f": ""
+    },
+    {
       "t": "[MBC] Whtz, the Bibliophile",
       "u": "https://www.reddit.com/r/magicTCG/comments/1veg2fj/mbc_whtz_the_bibliophile/",
       "s": 0,
@@ -78,13 +85,6 @@
       "u": "https://www.reddit.com/r/magicTCG/comments/1veelyd/mbc_grandmother_goby/",
       "s": 0,
       "c": 1785766394,
-      "f": ""
-    },
-    {
-      "t": "[MBC] Lyna, Veil of Vengeance",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1veggm4/mbc_lyna_veil_of_vengeance/",
-      "s": 0,
-      "c": 1785770496,
       "f": ""
     }
   ]
