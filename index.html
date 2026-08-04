@@ -2950,7 +2950,20 @@ const ATOMS = [
     { key: 'curses', w: 7, chip: 'Curses', title: 'Curses', sub: 'Hex the table', test: /\bcurses?\b/, q: '(t:curse OR o:"enchant player")', oq: 'o:curse', why: 'hangs Curses on players' },
     { key: 'topdeck', w: 5, chip: 'Top of library', title: 'Top of the Library', sub: 'The future, revealed', test: /top card of your library[^.]{0,50}(any time|play|cast)|(play|cast) [^.]{0,24}from the top of your library/, q: '(o:"top of your library" (o:play OR o:cast OR o:reveal) OR o:scry)', oq: 'o:"top of your library"', why: 'plays off the top' },
     { key: 'sagas', w: 6, chip: 'Sagas', title: 'Sagas', sub: 'Stories with chapters', test: /sagas? you control|chapter abilit|read ahead|lore counter/, q: '(t:saga)', oq: '(o:saga OR o:"lore counter")', why: 'cares about Sagas' },
-    { key: 'taxes', w: 5, chip: 'Taxes', title: 'Taxes & Friction', sub: 'Make them pay', test: /opponents? cast cost \{?\d\}? more|spells your opponents cast cost|unless (that player|its controller) pays/, q: '(o:"cost {1} more" OR o:"cost {2} more" OR o:"unless that player pays")', oq: 'o:"cost" o:"more"', why: 'taxes the table' },
+    // STAX/DENIAL family (Thalia, Heretic Cathar study 2026-08-04): the atom only read the
+    // COST-TAX half of the archetype ("spells your opponents cast cost {1} more", "unless that
+    // player pays"), so every commander whose lock is RESOURCE DENIAL rather than a mana tax was
+    // atomically INVISIBLE — Thalia HC ("creatures and nonbasic lands your opponents control
+    // enter tapped") rendered with ZERO atoms, NO game plan and only the 5 generic fallback
+    // shelves, even though her #1 EDHREC theme is Stax (38 decks) ahead of Hatebears (17) and
+    // Control (10). Added the four denial templates that define the rest of the family:
+    // enters-tapped, untap denial, activated-abilities-off, and can't-cast/search/play/activate
+    // (plus the "skips their draw step" step-skippers). Every arm is OPPONENT-SCOPED so a
+    // symmetrical self-drawback ("doesn't untap during your untap step", Mana Vault class) can
+    // never fire it. Paired with a new RAILS.taxes family so the shelf is a real package instead
+    // of one thin generic query. w5 is unchanged, so a stax commander who ALSO leads a typal or
+    // goad plan (Ojutai, Marisi) keeps that lead and gains Stax as a secondary shelf.
+    { key: 'taxes', w: 5, chip: 'Stax', title: 'Stax & Taxes', sub: 'Make them pay', test: /opponents? cast cost \{?\d\}? more|spells your opponents cast cost|unless (that player|its controller) pays|your opponents control enters? tapped|(don't|doesn't) untap during (their|its controller's|that player's|the next)|activated abilities of[^.]{0,60}opponents control can't be activated|opponents? can't (cast|search|play|activate)|can't cast more than one spell|opponents? skips? (their|his or her) (draw|untap|upkeep) step/, q: '(o:"cost {1} more" OR o:"cost {2} more" OR o:"unless that player pays" OR o:"your opponents control enter tapped" OR o:"opponents can\'t cast")', oq: 'o:"cost" o:"more"', why: 'makes the whole table pay to play — its static locks tax or outright deny what your opponents are allowed to do' },
     { key: 'fort', w: 5, chip: 'Pillowfort', title: 'Pillowfort', sub: 'Come at the king', test: /can't attack you( or planeswalkers you control)? unless|attack you unless [^.]{0,24}pays/, q: '(o:"attack you unless" OR o:"can\'t attack you")', oq: 'o:"attack you"', why: 'discourages attacks' },
     { key: 'scrysurv', w: 5, chip: 'Scry matters', title: 'Scry & Surveil Payoffs', sub: 'Knowledge is power', test: /whenever you (scry|surveil)/, q: '(o:scry OR o:surveil)', oq: '(o:scry OR o:surveil)', why: 'rewards looking ahead' },
     { key: 'extraturn', w: 6, chip: 'Extra turns', title: 'Extra Turns', sub: 'Time is a resource', test: /take (an|two) extra turns?|extra turn after this one/, q: '(o:"extra turn")', oq: 'o:"extra turn"', why: 'bends the turn structure' },
@@ -3104,8 +3117,18 @@ function extractAtoms(card) {
         .replace(/(have|has|gain|gains|grant|grants|gaining) lifelink/g, '$1 keptlnk')
         .replace(/\blifelink\b/g, ' ')
         .replace(/keptlnk/g, 'lifelink');
+    // TARGETED TAP-DOWN GUARD (Thalia, Heretic Cathar / stax study): "tap target X. It doesn't
+    // untap during its controller's next untap step" is ONE-SHOT combat removal, not a stax
+    // lock — the give-away is that it TARGETS. A real untap-denial lock is either a blanket
+    // static (Winter Orb: "lands don't untap during their controllers' untap steps") or is
+    // triggered by the OPPONENT'S own action (Vorinclex, Voice of Hunger: "whenever an opponent
+    // taps a land for mana, that land doesn't untap…"), and neither uses "target". Stripping the
+    // targeted clause pair keeps Lorthos the Tidemaker, Ojutai Soul of Winter and Ty Lee Chi
+    // Blocker out of the Stax family (they stay Combat Aggro / Dragon typal / Spellslinger)
+    // while Vorinclex and every blanket lockpiece still fire it.
+    const oStax = o.replace(/tap (?:up to \w+ )?target[^.]*\.\s*(?:it|that|those|they)[^.]{0,80}untap[^.]{0,80}\./g, ' ');
     ATOMS.forEach(a => {
-        const m = (a.key === 'tokens' ? oTok : a.key === 'lifegain' ? oLife : POLAR[a.key] ? oPol : o).match(a.test);
+        const m = (a.key === 'tokens' ? oTok : a.key === 'lifegain' ? oLife : a.key === 'taxes' ? oStax : POLAR[a.key] ? oPol : o).match(a.test);
         if (m) found.push({ atom: a, snippet: m[0] || '' });
     });
     const hasGear = found.some(f => f.atom.key === 'equipment' || f.atom.key === 'auras');
