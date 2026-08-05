@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v7.27 · 2026-08-05">
+<meta name="oracle-build" content="v7.29 · 2026-08-05">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1762,7 +1762,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v7.27 \u00B7 2026-08-05', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v7.29 \u00B7 2026-08-05', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3299,6 +3299,124 @@ const SHIELDS_UP_Q = '((' + ['(?:indestructible|hexproof)', '(?:protection from|
 // Enrage wants INDESTRUCTIBLE ONLY — see the family note above: hexproof and shroud do nothing
 // against your own untargeted sweeper, so this is grantQ on a single keyword, not SHIELDS_UP_Q.
 const ENRAGE_SURVIVE_Q = '(' + grantQ('indestructible') + ' -t:land)';
+// --- SHRINK / -1/-1 COUNTERS family (Massacre Girl, Known Killer STUDY 2026-08-05) ---------------
+// THE DEFECT THIS CLOSES IS COUNTER-TYPE BLINDNESS, and it is an engine-wide one. Every counters
+// read in the app was either literally "+1/+1" (`counters`, w3) or deliberately TYPE-AGNOSTIC
+// (`countersgen`, w5, "any counter, more of it") — and BOTH map to the SAME game plan,
+// ARCHETYPES.countersgen = "+1/+1 Counters … go tall". So the format's -1/-1 commanders, whose
+// whole deck is the OPPOSITE (go WIDE and shrink the other side of the table to nothing), were
+// dealt a go-tall Hardened-Scales/Doubling-Season read. Measured over all 3,348 commander-legal
+// commanders through the deployed build's own extractAtoms: Hapatra, Toxrill, The Scorpion God,
+// The Reaper King No More, Volrath and Skeleton Ship all LED with `countersgen` and rendered
+// "+1/+1 Counters — go tall"; Massacre Girl, Known Killer rendered ZERO atoms and an entirely
+// empty report. EDHREC says -1/-1 Counters is the #1 theme for six of those seven, and #2 for
+// Yawgmoth: Hapatra 1275 / Massacre Girl KK 993 / Scorpion God 570 / Reaper King 556 / Toxrill
+// 522 / Yawgmoth 492 / Volrath 365 — ~39,000 decks reading a plan that is precisely backwards.
+//
+// WHY MASSACRE GIRL RENDERED EMPTY, which is the more instructive half: her only build-around
+// line is "Creatures you control have wither", and wither's entire contract ("They deal damage
+// to creatures in the form of -1/-1 counters") lives in REMINDER TEXT, which extractAtoms strips
+// at the top of the function. Her one remaining clause is opponent-scoped and the polarity layer
+// strips that too. So the engine read a menace body with no text at all. `wither` is therefore a
+// FIRST-CLASS arm of the detector below, not an afterthought.
+//
+// NEGATION FIRST, the same idiom as the graveyard-BYPASS and ward-cost strips in extractAtoms: a
+// clause that FORBIDS the counters is anti-text, not a theme. Melira, Sylvok Outcast ("Creatures
+// you control can't have -1/-1 counters put on them") is the whole census of it and she must stay
+// poison-led (EDHREC Infect 25 is her #1); Solemnity and Vizier of Remedies are the same class on
+// the card side and are named as traps rather than filtered, since they are real combo pieces.
+const MINUS_NEGATION_RE = /can't have [^.]{0,50}counters? put on[^.]*\.?/g;
+// Four arms, each measured against all 3,348 commanders (see the worklog row for the census):
+// (1) the counter by name, (2) wither, (4) blight — see below — and (3) a STATIC per-counter
+// shrink — Toxrill's slime counter
+// is a -1/-1 counter under another name ("Creatures you don't control get -1/-1 for each slime
+// counter on them"), and scoping arm 3 to "for each … counter" is what keeps the ANTHEM class out.
+// That guard is load-bearing: a bare /gets? -\d\/-\d/ arm also fires on Elesh Norn, Ascendant
+// Evincar, Crovax and Veldrane, whose -X/-X is the back half of a TEAM ANTHEM (they pump their own
+// board in the same sentence) — two of which are studied ANTHEM commanders in STUDY_DB already.
+// Arm (4) is BLIGHT — "blight N" means "put N -1/-1 counters on a creature you control", and like
+// wither its entire contract is reminder text, so it is invisible to every other read in the app.
+// Matched as `blights? \d` and NOT as a bare word, deliberately: `\bblight\b` also matches the NAME
+// Skithiryx, the BLIGHT Dragon, which appears in his own oracle text. Census over all 3,348
+// commanders: exactly three — High Perfect Morcant, Auntie Ool Cursewretch, Grub Storied Matriarch.
+const MINUS_COUNTER_RE = /-1\/-1 counters?|\bwither\b|\bblights? \d|gets? -[0-9x]+\/-[1-9x] for each[^.]{0,40}counter/;
+// Family order test (see RAILS.minuscounters): eTest = the commander already SUPPLIES the shrink,
+// pTest = the commander IS the payoff. Massacre Girl grants wither, so she is supply-side and the
+// engine deals her PAYOFFS first — which is EDHREC's own high-synergy column for her, in order:
+// Nest of Scarabs 74% / Blowfly Infestation 71% / Necroskitter 70%.
+const MINUS_SUPPLY_RE = /put[^.]{0,26}-1\/-1 counters?|\bwither\b|\bblights? \d|creatures?[^.]{0,44}gets? -[0-9x]+\/-[1-9x]/;
+const MINUS_PAYOFF_RE = /whenever[^.]{0,70}-1\/-1 counters?|with (?:a |one or more )?-1\/-1 counters? on|-1\/-1 counters? on it dies/;
+// Queries live-QA'd on Scryfall 2026-08-05, EDHREC-sorted, against id<=B / id<=BG / id<=BR / id<=UB.
+// SUPPLY (450 in mono-B): Toxic Deluge, The Meathook Massacre, Massacre Wurm, Tragic Slip, Defile,
+// Archfiend of Ifnir, Decree of Pain, Contagion Clasp, Doomwake Giant, Black Sun's Zenith — which
+// is Massacre Girl's own top-cards column (Tragic Slip 59%, Black Sun's Zenith 68%, Massacre Wurm
+// 67%, Black Sun's Twilight 55%, Defile 42%). Single-target -N/-N is deliberately INCLUDED here
+// and nowhere else in the app: with wither or a counter source on board the shrink STICKS, which
+// is exactly why Tragic Slip is her single highest-played card.
+// The [1-9x] toughness class (never -N/-0) keeps Silumgar-style "-1/-0" combat taxes out.
+// The blight arm adds exactly 10 cards in mono-black (Sinister Gnarlbark, Blighted Blackthorn,
+// Requiting Hex, Gutsplitter Gang …) and changes nothing at the front of the shelf; it is here so
+// the pool speaks the same four dialects the detector does.
+const MINUS_SUPPLY_Q = '(o:/-1\\/-1 counters? on/ OR o:/gets? -[0-9x]+\\/-[1-9x]/ OR keyword:wither OR o:/blights? [0-9x]/)';
+// PAYOFF (19 in mono-B, 29 in BG): Necroskitter, Blowfly Infestation, Nest of Scarabs, Carnifex
+// Demon, Spitting Dilophosaurus, Crumbling Ashes, Grim Poppet — and Hapatra + Obelisk Spider once
+// green is legal. Deliberately NOT keyword:persist: persist bodies are fodder, they outrank the
+// real payoffs on edhrec order, and measured they pushed Nest of Scarabs and Blowfly Infestation
+// off the front of the shelf.
+//
+// v7.29 (Massacre Girl, Known Killer VERIFY) — ROLE BLINDNESS. The v7.28 study fixed counter-TYPE
+// blindness at the atom layer (+1/+1 vs -1/-1) and then shipped counter-ROLE blindness in its own
+// payoff query: the arms below matched the NOUN "-1/-1 counter" wherever it appeared and could not
+// tell a card that READS the counters (a payoff) from one that PAYS them (a printed drawback) or
+// one that TAKES THEM OFF (the archetype's exact opposite). Measured card-by-card over the shipped
+// query, 8 of the 27 cards in mono-black were wrong, and the very first card dealt was one of them:
+//   * DRAWBACK, not payoff — the counter is a COST the card pays to be undercosted, and it lands on
+//     YOUR creature: PERSIST ("...to the battlefield with a -1/-1 counter on it" — dealt at slot 0,
+//     ahead of all three of EDHREC's real top cards, and note the family comment above had already
+//     reasoned persist bodies off the shelf and excluded keyword:persist, only for the SORCERY named
+//     Persist to walk back in through this arm), Aberrant Return, Canker Abomination, Exemplar of
+//     Strength, Noxious Hatchling, Grief Tyrant, Magmaroth and the rest of the enters-with cycle.
+//   * ANTI-SYNERGY — cards whose whole function is REMOVING the counters, i.e. healing the creature
+//     this deck just shrank: Chainbreaker ("{3},{T}: Remove a -1/-1 counter from target creature"),
+//     Shed Weakness ("+2/+2 ... remove a -1/-1 counter from it"), Heirloom Auntie, Creakwood
+//     Safewright, Gnarlbark Elm, Moonshadow — plus Shambling Swarm, whose counters are removed again
+//     at the next end step, so it is the one card in the pool that promises a shrink that WEARS OFF.
+// Two structural repairs, both of which are about ROLE and neither of which is about this commander:
+//   (1) COST-vs-EFFECT IS THE COLON. "Remove a -1/-1 counter" before a colon is an activated-ability
+//       COST — the card is CONSUMING the resource this deck manufactures (Grim Poppet, Carnifex
+//       Demon, the whole "remove a counter from me: put one on them" engine). After the colon, or in
+//       a triggered ability, the same words are an EFFECT that UNDOES the deck. So the arm is now
+//       scoped to the cost position. This kept both real engine cards and dropped all six healers.
+//   (2) "ENTERS WITH" / "BATTLEFIELD WITH" IS SELF-INFLICTED SUPPLY, NEVER DEMAND. It is negated
+//       INSIDE the selector branch (Scryfall negation is conjunctive, so a top-level -o: would have
+//       taken Grim Poppet and Carnifex Demon with it) — they come back through the cost arm, which
+//       is precisely the point: a card that enters with counters AND spends them is an engine; one
+//       that only enters with them is paying rent.
+// Result, measured across id<=B / BG / BR / UB: 27→19, 43→29, 35→23, 33→21 — STRICTLY SUBTRACTIVE,
+// zero cards added in any identity — and the shelf now opens on Necroskitter / Blowfly Infestation /
+// Nest of Scarabs, which is EDHREC's own high-synergy top three for Massacre Girl (70/71/74%).
+const MINUS_PAYOFF_Q = '(o:"one or more -1/-1 counters" OR o:/remove (a|two|three|x|that many) -1\\/-1 counters? from [^:.]{0,26}:/ OR ((o:/-1\\/-1 counters? on (it|them|that)/ OR o:/with (a |one or more )?-1\\/-1 counters? on/) -o:/(enters|battlefield) with [^.]{0,26}-1\\/-1/))';
+// AMPLIFIER (36 in mono-B): Karn's Bastion, Nesting Grounds, Vraska Betrayal's Sting, Staff of
+// Compleation, Contagion Clasp, Contagion Engine, Power Conduit. Proliferate is the ONE amplifier
+// that is polarity-neutral — it copies whatever counter is already there — which is why this shelf
+// exists instead of letting the proliferate FAMILY fire (its own Counter Fuel rail seeds +1/+1,
+// charge and poison counters and is dead cardboard in a -1/-1 deck). Counter-MOVERS are included
+// for the same reason they matter here and not in a go-tall deck: a -1/-1 counter you move off
+// your own creature is removal you already paid for.
+//
+// v7.29 (Massacre Girl VERIFY) — THE MOVER ARM ONLY WORKED BY ACCIDENT, AND THE ACCIDENT HAD A
+// HOLE. `moves? (a|one|…) counters?` has no leading word boundary, so what it actually matches in
+// the wild is "reMOVE A COUNTER" — which is how Power Conduit (named in this rail's own `why`) ever
+// reached the shelf. That accident only fires when the counter is UNTYPED: the moment the card
+// names the counter, as every card in THIS archetype does, "remove a -1/-1 counter … put a -1/-1
+// counter on" no longer matches, and the genuine counter-MOVERS fell through. They were reaching
+// the report only by leaking into the PAYOFF rail — so repair (2) above would have silently deleted
+// DECIMATOR BEETLE, a top-20 Hapatra card, from the app entirely. The remove-here/put-there template
+// is therefore made an EXPLICIT arm rather than left to the substring accident. Measured: adds
+// exactly Carnifex Demon + Grim Poppet in mono-B (36→38) and those two plus Decimator Beetle in BG
+// (63→66), nothing else, in any identity — and every one of the three is literally a counter-mover,
+// so each is correctly dealt by BOTH this rail and the payoff rail it re-enters through the cost arm.
+const MINUS_AMP_Q = '(o:proliferate OR o:/moves? (a|one|two|x|any number of|that many) counters?/ OR o:/remove (a|one|two|three|x|that many) -1\\/-1 counters? from [^.]{0,44}put/ OR o:"twice that many counters" OR o:"an additional -1/-1 counter")';
 const ATOMS = [
     // --- copy family, split by realization (ledger CS-0001/0002/0011/0046:
     //     token copies re-trigger "enters"; in-place copies never do;
@@ -3364,7 +3482,11 @@ const ATOMS = [
     { key: 'reanimate', w: 6, chip: 'Reanimator', title: 'Reanimation', sub: 'Raise the dead', test: /from (your|a) graveyard (on)?to the battlefield|creature card (in|from) your graveyard[^\n]{0,110}return (it|that card) to the battlefield/, q: 'o:"graveyard to the battlefield"', oq: 'o:"graveyard to the battlefield"', why: 'reanimates from the graveyard' },
     // Meren study: "experience counter" moved out of this test into its own atom —
     // experience commanders don't proliferate and were getting amplifier copy saying they do.
-    { key: 'proliferate', w: 6, chip: 'Proliferate', title: 'Proliferate & Counters', sub: 'More of everything', test: /proliferate/, q: '(o:proliferate OR o:"counter on")', oq: 'o:proliferate', why: 'proliferates' },
+    // v7.28 — suppressed by `minuscounters` for the reason spelled out on that atom: the proliferate
+    // FAMILY's own Counter Fuel rail seeds +1/+1 / charge / poison counters, which is dead cardboard
+    // in a -1/-1 deck, while proliferate the EFFECT is already dealt (correctly scoped) by the shrink
+    // family's amplifier shelf. Yawgmoth, Thran Physician is the whole census of the overlap.
+    { key: 'proliferate', w: 6, chip: 'Proliferate', title: 'Proliferate & Counters', sub: 'More of everything', sup: ['minuscounters'], test: /proliferate/, q: '(o:proliferate OR o:"counter on")', oq: 'o:proliferate', why: 'proliferates' },
     { key: 'energy', w: 6, chip: 'Energy', title: 'Energy Engine', sub: 'Charge it up', test: /\{e\}|energy counter/, q: '(o:"{e}" OR o:"energy counter")', oq: '(o:"{e}" OR o:"energy counter")', why: 'runs on Energy' },
     { key: 'devotion', w: 5, chip: 'Devotion', title: 'Devotion Payoffs', sub: 'Pips are power', test: /devotion to/, q: 'o:\"devotion to\"', oq: 'o:\"devotion to\"', why: 'counts colored pips \u2014 pack heavy-pip permanents and devotion payoffs' },
     { key: 'mutate', w: 6, chip: 'Mutate', title: 'Mutate Pile', sub: 'One creature, many souls', test: /\bmutates?\b/, q: 'o:mutate', oq: 'o:mutate', why: 'mutates \u2014 stack abilities on one body' },
@@ -3402,7 +3524,20 @@ const ATOMS = [
     { key: 'exalted', w: 6, chip: 'Attacks alone', title: 'Attack Alone Payoffs', sub: 'One perfect strike', test: /attacks alone|exalted/, q: '(keyword:exalted OR o:"attacks alone")', oq: '(keyword:exalted OR o:"attacks alone")', why: 'rewards attacking with exactly one creature' },
     { key: 'theft', w: 5, chip: 'Theft', title: 'Steal & Sacrifice', sub: 'Yours now', test: /you (gain|get) control of|gains? control of (target|enchanted|up to|that creature|it until)/, q: '(o:"gain control of target" OR o:"sacrifice a creature:")', oq: 'o:"gain control of"', why: 'takes their stuff \u2014 sac outlets make borrowed things permanent' },
     { key: 'equipment', w: 5, chip: 'Equipment', title: 'Equipment & Gear', sub: 'Suit up', test: /\bequip(ped|ment)?\b|attach/, sup: ['curses'], q: '(t:equipment OR o:equipped)', oq: '(o:equipment OR o:equipped OR o:equip)', why: 'wants Equipment attached' },
-    { key: 'auras', w: 5, chip: 'Auras', title: 'Auras & Enchantress', sub: 'Blessings stack', test: /\bauras?\b|enchanted creature/, sup: ['curses'], q: '(t:aura OR o:"enchanted creature")', oq: '(o:aura OR o:"enchanted creature")', why: 'builds around Auras' },
+    // v7.30 (Koll, the Forgemaster STUDY) — "ENCHANTED OR EQUIPPED" IS AURA WORDING AND THE ATOM
+    // COULD NOT SEE IT. The test demanded either the literal word "aura" or the singular subject
+    // "enchanted creature". But the standard printed templating for "has an Aura OR an Equipment
+    // attached" is the compound phrase "enchanted or equipped", which contains neither — so a
+    // commander whose whole card is about wearing things read as EQUIPMENT-ONLY and was dealt no
+    // Aura shelf at all. On Koll that is not a rounding error: EDHREC's #1 card for him is OPEN
+    // THE ARMORY, an *Aura*-or-Equipment tutor, and his most-played draw engine is SRAM, SENIOR
+    // EDIFICER, which draws off Aura casts — the engine literally could not spell the word.
+    // Measured live: `legal:commander is:commander (o:"enchanted or equipped" OR o:"equipped or
+    // enchanted")` is 5 commanders, and adding `-o:aura -o:"enchanted creature"` leaves exactly
+    // TWO — KOLL and REYAV, MASTER SMITH — so this widening is provably a two-commander gain and
+    // a zero-commander change everywhere else (Halvar, Dogmeat and Cass already print "Aura" and
+    // already fired). Both orders of the compound are accepted because both are printed.
+    { key: 'auras', w: 5, chip: 'Auras', title: 'Auras & Enchantress', sub: 'Blessings stack', test: /\bauras?\b|enchanted creature|enchanted or equipped|equipped or enchanted/, sup: ['curses'], q: '(t:aura OR o:"enchanted creature")', oq: '(o:aura OR o:"enchanted creature")', why: 'builds around Auras' },
     // VEHICLES ARCHETYPE gap (Kotori, Pilot Prodigy study 2026-08-01): the bare-word test fired on
     // ANY "vehicle"/"crew" mention, so an enchantress/equipment commander that draws off casting
     // "Aura, Equipment, or Vehicle spell" (Sram, Senior Edificer) was mislabeled with vehicles rails.
@@ -3567,7 +3702,15 @@ const ATOMS = [
     { key: 'discover', w: 5, chip: 'Discover', title: 'Discover & Impulse', sub: 'Free casts off the top', test: /\bdiscover \d|\bdiscover x\b/, q: '(o:discover)', oq: 'o:discover', why: 'discovers off the top' },
     { key: 'xspells', w: 5, chip: 'Big X', title: 'X Spells & Big Mana', sub: 'Go over the top', test: /\{x\}/, q: '(m:{X})', oq: 'o:"{x}"', why: 'scales with big mana' },
     { key: 'power4', w: 5, chip: 'Big power', title: 'Power Matters', sub: 'Bigger is better', test: /power [3-9] or greater/, q: '(o:"power 4 or greater" OR (t:creature pow>=4))', oq: 'o:"power 4 or greater"', why: 'rewards high power' },
-    { key: 'countersgen', w: 5, chip: 'Counters', title: 'Counter Engine', sub: 'Any counter, more of it', sup: ['counters', 'proliferate'], test: /counters? on |counters? from among|remove [^.]{0,26}counter/, q: '(o:proliferate OR (o:"put a" o:"counter on"))', oq: 'o:"counter on"', why: 'runs on counters \u2014 proliferate scales every source' },
+    { key: 'countersgen', w: 5, chip: 'Counters', title: 'Counter Engine', sub: 'Any counter, more of it', sup: ['counters', 'proliferate', 'minuscounters'], test: /counters? on |counters? from among|remove [^.]{0,26}counter/, q: '(o:proliferate OR (o:"put a" o:"counter on"))', oq: 'o:"counter on"', why: 'runs on counters \u2014 proliferate scales every source' },
+    // v7.28 (Massacre Girl, Known Killer STUDY) \u2014 THE MINUS DIRECTION OF THE COUNTERS FAMILY.
+    // See MINUS_COUNTER_RE above for the detector, the negation guard and the full 3,348-commander
+    // census. Weight 7 so it outranks `countersgen` (5) and `proliferate` (6) \u2014 the two atoms that
+    // were labelling these decks "+1/+1 Counters \u2026 go tall" \u2014 and it SUPPRESSES both of them (via
+    // their own `sup` lists) rather than merely outsorting them, because a -1/-1 deck must not be
+    // dealt a go-tall counter shelf at ALL. It sits BELOW `poison` (7) in ATOMS order, and the sort
+    // is stable, so an infect/toxic commander that also touches -1/-1 counters stays poison-led.
+    { key: 'minuscounters', w: 7, chip: '-1/-1 counters', title: '-1/-1 Counters', sub: 'Shrink their board to nothing', test: MINUS_COUNTER_RE, q: MINUS_SUPPLY_Q, oq: 'o:"-1/-1 counter"', why: 'wins by putting -1/-1 counters on the OTHER side of the table \u2014 a counter that shrinks is removal that stays removed, and the same counter is a payoff trigger' },
     // ENRAGE / self-damage (Indoraptor study 2026-08-05). See ENRAGE_TRIGGER_RE above for the
     // census, the Borborygmos precision case and the Kazarov polarity guard. w5 is chosen by
     // measurement, not taste: it clears every generic that was mislabelling the family (w3
@@ -4239,8 +4382,13 @@ function extractAtoms(card) {
     // single-target pumps. Clause-scoped, so a commander with a static anthem in one line and a
     // combat trick in another keeps the atom (Raggadragga, Balthor the Stout).
     const oAnth = o.replace(ANTHEM_TEMP_RE, ' ').replace(ANTHEM_TARGET_RE, ' ');
+    // v7.28 (Massacre Girl, Known Killer study) — MINUS-COUNTER NEGATION variant, the same
+    // strip-then-read idiom as oStax / oLifeEng / oAnth above: a clause that FORBIDS the counters
+    // is anti-text, not a theme. See MINUS_NEGATION_RE. Melira, Sylvok Outcast is the entire
+    // census of it across all 3,348 commander-legal commanders, and she must stay poison-led.
+    const oMinus = o.replace(MINUS_NEGATION_RE, ' ');
     ATOMS.forEach(a => {
-        const m = (a.key === 'tokens' ? oTok : a.key === 'lifegain' ? oLifeEng : (a.key === 'enchantments' || a.key === 'artifacts') ? oNoun : a.key === 'taxes' ? oStax : a.key === 'anthem' ? oAnth : POLAR[a.key] ? oPol : o).match(a.test);
+        const m = (a.key === 'tokens' ? oTok : a.key === 'lifegain' ? oLifeEng : (a.key === 'enchantments' || a.key === 'artifacts') ? oNoun : a.key === 'taxes' ? oStax : a.key === 'anthem' ? oAnth : a.key === 'minuscounters' ? oMinus : POLAR[a.key] ? oPol : o).match(a.test);
         if (m) found.push({ atom: a, snippet: m[0] || '' });
     });
     // v7.06 (Charix study) — apply the WEAK basic-type land count demotion described above.
@@ -4468,6 +4616,11 @@ STUDY_DB["e32c0de7-132d-4a39-85fb-da0ed1132878"] = {"insight": "Ascendant Evinca
 // this entry adds Halvar's own read. Keyed by oracle_id, appended as a statement so the STUDY_DB
 // literal above stays untouched.
 STUDY_DB["acfc3e07-757f-4ccf-a65e-bee07ce87f40"] = {"insight": "Halvar, God of Battle is a mono-white EQUIPMENT/AURA VOLTRON commander, and he is really two cards stapled together. The front face is a LORD with a condition — 'creatures you control that are enchanted or equipped have double strike' — so every point of power you stack on a suited body counts twice, and 21 commander damage arrives in two connections rather than four. The second ability is the engine that makes that cheap: at the beginning of EACH combat you may move an Aura or Equipment that is already attached to a creature you control onto another creature you control, for free, every turn. That turns equip costs into a one-time tax, lets you re-suit a fresh body the turn after a removal spell, and lets one protective Aura float to whichever creature is being targeted. The back face, Sword of the Realms, is the deck's insurance policy: equipped creature gets +2/+0 and vigilance, and when it dies it returns to its owner's hand instead of the graveyard — so the loaded threat comes back. Build it as a small number of well-suited bodies plus a deep protection package, not a board of vanilla creatures.", "traps": ["He is NOT an Angel, Warrior or God typal deck. The God supertype is flavour — nothing in either face cares about creature types, and typal lords do nothing here.", "He is NOT a go-wide anthem commander. Double strike is granted ONLY to creatures that are enchanted or equipped, so a wide board of unsuited tokens gets nothing from him; anthems and mass token-makers are a trap. Want a FEW bodies you can actually suit up.", "His attach ability only moves gear that is ALREADY ATTACHED to a creature you control — it cannot pull an unattached Equipment off the battlefield onto a body. You still need real equip costs, attach-on-enter gear, or an Ardenn/Brass Squire effect for the FIRST hookup; the free movement is for re-pointing, not for deploying.", "Auras and Equipment are not interchangeable for him even though his ability moves both. An Aura on a creature that dies is a two-for-one and cannot be moved in response to removal (it is attached, but the creature is gone before the beginning of combat comes around); Equipment survives. Lean gear-heavy and treat Auras as payoffs you only play behind protection or totem armor.", "Halvar himself has no hexproof, no ward and no evasion — he is a 4/4 for four in the colour with the fewest ways to refill. The deck's scarcest resource is PROTECTION, not more Equipment: instant-speed answers (Teferi's Protection, Flawless Maneuver, Akroma's Will, Mother of Runes) matter more than the eleventh sword."]};
+// v7.28 STUDY (Massacre Girl, Known Killer) — the -1/-1 counters family. See MINUS_COUNTER_RE
+// and RAILS.minuscounters above for the detector, the 3,348-commander census and the live-QA'd
+// queries; this entry carries the half that cannot live in a query: WHY the +1/+1 amplifiers are
+// blank here, and why her draw trigger re-prices the whole removal suite.
+STUDY_DB["ccb39f4a-2684-4eb7-9066-aad81ae08962"] = {"insight":"Massacre Girl, Known Killer is a MONO-BLACK -1/-1 COUNTERS deck — the archetype that points counters at the OTHER side of the table — and until this run Oracle read her as NOTHING AT ALL: zero atoms, and therefore NO GAME PLAN on her Scouting Report, just two shelves a fallback transform had guessed at from her reminder text plus the five generic Ramp / Card Advantage / Removal / Board Wipes / Tutors staples every commander gets. The reason is instructive: her one build-around line is \"Creatures you control have wither\", and wither's entire contract lives in REMINDER TEXT (\"They deal damage to creatures in the form of -1/-1 counters\") which the engine strips before any atom reads it, while her only other clause is opponent-scoped and is removed by the polarity layer. So the atom layer saw a menace body with no text. What wither actually does is convert every point of combat damage your team deals to a CREATURE into a permanent -1/-1 counter: your blocks stop being trades and start being executions, a 1/1 that chump-blocks shrinks the attacker forever, and every cheap -N/-N spell you already play leaves a mark that never wears off. EDHREC agrees without qualification — 6,042 decks, -1/-1 Counters 993 ahead of Control 149 / Aristocrats 93 / Infect 88 — and her highest-synergy cards are exactly the two halves of the engine: the payoffs that read the counters (Nest of Scarabs 74%, Blowfly Infestation 71%, Necroskitter 70%) and the sources that supply them (Black Sun's Zenith 68%, Massacre Wurm 67%, Slaughter Specialist 66%, Midnight Banshee 64%, Drown in Ichor 63%, Black Sun's Twilight 55%), with Tragic Slip her single most-played card at 59% synergy. Build her as cheap interaction that SHRINKS rather than destroys, a payoff shell that turns each counter into bodies and cards, and proliferate to re-kill the table off counters you already paid for.","traps":["THE +1/+1 REFLEX IS THE WHOLE TRAP, AND IT IS THE ONE THE APP ITSELF FELL INTO. A counters commander looks like a counters commander, so the go-tall amplifiers get auto-included — and almost none of them work. Hardened Scales, Branching Evolution and Conclave Mentor read \"+1/+1\" literally and are blank. Doubling Season and Primal Vigor only double counters put on permanents YOU control, and every counter in this deck goes on a creature an OPPONENT controls, so they are blank too. The amplifier that actually works is PROLIFERATE (Contagion Engine, Contagion Clasp, Karn's Bastion, Flux Channeler), because it copies whatever counter is already there and does not care about the sign; Vorinclex, Monstrous Raider is the one true doubler, since it doubles counters you put on ANY permanent.","HER DRAW TRIGGER ONLY PAYS WHEN THE CREATURE DIED OF THE SHRINK. \"Whenever a creature an opponent controls dies, IF ITS TOUGHNESS WAS LESS THAN 1\" means a Swords to Plowshares, a Go for the Throat or a sacrifice edict draws you nothing at all — the body has to have been shrunk to zero toughness. That single clause re-prices your entire interaction suite: Tragic Slip, Defile, Dismember, Black Sun's Zenith, Toxic Deluge and Drown in Ichor are removal AND card draw AND counter-payoff triggers, while exile- and destroy-based removal is just removal. It is why her most-played card is a one-mana -1/-1 spell and not a one-mana exile spell.","SOLEMNITY, MELIRA AND VIZIER OF REMEDIES ARE OFF SWITCHES, NOT COMBO PIECES, IN THIS SEAT. They are famous cards in -1/-1 SPACE because they break persist, but each one stops -1/-1 counters from being placed — Solemnity blanks the deck outright, and Vizier of Remedies subtracts one from every placement, which turns wither's single-point hits into nothing. Recognise the difference between a card that is ABOUT -1/-1 counters and a card that PREVENTS them. For the same reason, an opponent's +1/+1-counter creature is armoured against you: the two counter types annihilate as a state-based action, so a board of Hardened-Scales-style permanents eats your counters one for one.","WITHER IS COMBAT DAMAGE TO CREATURES ONLY — it changes nothing about the damage your team deals to PLAYERS, so it is not an evasion package and it is not a Voltron plan. Menace on her own body is there to keep the wither carrier connecting, not to build 21 commander damage. The corollary is that BLOCKING is now an offensive action: with wither on the whole team, holding back a cheap deathtouch or high-toughness body is a repeatable, mana-free way to put permanent counters on the biggest thing the table can present.","THE GRAVEYARD IS PART OF THE PAYOFF, SO DO NOT EXILE THE BODIES YOU KILL. Necroskitter — her third-highest-synergy card — returns creatures that died with a -1/-1 counter on them to the battlefield UNDER YOUR CONTROL, which turns every shrink you cast into a Bribery. Mass exile (Rest in Peace, Farewell, Merciless Eviction) and exile-based spot removal cost you that half of the engine; where you have the choice, kill by shrinking and leave the corpses where you can pick them up."]};
 const ROLE_LABEL = { enabler: 'Enabler', payoff: 'Payoff', amplifier: 'Amplifier', gate: 'Gate', staple: 'Staple', synergy: 'Synergy' };
 // ============================================================
 // ENGINE v3 — role-based rails (from the commander study ledger).
@@ -5156,6 +5309,26 @@ const RAILS = {
             { role: 'enabler', title: 'Token Producers', sub: 'Raise the army', q: '(o:create o:token -o:"controller creates" -o:"opponent creates" -o:"opponents create" -o:"that player creates")', why: 'ways to flood the board \u2014 yours, not theirs' },
             { role: 'payoff', title: 'Go-Wide Payoffs', sub: 'Cash in the crowd', q: '((o:"creatures you control get" o:"+") OR o:"for each creature you control" OR o:/whenever (a|another|one or more) creatures? you control enters?/ OR (o:"whenever a creature you control dies" (o:lose OR o:gain OR o:draw)))', why: 'cards that CASH IN a wide board \u2014 anthems and overruns, per-body enter triggers (Impact Tremors class), death drains (Blood Artist class), and count-the-crowd draw (Shamanic Revelation class); token MAKERS live in the enabler rail, not here' },
             { role: 'amplifier', title: 'Token Doublers', sub: 'Two for one', q: '(' + TOKEN_MULT_VERB + ' (o:token OR o:counter))', why: 'Doubling Season, Parallel Lives, and Primal Vigor double every mint \u2014 Ojer Taq triples it \u2014 and for a commander whose counters BECOME tokens they multiply both halves of the engine. The token/counter qualifier keeps rival "twice that many" doublers (Bruvac mills) out' }
+        ]
+    },
+    // -1/-1 COUNTERS family (Massacre Girl, Known Killer STUDY 2026-08-05). The mirror of the
+    // `counters` family directly below, and deliberately a SEPARATE family rather than a per-rail
+    // `test` inside it: the two directions share a noun and share nothing else. A +1/+1 deck goes
+    // TALL and its amplifiers are Hardened Scales / Branching Evolution / Doubling Season; a -1/-1
+    // deck points the counters at the OTHER side of the table, so its "amplifier" is proliferate and
+    // its "payoff" is a board of dead creatures. See MINUS_COUNTER_RE for the census and the queries.
+    // eTest \u2014 the commander already SUPPLIES the shrink (it puts the counters, or it grants wither),
+    // so deal the payoffs first. pTest \u2014 the commander IS the payoff, so deal the sources first.
+    // Massacre Girl KK is pure supply (wither) -> payoff-first, which reproduces EDHREC's own
+    // high-synergy order for her. Hapatra and The Scorpion God are BOTH halves -> the family's
+    // default (enabler-first), which is right: their payoff is already on the command zone.
+    minuscounters: {
+        eTest: MINUS_SUPPLY_RE,
+        pTest: MINUS_PAYOFF_RE,
+        rails: [
+            { role: 'enabler', title: 'Shrink the Board', sub: 'Put the counters on them', q: MINUS_SUPPLY_Q, why: 'the counters have to come from somewhere, and in this archetype the removal IS the engine \u2014 mass shrink you can rebuild from (Black Sun\u2019s Zenith, Toxic Deluge, Decree of Pain, Massacre Wurm), repeatable counter sources (Contagion Clasp, Grim Poppet, Skinrender) and the cheap targeted -N/-N that every other deck plays as filler (Tragic Slip, Defile, Dismember) but that here leaves a permanent counter behind' },
+            { role: 'payoff', title: 'Read the Rot', sub: 'Cards that see the counters', q: MINUS_PAYOFF_Q, why: 'every -1/-1 counter should buy something on the way down \u2014 Nest of Scarabs and Blowfly Infestation turn each placement into bodies and more counters, Necroskitter steals the creatures it kills, and Crumbling Ashes and Grim Poppet convert a stalled board into repeatable removal' },
+            { role: 'amplifier', title: 'Proliferate & Move the Rot', sub: 'One counter, again and again', q: MINUS_AMP_Q, why: 'proliferate is the one counter amplifier that does not care WHICH counter it is copying, so it is worth far more here than the go-tall doublers a +1/+1 deck runs \u2014 Contagion Engine, Contagion Clasp, Karn\u2019s Bastion and Flux Channeler re-kill the whole table off counters you already paid for, and counter-MOVERS (Nesting Grounds, Power Conduit) let you shovel a -1/-1 counter off your own creature and onto theirs' }
         ]
     },
     counters: {
@@ -5873,6 +6046,12 @@ const ARCHETYPES = {
     tokens: { name: 'Go-Wide Tokens', win: 'overwhelm with anthems and mass pump' },
     counters: { name: '+1/+1 Counters', win: 'go tall \u2014 a few huge threats plus proliferate' },
     countersgen: { name: '+1/+1 Counters', win: 'go tall \u2014 a few huge threats plus proliferate' },
+    // v7.28 (Massacre Girl, Known Killer study) \u2014 the ATOM->ARCHETYPES entry is not optional
+    // book-keeping here, it is the POINT: the two entries directly above are what made every
+    // -1/-1 commander in the format render "+1/+1 Counters \u2014 go tall", which is the exact
+    // opposite of the deck. Same read-gap class as ring/anthem/monarch/exalted before it, except
+    // that leaving it blank would have been the SECOND failure rather than the first.
+    minuscounters: { name: '-1/-1 Counters', win: 'point the counters at the OTHER side of the table \u2014 shrink every creature your opponents play until the board is empty, and cash each counter you place for cards, bodies and their creatures' },
     selftap: { name: 'Tap Engine', win: 'tap the commander on demand, untap it, and tap it again \u2014 every tap pays' },
     voltron: { name: 'Voltron', win: '21 commander damage from one protected attacker' },
     equipment: { name: 'Voltron', win: '21 commander damage from one protected attacker' },
@@ -6220,6 +6399,35 @@ function reframeYardRail(out, patch) {
     }
     return true;
 }
+// v7.30 (Koll, the Forgemaster STUDY) — THE INTERVENING-IF READER, LIFTED TO MODULE SCOPE.
+// v7.29 proved the point on the OPPONENT side (Massacre Girl's "…dies, IF ITS TOUGHNESS WAS LESS
+// THAN 1" was being dealt edicts and Swords, which pay her nothing) but shipped the reader as a
+// pair of local consts INSIDE `if (P.oppDeath)`, so it could only ever see the two commanders in
+// that branch that carry a condition. The clause is not an opponent-side phenomenon: of the 14
+// commanders whose text matches `dies, if `, the majority gate an OWN-creature death, and their
+// conditions name mechanics the engine already has whole families for — KOLL and CASS pay only
+// "if it was ENCHANTED OR EQUIPPED", JASON BRIGHT only if the body's power differed from its base
+// power, DRIZZT only if its power exceeded his. The condition is not decoration; it is the
+// deckbuilding constraint, and reading it in one place lets every death-shaped family ask the
+// same question. `owner` answers "does a family that ALREADY FIRED own this mechanic?" — if yes
+// that family is dealing the correct pool on its own shelves and a generic rail can only
+// contradict it; if no, the caller keeps its rail and quotes `cond` so the reader is told the
+// constraint. Unknown atom keys never match, so the table degrades to the annotate path.
+const IF_COND_RE = /\bdies, if ([^,]{0,80}),/;
+const IF_OWNER_TABLE = [
+    { re: /toughness was less than|-1\/-1 counters?/, atom: 'minuscounters' },
+    { re: /\+1\/\+1 counters?|had counters on it/, atom: 'counters' },
+    { re: /enchanted or equipped|equipped or enchanted/, atom: 'equipment' },
+    { re: /enchanted or equipped|equipped or enchanted/, atom: 'auras' }
+];
+function readInterveningIf(o, found) {
+    const cond = (String(o || '').match(IF_COND_RE) || [])[1] || '';
+    if (!cond) return { cond: '', owner: null };
+    const owner = IF_OWNER_TABLE.find(function (e) {
+        return e.re.test(cond) && (found || []).some(function (f) { return f && f.atom && f.atom.key === e.atom; });
+    }) || null;
+    return { cond: cond, owner: owner };
+}
 function buildEngineModel(commander) {
     const ciArr = commander.color_identity || [];
     const ci = ciArr.join('');
@@ -6392,6 +6600,34 @@ function buildEngineModel(commander) {
         // creature) from the graveyard — reframes the generic creature-reanimator rails.
         vehicleReanimate: /return target vehicle card from (your|a) graveyard to the battlefield/.test(o),
         oppDeath: /(whenever|when) [^,.]{0,36}an opponent controls dies|creatures? (your )?opponents? control d(ie|ies)/.test(o),
+        // v7.30 (Koll, the Forgemaster STUDY) — A DEATH THAT HANDS THE CARD BACK IS A LOOP,
+        // NOT A GRAVEYARD. When the reward for your own creature dying is "return it to its
+        // owner's HAND", the body was never spent — it was LENT. That inverts three things the
+        // generic death family assumes: (1) you do not need FODDER, because the same creature
+        // dies over and over, you need OUTLETS, ideally free ones; (2) the loop RE-ENTERS as
+        // often as it dies, so enter-the-battlefield payoffs fire on the same beat as the
+        // aristocrat drains and the deck's real creature quality is FRONT-LOADED ETB value on a
+        // cheap recast cost; (3) the graveyard is empty by design, so reanimation and
+        // cards-in-yard payoffs are the wrong half of black. Scoped to "you control dies" so it
+        // reads a BOARD-WIDE static on the commander, which is what makes it an engine: measured
+        // live, `legal:commander is:commander o:/creature you control dies/ o:/to (its|their)
+        // owner's hand/` is exactly FOUR — KOLL, LIESA FORGOTTEN ARCHANGEL, RIENNE ANGEL OF
+        // REBIRTH and ARES GOD OF WAR. HALVAR is deliberately OUT: his refund is printed on the
+        // back-face Equipment ("whenever EQUIPPED creature dies"), so it protects one attached
+        // body at a time — a rider on a Voltron sword, not a board-wide loop — and he keeps the
+        // Voltron read the rest of his card earns.
+        deathRefund: /creature[^.]{0,44}you control dies,[^.]{0,64}return (?:it|that card|that creature card)[^.]{0,28}to (?:its|their) owner's hand/.test(o),
+        // v7.30 — AN ANTHEM YOU HAVE TO BUY PER CREATURE IS NOT A GO-WIDE ANTHEM. The anthem
+        // family's enabler is "flood the board" and its finisher is an overrun, both of which
+        // assume every BODY you add collects the pump for free. When the anthem's scope clause is
+        // an ATTACHMENT condition — "creature tokens you control THAT ARE ENCHANTED OR EQUIPPED
+        // get +1/+1" — the multiplier is the number of things you can attach, not the number of
+        // bodies, and a 20-token board collects +1/+1 exactly as many times as you have Auras and
+        // Equipment. This is the same clause-level shape as v7.19's ANTHEM_TRIBAL_SCOPE_RE and
+        // rides on the same scopedAnthem machinery. Guarded by the atom actually having fired, so
+        // it cannot touch Halvar, Reyav, Dogmeat, Killian or Eriette — all of whom carry the
+        // attachment clause but grant a KEYWORD, not +N/+N, and print no anthem at all.
+        anthemAttachScope: ANTHEM_RE.test(o) && /creatures?(?: tokens?)? (?:you control )?that(?:'s| are) (?:enchanted|equipped)/.test(o),
         giftGain: /(if|whenever) an opponent (would gain life|gains life)/.test(o),
         oppCast: /whenever an opponent casts/.test(o),
         oppEtb: /(whenever|when) [^,.]{0,40}under an opponent's control/.test(o),
@@ -6433,7 +6669,14 @@ function buildEngineModel(commander) {
             const deathPayoff = /whenever [^.]{0,45}dies|when [^.]{0,45}dies|whenever you sacrifice|deals? \d+ damage|each opponent loses|each player loses|target (?:player|opponent) loses \d+ life|draws? (?:a|two|three|x|that many) cards?/.test(oc);
             return sacCost && defensiveRider && !deathPayoff;
         })(),
-        negCounters: /-1\/-1 counters?/.test(o),
+        // v7.28 (Massacre Girl, Known Killer study) — NEGATION GUARD on the pre-existing
+        // transform below. Unchanged in every other respect (it still reads the RAW oracle, so
+        // the persist/infect/blight REMINDER-text commanders it currently serves keep exactly the
+        // shelves they have today), but a clause that FORBIDS the counters is anti-text: Melira,
+        // Sylvok Outcast — whose whole card is "Creatures you control can't have -1/-1 counters
+        // put on them" — was being dealt a -1/-1 counters shelf by the one card in the format that
+        // switches -1/-1 counters off. Same MINUS_NEGATION_RE the atom uses, one source of truth.
+        negCounters: /-1\/-1 counters?/.test(o.replace(MINUS_NEGATION_RE, ' ')),
         theirYard: /opponents'? graveyards?|an opponent's graveyard/.test(o),
         // CAST-TYPE, UNBLINDED BY QUALIFIERS (Rivaz of the Claw study 2026-08-05).
         // P.castType is the engine's read of WHICH card type a "whenever you cast" trigger counts.
@@ -7162,8 +7405,88 @@ function buildEngineModel(commander) {
     }
     // POLARITY: opponent-scoped triggers get opponent-aimed rails
     if (P.oppDeath) {
-        out.push({ key: 'opp-die', role: 'enabler', title: 'Make Them Die', sub: 'Their losses, your gain', q: base + ' (o:"destroy target creature" OR o:"each opponent sacrifices" OR (o:fight -t:land))', why: firstName + " triggers on opponents' creatures dying \u2014 removal, edicts, and fights pull the trigger." });
+        // v7.29 (Massacre Girl, Known Killer VERIFY) \u2014 INTERVENING-IF ON A DEATH TRIGGER.
+        // P.oppDeath reads only THAT opponents' creatures dying is a trigger; it is blind to the
+        // "\u2026, if <condition>," clause that gates the reward, so this rail told every commander in
+        // the class that "removal, edicts, and fights pull the trigger" whether or not they do.
+        // On Massacre Girl that sentence is simply false: her trigger is "\u2026dies, IF ITS TOUGHNESS
+        // WAS LESS THAN 1", so a Go for the Throat, a Swords or an edict draws her NOTHING \u2014 the
+        // body has to have been SHRUNK to death. Two of the three shapes this rail deals were
+        // actively anti-synergistic on the commander it was dealing them to.
+        // The condition is not decoration, it is the deckbuilding constraint, and it is a real
+        // engine-wide class: measured live on Scryfall, `legal:commander is:commander o:/dies, if /`
+        // is 14 commanders and every one of them names a different mechanic \u2014 Massacre Girl
+        // (toughness < 1), Felisa (had counters on it), Grakmaw and Slurrk (+1/+1 counter), Xira
+        // (egg counter), Koll and Cass (enchanted or equipped), Jason Bright (power different from
+        // base power), Drizzt (power greater than Drizzt's), Hawkeye (Hawkeye dealt damage to it),
+        // Wilhelt (didn't have decayed), Harold and Bob, Princess Yue, Fang.
+        // Handled by TABLE, not by commander: if the condition names a mechanic some atom that
+        // ALREADY FIRED owns, that family is dealing the correct pool on its own shelves and this
+        // generic rail can only contradict it \u2014 so it is suppressed rather than duplicated. If no
+        // fired family owns the condition, the rail is kept (it is still true that their creatures
+        // dying is the trigger) but the condition is stated in the `why`, so the reader is told the
+        // constraint instead of being told any removal will do. Unknown keys simply never match, so
+        // the table degrades to the annotate path rather than failing.
+        // v7.30 — the reader and its table now live at module scope (see readInterveningIf), so
+        // the own-death families ask the identical question. This call is behaviour-identical to
+        // the v7.29 inline pair: same condition capture, same table rows, same fired-atom test.
+        const oppRead = readInterveningIf(o, found);
+        const oppIf = oppRead.cond, ifOwner = oppRead.owner;
+        if (!ifOwner) {
+            out.push({ key: 'opp-die', role: 'enabler', title: 'Make Them Die', sub: 'Their losses, your gain', q: base + ' (o:"destroy target creature" OR o:"each opponent sacrifices" OR (o:fight -t:land))', why: firstName + " triggers on opponents' creatures dying \u2014 removal, edicts, and fights pull the trigger." + (oppIf ? ' Read the trigger closely, though: it only pays \u201Cif ' + oppIf + '\u201D, so removal that kills some OTHER way is removal only.' : '') });
+        }
     }
+    // v7.30 (Koll, the Forgemaster STUDY) — THE REFUND LOOP.
+    // Koll rendered as VOLTRON + ARISTOCRATS + ANTHEMS & GO-WIDE, and the app then printed its
+    // own blend verdict on the first two: "bad — sacrificing bodies vs protecting one body,
+    // opposite instincts." That warning is the diagnosis. Koll is the card that RESOLVES that
+    // tension — you sacrifice the body AND keep the investment, because the creature comes back
+    // to your hand — and the engine, unable to read the refund, dealt him both halves of a
+    // contradiction instead of the loop that dissolves it. EDHREC's ground truth for him is not
+    // a Voltron list and not a token list: his top cards are OPEN THE ARMORY, LIGHTNING GREAVES,
+    // FIGHTER CLASS, STEELSHAPER'S GIFT, MYR MOONVESSEL, IMPACT TREMORS, CRIMSON KOBOLDS and
+    // CROOKSHANK KOBOLDS, and his highest-synergy cards are ROGRAKH, MEMNITE, SAI OF THE SHINOBI,
+    // SHUKO, IMPULSIVE PILFERER, GOBLIN BOMBARDMENT, SKULLCLAMP, ORNITHOPTER, PURESTEEL PALADIN
+    // and SKIRK PROSPECTOR — free-to-attach gear on zero-cost bodies, fed to a free sac outlet.
+    // The three rails below are the family's, not his: they say the same true thing to Liesa,
+    // Rienne and Ares, whose gates differ (none / multicolored / attacking) but whose engine is
+    // identical. Placed AFTER the death family so the strip finds the rails it is replacing.
+    if (P.deathRefund) {
+        // The FODDER half of "Sac Outlets & Fodder" is redundant by construction: this deck's
+        // fodder is the SAME CREATURE, returning every cycle. What it is short of is a way to
+        // pull the trigger at will, so the enabler narrows to the free/repeatable outlets and
+        // stops spending half its 30 slots on token makers.
+        for (let i = out.length - 1; i >= 0; i--) if (/^death:enabler/.test(out[i].key || '')) out.splice(i, 1);
+        const refundIf = readInterveningIf(o, found);
+        out.unshift(
+            { key: 'refund-outlet', role: 'enabler', title: 'Free Sac Outlets — Death on Demand', sub: 'Pull the trigger yourself', q: base + ' (o:"sacrifice a creature:" OR o:"sacrifice another creature:" OR o:"sacrifice a permanent:" OR o:"sacrifice an artifact:")', why: firstName + ' hands the dead creature BACK, so a death costs you nothing and the only scarce resource is a way to cause one on demand \u2014 Ashnod\u2019s Altar, Phyrexian Altar, Goblin Bombardment, Blasting Station and High Market are engines here, not just outlets. Token fodder is what you run when bodies are spent; yours are LENT, so run outlets instead.' },
+            { key: 'refund-etbvalue', role: 'enabler', title: 'ETB Value on a Cheap Recast', sub: 'Bodies worth replaying', q: base + ' t:creature mv<=3 (o:"When this creature enters" OR o:"when it enters")', why: 'every refund is a RE-CAST, so the creatures that profit are the ones whose value is front-loaded into entering \u2014 Imperial Recruiter, Stoneforge Mystic, Recruiter of the Guard, Goblin Engineer and Ranger-Captain of Eos each pay again the moment they come back down. Keep the cost low: the recast is the loop\u2019s only real tax, which is why this shelf is capped at three mana and why the deck\u2019s best fuel is the zero-drops (Memnite, Ornithopter, Kobolds, Phyrexian Walker).' },
+            { key: 'refund-etbpay', role: 'payoff', title: 'Enter-the-Battlefield Payoffs', sub: 'The loop hits twice', q: base + ' (o:"whenever a creature enters" OR o:"whenever another creature you control enters" OR o:"whenever a creature you control enters")', why: 'a refund loop RE-ENTERS as often as it dies, so the entry half pays exactly as often as the aristocrat half \u2014 Impact Tremors, Witty Roastmaster, Warstorm Surge and Warleader\u2019s Call turn the same cycle into a second damage source. Running both halves is what converts an infinite loop into an actual win rather than an infinite shrug.' }
+        );
+        // THE GATE, read by the shared intervening-if reader rather than by commander name. When
+        // the condition names a mechanic a FIRED family already owns (Koll: "enchanted or
+        // equipped", owned by equipment/auras), the loop only closes if the body is WEARING
+        // something, so the cost of attaching IS the cost of the engine and free-attach is the
+        // deck's real ramp. When there is no condition (Liesa) or no family owns it (Rienne's
+        // "multicolored", Ares's "attacking"), no rail is added and the constraint is quoted in
+        // the outlet rail's why instead, so the reader is told the gate rather than sold a shelf.
+        if (refundIf.owner) {
+            out.splice(3, 0, { key: 'refund-attach', role: 'enabler', title: 'Free & Cheap Attach', sub: 'Suit up for nothing', q: base + ' (o:/equip \\{0\\}/ OR o:"less to equip" OR o:"equip abilities you activate cost" OR o:"attach it to" OR o:"you may attach" OR o:"attach target" OR o:"as though it had flash")', why: firstName + ' only refunds a creature \u201Cif ' + refundIf.cond + '\u201D, so every lap of the loop has to pay an ATTACH cost \u2014 and the deck is only as fast as that cost is cheap. Shuko and Leather Armor equip for {0}, Puresteel Paladin and Auriok Steelshaper drive the whole board to {0}, Sigarda\u2019s Aid and Hammer of Nazahn attach for free on cast, and Lightning Greaves does both jobs at once. This shelf is this deck\u2019s ramp.' });
+        } else if (refundIf.cond) {
+            for (let i = 0; i < out.length; i++) if (out[i].key === 'refund-outlet') out[i].why += ' Read the trigger closely, though: it only refunds \u201Cif ' + refundIf.cond + '\u201D, so a body that dies any other way is gone for good.';
+        }
+        // A commander that hands creatures back is not protecting ONE creature. The equipment /
+        // Voltron plan is the single most misleading thing the app can tell a Koll pilot, and the
+        // engine was already contradicting itself about it (see the blend verdict above). Plans
+        // only — the Equipment RAILS stay, because the gear is the loop's lubricant and the
+        // Equipment Package shelf is where Shuko and Skullclamp live.
+        foundForPlans = foundForPlans.filter(f => f.atom.key !== 'voltron' && f.atom.key !== 'equipment');
+    }
+    // v7.30 — same clause, plan layer. A commander whose only anthem is attachment-scoped must
+    // not be handed the "Anthems & Go-Wide" READ either; the rail strip below would otherwise
+    // leave a plan with no shelves under it, which is the exact ATOM->ARCHETYPES mismatch the
+    // v6.74 devotion fix was written to close (a plan the rails do not support reads as a lie).
+    if (P.anthemAttachScope) foundForPlans = foundForPlans.filter(f => f.atom.key !== 'anthem');
     if (P.edict && !P.oppDeath) {
         // Tergrid study: "each player sacrifices" is the Plaguecrafter / Fleshbag /
         // Innocent Blood class — the headline edict cluster the query was missing.
@@ -7250,7 +7573,22 @@ function buildEngineModel(commander) {
     // join the source pool \u2014 QA'd EDHREC-sorted (top slots unchanged: Archfiend of Ifnir,
     // Persist, Contagion Engine, Black Sun's Zenith; undying package reachable below:
     // Geralf's Messenger, Butcher Ghoul, Putrid Goblin).
-    if (P.negCounters) {
+    // v7.28 (Massacre Girl, Known Killer STUDY) — THIS TRANSFORM IS NOW THE FALLBACK, NOT THE READ.
+    // What it was doing wrong is the whole reason the -1/-1 family exists, and it is worth stating
+    // precisely because the transform LOOKED like it had the archetype covered. It tests the RAW
+    // oracle — reminder text included — so (a) it fired on commanders whose only "-1/-1 counter" is
+    // inside INFECT's or PERSIST's parenthetical (Skithiryx, Rhys the Evermore, Eirdu), (b) it fired
+    // on the one card that FORBIDS the counters (Melira — now fixed at the P.negCounters test), and
+    // (c) it MISSED Toxrill, the Corrosive, the single most-played -1/-1 commander in the format at
+    // 8,696 decks, because his card never prints the words "-1/-1 counter" (it says "get -1/-1 for
+    // each slime counter"). It also left every one of its commanders PLAN-LESS: two rails pushed
+    // from the P layer carry no ATOM, so buildGamePlans had nothing to read and Massacre Girl's
+    // live Scouting Report rendered rails with no game plan at all.
+    // The family (atom `minuscounters` + RAILS.minuscounters + ARCHETYPES.minuscounters) now owns
+    // the archetype, so this block is gated to fire only where the family did NOT — which keeps the
+    // reminder-text commanders it serves today exactly as they are (strictly additive, nothing
+    // loses a shelf) while the eight commanders the family claims get one set of rails, not two.
+    if (P.negCounters && !found.some(function (f) { return f.atom.key === 'minuscounters'; })) {
         const noPlus = !/\+1\/\+1 counter/.test(o);
         for (let i = out.length - 1; i >= 0; i--) {
             const k = out[i].key || '';
@@ -7997,7 +8335,21 @@ function buildEngineModel(commander) {
     // build can lose it. An UNSCOPED anthem (Elesh Norn, Jetmir, Prava) is not moved — the anthem
     // IS its deck and its rails must lead — and a commander whose anthem is its ONLY read
     // (Ascendant Evincar, Balthor the Stout, Zuberi) has an empty core list, so "last" is first.
-    if (railCtx.scopedAnthem) {
+    // v7.30 (Koll STUDY) — AN ATTACHMENT-SCOPED ANTHEM IS NOT A GO-WIDE ANTHEM, so it does not
+    // get the go-wide family at all. v7.18's demote-to-the-tail is the right treatment for a
+    // TYPAL or ADJECTIVE scope, because those still scale with board width: every extra Goblin,
+    // every extra flyer, collects the pump for free. An ATTACHMENT scope does not. "Creature
+    // tokens you control that are enchanted or equipped get +1/+1" pays out once per AURA OR
+    // EQUIPMENT you can attach, so on a twenty-token board it is worth exactly as much as it is
+    // on a two-token board, and the family's enabler ("flood the field so every +X/+X counts many
+    // times over") and its finisher (the alpha strike) are both arguing for the wrong resource.
+    // The multiplier this commander actually wants is the attach package, which the equipment /
+    // aura families and the refund-attach shelf are already dealing. Three of Koll's seven themed
+    // rails were this family; removing them is what makes room for the loop. Clause-level, not
+    // name-level, and it composes with the scope machinery above rather than replacing it.
+    if (P.anthemAttachScope) {
+        for (let i = out.length - 1; i >= 0; i--) if (/^anthem:/.test(out[i].key || '')) out.splice(i, 1);
+    } else if (railCtx.scopedAnthem) {
         const heldAnthem = [];
         for (let i = out.length - 1; i >= 0; i--) if (/^anthem:/.test(out[i].key || '')) heldAnthem.unshift(out.splice(i, 1)[0]);
         for (let i = 0; i < heldAnthem.length; i++) out.push(heldAnthem[i]);
@@ -8412,6 +8764,8 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    {"build":"v7.29","date":"2026-08-05","focus":"verify","commander":"Massacre Girl, Known Killer","summary":"VERIFY Massacre Girl, Known Killer - THE STUDY RUN FIXED COUNTER-TYPE BLINDNESS AND THEN SHIPPED COUNTER-ROLE BLINDNESS IN ITS OWN PAYOFF QUERY. v7.28 taught the engine that -1/-1 is not +1/+1; read card-by-card against EDHREC + Scryfall, its `Read the Rot` rail could still not tell a card that READS the counters (a payoff) from one that PAYS them (a printed drawback) or one that TAKES THEM OFF (the archetype's exact opposite), because every arm matched the NOUN '-1/-1 counter' wherever it appeared. 8 of the 27 cards in mono-black were wrong and THE VERY FIRST CARD DEALT WAS ONE OF THEM: the sorcery PERSIST ('...to the battlefield with a -1/-1 counter on it') sat at slot 0 ahead of all three of EDHREC's real top cards - and the family comment had ALREADY reasoned persist bodies off the shelf and excluded keyword:persist, only for the card named Persist to walk back in through a different arm. Behind it: the enters-with drawback cycle (Aberrant Return, Canker Abomination, Exemplar of Strength, Noxious Hatchling, Grief Tyrant, Magmaroth), and - worse - six COUNTER-HEALERS whose whole function is undoing this deck's removal (Chainbreaker '{3},{T}: Remove a -1/-1 counter from target creature', Shed Weakness, Heirloom Auntie, Creakwood Safewright, Gnarlbark Elm, Moonshadow) plus Shambling Swarm, whose counters are removed again at the next end step, making it the one card in the pool that promises a shrink that WEARS OFF. SHIPPED, at the query-logic level and about ROLE rather than about this commander: (1) COST-vs-EFFECT IS THE COLON - 'remove a -1/-1 counter' BEFORE a colon is an activated-ability cost, i.e. the card CONSUMES the resource this deck manufactures (Grim Poppet, Carnifex Demon, Wickerbough Elder, Channeler Initiate); after the colon or in a triggered ability the same words UNDO the deck. The arm is now scoped to the cost position, which kept every real engine card and dropped all six healers. (2) 'ENTERS WITH' / 'BATTLEFIELD WITH' IS SELF-INFLICTED SUPPLY, NEVER DEMAND - negated INSIDE the selector branch, because Scryfall negation is conjunctive and a top-level -o: would have taken Grim Poppet and Carnifex Demon with it; they return through the cost arm, which is the point (a card that enters with counters AND spends them is an engine, one that only enters with them is paying rent). (3) THE AMPLIFIER'S MOVER ARM ONLY EVER WORKED BY ACCIDENT: `moves? (a|one|...) counters?` has no leading word boundary, so what it matches in the wild is 'reMOVE A COUNTER' - which is how Power Conduit, named in that rail's own why-text, ever reached the shelf. The accident only fires on UNTYPED counters, so the moment a card names the counter (as everything in this archetype does) the genuine movers fell through, and repair (2) would have silently deleted DECIMATOR BEETLE, a Hapatra staple, from the app entirely. The remove-here/put-there template is now an explicit arm. (4) INTERVENING-IF ON A DEATH TRIGGER: `Make Them Die` was dealing destroy / edict / fight to a commander whose trigger reads 'dies, IF ITS TOUGHNESS WAS LESS THAN 1' - two of its three shapes draw her literally nothing, so the rail was anti-synergistic on the commander it was dealing to. Now table-driven: if the condition names a mechanic a FIRED atom already owns, that family is dealing the correct pool and the generic rail is suppressed rather than allowed to contradict it; otherwise the rail is kept and the condition is quoted in the why-text. Census measured live: `o:/dies, if /` is 14 commanders (Massacre Girl toughness<1, Felisa counters, Grakmaw/Slurrk +1/+1, Xira egg, Koll/Cass enchanted-or-equipped, Jason Bright power-vs-base, Drizzt power, Hawkeye damage, Wilhelt decayed, Harold and Bob, Princess Yue, Fang), of which 16 fire P.oppDeath and 2 reach this rail. COUNTER-CASE: MINUS_PAYOFF_Q and MINUS_AMP_Q have EXACTLY ONE CONSUMER EACH (RAILS.minuscounters), so the blast radius is provably the 11 commanders that family serves - Massacre Girl, Hapatra, Toxrill, The Scorpion God, The Reaper King No More, Volrath, Skeleton Ship, Yawgmoth, High Perfect Morcant, Auntie Ool, Grub - and the payoff change is STRICTLY SUBTRACTIVE, ZERO cards added in any identity (id<=B 27->19, BG 43->29, BR 35->23, UB 33->21); the amp change adds exactly Carnifex Demon + Grim Poppet in mono-B (36->38) and those two plus Decimator Beetle in BG (63->66), each of which is literally a counter-mover. The opp-die edit lives inside `if (P.oppDeath)`, so at most 16 commanders can see it and 14 of them are byte-identical (Yahenni, Mari, Vraska the Silencer, Shelob, Gimli, Kamber, Glissa, Legolas, Sephiroth, Toshiro, Shriek, Lim-Dul, Vincent Valentine, The Balrog all print no intervening-if). Nothing outside those sets is reachable. Rendering safety proved by DIFF: non-script bytes 193,893 -> 193,893 IDENTICAL and script blocks 0-4 byte-identical, so the mobile viewport/keyboard IIFE was provably never touched; roster pipeline untouched. Verified live in Chrome card-by-card: Read the Rot now opens Necroskitter / Blowfly Infestation / Nest of Scarabs - EDHREC's own high-synergy top three for her at 70/71/74% - and Persist has moved to Shrink the Board where it belongs."},
+    {"build":"v7.28","date":"2026-08-05","focus":"study","commander":"Massacre Girl, Known Killer","summary":"STUDY Massacre Girl, Known Killer - THE COUNTERS LAYER WAS COUNTER-TYPE BLIND AND WAS LABELLING AN ENTIRE ARCHETYPE AS ITS OWN OPPOSITE. Every counters read in the app was either literally '+1/+1' (`counters`, w3) or deliberately type-AGNOSTIC (`countersgen`, w5, 'any counter, more of it'), and BOTH mapped to the same plan, ARCHETYPES.countersgen = '+1/+1 Counters ... go tall'. Measured through the DEPLOYED build's own extractAtoms over all 3,348 commander-legal commanders: Hapatra, Toxrill, The Scorpion God, The Reaper King No More, Volrath and Skeleton Ship all LED with `countersgen` and rendered a go-tall Hardened-Scales read, while MASSACRE GIRL, KNOWN KILLER (6,042 decks) had ZERO atoms and therefore NO GAME PLAN AT ALL - because her only build-around line is 'Creatures you control have wither' and wither's whole contract lives in REMINDER TEXT the engine strips, with her one other clause removed by the polarity layer. EDHREC says -1/-1 Counters is the #1 theme for six of the seven and #2 for Yawgmoth: Hapatra 1275 / Massacre Girl KK 993 / Scorpion God 570 / Reaper King 556 / Toxrill 522 / Yawgmoth 492 / Volrath 365 - about 39,000 decks reading a plan that is precisely backwards. THE PRE-EXISTING P.negCounters TRANSFORM LOOKED LIKE IT HAD THIS COVERED AND DID NOT, which is the sharpest lesson of the run: it tests the RAW oracle, reminder text included, so it fired on commanders whose only '-1/-1 counter' is inside INFECT's or PERSIST's parenthetical (Skithiryx, Rhys the Evermore, Eirdu), it fired on MELIRA, SYLVOK OUTCAST - the one card in the format that FORBIDS -1/-1 counters - and it MISSED Toxrill, the Corrosive, the most-played -1/-1 commander in the format at 8,696 decks, because his card never prints the words (it says 'get -1/-1 for each slime counter'). It also carried no atom, so every commander it served rendered PLAN-LESS. SHIPPED, at the family level: a `minuscounters` atom (w7) with a FOUR-arm detector - the counter by name, `wither`, `blight N` (matched as `blights? \\d`, never as a bare word, because `\\bblight\\b` also matches the NAME Skithiryx, the BLIGHT Dragon in his own oracle), and a STATIC per-counter shrink scoped to 'for each ... counter' so Toxrill's slime counters are read as the -1/-1 counters they are; a MINUS_NEGATION_RE strip (same strip-then-read idiom as oStax/oLifeEng/oAnth) applied BOTH to the new atom and to P.negCounters, so Melira stays poison-led; a full RAILS.minuscounters family (Shrink the Board / Read the Rot / Proliferate & Move the Rot) with eTest+pTest, so a supply-side commander is dealt PAYOFFS first - which reproduces EDHREC's own high-synergy order for Massacre Girl (Nest of Scarabs 74% / Blowfly Infestation 71% / Necroskitter 70%); suppression of BOTH `countersgen` and `proliferate` (whose own Counter Fuel rail seeds +1/+1, charge and poison counters and is dead cardboard here); an ARCHETYPES entry so the family cannot render plan-less the way its predecessor did; and a STUDY_DB teardown. P.negCounters is retained but GATED to fire only where the family did not, so the reminder-text commanders it serves today keep exactly the shelves they have - the change is strictly additive and nothing loses a shelf. The ANTHEM class is deliberately excluded by the 'for each ... counter' scope: a bare negative-pump arm also fires on Elesh Norn, Ascendant Evincar, Crovax and Veldrane, whose -X/-X is the back half of a TEAM ANTHEM, and two of those are studied ANTHEM commanders in STUDY_DB. Queries live-QA'd on Scryfall EDHREC-sorted across id<=B / BG / BR / UB; largest regex term body 54 of the 214 ceiling, whole queries 137-217 of ~1008. COUNTER-CASE: 502 engine keys diffed old-vs-new - 7 added, 0 removed, EXACTLY 2 changed (the two `sup` lists); ARCHETYPES 76 -> 77 with none changed; and an old-vs-new atom-read diff over all 3,348 commanders changed EXACTLY 11 - Massacre Girl KK and Auntie Ool from empty, Hapatra / Toxrill / Scorpion God / Reaper King / Volrath / Skeleton Ship off the +1/+1 plan, Yawgmoth off a +1/+1 proliferate lead, and High Perfect Morcant + Grub gaining the shelf behind their tribal lead. Krenko, Talrand, Thalia, Atraxa, Sliver Legion, Meren, Elesh Norn, Ascendant Evincar, Skithiryx, Rhys, Ghave and Skullbriar all byte-identical. Verified live in Chrome card-by-card."},
     { build: 'v7.27', date: '2026-08-05', focus: 'verify', commander: 'Halvar, God of Battle', summary: "VERIFY Halvar, God of Battle - took the v7.26 hand-off's lead (a) verbatim and it turned up three things the study got wrong, one of them a false claim in the shipped record. (1) THE STUDY SAID DARKSTEEL MUTATION LEFT THE PROTECTION SHELF. IT NEVER DID. v7.26 reported that the subject-anchored SHIELDS_UP_Q 'happens to reject' the removal aura it had just found at #9 of Uril's shelf. Measured live this run it is STILL THERE - #14 in Halvar's mono-white Protect the Threat (222 cards) and #20 in Uril's GRW (302). Its oracle is 'Enchanted creature is an Insect artifact creature ... and has indestructible, and it loses all other abilities' - a textbook match for the grant template. The exclusion is DELIBERATELY NOT SHIPPED and the reason is recorded so no future run re-derives it: the only cheap general template for the class, o:/loses all (?:other )?abilities/, ALSO matches BRONZEHIDE LION, whose death-trigger Aura side is a genuine protection card for your own creature - measured over the 302-card shelf, the exclusion removes exactly 2 cards, 1 junk and 1 good, for a net quality change of zero and ~35 characters. Darksteel Mutation is a single-card leak with no cheap general discriminator; recorded, not patched, because a one-off name exclusion is exactly what this engine must not accumulate. (2) THE COVERAGE NUMBER WAS +15; IT IS +14, AND THE OVER-COUNT WAS THE CARD THE HAND-OFF SUSPECTED. v7.26's census was a PREDICATE count and it flagged its own uncertainty (11-vs-15) because the last arm of the old predicate needs the full engine to evaluate. Settled end-to-end: the 124-commander gear pool run through the deployed build's OWN extractAtoms - byte-verified IDENTICAL between v7.25 and v7.26, which is what makes it a valid substrate - gives 35 commanders reaching the transform before and 49 after, +14, and JOR KADEEN is absent from the gained list exactly as predicted because he already arrived via the seen['attack'] arm. Gained: Halvar, Nazahn, Syr Gwyn, Calix, Dalakos, Ellivere, Firion, Nahiri, Kemba, Rhuk, Swordsman, Syr Armont, Zamriel, Barret Wallace. (3) THE ENGINE'S RECORDED SCRYFALL LIMIT (3) IS FALSE, AND IT HAS BEEN COSTING ~400 CHARACTERS PER QUERY. The in-file note said 'a GROUP in the KEYWORD position silently drops the term -> ONE REGEX PER KEYWORD', which is why SHIELDS_UP_Q was built by .map(grantQ) over four keywords, repeating its 127-char subject clause four times. Groups in the keyword position WORK and are EXACTLY ADDITIVE, measured live: has indestructible = 6, has hexproof = 2, has (?:indestructible|hexproof) = 8 = 6+2; with the full subject, 181 + 107 -> union 264. THE REAL RULE, bisected live with semantically-null (?:) padding, is a PER-TERM ceiling: an o:/.../ term whose BODY exceeds 214 characters is SILENTLY DROPPED and Scryfall returns THE ENTIRE POOL - body 201/205/209/213 -> 181 cards (correct), body 215/217 -> 31611 (= all of legal:commander -t:basic). The earlier run hit that ceiling while adding a keyword to a group and misattributed the failure to the grouping. THE FIX: SHIELDS_UP_Q rebuilt as TWO keyword-grouped arms over a token-shortened subject ((?:equipp|enchant)ed, (?:creature|permanent|token)s?), 924 -> 532 characters, with the largest term body at 208 of 214. VERIFIED EQUIVALENT TWO WAYS: live, the new constant returns EXACTLY 404 cards against the old constant's 404 over legal:commander -t:basic, with the single-keyword arm at 181 and the grouped arm at 264 reproducing the old arms exactly; and locally, both regex sets evaluated over a 424-card corpus of real oracle text give ZERO mismatches. Halvar's shelf: query 981 -> 589 chars, HTTP 200, 222 cards, top ten unchanged (Swiftfoot Boots / Lightning Greaves / Teferi's Protection / Flawless Maneuver / Akroma's Will / Mithril Coat / Whispersilk Cloak / Dawn's Truce / Commander's Plate / Mother of Runes). That is ~400 characters returned to EVERY query built on the constant, which is the budget that has blocked the recorded backlog and that made seven gear commanders un-shippable in v7.26. (4) A SILENT FAILURE MODE IS NOW LOUD. Because a dropped term returns the whole colour identity rather than an error, the rail still renders, still fills with on-colour tiles, and merely looks 'generic' - the hardest possible thing to catch by reading cards. Added REGEX_TERM_MAX = 214 and a boot-time assertRegexTermBudget() that walks every rail query, every atom q/oq and the shared constants and console.errors any term over budget. Audited the whole engine with it: 22 regex terms, max 208, ZERO over budget - so nothing is broken today, and nothing can regress silently tomorrow. The guard is a pure read and never mutates a query. ALSO RECORDED, NOT SHIPPED: the factored subject (?:(?:equipp|enchant)ed |target (?:[a-z]+ or )?)(?:creature|permanent) is 117 chars, SHORTER than the shipped 121, and would have bought 'enchanted permanent' (the v7.26 hand-off's lead (b), which recovers Indestructibility) FOR FREE - but Scryfall silently drops it at a body length of only 136, so it is NOT the 214 ceiling; it is NOT nesting depth either (depth-3 measures 12, same as depth-2); and it matches IDENTICALLY in JS over the 424-card corpus. Undiagnosed, so the subject's three alternatives stay written out in full. COUNTER-CASE: old-vs-new diff of both builds' own extracted app blocks in Node over 1358 ENGINE KEYS - every atom test/q/oq/weight, every rail q/title/role/sub in all 60 families, every family eTest/pTest, all 142 STUDY_DB entries - EXACTLY 3 CHANGED: RAILS.voltron[0].q (Shields Up), RAILS.ring[2].q (Protect the Bearer) and RAILS.enrage[2].q (ENRAGE_SURVIVE_Q), i.e. precisely the three consumers of the two shared constants, plus the P.voltron 'Protect the Threat' transform that builds from SHIELDS_UP_Q at runtime. Atom detection and archetype selection are byte-identical for every commander in the format by construction. Generalizes to every Voltron, Ring, Enrage and gear commander - Uril, Wyleth, Light-Paws, Kemba, Bruna, Halvar, Nazahn, Syr Gwyn, Frodo, Indoraptor, Vrondiss, Raphael; unchanged: Krenko, Talrand, Thalia, Atraxa, Meren, Sliver Legion, Sauron." },
     { build: 'v7.26', date: '2026-08-05', focus: 'study', commander: 'Halvar, God of Battle', summary: "STUDY Halvar, God of Battle - the v7.25 hand-off's lead (a) asked whether RAILS.voltron is shadowed and predicted the family's pTest was the defect. Measured through the real engine, the diagnosis was wrong in a useful way: eTest/pTest only ORDER rails, they never gate a family, and RAILS.voltron is reached off ATOM_VOLTRON, which carries an explicit `!hasGear` guard. So the family is not shadowed by a stronger one - it is DELIBERATELY reserved for non-gear self-protected commanders (Sigarda, Charix, Esior), and the entire gear-Voltron school is routed instead to the P.voltron transform's 'Protect the Threat'. That shelf is where the real defects were, and there were two. (1) QUALITY: it carried its own bare has-the-keyword list `(t:equipment OR t:aura) (o:hexproof OR o:indestructible OR ...)`, so it served the commanders who need protection MOST with the engine's WORST protection string. Measured live in Uril's GRW it returned 124 cards with DARKSTEEL MUTATION AT #9 - a removal aura you point at an OPPONENT - inside a shelf whose whole job is keeping YOUR one body alive (Reprobation too); Shadowspear present despite STRIPPING hexproof/indestructible; Diamond Pick-Axe and Captain America's Shield present because they print Indestructible on the EQUIPMENT ITSELF, the same self-only defect v7.25 fixed for Shields Up; and being type-scoped to equipment/aura it structurally excluded every instant-speed answer, which is the actual backbone of the archetype. Repointed at the shared SHIELDS_UP_Q (now on its THIRD caller alongside RAILS.voltron's Shields Up and RAILS.ring's Protect the Bearer): 124 -> 302 in the same identity, recovering Heroic Intervention, Teferi's Protection, Flawless Maneuver, Akroma's Will, Boros Charm, Inspiring Call, Dawn's Truce, Snakeskin Veil and Tamiyo's Safekeeping. (2) COVERAGE: P.voltron only fired when the commander's own text said gear attaches to ITSELF, missing the printed WotC template where the payoff is CONDITIONED on a creature being equipped/enchanted ('whenever an equipped creature you control attacks' - Nazahn, Syr Gwyn; 'creatures you control that are enchanted or equipped have double strike' - Halvar). Those commanders were rendering with NO protection shelf at all. Added both grammatical orders as a family-level template: censused live over the 125 commander-legal gear commanders, 32 reached the transform before and +15 do now. (3) SHIP-BLOCKER FOUND AND FIXED IN A SHARED HELPER: pointing the 924-char SHIELDS_UP_Q at gear commanders pushed 7 of them past Scryfall's whole-query ceiling (re-bisected live this run: 1000/1008 -> HTTP 200, 1016/1024 -> fetch error, 1032+ -> HTTP 400 'unclosed parentheses'), because an MDFC's card.name carries BOTH faces and selfExcludeQ was spending up to 50 chars on it - Halvar 1004, Dorothea 1012, Katilda 1009. selfExcludeQ now uses the FRONT-FACE name, verified live to still be an exact match and to still exclude the card (id<=W legal:commander t:god: 12 -> 11 with -!\"Halvar, God of Battle\"). Worst case in the gear pool falls 1012 -> 996; single-faced commanders are byte-identical by construction; and every MDFC commander's 167 rail queries gain 20-25 chars of headroom. COUNTER-CASE, as an old-vs-new diff of both builds' own extracted app blocks in Node: 1118 engine keys compared (every atom test/q/oq/weight, every rail query/title/role, every family eTest/pTest, all 76 archetypes, all 141 STUDY_DB entries) and EXACTLY 0 CHANGED - the entire diff lives in the transform layer plus one shared helper, so atom detection and archetype selection are byte-identical for every commander in the format by construction. Through the real buildAtomSections: Halvar, Nazahn and Syr Gwyn GAIN the shelf; Light-Paws, Wyleth, Uril, Kemba, Bruna and Jor Kadeen keep it with the better query; and Krenko, Talrand, Thalia, Atraxa, Meren, Sliver Legion, Frodo (Ring), Indoraptor, Brimaz, Sigarda, Charix, Rafiq, Killian, Danitha, Sram, Ardenn, Galea, Akiri and Rograkh are all byte-identical. Shipped strings extracted from the edited file itself and run live: Halvar 981 chars -> HTTP 200, 222 cards, art 222/222, front Swiftfoot Boots / Lightning Greaves / Teferi's Protection / Flawless Maneuver / Akroma's Will / Mithril Coat; Syr Gwyn 987 -> 200, 259 cards; Nazahn 987 -> 200, 291 cards. Added a Halvar STUDY_DB teardown (two-cards-in-one: a conditional double-strike lord plus a free every-combat gear-mover, with Sword of the Realms as the insurance policy; traps cover the God-supertype non-typal read, the go-wide trap, the fact that his attach ability can only MOVE already-attached gear, and the Aura/Equipment asymmetry)." },
     { build: 'v7.25', date: '2026-08-05', focus: 'verify', commander: 'Indoraptor, the Perfect Hybrid', summary: "VERIFY Indoraptor, the Perfect Hybrid - the v7.24 hand-off's lead (a) was right that the `Survive the Blast` rail was returning the wrong shape, but wrong about WHY, and the real cause turned out to be an engine-wide blind spot rather than one bad string. THE DEFECT: a protection rail must ship ways to GRANT a keyword to a creature you control, never bodies that merely HAVE it. A phrase list (o:\"gains indestructible\" ...) cannot tell those apart, because Scryfall names the SOURCE either by card name (Yahenni, Undying Partisan; Witch-king of Angmar) or - since the 2024 templating change - as \"THIS CREATURE\" (Temur Sabertooth, Kogla, Weathered Sentinels). The hand-off proposed `-t:creature`; that would have been WRONG, because it also deletes Avacyn, Angel of Hope and The Walls of Ba Sing Se, which grant to the whole team. MEASURED over Indoraptor's BRG pool: the old string returned 116 cards of which 76 were the wrong shape - self-only bodies, plus Darksteel Forge and Nissa's emblem, which grant to ARTIFACTS and LANDS. THE FIX IS AN ATOM, not a patch: GRANT_SUBJ_SRC + GRANT_ANAPHOR_SRC + grantQ(kw) build a subject-anchored query for ANY keyword. The guard is POSITIONAL because Scryfall's RE2 has no lookahead - the grant subject must sit in the SAME SENTENCE as the keyword ([^.] cannot cross a period), which is exactly what makes \"...to its owner's hand. This creature gains indestructible\" fail. One anaphor is allowed explicitly (\"...target creature you control. It gains X\" / \"Those creatures gain X\" - Snakeskin Veil, Inspiring Call); \"this creature\" is deliberately NOT an accepted anaphor, that IS the source. THE ATOM PAID FOR ITSELF TWICE. Applied to the Voltron `Shields Up` and Ring `Protect the Bearer` shelves - which until now were TWO HAND-COPIED DUPLICATES of one literal, the drifted-copy hazard v7.13 was about, now ONE shared SHIELDS_UP_Q - it also fixed a SECOND, unrelated defect nobody had noticed: the phrase list required the keyword to sit IMMEDIATELY after the verb, so \"Equipped creature has haste and shroud\" never matched o:\"has shroud\" and LIGHTNING GREAVES WAS MISSING FROM THE VOLTRON PROTECTION RAIL, as were Teferi's Protection, Akroma's Will, Mithril Coat, Commander's Plate and Sword of Feast and Famine. Measured GWU: 367 -> 361 cards but 133 OUT and 127 IN, a near-total content swap. Enrage BRG: 116 -> 68, 76 wrong-shape removals with ZERO false negatives found, and 30 real grants recovered led by HEROIC INTERVENTION, the single best card for the shelf, which the old string could not see. COUNTER-CASE, run as an old-vs-new diff of the two builds' own script blocks in Node: 473 engine keys compared (every rail query, every atom query/test/weight, every archetype), EXACTLY 3 CHANGED - enrage.2, voltron.0, ring.2. Generalizes beyond Indoraptor to Vrondiss and Raphael (enrage) and to every Ring and Voltron commander (Frodo confirmed CHANGED); Krenko, Talrand, Thalia, Atraxa, Meren, Sliver Legion, Sauron, Rafiq, Skithiryx, Godo, Halvar, Uril and Kazarov all byte-identical. SCRYFALL LIMITS MEASURED AND RECORDED IN-FILE so no future run re-derives them: {n,m} quantifiers are SILENTLY DROPPED (you get the whole pool back, not an error), \\s is not honoured inside o:/.../, a GROUP in the keyword position silently drops the term, and the query 400s past ~1000 chars - SHIELDS_UP_Q is 924 and must stay under." },
