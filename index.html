@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v7.17 · 2026-08-05">
+<meta name="oracle-build" content="v7.19 · 2026-08-05">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1762,7 +1762,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v7.17 \u00B7 2026-08-05', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v7.19 \u00B7 2026-08-05', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3046,6 +3046,129 @@ function costdownSubject(clause, tribeCostDown) {
     if (/instant|sorcery/.test(c)) return null;
     return { t: 'The Expensive Half', q: '(mv>=5 -t:land)', w: 'the discount is unconditional, so it pays most on the cards that cost the most — the deck can run a curve a full turn ahead of the table' };
 }
+// ---------------------------------------------------------------------------------------
+// v7.18 (Ascendant Evincar STUDY) — ANTHEM_RE: THE SCOPED STATIC ANTHEM, i.e. the other
+// NINETY PERCENT of the anthem family the engine could not see.
+//
+// The atom shipped since the Elesh Norn study tested `creatures you control get +N/+N`.
+// That is ONE printed template out of five, and it is the only one Magic uses when the
+// pump is unscoped. Every anthem that names a CLASS was invisible, and measured live over
+// the complete universe of the effect (`is:commander o:/gets? \+[0-9X]+\/\+[0-9X]+/` = 439
+// commanders) the old test fired on 51 of them and MISSED 81 more — it saw 39% of its own
+// family. The four missed templates, each with named carriers:
+//   (a) TYPAL scope before the noun — "Other Pirates you control get +1/+1"
+//       (Admiral Beckett Brass, Anowon the Ruin Thief, Lyra Dawnbringer, Depala,
+//        General Kudro, Gallia, Hofri, Magda, Naru Meha, Ishkanah, Gisa, Neheb…);
+//   (b) ADJECTIVE scope AFTER the noun — "Other creatures you control WITH FLYING get
+//       +1/+0" (Alela Artful Provocateur, Cynette, Ruxa, Angelic Harold, Brenard, Koll);
+//   (c) NO CONTROLLER CLAUSE at all, the pre-2003 lord wording — "Other Treefolk creatures
+//       get +1/+1" (Verdeloth, Ascendant Evincar, Crovax, Balthor the Stout, Kangee,
+//       Zuberi, Chainer, Sliver Legion);
+//   (d) CHOSEN-TYPE scope — "Other creatures you control OF THE CHOSEN TYPE get +1/+1"
+//       (Morophon, the Boundless).
+// Ascendant Evincar, Balthor the Stout and Zuberi, Golden Feather are ENTIRELY this one
+// effect, so each fired ZERO atoms and rendered a blank report — five generic staple
+// shelves and no game plan at all.
+//
+// The predicate is deliberately built as TWO arms, because the two halves are safe for
+// different reasons:
+//   ARM 1 — controller-scoped. Anything "<noun> you control … get +N/+N" is your team by
+//     construction, whatever the scope word is. The optional tail admits a qualifier
+//     (with / that / that's / named / of / but / without / in) and is fenced with [^.,] so
+//     it can never bridge a comma into the NEXT clause — that guard is what keeps Tiana,
+//     Angelic Mechanic ("whenever a creature you control crews a Vehicle, that Vehicle
+//     perpetually gets +1/+1") out, which the unfenced version wrongly matched.
+//   ARM 2 — symmetric lord ("all|other|each other <scope> <noun> get +N/+N"). This one
+//     pumps opposing copies too, and the deliberate ruling is that it STILL earns the
+//     go-wide read: it excludes the source, it names a creature class, and it is only ever
+//     printed on lords whose deck is unambiguously that class. In Commander an opponent
+//     sharing your tribe is rare and never changes how the deck is BUILT.
+// Neither arm can match an opponent-facing pump ("creatures your opponents control get")
+// because arm 1 demands the literal "you control" and arm 2 demands a plural class noun
+// immediately before the verb.
+const ANTHEM_RE = /(?:(?:creature tokens?|creatures?|[a-z][a-z'-]{2,15}s) you control(?: (?:with|that|that's|named|of|but|without|in)\b[^.,]{0,44})?|\b(?:all|other|each other) (?:[a-z][a-z'-]{2,15} ){0,2}(?:creatures?|[a-z][a-z'-]{2,15}s)) (?:also )?gets? \+[\dx]+\/\+[\dx]+(?![^.]*until end of turn)/;
+// The two things a static team anthem is NOT. Both are STRIPPED from the text the atom
+// reads rather than fought inside the pattern — the same idiom as the targeted tap-down
+// and targeted-tax guards in extractAtoms, and for the same reason: the give-away that an
+// effect is not an anthem is structural, not lexical.
+//   TEMP  — the whole clause containing "until end of turn". The shipped pattern carried a
+//           FORWARD lookahead only, so it caught "get +1/+1 until end of turn" but not
+//           Akroma, Vision of Ixidor's "until end of turn, each other creature you control
+//           gets +1/+1", where the qualifier is stated BEFORE the pump. Stripping the
+//           clause makes the guard symmetric. It is clause-scoped, never card-scoped, so
+//           Raggadragga (static anthem in line 1, combat trick in line 3) keeps his atom.
+//   TGT   — single-target pumps ("target creature you control gets +2/+2"). One creature
+//           is not a team.
+const ANTHEM_TEMP_RE = /[^.]*until end of turn[^.]*/g;
+const ANTHEM_TARGET_RE = /\b(?:up to \w+ )?(?:an|another|other )?\s*target [^.]{0,60}?gets? \+[\dx]+\/\+[\dx]+/g;
+// ANTHEM_BARE_RE — which ARM of the family this commander sits in. Bare = the unscoped
+// pump the old test already saw (Elesh Norn, Jetmir, Prava); anything else is SCOPED and
+// wants a different anthem POOL (see RAILS.anthem rail 1). Read as
+// "ANTHEM_RE matches but ANTHEM_BARE_RE does not", so a commander carrying BOTH (Depala:
+// "Other Dwarves you control get +1/+1" AND "Each Vehicle you control gets +1/+1") is
+// correctly treated as bare-inclusive and keeps the shipped pool.
+const ANTHEM_BARE_RE = /(?:other |all |each other |each )?creature tokens? you control (?:also )?gets? \+|(?:other |all |each other |each )?creatures? you control (?:also )?gets? \+/;
+// v7.19 (Ascendant Evincar VERIFY) — ANTHEM_UEOT_FENCE: THE ATOM'S OWN GUARD, RESTATED IN
+// SCRYFALL. ANTHEM_RE excludes temporary pumps with a negative lookahead. Scryfall's `o:/…/`
+// is RE2 and HAS NO LOOKAHEAD, so the rail POOL could not express the one constraint that
+// defines the shelf, and the shipped pool was majority combat trick. MEASURED LIVE on the
+// deployed build: "More Anthems & Mass Pump" returned 238 cards for ELESH NORN of which 141
+// (59%) were "until end of turn" tricks, and 479 for JETMIR of which 294 (61%) were — the two
+// commanders this family was BUILT for. Their shelves led with Summon: Knights of Round, Make
+// a Stand, Jazal Goldmane, Goldnight Commander and Warren Warleader (Norn) and with Return of
+// the Wildspeaker, Triumph of the Hordes, Overrun and End-Raze Forerunners (Jetmir) — and that
+// second group is the "Overrun & Alpha-Strike" rail's ENTIRE contents, so the two payoff
+// shelves in the same family were dealing each other's cards.
+// The fence is a NEGATIVE pair, because the templating comes in both orders and the shipped
+// atom guard was forward-only until v7.18 fixed it on the JS side only:
+//   1. PUMP → UEOT. `[^.]{0,44}` spans the intervening "and gain <keyword>" that 11 of the 34
+//      leaks in mono-black used (Dance of Shadows, Myrkul's Invoker, Chittering Host …). The
+//      window is bounded by "." on purpose: the period is the sentence fence, so a card with a
+//      STATIC anthem in one sentence and a trick in another (Lord of the Accursed, Raggadragga)
+//      is KEPT — the same clause-scoped, never card-scoped rule as ANTHEM_TEMP_RE.
+//   2. UEOT → PUMP. WotC has errata'd the modern wording to lead with the qualifier, so
+//      Triumph of the Hordes now reads "Until end of turn, creatures you control get +1/+1".
+//      It demands the PLURAL TEAM subject "creatures you control", which is what keeps
+//      PALADIN CLASS (static anthem at Level 2, "until end of turn, target attacking creature
+//      gets +1/+1" at Level 3) on the shelf. A wider `[^.]{0,50}gets? \+N\/\+N` was measured
+//      and REJECTED for exactly that false drop.
+// Both terms were tuned against Scryfall's RE2 repetition limiter — `[^.]{0,60}` is refused
+// ("Too much repetition") and silently IGNORED with only a warning, which would have shipped a
+// fence that did nothing, so the widths here are load-bearing.
+// MEASURED, live, over the whole family: Elesh Norn 238 → 97, Jetmir 479 → 185, Evincar 111 →
+// 78, with ZERO static anthems dropped on Norn and Evincar. The single measured false drop in
+// all three identities is Pollen-Shield Hare // Hare Raising, whose FRONT face is a real anthem
+// and whose BACK face is a trick — the known cross-face MDFC conjunction hazard already on the
+// backlog, which `o:` cannot separate for any rail.
+const ANTHEM_UEOT_FENCE = ' -o:/gets? \\+[0-9Xx]+\\/\\+[0-9Xx]+[^.]{0,44}until end of turn/'
+                        + ' -o:/until end of turn, [a-z ]{0,20}creatures you control [a-z ]{0,20}get \\+/';
+// v7.19 — ANTHEM_TRIBAL_SCOPE_RE: is this commander's anthem scoped to a CREATURE TYPE?
+// Deliberately a POSITIVE test on the commander's own wording rather than a lookup in the
+// TRIBES whitelist, because TRIBES is a known-incomplete list (Barbarian and Griffin are
+// missing, which is why Balthor the Stout and Zuberi, Golden Feather still render no
+// "More <Tribe>" shelf). Anything scoped to a noun that COULD be a creature type blocks the
+// narrow-demote below, so the demote can never misfire on a tribe the whitelist has not heard
+// of. A COLOUR qualifier ("Black creatures get +1/+1") is explicitly not a type and does not
+// block; neither does a bare or adjective-qualified team ("creatures you control with flying").
+// Three printed shapes, because the subject noun phrase is written three ways. The two
+// negative-lookahead sets are what make it a TYPE test and not a "there is a word here" test —
+// the first draft omitted the QUALIFIER set and matched the word "other" itself as the tribe,
+// which classified EVERY anthem commander as type-scoped and silently disabled the demote.
+//   A  "<Type> creatures [you control] get +N/+N"  — Balthor, Verdeloth, Kangee, the pre-2003 lords
+//   B  "<Type>s you control get +N/+N"             — Beckett Brass, Kudro, Lyra, Sliver Legion
+//   C  the chosen-type wording                     — Morophon
+// A colour qualifier is explicitly NOT a type ("Other black creatures get +1/+1" is Evincar,
+// whose board shares no type), and neither is a bare or adjective-qualified team, so shape B
+// demands "you control" IMMEDIATELY before the verb — that is what lets Alela through
+// ("other creatures you control WITH FLYING get +1/+0") while still catching Beckett Brass.
+const ANTHEM_COLOUR_WORD = '(?:non)?(?:white|blue|black|red|green|colorless|multicolored|monocolored)';
+const ANTHEM_QUALIFIER_WORD = '(?:all|other|each|another|those|these)';
+const ANTHEM_PUMP_TAIL = '(?:also )?gets?\\s\\+[\\dx]+\\/\\+[\\dx]+';
+const ANTHEM_TRIBAL_SCOPE_RE = new RegExp(
+    '\\b(?!' + ANTHEM_COLOUR_WORD + '\\b)(?!' + ANTHEM_QUALIFIER_WORD + '\\b)(?!creature)([a-z][a-z\'-]{2,15})\\s+creatures?\\s+(?:you control\\s+)?' + ANTHEM_PUMP_TAIL
+  + '|\\b(?!' + ANTHEM_QUALIFIER_WORD + '\\b)(?!creatures?\\b)(?!creature tokens?\\b)([a-z][a-z\'-]{2,15}s)\\s+you control\\s+' + ANTHEM_PUMP_TAIL
+  + '|choose a creature type|the chosen type|creature type of your choice'
+);
 const ATOMS = [
     // --- copy family, split by realization (ledger CS-0001/0002/0011/0046:
     //     token copies re-trigger "enters"; in-place copies never do;
@@ -3320,7 +3443,12 @@ const ATOMS = [
     // double strike", which the strip's "you control (have|gain|get)" pattern misses). The test
     // matches only the STATIC team pump; the negative lookahead drops "until end of turn" combat
     // tricks (Overrun-style one-shots stay OUT of the atom and return inside the payoff rail).
-    { key: 'anthem', w: 5, chip: 'Anthem', title: 'Anthems & Go-Wide', sub: 'Pump the whole team', test: /(?:other )?creatures you control (?:also )?get \+[\dx]+\/\+[\dx]+(?![^.]*until end of turn)/, q: '(o:"creatures you control get +" OR o:"creature tokens you control get +")', oq: '(o:"creatures you control get +" OR o:"creature tokens you control get +")', why: 'statically pumps your whole team — the wider your board, the more each buff is worth' },
+    // v7.18 (Ascendant Evincar STUDY) — test is now the shared ANTHEM_RE, which adds the four
+    // SCOPED templates (typal / adjective / no-controller-clause lord / chosen-type) the single
+    // hard-coded pattern here could not see. Same constant gates RAILS.anthem.pTest, so the atom
+    // and its rail family can never again disagree about what an anthem is. Measured: 51 -> 132
+    // commanders, zero lost. See the ANTHEM_RE block above for the census and the two arms.
+    { key: 'anthem', w: 5, chip: 'Anthem', title: 'Anthems & Go-Wide', sub: 'Pump the whole team', test: ANTHEM_RE, q: '(o:"creatures you control get +" OR o:"creature tokens you control get +")', oq: '(o:"creatures you control get +" OR o:"creature tokens you control get +")', why: 'statically pumps your whole team — the wider your board, the more each buff is worth' },
     { key: 'counters', w: 3, chip: '+1/+1 counters', title: '+1/+1 Counters', sub: 'Grow the board', test: /\+1\/\+1 counter/, q: 'o:"+1/+1 counter"', oq: 'o:"+1/+1 counter"', why: 'stacks +1/+1 counters' },
     // experience counters (Meren study; Ezuri/Mizzix class): they live on the PLAYER,
     // not the board — split out of the proliferate atom so these commanders stop being
@@ -3782,8 +3910,16 @@ function extractAtoms(card) {
     // (Arachne, Irini Sengir) — still fires it untouched. See SELF_TAX_RE for the census.
     const oStax = o.replace(/tap (?:up to \w+ )?target[^.]*\.\s*(?:it|that|those|they)[^.]{0,80}untap[^.]{0,80}\./g, ' ')
         .replace(new RegExp(SELF_TAX_RE.source, 'g'), ' ');
+    // v7.18 (Ascendant Evincar study) — ANTHEM text variant, the sibling of oStax/oLifeEng above
+    // and built for the same reason: what disqualifies a static team pump is structural, so the
+    // disqualifying clauses are removed from the text before the (now much wider) ANTHEM_RE reads
+    // it, instead of being fought inside the pattern. TEMP first — it deletes whole "until end of
+    // turn" clauses, which is the guard the shipped forward-lookahead could not express — then the
+    // single-target pumps. Clause-scoped, so a commander with a static anthem in one line and a
+    // combat trick in another keeps the atom (Raggadragga, Balthor the Stout).
+    const oAnth = o.replace(ANTHEM_TEMP_RE, ' ').replace(ANTHEM_TARGET_RE, ' ');
     ATOMS.forEach(a => {
-        const m = (a.key === 'tokens' ? oTok : a.key === 'lifegain' ? oLifeEng : (a.key === 'enchantments' || a.key === 'artifacts') ? oNoun : a.key === 'taxes' ? oStax : POLAR[a.key] ? oPol : o).match(a.test);
+        const m = (a.key === 'tokens' ? oTok : a.key === 'lifegain' ? oLifeEng : (a.key === 'enchantments' || a.key === 'artifacts') ? oNoun : a.key === 'taxes' ? oStax : a.key === 'anthem' ? oAnth : POLAR[a.key] ? oPol : o).match(a.test);
         if (m) found.push({ atom: a, snippet: m[0] || '' });
     });
     // v7.06 (Charix study) — apply the WEAK basic-type land count demotion described above.
@@ -3792,6 +3928,25 @@ function extractAtoms(card) {
     if (BASIC_TYPE_COUNT_RE.test(o) && !LAND_ENGINE_RE.test(o)) {
         found.forEach(f => {
             if (f.atom.key === 'landfall') f.atom = Object.assign({}, f.atom, { w: 2 });
+        });
+    }
+    // v7.18 (Ascendant Evincar study) — SCOPED-ANTHEM DEMOTION, the same fresh-object idiom as the
+    // landfall demotion directly above, and the rule that keeps the widened atom from doing harm:
+    // A SCOPED ANTHEM MUST NEVER OUTRANK THE CLASS FAMILY IT IS SCOPED TO.
+    // When the pump names a class, that class is the deck and the engine already has a richer
+    // family for it — the typal rails deal "More <Tribe>" plus a tribe-specific "<Tribe> Anthems &
+    // Banners", the flying family deals the skyboard, the tokens family deals the swarm. The
+    // anthem package is then the SECONDARY, least-specific read. Left at w5 it sorted ahead of all
+    // of them and, because the report trims its synergy tail, it pushed real shelves off the end:
+    // measured before this clause, Alela lost BOTH flying shelves, Verdeloth and Naru Meha and
+    // General Kudro lost their own tribe's banner shelf, and Hofri lost Token Doublers. Demoted to
+    // w2 the anthem package sorts last, so it is ADDITIVE where there is room and is itself the
+    // thing that yields where there is not — which is the correct priority.
+    // An UNSCOPED anthem is untouched at w5: for Elesh Norn, Jetmir and Prava the anthem IS the
+    // deck, there is no class family to defer to, and their reports must not move at all.
+    if (ANTHEM_RE.test(oAnth) && !ANTHEM_BARE_RE.test(oAnth)) {
+        found.forEach(f => {
+            if (f.atom.key === 'anthem') f.atom = Object.assign({}, f.atom, { w: 2 });
         });
     }
     const hasGear = found.some(f => f.atom.key === 'equipment' || f.atom.key === 'auras');
@@ -3981,6 +4136,11 @@ STUDY_DB["162572f2-1757-42e9-bd97-e6bd9a762c0e"] = {"insight": "Ashaya, Soul of 
 // per-commander insight + traps.
 STUDY_DB["28d500ea-720f-4332-891e-404fb03acb5c"] = {"insight": "Arachne, Psionic Weaver is a MONO-WHITE HATEBEARS / STAX commander whose whole card is one surgical tax, and the engine used to render her with NO game plan at all because her tax names no controller. Read the two halves together: the ETB looks at an opponent's hand and lets you CHOOSE a card type OTHER THAN CREATURE, and then “spells of the chosen type cost {1} more to cast” applies to the whole table for as long as she lives. The excluded word is the instruction — you are being told to build a CREATURE deck, because creature is the one type your own tax can never name. Play cheap white bodies that each carry a rule (Thalia Guardian of Thraben, Vryn Wingmare, Archon of Emeria, Leonin Arbiter, Drannith Magistrate, Grand Abolisher, Containment Priest, Aven Mindcensor), stack her named-type tax on top of the symmetric spheres, and win with the weenies while the table pays rent. EDHREC ranks her Stax #1, then Bounce / Control / Hatebears / Tokens / Prison / Weenies — every column is the same deck. Web-slinging {W} is a genuine second gear, not flavour text: returning a tapped creature you control re-buys an ETB (blink-adjacent) and deploys her for one mana on a turn you also cast something else, which is why Bounce and Blink show up in her theme list at all.", "traps": ["the tax is SYMMETRIC — it taxes YOU too, and unlike Thalia's fixed ‘noncreature’ you pick the type on the way in, so picking the type your OWN deck is densest in is a real and common misplay. Look at the opponent's hand first, then name the type that is expensive for the table and cheap for you: if your deck is 35 creatures, artifact or instant is almost always the right name, and naming sorcery into a hand full of instants does nothing.", "she chooses ONCE, AS SHE ENTERS — it is a static replacement choice, not an upkeep trigger, so the named type is locked for that lifetime and you only re-choose by re-deploying her. That is the actual reason to run blink and self-bounce (her own Web-slinging, Restoration Angel, Flickerwisp, Ephemerate): they are not value blinks here, they are how you RE-AIM the lock at whatever the table drew into.", "a tax is not a win condition. {1} more never kills anyone, and a mono-white deck that spends every slot on lockpieces stalls the table and then loses to the first player who resolves something anyway. Her rails lead with Profit Through the Lock (Smothering Tithe, Esper Sentinel, Mangara the Diplomat, Archivist of Oghma, Trouble in Pairs) for exactly this reason — the lock has to be converting the turns it buys into cards and mana, and there has to be a clock, which for her is the creature board her own tax deliberately exempted."]};
 STUDY_DB["505231d8-714f-4c5b-a635-d1662bd18a78"] = {"insight": "Spider-Man, Web-Slinger is a MONO-WHITE BOUNCE / BLINK-VALUE commander whose entire card is one keyword, and the engine used to render him with NO game plan at all because a keyword's contract lives in REMINDER text and the reader strips parentheses before it looks. Read Web-slinging {W} as what it actually is — an ALTERNATIVE COST that turns a 3-mana 3/3 into a ONE-MANA 3/3 in exchange for returning a TAPPED creature you control to hand. That is not a drawback, it is the deck: the returned creature is a card you get to spend again, so you build so that every body you own is one you are HAPPY to re-buy. The loop has three parts and each is a deckbuilding instruction. (1) Manufacture tapped creatures on purpose — a mana dork is the perfect payer because it taps for the mana that helps cast the spell and is then already tapped to pay its cost, which is why Gold Myr, Hedron Crawler, Birds of Paradise and Ornithopter of Paradise show up in white-adjacent Spider lists that otherwise have no reason to run them. (2) Give every cheap body an “enter” ability — Spirited Companion, Helpful Hunter, Priest of Ancient Lore, Novice Inspector, Wall of Omens, Loran of the Third Path, Inspiring Overseer — so the bounce re-buys a trigger instead of losing a card. (3) Add redundancy for the trick itself, because only a handful of cards in Magic actually have web-slinging: Whitemane Lion, Kor Skyfisher and Ancestral Statue bounce for value on their own, and Ephemerate, Cloudshift, Restoration Angel and Conjurer's Closet re-run the same triggers. EDHREC ranks him Blink #1, then Combo / Lifegain / Bounce / Control, with Whitemane Lion, Kor Skyfisher, Aunt May, Spirited Companion and Spider-UK as his high-synergy cards and Oketra's Monument and Pearl Medallion in his top artifacts — every column is the same deck: cheap ETB bodies, cast and recast below rate.", "traps": ["VIGILANCE IS AN ANTI-SYNERGY HERE, and it is the single most counter-intuitive thing about the archetype. The cost demands a TAPPED creature, and the ordinary way a creature becomes tapped is by attacking — a vigilant attacker never taps, so it can never pay. This is not theoretical: Silk, Web Weaver's own activated ability grants her whole team vigilance and therefore fights her own web-slinging, and Amazing Spider-Girl is printed with vigilance on a card whose other line is the keyword. Prize mana dorks and creatures that enter tapped over vigilant bodies, and think twice before firing a team-wide vigilance pump on a turn you intend to sling.", "The web-slinging cost is an ALTERNATIVE cost, not a discount you get to stack — you are casting the spell FOR that cost instead of its mana cost, so cost reducers apply to it but you cannot also pay the normal cost, and you cannot web-sling a spell you are casting some other free way. It is also not free card advantage on its own: you are down a permanent on board the moment you pay, and if the creature you returned had no “enter” ability and no cheap recast, you simply traded a body and a card for a couple of mana. The bounce has to be aimed at something that WANTS to come back.", "Do not build it as a Spider typal deck. The type line is flavour — the payoff is the LOOP, and the loop is colourless in the design sense: it runs on cheap ETB creatures, mana dorks and bounce, none of which care what creature type they are. Every commander in this family that renders well does so on the strength of its enters-triggers and its dork count, and the format's Spider tribal support is thin enough that chasing it costs you the density that actually makes the engine go."]};
+// STUDY (Ascendant Evincar) 2026-08-05 — appended as a statement so the STUDY_DB literal stays
+// untouched. Keyed by oracle_id (the same id-then-name lookup the engine uses). The ENGINE fix
+// (ANTHEM_RE: the four SCOPED static-anthem templates, 51 -> 132 commanders) is what lifts the
+// whole family; this entry adds Evincar's own insight + traps.
+STUDY_DB["e32c0de7-132d-4a39-85fb-da0ed1132878"] = {"insight": "Ascendant Evincar is a MONO-BLACK COLOUR-ANTHEM go-wide deck, and until this build Oracle rendered him with nothing at all — no game plan and not one synergy rail, just the generic Ramp / Card Advantage / Removal / Board Wipes / Tutors staples every commander gets. His whole card is one static effect written in the pre-2003 lord wording — \"Other black creatures get +1/+1. Nonblack creatures get -1/-1\" — and the engine's anthem detector only knew the modern phrasing (\"creatures you control get +N/+N\"), so a card that is ENTIRELY an anthem fired zero atoms. In mono-black his first line is not a colour restriction at all: every creature you cast is black, so it reads as a clean team anthem, and EDHREC confirms the deck exactly — his highest-synergy cards are Bad Moon, Hall of Triumph, Paragon of Open Graves and Death Pit Offering, i.e. FOUR MORE COLOUR ANTHEMS, alongside Intimidation for evasion and Massacre for the sweep. Build him as a wide, cheap black board plus a stack of anthems and banners (Bad Moon, Paragon of Open Graves, Caged Sun, Gauntlet of Power, Coat of Arms, Door of Destinies), fix the mana with Cabal Coffers / Cabal Stronghold / Nykthos / Urborg and Crypt Ghast, and close with an evasion or trample effect that turns the stacked +N/+N into one lethal swing. His second line is the half most brewers under-read: \"Nonblack creatures get -1/-1\" is a PERMANENT, one-sided sweeper that your own board is immune to, so it wipes opposing x/1 tokens on sight and stacks with the same-shaped enchantments EDHREC already ranks for him — Engineered Plague, Night of Souls' Betrayal, Curse of Death's Hold, Midnight Banshee and Pestilence.", "traps": ["He is NOT Vampire typal, and his printed type line is the trap. Evincar is a Phyrexian Vampire Noble, but his text never names a creature type — it names a COLOUR — so Vampire lords, Vampire banners and Kindred payoffs do nothing for him that a black anthem would not do better and more broadly. The tribe here is 'black', and in mono-black that means every creature you own.", "The anthem is only worth what the board is worth, so the deck's real cost is BODIES, not more buffs. A hand of five anthems and two creatures loses. Prioritise cheap, wide black creatures and token makers (Bitterblossom class) first, then stack the second and third anthem — each one is multiplied by the number of creatures already down, which is why an anthem drawn late is far better than one drawn early.", "The -1/-1 half is a static sweeper, not a removal spell, and it can be a liability against a board of your own colourless artifact creatures — Treasure- and Clue-style bodies, Eldrazi Spawn and any colourless token you make are NONBLACK and shrink too. Keep the creature suite genuinely black rather than splashing colourless utility bodies you are about to shrink by one."]};
 const ROLE_LABEL = { enabler: 'Enabler', payoff: 'Payoff', amplifier: 'Amplifier', gate: 'Gate', staple: 'Staple', synergy: 'Synergy' };
 // ============================================================
 // ENGINE v3 — role-based rails (from the commander study ledger).
@@ -4484,10 +4644,39 @@ const RAILS = {
     // sorted on Scryfall 2026-07-31: Go-Wide -> Scute Swarm/Avenger/Bitterblossom/Adeline; More
     // Anthems -> Intangible Virtue/Mirari's Wake/Purphoros; Overrun -> Craterhoof/Overrun.
     anthem: {
-        pTest: /(?:other )?creatures you control (?:also )?get \+/,
+        // v7.18 — the SAME shared constant as the atom test (see ANTHEM_RE). Before this the rail
+        // family carried its own second, narrower copy of the pattern, so even a commander whose
+        // atom fired could be denied its rails by a gate that disagreed with the atom.
+        pTest: ANTHEM_RE,
         rails: [
             { role: 'enabler', title: 'Go-Wide Token Makers', sub: 'Fill the board', q: GO_WIDE_Q, why: 'an anthem is only as big as the board it pumps — Scute Swarm, Avenger of Zendikar, Bitterblossom, and Adeline flood the field so every +X/+X counts many times over' },
-            { role: 'payoff', title: 'More Anthems & Mass Pump', sub: 'Stack the buffs', q: '(o:"creatures you control get +" OR o:"creature tokens you control get +")', why: 'anthems stack across a wide board — Intangible Virtue, Mirari’s Wake, Purphoros, and Warleader’s Call all pile onto the team at once' },
+            // v7.18 — SCOPE-AWARE anthem pool, using the rail-`q`-as-a-function machinery v7.14
+            // added. The shipped string searches for the literal substring "creatures you control
+            // get +", which is exactly the ONE template the old atom knew, so a commander whose
+            // anthem names a class was about to be dealt a shelf that could not contain a single
+            // card of its own kind: mono-black Ascendant Evincar would never have been shown Bad
+            // Moon, Hall of Triumph, Paragon of Open Graves or Death Pit Offering — EDHREC's #1,
+            // #4, #7 and #8 highest-synergy cards for him. A SCOPED commander therefore gets the
+            // regex pool (plural team subject, optional scope words, "get +N/+N"), which finds the
+            // colour lords, the chosen-type banners (Door of Destinies, Icon of Ancestry, Obelisk
+            // of Urd, Vanquisher's Banner) and Coat of Arms. Verified in mono-black: 121 cards,
+            // zero Equipment/Aura/combat-trick leak — the plural verb "get" is what fences out the
+            // "equipped/enchanted/target creature GETS +N/+N" classes that a naive widening admits
+            // (a bare o:"creature gets +" widening returns 525 cards in the same identity, led by
+            // Accorder's Shield and Argentum Armor). A BARE commander keeps the shipped string
+            // byte-for-byte, so Elesh Norn, Jetmir and Prava are untouched: a typal banner that
+            // needs a shared creature type is dead weight in a mixed token swarm.
+            // v7.19 — ANTHEM_UEOT_FENCE is appended to BOTH arms. The temporary-pump leak is not a
+            // property of the scoped widening: the UNSCOPED arm was the worse offender (Elesh Norn
+            // 59% tricks, Jetmir 61%), so the fence is the shelf's definition, not a patch to one
+            // branch. `leadCtx` demotes subtype-scoped anthems only where the board has no shared
+            // type — see anthemWideLead.
+            { role: 'payoff', title: 'More Anthems & Mass Pump', sub: 'Stack the buffs',
+              leadCtx: ctx => (ctx && ctx.anthemWide) ? anthemWideLead : null,
+              q: ctx => ((ctx && ctx.scopedAnthem)
+                ? '-t:land (o:/(creatures|[a-z]+s)( you control)?( [a-z\'"]+){0,4} get \\+[0-9X]+\\/\\+[0-9X]+/ OR o:/each (other )?([a-z]+ ){0,3}creature([a-z \'"]{0,30})? gets \\+[0-9X]+\\/\\+[0-9X]+/)'
+                : '(o:"creatures you control get +" OR o:"creature tokens you control get +")') + ANTHEM_UEOT_FENCE,
+              why: 'static anthems stack across a wide board — Intangible Virtue, Mirari’s Wake, Caged Sun, and Warleader’s Call all pile onto the team at once, and the one-turn pumps live on the alpha-strike shelf instead' },
             { role: 'payoff', title: 'Overrun & Alpha-Strike', sub: 'Turn wide into lethal', q: '(o:"creatures you control" o:trample o:"until end of turn")', why: 'one Craterhoof Behemoth, Overwhelming Stampede, or Overrun converts the pumped swarm into a single lethal alpha strike' }
         ]
     },
@@ -5292,6 +5481,16 @@ const ARCHETYPES = {
     goad: { name: 'Goad/Politics', win: 'goad every attacker onto your other opponents, punish each forced swing, and win off the table tearing itself apart' },
     sac: { name: 'Aristocrats', win: 'drain the table with death triggers \u2014 no combat needed' },
     death: { name: 'Aristocrats', win: 'drain the table with death triggers \u2014 no combat needed' },
+    // read-gap fill (Ascendant Evincar study 2026-08-05): the SAME ATOM->ARCHETYPES plan-gap class
+    // as monarch/mutate/energy/blood above and vehicles/extracombat/goad before them — `anthem` has
+    // fired as a w5 atom with a full three-rail family since the Elesh Norn study, and has never had
+    // a game PLAN. The two commanders the family was built for, ELESH NORN and JETMIR, have been
+    // rendering PLAN-LESS this whole time, and so does every commander whose anthem is its only read
+    // (Ascendant Evincar, Balthor the Stout, Zuberi, Golden Feather). Deliberately worded as the
+    // ANTHEM plan rather than reusing the tokens plan: tokens wins by flooding and then finding a
+    // pump, an anthem commander already HAS the pump and is buying bodies to multiply it — the same
+    // two halves in the opposite order, which is exactly what the rails deal.
+    anthem: { name: 'Anthems & Go-Wide', win: 'the pump is already on the board, so buy BODIES to multiply it — flood cheap and wide, stack a second and third anthem, and convert the whole team into one lethal alpha strike' },
     tokens: { name: 'Go-Wide Tokens', win: 'overwhelm with anthems and mass pump' },
     counters: { name: '+1/+1 Counters', win: 'go tall \u2014 a few huge threats plus proliferate' },
     countersgen: { name: '+1/+1 Counters', win: 'go tall \u2014 a few huge threats plus proliferate' },
@@ -5553,16 +5752,28 @@ function pushUniqueRail(out, sec) {
 //       contains wolf. Both faces are read (the top-level type_line of an MDFC is
 //       'A // B', and card_faces is checked too for reversible layouts).
 const RAIL_LEAD_STRIDE = 4;
+// v7.19 — `lead` may now be a PREDICATE as well as a subtype string. The ordering machinery,
+// the stride and all three safety properties above are unchanged and shared; only the question
+// "is this card what the shelf is FOR?" is widened, because the answer is not always a printed
+// subtype. The carrier is the anthem payoff shelf (see ANTHEM_NARROW_RE): there the buried
+// class is not a tribe at all but "an anthem my board can actually turn on", which lives in the
+// ORACLE text, not the type line. A rail passing a string behaves byte-for-byte as it did in
+// v7.17 — the string branch below is the shipped code, untouched.
 function railLeadFirst(cards, lead) {
     if (!lead || !cards || cards.length < 2) return cards;
+    let isLead;
+    if (typeof lead === 'function') {
+        isLead = (c) => { if (!c) return true; try { return !!lead(c); } catch (e) { return true; } };
+    } else {
     const re = new RegExp('\\b' + String(lead).toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b');
-    const isLead = (c) => {
+    isLead = (c) => {
         if (!c) return true;
         if (re.test(String(c.type_line || '').toLowerCase())) return true;
         const faces = (c.card_faces && c.card_faces.length) ? c.card_faces : [];
         for (let i = 0; i < faces.length; i++) if (re.test(String(faces[i].type_line || '').toLowerCase())) return true;
         return false;
     };
+    }
     const out = [], held = [];
     let tail = 0;
     const canEmit = () => (tail + 1) * RAIL_LEAD_STRIDE <= out.length + 1;
@@ -5575,6 +5786,46 @@ function railLeadFirst(cards, lead) {
     }
     while (held.length) out.push(held.shift());
     return out;
+}
+// v7.19 (Ascendant Evincar VERIFY) — ANTHEM_NARROW_RE / anthemWideLead.
+// THE SAME DEFECT v7.17 FOUND ON THE TRIBAL RAIL, ONE FAMILY OVER, AND IT IS THE REASON THE
+// EVINCAR STUDY'S OWN SHELF STILL DID NOT SHOW HIS CARDS. Every rail is fetched order=edhrec,
+// and EDHREC popularity is global — counted across ALL decks — so a broad arm's cards are
+// ranked by how often they are played EVERYWHERE while the cards the shelf is actually for are
+// ranked only by their own niche's play. On the anthem payoff shelf the broad arm is the
+// SUBTYPE-SCOPED anthem: tribal lords ("Zombies you control get +1/+1") and the chosen-type
+// banners (Coat of Arms, Obelisk of Urd, Icon of Ancestry, Door of Destinies, Adaptive
+// Automaton). Those are the most-played anthems in Magic because every typal deck runs them —
+// and they are DEAD CARDS in a deck whose board shares no creature type.
+// MEASURED for Ascendant Evincar (mono-black COLOUR lord, mixed-type board): 41 of the 78 cards
+// on his shelf — 53% — were subtype-scoped, they held 7 of the top 8 slots, and EDHREC does not
+// play 7 of the 10 chosen-type banners among them (Banner of Kinship, Coat of Arms, Mirror Box,
+// Adaptive Automaton, Icon of Ancestry, Obelisk of Urd, Brass Herald all absent from his page).
+// Meanwhile his FOUR highest-synergy cards on EDHREC are all colour anthems and ALL FOUR fell
+// outside the 30-card cap: Bad Moon #1 synergy at rank 39, Hall of Triumph #4 at 54, Paragon of
+// Open Graves #7 at 64, Death Pit Offering #8 at 74. The shelf could not show him one of them.
+// Demoting the narrow class through the SHARED railLeadFirst stride: Bad Moon 39 → 21 and Hall
+// of Triumph 54 → 29 (both now visible), Gauntlet of Power 23 → 10, Caged Sun 6 → 3, and
+// EDHREC-confirmed cards in the dealt 30 go 6 → 8. Multiset identity holds; nothing is dropped.
+// WHEN IT APPLIES is decided by the commander's OWN wording, never by the TRIBES whitelist —
+// see ANTHEM_TRIBAL_SCOPE_RE. A commander whose anthem names any noun that could be a creature
+// type is EXCLUDED, so Admiral Beckett Brass, Lyra, General Kudro, Depala and Sliver Legion are
+// untouched (their own tribe's banner shelf is the right home for those cards), and so are
+// Balthor the Stout and Zuberi, Golden Feather even though TRIBES has never heard of Barbarian
+// or Griffin. It is also SELF-NEUTRALISING on the unscoped arm: that pool only admits the
+// literal "creatures you control get +", where the narrow class is already scarce and ranked
+// low, so ELESH NORN and JETMIR were measured BYTE-IDENTICAL — zero cards into or out of their
+// top 30 — which is property (1) of railLeadFirst demonstrating itself on live data.
+const ANTHEM_NARROW_RE = new RegExp(
+    '\\b(?:' + TRIBES.filter(t => t.length > 2).join('|') + ')s?\\b[^.;\\n]{0,40}?\\bgets? \\+[\\dx]+\\/\\+[\\dx]+'
+);
+const ANTHEM_CHOSEN_TYPE_RE = /choose a creature type|the chosen type|shares? a creature type|creature type of your choice/;
+function anthemWideLead(card) {
+    if (!card) return true;
+    let t = String(card.oracle_text || '').toLowerCase();
+    const faces = (card.card_faces && card.card_faces.length) ? card.card_faces : [];
+    for (let i = 0; i < faces.length; i++) t += '\n' + String(faces[i].oracle_text || '').toLowerCase();
+    return !(ANTHEM_NARROW_RE.test(t) || ANTHEM_CHOSEN_TYPE_RE.test(t));
 }
 function reframeYardRail(out, patch) {
     let at = -1;
@@ -5605,7 +5856,22 @@ function buildEngineModel(commander) {
     // identity; the guard it was built for turned out to need the deck's TRIBE too (a creature-type
     // reducer is dead without one), so the argument is now the whole context and any future rail can
     // ask the same question. Tribe is read the same way the typal rails read it further down.
-    const railCtx = { ci: ciArr, tribe: ((found.slice(0, 6).find(f => f.tribe) || {}).tribe) || null };
+    // v7.18 — third and fourth context fields, added the same way and for the same reason as
+    // v7.15's `tribe`: a rail can be gated on a property that lives in the commander's TEXT.
+    // `o` is the raw lowercased oracle every other detector already reads; `scopedAnthem` is the
+    // pre-computed answer to "does this commander's anthem name a class?", so the anthem payoff
+    // rail can deal a typal/colour pool instead of the unscoped one. Both are available to every
+    // present and future rail; no existing rail reads them, so nothing else moves.
+    // Parens stripped first: `o` here is the RAW lowercased oracle (extractAtoms does its own
+    // strip), and reminder text is not rules the commander provides — a keyword's reminder must
+    // never be able to summon or suppress the scoped read.
+    const oAnthCtx = o.replace(/\([^)]*\)/g, ' ').replace(ANTHEM_TEMP_RE, ' ').replace(ANTHEM_TARGET_RE, ' ');
+    const railCtx = { ci: ciArr, tribe: ((found.slice(0, 6).find(f => f.tribe) || {}).tribe) || null, o: o, scopedAnthem: ANTHEM_RE.test(oAnthCtx) && !ANTHEM_BARE_RE.test(oAnthCtx) };
+    // v7.19 — `anthemWide`: this commander's board has NO shared creature type, so a
+    // subtype-scoped anthem is a dead card on its shelf (see ANTHEM_NARROW_RE). Read off the
+    // commander's OWN anthem wording via ANTHEM_TRIBAL_SCOPE_RE, never off the TRIBES whitelist,
+    // so a tribe the whitelist is missing (Barbarian, Griffin) still blocks the demote.
+    railCtx.anthemWide = ANTHEM_RE.test(oAnthCtx) && !ANTHEM_TRIBAL_SCOPE_RE.test(oAnthCtx);
     found.slice(0, 6).forEach(f => {
         const a = f.atom;
         if (seen[a.key]) return;
@@ -5641,7 +5907,10 @@ function buildEngineModel(commander) {
                     q: base + ' ' + (typeof r.q === 'function' ? r.q(railCtx) : r.q),
                     // v7.17 — a rail may declare a lead subtype (see railLeadFirst); available to
                     // every family, and a rail that sets none is ordered exactly as before.
-                    lead: r.lead || null,
+                    // v7.19 — `leadCtx` is the deck-context form, exactly as `q` gained one in
+                    // v7.14: it returns a lead (subtype string OR predicate) computed from the
+                    // commander, or null to order the rail as shipped. `lead` is unchanged.
+                    lead: (typeof r.leadCtx === 'function' ? (r.leadCtx(railCtx) || null) : (r.lead || null)),
                     why: i === 0
                         ? firstName + ' ' + (a.why || 'works here') + (f.snippet ? ' \u2014 \u201C' + trimSnippet(f.snippet) + '\u201D' : '.') + ' ' + capWord(r.why) + '.'
                         : capWord(r.why) + '.'
@@ -7270,6 +7539,28 @@ function buildEngineModel(commander) {
             out.push({ key: 'out-typal', role: 'payoff', title: 'Token Typal Payoffs', sub: 'The tokens have types', q: base + ' (' + outT.map(t => '(o:"other ' + t + 's" OR o:"' + t + 's you control get")').join(' OR ') + ')', why: 'the tokens are ' + outT.map(capWord).join(' and ') + 's \u2014 lords and anthems that pay the tribe see every one.' });
         }
     }
+    // v7.18 (Ascendant Evincar study) — A SCOPED ANTHEM YIELDS THE BUDGET.
+    // The line below is a hard NINE-CORE-RAIL budget, and it is deliberate (see the twin-tribe
+    // note above, which spends a slot on purpose). Widening the anthem atom to the scoped
+    // templates therefore had a second-order cost that the atom's own weight could not fix:
+    // the typal / flying / graveyard shelves are pushed onto `out` AFTER the atom rails, so on a
+    // commander already at the budget the three anthem rails evicted the tail no matter how low
+    // the atom sorted. Measured before this clause: Alela lost BOTH flying shelves AND Token
+    // Typal Payoffs, Verdeloth / Depala / Naru Meha / General Kudro each lost their own tribe's
+    // "<Tribe> Anthems & Banners", Kudro also lost Fill Their Yards, and Hofri lost both
+    // graveyard shelves. Every one of those is a MORE specific read than a generic anthem shelf.
+    // So: when the anthem is scoped — i.e. the commander has a class family that is the primary
+    // read — its rails are moved to the very end of the core list, in their own order, right
+    // before the trim. They then fill only SPARE budget and are the first thing to yield, which
+    // makes the widened atom strictly additive: no commander that rendered a shelf before this
+    // build can lose it. An UNSCOPED anthem (Elesh Norn, Jetmir, Prava) is not moved — the anthem
+    // IS its deck and its rails must lead — and a commander whose anthem is its ONLY read
+    // (Ascendant Evincar, Balthor the Stout, Zuberi) has an empty core list, so "last" is first.
+    if (railCtx.scopedAnthem) {
+        const heldAnthem = [];
+        for (let i = out.length - 1; i >= 0; i--) if (/^anthem:/.test(out[i].key || '')) heldAnthem.unshift(out.splice(i, 1)[0]);
+        for (let i = 0; i < heldAnthem.length; i++) out.push(heldAnthem[i]);
+    }
     if (out.length > 9) out.length = 9;
     const oOwn = o.replace(/\([^)]*\)/g, ' ').replace(/"[^"]*"/g, ' ');
     const coreRails = out.length;
@@ -7680,6 +7971,8 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v7.19', date: '2026-08-05', focus: 'verify', commander: 'Ascendant Evincar', summary: "VERIFY Ascendant Evincar - re-read his rails card-by-card live and took the v7.18 hand-off's own lead. TWO DEFECTS, BOTH IN THE SHARED ANTHEM PAYOFF SHELF, AND THE WORSE ONE WAS NOT ON THE SCOPED ARM AT ALL. (1) THE ATOM'S OWN GUARD WAS NEVER RESTATED IN THE QUERY. ANTHEM_RE excludes temporary pumps with a negative lookahead; Scryfall's o:/.../ is RE2 and HAS NO LOOKAHEAD, so the rail POOL could not express the one constraint that defines the shelf and was shipping majority combat trick. Measured live: 'More Anthems & Mass Pump' returned 238 cards for ELESH NORN of which 141 (59%) were 'until end of turn' tricks, and 479 for JETMIR of which 294 (61%) were - the two commanders this family was BUILT for, wrong since v6.58. Norn's shelf led with Summon: Knights of Round, Make a Stand, Jazal Goldmane, Goldnight Commander, Warren Warleader; Jetmir's with Return of the Wildspeaker, Triumph of the Hordes, Overrun, End-Raze Forerunners - and that second group is the 'Overrun & Alpha-Strike' rail's ENTIRE contents, so two payoff shelves in the same family were dealing each other's cards. New shared ANTHEM_UEOT_FENCE, appended to BOTH arms because the leak is the shelf's definition and not a property of the scoped widening. It is a NEGATIVE PAIR because the templating comes in both orders: PUMP->UEOT with [^.]{0,44} spanning the intervening 'and gain <keyword>' that 11 of the 34 mono-black leaks used (Dance of Shadows, Myrkul's Invoker, Chittering Host), and UEOT->PUMP because WotC errata'd the modern wording to lead with the qualifier (Triumph of the Hordes now reads 'Until end of turn, creatures you control get +1/+1'). The window is bounded by '.' so the period is the sentence fence: a card with a static anthem in one sentence and a trick in another (Lord of the Accursed, Raggadragga) is KEPT - clause-scoped, never card-scoped, the same rule as ANTHEM_TEMP_RE. The second term demands the PLURAL TEAM subject, which is what keeps PALADIN CLASS (static anthem at Level 2, 'until end of turn, target attacking creature gets +1/+1' at Level 3); a wider [^.]{0,50}gets? form was measured and REJECTED for exactly that false drop. Both widths are load-bearing against Scryfall's RE2 repetition limiter - [^.]{0,60} is refused ('Too much repetition') and SILENTLY IGNORED with only a warning, which would have shipped a fence that did nothing. RESULT: Elesh Norn 238->97, Jetmir 479->185, Evincar 111->78, with ZERO static anthems dropped on Norn and Evincar; Norn now leads Caretaker's Talent / Intangible Virtue / Flowering of the White Tree / Elspeth / Bastion Protector / Righteous Valkyrie. (2) THE v7.17 ORDERING BUG, ONE FAMILY OVER - and it is why the Evincar study's own shelf still did not show his cards. Every rail is fetched order=edhrec and EDHREC popularity is GLOBAL, so a broad arm's cards are ranked by how often they are played everywhere while the shelf's real cards are ranked only by their own niche's play. Here the broad arm is the SUBTYPE-SCOPED anthem: tribal lords and chosen-type banners, the most-played anthems in Magic because every typal deck runs them, and DEAD CARDS on a board that shares no creature type. Measured for Evincar: 41 of 78 cards (53%) were subtype-scoped, they held 7 of the top 8 slots, and EDHREC does not play 7 of the 10 chosen-type banners among them (Banner of Kinship, Coat of Arms, Mirror Box, Adaptive Automaton, Icon of Ancestry, Obelisk of Urd, Brass Herald all absent from his page) - while his FOUR highest-synergy cards are all colour anthems and ALL FOUR fell outside the 30-card cap (Bad Moon #1 at rank 39, Hall of Triumph #4 at 54, Paragon of Open Graves #7 at 64, Death Pit Offering #8 at 74). THE FIX REUSES v7.17'S MECHANISM RATHER THAN ADDING ONE: railLeadFirst's `lead` may now be a PREDICATE as well as a subtype string, because the question 'is this card what the shelf is FOR?' does not always have a printed-type-line answer - here it lives in the oracle text. The string branch is the shipped code untouched, and a new `leadCtx` gives a rail the deck-context form exactly as `q` gained one in v7.14. WHEN IT APPLIES is read off the COMMANDER'S OWN WORDING via ANTHEM_TRIBAL_SCOPE_RE, deliberately NOT from the TRIBES whitelist, which is known-incomplete - so BALTHOR THE STOUT and ZUBERI, GOLDEN FEATHER are correctly excluded even though TRIBES has never heard of Barbarian or Griffin. Live through the VERBATIM shipped fetch/lead/dedupe/cap-30 loop against api.scryfall.com (HTTP 200, pool 77, 30/30 art, multiset identity and one-directionality both true): BAD MOON and HALL OF TRIUMPH move INTO the dealt 30, and out go twelve lords that pump a type his board does not share (Lord of the Accursed, Cemetery Reaper, Undead Warchief, Lord of the Undead, Gisa, Captivating Vampire, Bloodline Keeper, Markov Baron, Adaptive Automaton, Icon of Ancestry, Chronicle of Victory, Stridehangar Automaton). GENERALIZES: the fence to every anthem commander (Elesh Norn, Jetmir, Prava, Alela, Crovax, Depala, Beckett Brass, Kudro, Lyra, Sliver Legion, Morophon and the 132-commander family), the demote to every commander whose board shares no creature type. COUNTER-CASE, ALL MEASURED. Classifier over 20 commanders live: WIDE fires on Evincar, Elesh Norn, Jetmir, Alela, Crovax and on nobody else - Beckett Brass, Kudro, Depala, Balthor, Zuberi, Sliver Legion, Morophon, Lyra and Prava all correctly BLOCKED (their own tribe's banner shelf is the right home for those cards), and Krenko, Atraxa, Baral, Thalia, Talrand, Muldrotha never fire the atom so they are untouched by construction. Running BOTH builds' real engines old-vs-new: 145 rail queries across ALL families compared, EXACTLY ONE changed (anthem#1); Evincar 8 rails->8 and Elesh Norn 8->8 with one line changed each, ZERO rails lost anywhere; Krenko (15 rails), Talrand (10) and Thalia (8) BYTE-IDENTICAL. 27 Node assertions pass, including string-branch byte-identity over 132 synthetic orderings and predicate-branch multiset identity + one-directionality over 40 shuffles; live, the string branch is byte-identical to the deployed v7.17 over 395 real cards (Sliver 175, Elf 175, Mouse 45). The demote is SELF-NEUTRALISING on the unscoped arm - Elesh Norn and Jetmir measured with ZERO cards into or out of their top 30 - which is railLeadFirst property (1) demonstrating itself on live data. Also corrected the rail's own `why`, which cited Purphoros, a card the fence now correctly excludes. KNOWN RESIDUALS, measured not guessed: Rabid Attack survives the fence in mono-black (rank ~65), and Pollen-Shield Hare // Hare Raising is the single false drop in three identities - front face a real anthem, back face a trick, the known cross-face MDFC conjunction hazard already on the backlog. node --check PASS 6/6; app block executes clean in a Node VM; HTML structure identical to the pre-edit backup (html 2, body 2, script 6); spoiler-board phase markers held at 7; meta == console banner == CHANGELOG[0] == v7.19 - 2026-08-05. Backup index-backup-20260805-0740-preVerifyEvincar.html; mobile viewport/keyboard IIFE, roster pipeline and git untouched - no CSS or layout changed at all this run." },
+    { build: 'v7.18', date: '2026-08-05', focus: 'study', commander: 'Ascendant Evincar', summary: "STUDY Ascendant Evincar - a commander whose ENTIRE card is an anthem and who rendered a COMPLETELY BLANK report: zero atoms, zero synergy rails, no game plan, just the five generic staple shelves. ROOT CAUSE, MEASURED OVER THE WHOLE UNIVERSE OF THE EFFECT: the anthem atom (and RAILS.anthem's own second copy of the same pattern) tested for the single template `creatures you control get +N/+N`. Across all 439 commanders whose oracle contains a static-looking pump, that fired on 51 and MISSED 81 - the atom saw 39% of its own family. Four printed templates were invisible: TYPAL scope before the noun ('Other Pirates you control get +1/+1' - Admiral Beckett Brass, Anowon, Lyra Dawnbringer, Depala, General Kudro, Gallia, Hofri, Magda, Naru Meha, Ishkanah, Gisa, Neheb), ADJECTIVE scope after it ('Other creatures you control WITH FLYING get +1/+0' - Alela, Cynette, Ruxa, Brenard, Koll), the pre-2003 lord wording with NO controller clause at all ('Other Treefolk creatures get +1/+1' - Verdeloth, Evincar, Crovax, Balthor the Stout, Kangee, Zuberi, Chainer, Sliver Legion) and CHOSEN-TYPE scope (Morophon). Replaced both hard-coded copies with ONE shared ANTHEM_RE built as two arms - controller-scoped (safe because 'you control' is the team by construction) and symmetric lord (deliberately ruled IN: it excludes the source, names a creature class and only ever appears on lords whose deck is that class) - plus a text variant in extractAtoms that STRIPS whole 'until end of turn' clauses and single-target pumps, which also makes the temporary-pump guard symmetric (it was forward-only, so Akroma Vision of Ixidor's 'until end of turn, each other creature you control gets +1/+1' slipped through). 51 -> 132 commanders, ZERO lost. Two guards keep the widening strictly additive: a SCOPED anthem is demoted to w2 so it can never outrank the class family it is scoped to, and its rails are moved to the tail of the core list before the 9-rail budget trim, so they fill only spare budget and are the first to yield - without that, Alela lost both flying shelves, and Verdeloth/Depala/Naru Meha/General Kudro each lost their own tribe's banner shelf. The anthem payoff rail's pool is now scope-aware (rail-q-as-a-function, v7.14 machinery): a scoped commander gets a regex pool that actually contains colour and typal anthems (Bad Moon, Hall of Triumph, Paragon of Open Graves, Caged Sun, Gauntlet of Power, Coat of Arms, Door of Destinies, Icon of Ancestry - 110 cards in mono-black, live, zero Equipment/Aura/combat-trick leak), while an UNSCOPED one keeps the shipped string byte-for-byte. Also closed an ATOM->ARCHETYPES read-gap of the monarch/mutate/energy/blood class: `anthem` has had a full rail family since the Elesh Norn study and NEVER had a game plan, so ELESH NORN AND JETMIR - the two commanders it was built for - have been rendering PLAN-LESS ever since; new ARCHETYPES.anthem fixes them and every anthem-lead commander. Added STUDY_DB[Ascendant Evincar]: mono-black COLOUR-anthem go-wide (EDHREC's top-synergy cards for him are four more colour anthems - Bad Moon, Hall of Triumph, Paragon of Open Graves, Death Pit Offering), NOT Vampire typal despite the type line, and his 'nonblack creatures get -1/-1' half is a permanent one-sided sweeper your own board is immune to. NO-REGRESSION, measured old-vs-new through both builds' real buildEngineModel over 30 commanders: ZERO rails removed anywhere at the QUERY level, ZERO game plans lost, 11 reports byte-identical (Krenko, Atraxa, Baral, Thalia, Talrand, Muldrotha, Elesh Norn, Jetmir, Alela, General Kudro, Hofri); Evincar, Balthor the Stout and Zuberi go from a blank report to a three-rail go-wide package with a plan. node --check 6/6; meta == console banner == CHANGELOG[0] == v7.18 - 2026-08-05. Backup index-backup-20260805-0704-preStudy.html; mobile viewport IIFE, roster pipeline and git untouched." },
     { build: 'v7.17', date: '2026-08-05', focus: 'verify', commander: 'Sliver Legion', summary: "VERIFY Sliver Legion - re-read his rails card-by-card live and took the v7.16 hand-off's own lead (a). THE DEFECT IS AN ORDERING BUG WITH A GENERAL SHAPE, not a query bug. A rail query may carry a broad OR arm that admits a UNIVERSAL class alongside the specific one the shelf is named for. Every rail is fetched order=edhrec, and EDHREC popularity is counted ACROSS ALL DECKS - so the universal class is ranked by how often it is played in EVERY deck of its kind while each specific member is ranked only by its own tribe's play. The universal class therefore outranks the very thing the shelf is FOR, and the distortion is INVERSELY PROPORTIONAL to the specific class's popularity: it lands hardest exactly where the shelf is needed most. The live carrier is the More-<Tribe> rail's `keyword:changeling` arm (v6.29 - correct, and worth keeping, because changelings ARE members of every tribe). MEASURED LIVE OVER 55 TRIBES, changelings in the EDHREC top 12: Elf 0, Human 0, Wizard 2, Goblin 3 - the popular tribes are fine; Sliver 10, Rebel 10, Wolf 10, Samurai 10, Phoenix 11, Werewolf 11 - the tribe is buried; and Saproling 12, Mouse 12, Kithkin 12, Moonfolk 12, Ox 12, Astartes 12 - NOT ONE member of the tribe visible at all. 25 of the 50 tribes first sampled were at 6+/12. Sliver Legion's own lead rail showed TEN changelings before the first Sliver (Realmwalker, Changeling Outcast, Taurean Mauler, Mirror Entity, Morophon, Bloodline Pretender, Universal Automaton, Masked Vandal, Crib Swap, Graveshifter), and Mabel, Heir to Cragflame - a popular Bloomburrow typal commander - had ZERO Mice on her More Mice shelf. THE FIX IS ORDERING, NOT EXCLUSION. Dropping the universal arm would be wrong (Realmwalker is genuinely a top Sliver card). A rail may now declare `lead: '<subtype>'`: cards whose PRINTED type line names that subtype lead the shelf, and everything else the query admitted is spaced one slot in every RAIL_LEAD_STRIDE (4). Three properties make it safe as a SHARED mechanism available to every present and future rail family: (1) ONE-DIRECTIONAL - a non-lead card can only ever move LATER, never earlier, so a rail where the universal class is already scarce at the top is byte-identical; (2) SELF-NEUTRALISING - where the tribe IS the universal class (a Shapeshifter typal commander) every changeling's printed type line says Shapeshifter, so all cards are leads and nothing moves; (3) WORD-BOUNDED - the subtype is matched with \\b, never as a substring, because Magic subtypes nest ('Fox' contains ox, 'Pirate' contains rat, 'Werewolf' contains wolf), and both faces are read. It is applied to the WHOLE fetched page BEFORE the 30-card cap, not after, because on a buried tribe the members are not in the first 30 at all. RESULT, verified live in the deployed app's own realm through the VERBATIM shipped code path (railLeadFirst + the real fetch/dedupe/cap-30 loop) against api.scryfall.com: Sliver Legion's More Slivers rail (HTTP 200, 176 cards) now leads Gemhide Sliver / Manaweft Sliver / Cloudshredder Sliver / Realmwalker / Sliver Hivelord / Harmonic Sliver / Galerider Sliver / Changeling Outcast / The First Sliver / Diffusion Sliver / Shifting Sliver / Taurean Mauler - nine Slivers and three changelings at exactly slots 4, 8 and 12, all 30 dealt cards carrying art. Mabel leads Steelburr Champion / Whiskervale Forerunner / Cheeky House-Mouse / Mirror Entity / Nettle Guard. GENERALIZES to all ~108 tribes off ONE mechanism: over 55 tribes measured live, 24 had a buried first member rescued (Sliver 11->1, Rebel 10->1, Wolf 9->1, Phoenix 10->1, Pegasus 10->1, Werewolf 12->1, Ninja 7->1, Rat 7->1, Fox 7->1, Samurai 5->1, Lizard 5->1, Eldrazi 5->1, Avatar 5->1, Myr 3->1, Angel 3->1, Demon 3->1, Fungus 3->1, Sphinx 3->1) and SIX went from zero visible members to leading with one (Saproling, Mouse, Kithkin, Moonfolk, Ox, Astartes 99->1). COUNTER-CASE / NO REGRESSION, all measured: across those 55 tribes ZERO cards lost (multiset identity every time), ZERO one-directionality violations (no non-lead card moved earlier anywhere), ZERO fetch errors. Elf, Human, Wizard, Shaman and SHAPESHIFTER return a FULL LIST byte-identical to the shipped order - shapeshifter proving the self-neutralising property live. Running the real edited 1.5MB app block against the pre-edit backup's block in Node over 15 commanders, the ONLY difference in any section is the new additive `lead` field: Sliver Legion, Mabel, Nemata, Lin Sivvi, Ezuri, Krenko, Edgar Markov, The Ur-Dragon and Gargos each carry it on exactly their one tribal rail and nowhere else, and Talrand, Atraxa, Muldrotha, Baral, Thalia and Morophon carry none at all - Morophon mattering most, since his chosen-type rails are deliberately type-AGNOSTIC and correctly take no lead. 16 Node assertions built from the SHIPPED source all pass, including the three subtype-nesting traps and the one-directionality proof. ALSO FOUND, DIAGNOSED, NOT CHANGED (recorded so the next run does not re-derive it): v7.16's own CHANGELOG claims Sliver Legion renders 'More Slivers / Go-Wide Token Makers / More Anthems & Mass Pump / Overrun & Alpha-Strike / Sliver Anthems & Banners'. He does not - the real render is More Slivers / Sliver Anthems & Banners plus the six staples. The cause is the SAME missing clause v7.16 fixed one layer down: the `anthem` atom's test requires a CONTROLLER scope (/creatures you control get \\+/), so the lord wording with no controller clause never fires it. Measured: Sliver Legion, Verdeloth the Ancient, Kangee Aerie Keeper, Zuberi Golden Feather, Balthor the Stout, Ascendant Evincar, Crovax Ascendant Hero, Marton Stromgald and Firebird Blazing Ranger all carry a static lord pump the anthem atom cannot see. It is a real defect but it belongs to the ATOM layer and needs its own full-pool sweep, so it is handed off rather than patched inside an ordering fix. node --check PASS 6/6 inline script blocks; HTML structure identical to the pre-edit backup (html 2, body 2, script 6); spoiler-board markers held at 7; meta == console banner == CHANGELOG[0] == v7.17 - 2026-08-05. Backup index-backup-20260805-0630-preVerifySliver.html; mobile viewport/keyboard IIFE + roster pipeline + git untouched." },
     { build: 'v7.16', date: '2026-08-05', focus: 'study', commander: 'Sliver Legion', summary: "STUDY Sliver Legion - the most famous Sliver lord in the format renders NOTHING. Measured live on the deployed build: buildAtomSections(Sliver Legion) returns only the six generic staple shelves (Ramp, Card Advantage, Removal, Wipes, Tutors, Counterspells) - zero archetype sections, zero typal read, a five-colour goodstuff pile. THE CAUSE IS ONE MISSING CLAUSE. Every template the typal detector knew required a CONTROLLER scope ('<Tribe> ... you control') or a PLURAL noun ('<Tribe> spells'). The oldest and most explicit typal wording in Magic does neither: a lord buffs by TYPE with no controller clause at all ('All Sliver creatures get +1/+1', 'Other Elves have shroud', 'Dragon creatures get +1/+1 until end of turn'), a cast trigger names ONE spell ('whenever you cast a Lizard spell', 'an Eldrazi spell'), and the tutor/recursion noun is often 'permanent card', not 'creature card' ('return target Dragon permanent card', 'search your library for a Rebel permanent card'). AND THE DETECTOR COULD NOT SIMPLY BE EXTENDED: the shipped code was one `||` chain feeding a single validity check, so the FIRST regex that matched ANYTHING decided the answer - a generic capture killed the read and every later template was never tried. Gev, Scaled Scorch leads with 'Other creatures you control enter with an additional +1/+1 counter', which matches template 1 with the generic capture `creature`, so his real typal line could never have been reached by appending to the chain. The templates are now an ordered LIST evaluated FIRST-VALID through a shared validator, and the new LORD pass runs last, only after both the shipped templates and the substring loop have failed - additive by construction. WHAT IT BUYS, measured live against api.scryfall.com over ALL 3,570 legal commanders: 16 commanders gain a typal spine and NOT ONE existing read changes - 3,554 identical, 16 added, 0 re-labelled, 0 lost. Sliver Legion goes from six generic shelves to More Slivers / Go-Wide Token Makers / More Anthems & Mass Pump / Overrun & Alpha-Strike / Sliver Anthems & Banners. Also fixed: Scion of the Ur-Dragon and Zirilan (Dragon), Bladewing the Risen (Dragon), Gev (Lizard), Ulalek (Eldrazi), Eladamri (Elf), Lin Sivvi (Rebel), Iname as One (Spirit), Katilda and Lier (Human), Kangee and Soraya (Bird), Nemata (Saproling), Verdeloth (Treefolk), Jessie Zane (Snake), Salacinder and Soot (Elemental). Templates, not a card list: the next printed lord or 'cast a <Type> spell' commander is covered with no code change. THE REJECTED FIX IS WORTH RECORDING: reading the commander's own TYPE LINE looks like the obvious answer and is a trap - it fires on 278 commanders and most are wrong, because a commander that MAKES A TOKEN of its own type is not that tribe's deck (Adeline's Humans, Titania's Elementals, Koma's Serpents, Talrand's Drakes) and because negations read as confirmations (Yawgmoth's 'protection from Humans', Kinnan's 'non-Human creature card'). All six of those bait cases were run against the shipped file's own code in Node and every one correctly returns null. SECOND ATOM, same family, surfaced by the first: pluralTribe applies ENGLISH suffix rules to MAGIC creature types and the app has been shipping the results as shelf titles. Measured live on the deployed build, Mabel, Heir to Cragflame - a popular Bloomburrow typal commander - renders 'More Mouses' AND 'Mouse Anthems & Banners', and Urtet, Remnant of Memnarch renders 'More Myrs'; the -es rule turns Astartes into 'Astarteses'. Two tables, checked before the suffix rules: types whose plural is the same word (Eldrazi, Treefolk, Kithkin, Kor, Myr, Moonfolk, Samurai, Vedalken, Astartes) and genuinely irregular plurals (Mouse -> Mice, Ox -> Oxen, Fungus -> Fungi, Pegasus -> Pegasi). Fixes every rail title for every commander of those tribes at once - Mabel and the Bloomburrow mice, Urtet's Myr, Doran and Sapling of Colfenor's Treefolk, the Eldrazi titans, Tameshi's Moonfolk - and catches the two the detector additions would otherwise have printed wrong ('More Eldrazis', 'More Treefolks'). COUNTER-CASE: every other tribe's plural verified byte-identical to the shipped output (Slivers, Elves, Wolves, Dwarves, Werewolves, Allies, Foxes, Sphinxes, Phoenixes, Saprolings, Goblins); nine control commanders (Krenko, Talrand, Muldrotha, Baral, Sram, Edgar Markov, The Ur-Dragon, Gargos, Thalia) unchanged section-for-section; the two synthetic detectTribe call sites in the statzone/statboard branches produce zero diffs across every tribe word. node --check PASS on all 6 inline script blocks; HTML intact (2 html / 2 body); spoiler-board markers held at 7; meta == console banner == CHANGELOG[0] == v7.16 - 2026-08-05. Backup index-backup-20260805-0605-preStudySliver.html; mobile viewport IIFE + roster pipeline + git untouched." },
     { build: 'v7.15', date: '2026-08-05', focus: 'verify', commander: 'Killian, Ink Duelist', summary: "VERIFY Killian, Ink Duelist - re-read v7.14's two new rails card-by-card on live Scryfall against EDHREC. The study's archetype call was right (Auras & Targeted Pump returns 580 cards led by Darksteel Mutation, All That Glitters, Kaya's Ghostform, Ethereal Armor, Mantle of the Ancients and Timely Ward - EDHREC's Killian list card-for-card) and the reanimation auras the hand-off flagged are genuinely playable protection in an aura-Voltron deck, not leaks. The DEFECT is on the other rail, and it is the study's own idea left half-finished. THE PRINCIPLE v7.14 FOUND: a reducer whose discount is gated on a property the deck does not have is a DEAD CARD, however famous it is. It then fenced exactly one gate. Measured on the shipped rail, the other two cost more than the one it caught. (1) THE TRIBE GATE. A reducer priced off a CREATURE TYPE - Herald's Horn, Undead Warchief, Ancient Cellarspawn, Gravebreaker Lamia, Starnheim Aspirant, the whole Banneret cycle - pays nothing in a deck with no tribe. Fifteen of the 59 cards on Killian's rail were tribe-gated and HERALD'S HORN WAS #1, the very first tile a builder sees, on an Orzhov AURA deck that plays no typal creatures at all. Creature types are an OPEN set, so a hand list rots and a regex over them is the RE2-budget trap v7.04 documented - measured this run, the compact good-subject regex silently blew the budget and returned 31,623 cards led by Sol Ring and Command Tower, exactly the failure mode that rule predicts. Scryfall's own `otag:tribal` IS that class, curated upstream and self-updating as new cards print: over the reducer pool it returns 44 cards and every one is genuinely creature-type-gated. Applied only when the deck has NO tribe - a typal deck wants these and already gets them from the tighter '<Tribe> Discounts' shelf. (2) THE COLOUR GATE WAS ONE WORD TOO NARROW. v7.14's literal was '<colour> spells', which cannot see the MONUMENT cycle - 'Black CREATURE spells you cast cost {1} less' - so mono-U Thryx was dealt Bontu's, Oketra's, Hazoret's and Rhonas's Monuments and mono-G Goreclaw four more: the identical error the Medallion guard was built to stop, one word further into the sentence. Both templates now fenced. Killian's rail 59 -> 40, now led by Foundry Inspector, Jet Medallion, Pearl Medallion, Cloud Key and Bontu's Monument - every one castable and useful; Thryx 62 -> 49, Goreclaw 46 -> 32, Danitha 42 -> 29, all verified card-by-card live. (3) THE FURTHER IMPROVEMENT, and it is the widest-reaching change available at the query layer: A COMMANDER CAN NEVER BE IN ITS OWN 99. Every rail is a 'cards to ADD to this deck' list, so the commander turning up in its own results is always a wasted slot - and because rails are EDHREC-sorted the commander, by definition one of the most-played cards in its own archetype, surfaces NEAR THE TOP. Measured live over 28 commanders on the deployed build: 24 put themselves on at least one of their own rails (44 hits) and 14 of those landed inside the top eleven. Sram, Senior Edificer was the #1 card on BOTH 'Equip Engines & Reducers' and 'Enchantress Draw'; Talrand was #1 on his own 'More Spell->Token Engines'; Baral #2 on two rails; Danitha #3; Krenko and Yuriko #6; Goreclaw #7; Killian was on his own 'Stack the Discounts'. The fix rides on `base`, the string all 167 rail-query call sites in buildEngineModel are built from, so one line fixes every rail of every commander instead of one rail at a time. Talrand's rail now leads Shark Typhoon, Sram's leads Puresteel Paladin. Scryfall `-!\"...\"` was verified live against 17 edge-case names - unicode (Eowyn, Jotun Grunt, Aetherling), MDFC full names, parentheses, periods, apostrophes and hyphens - ZERO syntax errors; a name carrying a literal double quote (Kongming, Pang Tong) cannot be expressed inside a Scryfall quoted string, so the guard degrades gracefully to no exclusion rather than emitting a malformed query. MECHANISM: a rail's `q`-as-function argument widens from colour identity alone to the whole DECK CONTEXT ({ci, tribe}) - the sibling of v7.00's per-rail `test` - so any future rail can ask what the deck actually is before it deals. GENERALIZES: the self-exclusion reaches EVERY rail of EVERY commander in the app; the reducer guards reach all ~30 costdown-family commanders (Killian, Thryx, Danitha, Cid, Goreclaw, Alisaie, Doran, Urza Lord Protector, Rakdos Lord of Riots, Animar, Honest Rutstein, Nylea, Hamza, Grand Arbiter, Heliod, Will, Serah Farron, Longshot, Lyse Hext). COUNTER-CASE: old-vs-new over the shipped file in a Node VM across 15 commanders - ZERO rail titles changed, ZERO order changes, ZERO role or plan changes, ZERO errors, and EVERY difference confined to `q` strings. Ur-Dragon and Gargos are typal, so their 'Dragon Discounts' / 'Hydra Discounts' shelves correctly take the self-exclusion and NOT the tribe gate; Baral and Lyse Hext keep the tighter 'Instant & Sorcery Cost Reducers' shelf with the v7.14 de-dupe intact; Krenko, Talrand, Edgar Markov, Sram and Doran are identical but for the one added term. Deliberately NOT fixed and named for a future run: Accursed Witch // Infectious Curse is on the reducer rail as an OPPONENT-facing discount (a drawback, not a reducer), but the only phrase that reaches it also catches Grand Arbiter Augustin IV and Hinata, both legitimate, so a one-card literal patch would have violated the atom principle. node --check PASS on all 6 inline script blocks; HTML intact (2 html / 2 body); spoiler-board markers held at 7; meta == console banner == CHANGELOG[0] == v7.15 - 2026-08-05. Backup index-backup-20260805-0535-preVerifyKillian.html; mobile viewport IIFE + roster pipeline + git untouched." },
