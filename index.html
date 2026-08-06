@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v7.38 · 2026-08-05">
+<meta name="oracle-build" content="v7.40 · 2026-08-06">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1762,7 +1762,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v7.38 \u00B7 2026-08-05', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v7.40 \u00B7 2026-08-06', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3644,6 +3644,100 @@ function stripReminders(text) {
         return REMINDER_ACTION_RE.test(inner.trim().toLowerCase()) ? ' ' + inner + ' ' : ' ';
     });
 }
+// v7.39 (Loran of the Third Path study 2026-08-06) — TAP-ACTIVATED ENGINE, shared constants.
+// See the `tapability` atom at the foot of ATOMS for the census and the exclusion rationale.
+// TAP_ENGINE_RE reads ONE activation at a time: the `{t}` symbol, an optional non-self-sacrifice
+// cost tail, the colon, and an effect that is neither a mana ability nor a DFC transform cost.
+const TAP_ENGINE_RE = /\{t\}(?:\s*,(?!\s*sacrifice (?:this|~|it\b))\s*[^:\n]{0,30})?\s*:(?!\s*(?:add|transform)\b)/;
+// TAP_BLINK_Q — THE ARM THE SHIPPED UNTAP SUITE NEVER HAD, and the reason this study went
+// looking. A flicker IS an untap for a tap-activated commander: the permanent returns fresh, so
+// the ability is live again, AND any enter trigger fires a second time. The Krenko-study untap
+// suite in the parameter layer is untap-only, so the single highest-synergy card in EDHREC's
+// entire Loran of the Third Path column — Ephemerate — appeared on no shelf the app deals, and
+// neither did Cloudshift, Teleportation Circle, Conjurer's Closet or Eerie Interlude. Measured
+// live 2026-08-06 in every mono identity, this pool ALONE is a WU card class (W 22 / U 13 but
+// B 2 / R 2 / G 2 / C 2), which is exactly why it is ORed INTO the untap suite rather than dealt
+// as its own rail: this repo's own rule (v7.32) is that a two-card shelf is worse than no shelf,
+// and merged the suite measures W 101 / U 142 / B 47 / R 70 / G 79 / C 35 / GW 150 / UB 156 —
+// healthy in every identity, with Scryfall's EDHREC ordering surfacing the right half by itself
+// (Loran's front becomes Ephemerate / Conjurer's Closet / Cloudshift / Thousand-Year Elixir /
+// Teleportation Circle / Staff of Domination; a mono-G tap commander still leads Seedborn Muse).
+const TAP_BLINK_Q = '(o:/exiles? (?:up to (?:one|two|three) |another |any number of )?target (?:non-\\w+ )?(?:artifact or creature|creature or artifact|creature|permanent) you control/ o:/returns? (?:it|them|that card|those cards|that permanent)/)';
+// TAP_RESET_Q — the headline shelf, and the reason untap and flicker are ONE rail rather than
+// two. For a tap-activated commander a blink IS an untap: the permanent returns fresh and any
+// enter trigger fires again, so the two card classes answer the identical question ("how do I
+// use the ability a second time this turn?"). Measured live on 2026-08-06, splitting them would
+// have shipped a dead shelf: self-flicker alone returns 22 cards in mono-W and 13 in mono-U but
+// only TWO in mono-B, mono-R, mono-G and colourless — blink is a WU card class, and this repo's
+// own rule (v7.32) is that a shelf of one or two cards is worse than no shelf. Merged, the rail
+// measures W 101 / U 142 / B 47 / R 70 / G 79 / C 35 / GW 150 / UB 156 — healthy everywhere —
+// and because Scryfall is asked in EDHREC order the right half surfaces by itself: Loran's front
+// is Ephemerate, Conjurer's Closet, Cloudshift, Thousand-Year Elixir, Teleportation Circle,
+// Staff of Domination (EDHREC's own high-synergy column for her, in very nearly its own order),
+// while a mono-G tap commander gets Seedborn Muse, Thousand-Year Elixir and Devoted Druid.
+const TAP_RESET_Q = '(o:"untap target creature" OR o:"untap another target creature" OR o:"untap target permanent" OR o:"untap another target permanent" OR o:"untap target artifact or creature" OR o:"untap all creatures you control" OR o:"untap all permanents you control" OR o:"untap all creatures" OR o:"untap enchanted creature" OR o:"untap equipped creature" OR o:"untap this creature" OR o:"untap up to two target creatures" OR ' + TAP_BLINK_Q + ')';
+// v7.39 — THE SHARED TAP READER. The parameter layer has read the commander's own `{T}`
+// activations since the Krenko study; this hoists that reader to module scope so extractAtoms
+// and buildEngineModel can never again hold different opinions about what a tap engine IS (the
+// same lesson v7.34 learned when the two reminder-strip sites disagreed). Reminder text and
+// QUOTED granted abilities are stripped first, so "creatures you control have '{T}: …'" is not
+// the commander's own ability. Effects are returned, not just a boolean, because the callers
+// need to ask what the activation DOES.
+function tapActivations(o) {
+    return (String(o || '').replace(/\([^)]*\)/g, ' ').replace(/"[^"]*"/g, ' ').match(/\{t\}[^:.]{0,40}:\s*[^.;\n]*/g) || [])
+        .map(s => s.replace(/^\{t\}[^:.]{0,40}:\s*/, ''));
+}
+// A tap activation is an ENGINE only if its effect is neither a mana ability nor a DFC transform
+// cost. `add` was already excluded; `transform` is new in v7.39 and is a MEASURED bug-fix, not a
+// preference: oracleOf concatenates every face, so the five Ixalan gods — Ojer Taq, Ojer Axonil,
+// Ojer Kaslem, Ojer Pakpatiq and Aclazotz — were reading their own LAND back face's
+// "{4}{W}{W}, {T}: Transform" as a non-mana tap engine and being dealt the Ability Copiers rail.
+// Measured live over all 3,348 commander-legal commanders on 2026-08-06: 348 -> 343, and the
+// five that leave are exactly that cycle. Nothing else moves.
+function tapNonManaEngine(o) {
+    return tapActivations(o).some(fx => !/^add\b/.test(fx) && !/^transform\b/.test(fx));
+}
+// v7.40 (Loran of the Third Path VERIFY 2026-08-06) — THE RAIL GATE THAT NEVER SHARED THE READER.
+// v7.39 hoisted tapActivations so "extractAtoms and these rails can never hold different opinions
+// about what a tap engine IS" — but it only rewired the ATOM and P.tapNonMana (which gates the
+// Ability Copiers rail alone). The gate on the WHOLE family, `P.tapActivated`, was still raw
+// `tapFx.length > 0`: ANY {T} at all, mana abilities and DFC transform costs included. Measured
+// live over all 3,348 commander-legal commanders on 2026-08-06, that dealt 56 commanders the
+// Untap & Reset + Haste Enablers shelves with NO tap atom behind them — including the five Ixalan
+// gods the v7.39 study had ALREADY ruled a bug and fixed for the copy rail only (Ojer Taq #870,
+// Ojer Axonil, Ojer Kaslem, Ojer Pakpatiq, Aclazotz all read their own LAND back face's
+// "{T}: Add {W}" / "Transform this land"), plus Giada, Font of Hope #1705 and Esika, God of the
+// Tree #2514, whose reports told the user their {T} "is the engine" when it is a one-mana rider.
+//
+// The gate and the atom ask GENUINELY DIFFERENT questions, so this is a documented superset, not
+// a second opinion: the ATOM asks "is the DECK about the {T} ability?" (non-mana only — Marwyn's
+// deck is about Elves), while the RAIL asks "is untapping this commander worth a shelf?", which a
+// mana ability CAN answer — but only when the mana SCALES or is worth more than one. Untapping
+// "{T}: Add {W}" buys exactly one white mana; untapping "add an amount of {G} equal to Marwyn's
+// power" is the Umbral Mantle / Staff of Domination combo the deck is named for.
+//
+// Verified against EDHREC 2026-08-06: Marwyn's own high-synergy top ten contains TWO untappers
+// (Wirewood Lodge, Wirewood Symbiote) so she KEEPS the shelf, while Giada's is ten Angels and
+// Esika's is Nicol Bolas planeswalkers — neither list contains a single untap or blink effect.
+const TAP_MANA_SCALES_RE = /^add (?:two|three|four|five|six|seven|x\b|an amount of|that much)|^add [^.]{0,40}for each|^add \{[wubrgc0-9x]\}\s*\{/;
+function tapEngineActivations(o) {
+    return tapActivations(o).filter(fx => !/^transform\b/.test(fx) && (!/^add\b/.test(fx) || TAP_MANA_SCALES_RE.test(fx)));
+}
+// v7.39 — THE THREE SUPERSEDING FAMILIES, hoisted for the same reason. Three earlier studies
+// each ruled that a particular commander's `{T}` ability is NOT a tap-value engine and gated the
+// tap rails off for it: Anje Falkenrath (madness — the loot's value is what you PITCH), Selvala
+// Heart of the Wilds (powerMana — her `{T}` is a mana ability with its own "Untap Selvala" rail)
+// and Chulane (castDrawRamp — his `{3}{T}` bounce is slow utility behind a real cast engine).
+// Those rulings lived as inline expressions inside buildEngineModel's `P`, so a new atom could
+// have contradicted all three without anyone noticing. Now both sites call ONE predicate.
+const isMadnessEngine = o => /madness/.test(o) && (/whenever you discard/.test(o) || /discard a card:/.test(o) || /discard your hand/.test(o));
+const isPowerManaEngine = o => /add x mana[^.]{0,70}greatest power among creatures you control/.test(o);
+const isCastDrawRamp = o => /whenever you cast a creature spell/.test(o) && /land card from your hand onto the battlefield/.test(o);
+const tapEngineSuperseded = o => isMadnessEngine(o) || isPowerManaEngine(o) || isCastDrawRamp(o);
+// The atom itself is pushed CARD-LEVEL from extractAtoms (see ATOM_TAPENGINE's push site), not
+// from the ATOMS loop, precisely so it can ride the two gates above — a `test` regex cannot ask
+// whether another family already owns the commander.
+const ATOM_TAPENGINE = { key: 'tapability', w: 4, chip: 'Tap ability', title: 'Tap-Activated Engine', sub: 'Untap it, use it again', q: TAP_RESET_Q, oq: '(o:"{t}:" -o:"{t}: add")', why: 'has a printed {T} ability, so its deck is measured in ACTIVATIONS PER TURN — untap it, blink it, and copy the activation' };
 const ATOMS = [
     // --- copy family, split by realization (ledger CS-0001/0002/0011/0046:
     //     token copies re-trigger "enters"; in-place copies never do;
@@ -3979,7 +4073,36 @@ const ATOMS = [
     { key: 'attack', w: 4, chip: 'Attack triggers', title: 'Attack Triggers', sub: 'Reward the red zone', test: /whenever .{0,30}attacks|whenever you attack\b|whenever one or more .{0,36}attack\b|deal(?:s|ing)? combat damage to (a player|an opponent|each|one of your opponents)|can.t be blocked|(?:was|were) dealt combat damage/, q: '(o:whenever o:attacks)', oq: '(o:whenever o:attacks)', why: 'triggers on attacks' }, // STUDY Tymna v6.81: added PASSIVE-voice combat-damage template "(was|were) dealt combat damage" — the active clause only caught "deals combat damage to a player/opponent", so connect payoffs templated "opponents that WERE dealt combat damage this turn" fired nothing. Rescues Tymna the Weaver (was 0 atoms/empty report) and lifts Admiral Beckett Brass, Hope of Ghirapur, Estinien Varlineau. VERIFY v6.82: completed the verb-form coverage — active object clause now "deal(?:s|ing)?" so the GERUND form "dealing combat damage to a player" also fires; rescues Felix Five-Boots (BGU combat-damage-trigger DOUBLER, was 0 atoms/empty). Scryfall-verified: gerund-to-player = EXACTLY Felix among all commander-legal cards (zero false positives); purely additive so every prior match (Tymna/Beckett/Estinien/Hope/Edric/Kaalia/Yuriko/Isperia/Aurelia/Najeela) is byte-identical, unrelated (Kruphix/Atraxa/Okaun/Krenko) unchanged.
     { key: 'deathtouchkw', w: 4, chip: 'Deathtouch', title: 'Deathtouch Matters', sub: 'Every point is lethal', test: /gains? deathtouch|ha(ve|s) deathtouch|with deathtouch|deathtouch creature/, q: '((t:creature keyword:deathtouch) OR o:"gains deathtouch" OR o:"have deathtouch")', oq: 'o:deathtouch', why: 'cares about deathtouch \u2014 granters multiply the trigger pool' },
     { key: 'casttrigger', w: 3, chip: 'Cast triggers', title: 'Cast Triggers', sub: 'Every spell counts', sup: ['spellslinger'], test: /whenever you cast/, q: 'o:"whenever you cast"', oq: 'o:"whenever you cast"', why: 'triggers on your casts' },
-    { key: 'tokens', w: 3, chip: 'Tokens', title: 'Tokens & Go Wide', sub: 'Build an army', test: /creates? .{0,40}token|tokens? (would be |are )?created|plus an additional [^.]{0,24}token|\bamass\b/, q: '(o:create o:token)', oq: '(o:create o:token)', why: 'creates tokens' },
+    // TOKENS — v7.41 (Bennie Bracks, Zoologist study). The reader had TWO independent gaps and
+    // both were in the regex, not in any one commander, so both were fixed here and nowhere else.
+    // (1) THE WINDOW WAS TOO SHORT FOR A MODERN TOKEN LINE. The old arm allowed 40 characters
+    //     between the verb and the noun — but a printed token today is "a 1/1 colorless Thopter
+    //     artifact creature token" (41), "x 1/1 colorless Soldier artifact creature tokens" (44),
+    //     or "the Hollow Sentinel, a legendary 3/3 colorless Phyrexian Golem artifact creature
+    //     token" (81): colour, supertype, subtype and card types all live INSIDE that gap, and
+    //     the gap grew every year the window did not. 79 commanders whose only token text is one
+    //     long token line therefore extracted NO token atom at all — Urza, Lord High Artificer
+    //     (#801), Sai, Master Thopterist (#814), Myrel (#1525), Brudiclad (#2114), Lathril
+    //     (#2195), Torens (#4327), Oona (#5067) — i.e. the format's canonical token decks were
+    //     invisible to the token read. Widened to 85 and made LAZY. Note the window is now
+    //     STRICTER on the other axis than the `.` it replaces: `[^.\n]` cannot run past a period
+    //     or a line break, so a "create" in one sentence can no longer reach a "token" in the
+    //     next one. Lazy + sentence-scoped is why widening costs nothing (0 losses, 0 leaks).
+    // (2) THE ATOM READ ONLY THE ACT OF CREATING, NEVER THE PAYOFF. Every arm described MINTING
+    //     a token, so a commander who BUILDS AROUND a token board without printing one himself
+    //     matched nothing. That is a whole class, not an oddity: Bennie Bracks ("if you CREATED
+    //     a token this turn" — past tense, which `creates? ` cannot reach because the character
+    //     after "create" is "d", not a space), Teysa Karlov and Neyali (static buffs on "tokens
+    //     you control"), Jaheira and Baylen (tokens as a mana/draw resource), Mister Fantastic
+    //     and Leonardo ("whenever one or more tokens you control enter"). Three payoff arms
+    //     added — past-tense COUNTING, the "tokens you control" scope, and "one or more tokens".
+    // Measured over all 3,348 commander-legal commanders through the engine's OWN pre-processing
+    // (oracleOf -> lowercase -> stripReminders): 622 -> 717, +95 gained and ZERO lost, so the new
+    // read is a STRICT SUPERSET of the old one and cannot change any commander that already had
+    // the atom. `q` is unchanged — it deals token PRODUCERS, which is still the right enabler
+    // pile — but `oq` ("others like this") is widened to match the atom, or the payoff commanders
+    // this fix finally reads would be shown neighbours they no longer belong with.
+    { key: 'tokens', w: 3, chip: 'Tokens', title: 'Tokens & Go Wide', sub: 'Build an army', test: /creates? [^.\n]{0,85}?tokens?\b|tokens? (would be |are )?created|created [^.\n]{0,30}tokens?\b|tokens? you control|one or more tokens?\b|plus an additional [^.]{0,24}token|\bamass\b/, q: '(o:create o:token)', oq: '(o:create o:token OR o:"tokens you control" OR o:"one or more tokens")', why: 'builds around tokens' },
     // ANTHEM / GO-WIDE STATIC PUMP (Elesh Norn, Grand Cenobite study 2026-07-31): a static
     // "creatures you control get +X/+X" team buff is a defining, popular EDHREC archetype
     // (Anthems) that had NO atom, so a pure anthem commander (Elesh Norn) fell through to bare
@@ -4054,7 +4177,46 @@ const ATOMS = [
     { key: 'graveyard', w: 2, chip: 'Graveyard', title: 'Graveyard Value', sub: 'Recur & rebuy', sup: ['mill', 'reanimate'], test: /graveyard/, q: '(o:"from your graveyard" OR keyword:delve OR keyword:escape)', oq: 'o:graveyard', why: 'uses the graveyard' },
     { key: 'artifacts', w: 2, chip: 'Artifacts', title: 'Artifacts Matter', sub: 'The machine hums', test: /artifacts? you control|for each artifact|number of artifacts|metalcraft|affinity|improvise|artifact spells?|artifact creature|artifact tokens?|artifact card|whenever an artifact|an artifact enters|artifacts? enter|sacrifice an artifact|artifact's|each artifact/, q: '(t:artifact OR o:"artifact you control")', oq: 'o:artifact', why: 'cares about artifacts' },
     { key: 'enchantments', w: 2, chip: 'Enchantments', title: 'Enchantments Matter', sub: 'Constellation rising', test: /enchantment/, q: '(t:enchantment OR o:constellation)', oq: 'o:enchantment', why: 'cares about enchantments' },
-    { key: 'flying', w: 2, chip: 'Flyers', title: 'Flyers Matter', sub: 'Rule the skies', test: /creatures? (you control )?with flying/, q: '(t:creature keyword:flying)', oq: 'o:"with flying"', why: 'rewards flyers' }
+    { key: 'flying', w: 2, chip: 'Flyers', title: 'Flyers Matter', sub: 'Rule the skies', test: /creatures? (you control )?with flying/, q: '(t:creature keyword:flying)', oq: 'o:"with flying"', why: 'rewards flyers' },
+    // v7.39 (Loran of the Third Path study 2026-08-06) — THE TAP-ACTIVATED COMMANDER, a family
+    // the engine could not see at all. The app already reads the PASSIVE half of tapping
+    // (`selftap`, "whenever ~ becomes tapped", Kilo study) but had no reader for the far larger
+    // ACTIVE half: a commander whose engine is a printed `{T}:` ability. MEASURED live over all
+    // 3,348 commander-legal commanders through the shipped extractAtoms on 2026-08-06:
+    // 336 commanders carry a non-mana `{T}` activation, and **51 of them render COMPLETELY
+    // BLANK** — zero atoms, zero rails, no game plan. The census is the argument, because the
+    // blank list is a roll-call of the format's canonical untap-abuse decks: Loran of the Third
+    // Path (EDHREC rank #350, the most-played card in the whole no-atom census), Arcanis the
+    // Omnipotent, Heartless Hidetsugu, Zirda the Dawnwaker, The Peregrine Dynamo, Obeka Brute
+    // Chronologist, Zimone, Mangara of Corondor, Visara the Dreadful, Glissa Sunseeker, Tawnos
+    // and Garth One-Eye. A further 38 fell to an incidental w1-w3 noun that names the LEAST
+    // interesting thing on the card — Arcum Dagsson read `artifacts` w2, Hanna Ship's Navigator
+    // and The Master read `graveyard` w2, Mikaeus the Lunarch / Experiment Kraj / Zimone read
+    // `counters` w3, Chulane and Selvala Explorer Returned read `casttrigger` w3 — every one of
+    // them a deck whose actual instruction is "use the ability more than once per turn".
+    // WHY IT IS ONE ATOM AND NOT A PATCH: what a tap-activated commander needs is the SAME three
+    // things regardless of what the ability does — a way to untap or reset it, a way to activate
+    // it the turn it lands, and a way to get two activations out of one. That is a family, and
+    // RAILS.tapability below deals exactly those three shelves.
+    // THE DETECTOR IS PER-ACTIVATION, not a bare `{t}` search, and each exclusion was measured:
+    //   • `(?!\s*(?:add|transform)\b)` — a `{T}: Add {G}` is a MANA ability (a dork, already the
+    //     ramp package's job) and `{4}{W}{W}, {T}: Transform` is an MDFC land back face, not an
+    //     engine. oracleOf concatenates every face, so without the transform guard every
+    //     Ixalan-cycle god (Ojer Taq at #870) false-fired off its own back-face land.
+    //     The lookahead sits BEFORE the whitespace deliberately: written as `:\s*(?!add\b)` the
+    //     engine backtracks `\s*` to zero and the guard silently passes on " add".
+    //   • `(?!\s*sacrifice (?:this|~|it\b))` in the cost — "{T}, Sacrifice this creature:" is a
+    //     ONE-SHOT. Untappers and haste do nothing for an ability you can only use once.
+    // WEIGHT 4, AND PUSHED LAST ON PURPOSE. w4 is this file's "real but not headline" band
+    // (sac/death/attack/drain/spellslinger), and `kept.sort` is stable — so an atom pushed after
+    // the ATOMS loop LOSES every w4 tie. Measured consequence: the 51 blanks and the 38
+    // incidental w1-w3 leads (89 commanders) gain a Tap-Activated Engine LEAD, while every
+    // commander whose tap ability is genuinely the second-most-interesting thing about it keeps
+    // the lead it already had and merely gains the label behind it — Ghoulcaller Gisa stays
+    // `sac`-led, Oswald Fiddlebender stays `sac`-led, Saryth stays `deathtouchkw`-led, Krenko
+    // stays Goblin-typal, and all 217 commanders led at w5+ do not move.
+    // The atom itself lives at ATOM_TAPENGINE above and is pushed CARD-LEVEL in extractAtoms —
+    // see that push site for why a `test` regex in this array could not do the job.
 ];
 // v7.01 (Zacama, Primal Calamity study 2026-08-04) — MENTION vs THEME, the shared
 // discriminator this run adds twice. An atom fires when its keyword APPEARS in the
@@ -4767,6 +4929,25 @@ function extractAtoms(card) {
     if (bombMV >= 7 && /creature/.test(String(card.type_line || '').toLowerCase()) && bombTopW < 6) {
         found.push({ atom: ATOM_BIGBOMB, snippet: '' });
     }
+    // v7.39 (Loran of the Third Path study 2026-08-06) — TAP-ACTIVATED COMMANDER. Card-level and
+    // pushed LAST, the same idiom as ATOM_VOLTRON and ATOM_BIGBOMB above, and for a reason a
+    // `test` regex in the ATOMS array could not express: this read must yield to the three
+    // families that earlier studies ruled SUPERSEDE it (see tapEngineSuperseded — Anje's madness
+    // loot, Selvala's power-mana ability, Chulane's cast-draw-ramp bounce), and it must read the
+    // commander's activations through the SAME reader the parameter layer's tap rails use so the
+    // atom and the shelves can never disagree. Purely additive: it only ever pushes, and being
+    // pushed after the loop it loses every w4 tie, so no commander with a real w4+ theme is
+    // relabelled. MEASURED over all 3,348 commander-legal commanders on 2026-08-06: it fires on
+    // 336, of which 51 had NO ATOM AT ALL (Loran #350, Arcanis the Omnipotent, Heartless
+    // Hidetsugu, Zirda, The Peregrine Dynamo, Obeka, Mangara of Corondor, Visara, Glissa
+    // Sunseeker, Tawnos, Garth One-Eye) and 38 were led by an incidental w1-w3 noun that named
+    // the least interesting thing on the card (Arcum Dagsson `artifacts` w2, Hanna Ship's
+    // Navigator `graveyard` w2, Experiment Kraj and Mikaeus the Lunarch `counters` w3, Selvala
+    // Explorer Returned `casttrigger` w3) — 89 new leads, 247 commanders keeping the lead they
+    // had and gaining only the label, and 3,012 commanders untouched.
+    if (tapNonManaEngine(o) && !tapEngineSuperseded(o)) {
+        found.push({ atom: ATOM_TAPENGINE, snippet: '' });
+    }
     const have = {};
     found.forEach(f => { have[f.atom.key] = 1; });
     const kept = found.filter(f => !(f.atom.sup || []).some(k => have[k]));
@@ -4911,6 +5092,7 @@ STUDY_DB["ccb39f4a-2684-4eb7-9066-aad81ae08962"] = {"insight":"Massacre Girl, Kn
 // what lift the whole class; this entry carries the half that cannot live in a query.
 STUDY_DB["344dc8b0-302a-4721-99b6-5a6626a349c1"] = {"insight": "Koll, the Forgemaster is a BOROS (RW) FREE-ATTACH SACRIFICE LOOP, and until this run Oracle told a Koll pilot three things and two of them were wrong: it read him as VOLTRON, as ARISTOCRATS, and as ANTHEMS & GO-WIDE — and then printed its own verdict on the first pair, \"bad: sacrificing bodies vs protecting one body, opposite instincts.\" That warning is the diagnosis. Koll is the card that DISSOLVES that tension rather than suffering from it: \"whenever another nontoken creature you control dies, if it was enchanted or equipped, return it to its owner's hand\" means you sacrifice the body AND keep the investment, because the creature is not spent, it is LENT. So the engine is not a beatdown and not a graveyard — it is a loop with three costs, and the deck is a contest to drive all three to zero. Cost one is the ATTACH: Shuko and Leather Armor equip for {0}, Puresteel Paladin and Auriok Steelshaper drive the whole board to {0}, and Sigarda's Aid, Forge Anew and Hammer of Nazahn attach for free on cast. Cost two is the RECAST, which is why his creature base is the cheapest in Magic — Memnite, Ornithopter, Rograkh, Phyrexian Walker, Myr Moonvessel and the three Kobolds — a zero-drop makes the loop literally free. Cost three is the DEATH itself, which wants a free, repeatable outlet: Goblin Bombardment, Ashnod's Altar, Phyrexian Altar, Blasting Station, Skirk Prospector, Altar of Dementia, Mortarpod, Martyr's Cause. With all three at zero the loop is infinite, so the last slot is a PAYOFF that converts iterations into a win — Impact Tremors, Witty Roastmaster and Molten Gatekeeper on the enter half, Blood Artist / Impulsive Pilferer / Altar of the Brood on the death half, Skullclamp to draw the deck. EDHREC's own ordering says exactly this and says nothing about swinging with a suited fatty: his top cards are Open the Armory, Swords to Plowshares, Lightning Greaves, Fighter Class, Steelshaper's Gift, Myr Moonvessel, Impact Tremors, Path to Exile, Crimson Kobolds and Crookshank Kobolds, and his highest-synergy cards are Rograkh, Memnite, Sai of the Shinobi, Shuko, Impulsive Pilferer, Goblin Bombardment, Skullclamp, Ornithopter, Puresteel Paladin and Skirk Prospector.", "traps": ["HE IS NOT A VOLTRON COMMANDER, AND THE EQUIPMENT IS THE REASON HE LOOKS LIKE ONE. Gear here is not a way to make one creature lethal; it is the KEY that unlocks the refund, so its job is to be CHEAP TO ATTACH rather than big. Colossus Hammer and Eldrazi Conscription are worse for him than Bone Saw and Shuko, which is a sentence that is true in almost no other equipment deck. Koll himself is a 2-mana 2/2 with no evasion, no protection and no way to grow — 21 commander damage is not a plan the card supports.", "HE IS NOT A GO-WIDE TOKEN DECK EITHER, and his second line is the trap that makes him look like one. \"Creature tokens you control that are enchanted or equipped get +1/+1\" pays out once per AURA OR EQUIPMENT you can attach, not once per body, so a board of twenty tokens collects the anthem exactly as many times as you have gear. Overruns, mass token-makers and stacked anthems are all buying the wrong resource; more attach effects are the real multiplier.", "THE INTERVENING IF IS THE WHOLE DECKBUILDING CONSTRAINT. \"...dies, IF IT WAS ENCHANTED OR EQUIPPED\" means an unsuited creature that dies is gone for good — the refund is not a static safety net, it is a reward you have to pre-pay for every single lap. It also means the ORDER matters at instant speed: if the gear is removed or falls off in response to the sacrifice, the trigger checks on resolution and finds nothing. And it excludes TOKENS twice over — \"another NONTOKEN creature\" — so token fodder is exactly the thing the engine cannot recycle, which is the opposite of ordinary aristocrats.", "THE GRAVEYARD IS EMPTY BY DESIGN, SO THE BLACK-STYLE RECURSION PACKAGE IS DEAD WEIGHT. The bodies come back to HAND, not to the yard, so reanimation, Meren-style value loops, delve, threshold and cards-in-graveyard payoffs have nothing to work with. Boros already has no reanimator; the point is that you should not go looking for one — your recursion is the commander, and your Regrowth is a two-mana recast.", "AURAS ARE PART OF THIS DECK AND HIS TEXT NEVER SAYS THE WORD. \"Enchanted or equipped\" is one clause covering both halves, which is why his single most-played card is OPEN THE ARMORY — an Aura-or-Equipment tutor — and why Sram, Senior Edificer is his best draw engine (it draws off Aura casts as well as Equipment). The cheap Runes, Spectral Steel and All That Glitters are legitimate loop keys; do not read him as equipment-only just because the type line says Dwarf Warrior."]};
 STUDY_DB["d8c16a3a-dd9d-410c-a5d5-06339a89970f"] = {"insight": "Zinnia, Valley's Voice is a JESKAI (RUW) GO-WIDE TOKEN-COPY deck, and until this run Oracle rendered her with a COMPLETELY EMPTY report — zero atoms, no game plan, and nothing but the five generic Ramp / Card Advantage / Removal / Board Wipes / Tutors shelves every commander gets. At 18,676 decks she was the most-played commander in the app that rendered empty, and the cause was one line of engine logic rather than anything about her card: her entire deckbuilding instruction is the word OFFSPRING, and the English for what offspring DOES lives only inside her reminder text — which the atom extractor stripped before reading. \"Creature spells you cast gain offspring {2} as you cast them\" means every creature you cast can pay {2} extra to bring a 1/1 TOKEN COPY of itself along, so the deck is not a token deck that happens to copy — it is a COPY deck whose copies are tokens, and every creature in it is really two creatures. EDHREC agrees in exactly that order: Tokens 1865 / Offspring 351 / Clones 301 / Artifacts 270 / Burn 253 / ETB 185 / Populate 175 / Blink 145. Build her as a curve of cheap creatures whose value is an ENTERS trigger — the token copy re-fires every one of them — plus the two multipliers that read the same event: token doublers (Anointed Procession, Mondrak, Ojer Taq, Elspeth Storm Slayer) turn one offspring payment into two or three bodies, and go-wide damage payoffs (Impact Tremors, Purphoros, Terror of the Peaks, Cathars' Crusade) convert the flood into the actual win. Her own second line is the finisher: she gets +X/+0 for each other creature you control with base power 1, and every offspring token is exactly a 1/1, so the board you built to trigger things is also the anthem that makes a FLYING commander lethal.", "traps": ["OFFSPRING IS A COST YOU PAY PER CREATURE, NOT A STATIC DOUBLER, and it is the trap that a Panharmonicon-shaped reading walks you into. The {2} is paid separately for every creature spell, so the deck's mana curve is the real constraint: a five-drop is an eight-drop if you want the copy, which is why her strongest cards are one- and two-drops whose ENTERS trigger is worth more than their body. Ramp and cost reduction are not luxuries here, they are what turns one copy per turn into three.", "THE TOKEN COPY IS A 1/1 REGARDLESS OF THE PRINTED BODY, so copying a big creature copies the ABILITY, not the stats. An 8/8 trampler's offspring token is a 1/1 trampler and is nearly blank; a Spirited Companion's offspring token is a whole extra card. Prize creatures whose text is a triggered ability over creatures whose text is a stat line — the token is a rules-text copy, and rules text is the only thing that survives the shrink.", "HER ANTHEM COUNTS BASE POWER 1, WHICH MEANS PUMP EFFECTS DO NOT MAKE IT BIGGER — they can only make it smaller. Base power ignores +1/+1 counters and anthems, so Glorious Anthem and Intangible Virtue leave the count untouched, but anything that SETS base power (a clone of something larger, Ovinize, a creature-type-and-stats overwrite) removes that body from her count permanently. This is the mirror image of Delney's cap: Delney is turned off by anthems because his check is current power, Zinnia is immune to them because hers is base power — do not assume the two commanders want the same package just because both read a small number.", "SHE IS NOT AN ARTIFACT DECK EVEN THOUGH EDHREC LISTS ARTIFACTS AT 270. That count is Treasure and mana rocks bought to pay the offspring tax, plus the token doublers that happen to be artifacts — it is the deck financing the mechanic, not an artifact synergy. Building an actual artifact shell (metalcraft, affinity, Urza-style) buys none of the enters triggers the whole engine is made of.", "THE COPY IS CREATED BY A TRIGGER ON THE CREATURE ENTERING, so it is not a cast and never was in your hand. Cast-triggers (Zinnia's own line included), storm, magecraft and \"whenever you cast a creature spell\" payoffs see the ORIGINAL only, while enters-triggers, dies-triggers and go-wide counts see both. When a card could be read either way, the enters-half is the half that pays you twice."]};
+STUDY_DB["b3d81980-76f2-44e2-b1c9-01e30c726312"] = {"insight": "Loran of the Third Path is a MONO-WHITE TAP-ENGINE deck wearing a Disenchant, and until this run Oracle rendered her with NO ATOM AT ALL — she was dealt the three generic tap shelves the parameter layer gives every {T} commander, but no game plan, no archetype label and no read, and at EDHREC rank #350 she was the most-played card in the app's entire no-atom census. Her card is two engines welded to one 2/1 body. The line that matters most is the one that looks smallest: \"{T}: You and target opponent each draw a card.\" A repeatable draw on a three-mana body in the colour that historically could not draw is a real engine, and the deck's job is to fire it MORE THAN ONCE A TURN — which is why EDHREC's high-synergy column for her is not white staples at all but Ephemerate, Drumbellower, White Plume Adventurer, Teleportation Circle, Sun Titan and Cloudshift. Half of those are untappers and half are BLINKS, and the reason both work is the same: a flickered Loran comes back untapped AND re-fires her enter trigger, so one Ephemerate is a second Disenchant and a second draw at once. Her top cards say the other half out loud — Smuggler's Share, Trouble in Pairs and Esper Sentinel are all cards that tax or mirror the card you just handed an opponent. Build her as cheap efficient removal (Swords to Plowshares, Path to Exile, Generous Gift), a dense blink package, one or two free untappers, and enough opponent-draw punishers that the symmetric half of her ability is a bargain rather than a gift.", "traps": ["THE DRAW IS SYMMETRIC AND YOU ARE THE ONE PAYING FOR IT. Every activation hands a card to an opponent you choose, so without payoffs Loran is a political card that trades even at best — and against the wrong table she is a Howling Mine you built the deck around. The cards that make it asymmetric are the deck's real core: Smuggler's Share and Trouble in Pairs turn every gift into your own card, Esper Sentinel and Ghostly Prison make the opponent you fed the one least able to use it, and Alms Collector-style effects punish the rest of the table. This is NOT a group-hug deck — it is a deck that sells one card at a time and needs a markup.", "THE DISENCHANT IS AN ENTER TRIGGER, SO IT IS ONE-SHOT UNLESS YOU BLINK HER. \"When Loran enters, destroy up to one target artifact or enchantment\" fires once and never again, which is precisely why Ephemerate is her single highest-synergy card on EDHREC rather than any white staple: a flicker buys a second Disenchant, and because the permanent returns fresh it also buys a second activation of the tap ability in the same turn. The \"up to one\" is deliberate and load-bearing — she can enter with no legal target and still resolve, so blinking her into an empty board is never a fizzle.", "VIGILANCE IS NOT WHAT LETS HER TAP, AND CONFUSING THE TWO COSTS YOU THE FIRST TURN EVERY TIME. Vigilance only means attacking does not tap her, so the ability survives combat — SUMMONING SICKNESS is untouched by it. She does nothing at all the turn she lands, and nothing the turn she is recast after dying, which on a commander that will be killed repeatedly is a lot of dead turns. Lightning Greaves and Swiftfoot Boots are doing two jobs here (haste to start the engine, protection to keep it), and Thousand-Year Elixir's \"as though they had haste\" clause is worth more on this card than its untap is.", "AN UNTAPPER THAT COSTS MANA CAN COST MORE THAN THE CARD IT BUYS. Her activation draws exactly one card, so a free or nearly-free untap is a profit and an expensive one is a wash: Drumbellower (untap during each untap step), White Plume Adventurer and Nature's Chosen-class effects net you cards, while a three-mana untap activation nets you a card for three mana, which mono-white can already buy more cheaply. Count the rate on every untapper before it goes in — this is the one family where the cheapest effect, not the most powerful, is the correct one.", "SHE IS A 2/1 FOR THREE IN THE COLOUR WITH NO COUNTERSPELLS, AND THE WHOLE DECK IS ON HER. Both engines are printed on one fragile body with no evasion and no built-in protection, and unlike a Voltron commander she gains nothing from being big. Protection is therefore card advantage: hexproof grants, Teferi's Protection, Flawless Maneuver and a blink held up as a removal dodge all convert directly into activations, and a blink is the only one of them that also draws you a card when it is not needed defensively."]};
 const ROLE_LABEL = { enabler: 'Enabler', payoff: 'Payoff', amplifier: 'Amplifier', gate: 'Gate', staple: 'Staple', synergy: 'Synergy' };
 // ============================================================
 // ENGINE v3 — role-based rails (from the commander study ledger).
@@ -6034,6 +6216,27 @@ const RAILS = {
             { role: 'enabler', title: 'Untap to Re-Trigger', sub: 'Tap, untap, again', q: '(o:"untap target creature" OR (t:aura o:"untap enchanted creature"))', why: 'every untap resets the trigger — tap it again the same turn' }
         ]
     },
+    // v7.39 (Loran of the Third Path study 2026-08-06) — THE ACTIVE HALF OF TAPPING, the sibling
+    // family to `selftap` directly above and deliberately kept separate from it, because the two
+    // want OPPOSITE cards. `selftap` fires on "whenever ~ BECOMES tapped", so its deck wants ways
+    // to tap the commander (crew a Vehicle, feed a Springleaf Drum) and the tap itself is the
+    // payoff. `tapability` fires on a printed `{T}:` ability, so the tap is the COST — tapping it
+    // more is not the goal, UNTAPPING it is. Dealing selftap's "Ways to Tap" shelf to Loran would
+    // hand her a pile of Vehicles to crew with the one creature whose tap she needs for herself.
+    // The commander is always the PAYOFF here (the ability is printed on it), which is why the
+    // family declares pTest and no eTest: buildEngineModel's `hasP && !hasE` branch then sorts
+    // the enablers to the front, which is the correct reading order for all 336 of them.
+    // DELIBERATELY EMPTY, AND THE EMPTINESS IS THE POINT. This family's shelves are already
+    // dealt — face-aware, and better than a generic family could — by the Krenko-study
+    // `P.tapActivated` block in the parameter layer (Untappers / Haste Enablers / Ability
+    // Copiers). The gap this study found was never the rails: it was that the family had NO
+    // ATOM, so all 336 tap-activated commanders rendered with shelves but with `gamePlans:
+    // {plans:[],blends:[]}` — no Game Plan block, no archetype label, no chip and no Oracle's
+    // Read. That is the same ATOM->ARCHETYPES gap v7.28 closed for Massacre Girl and v6.90 for
+    // draw2. ATOM_TAPENGINE closes it; a rail list here would have dealt Loran a fourth shelf
+    // that said the same thing as the first three. An empty list is honest and inert:
+    // buildEngineModel filters it to [], the fail-safe re-slices it to [], and nothing is pushed.
+    tapability: { pTest: TAP_ENGINE_RE, rails: [] },
     xspells: {
         eTest: /add \{c\}\{c\}|add (two|three|x) mana|twice that much mana/,
         pTest: /spells? with \{x\}|\{x\} in (its|their) mana cost/,
@@ -6479,6 +6682,11 @@ const ARCHETYPES = {
     // that leaving it blank would have been the SECOND failure rather than the first.
     minuscounters: { name: '-1/-1 Counters', win: 'point the counters at the OTHER side of the table \u2014 shrink every creature your opponents play until the board is empty, and cash each counter you place for cards, bodies and their creatures' },
     selftap: { name: 'Tap Engine', win: 'tap the commander on demand, untap it, and tap it again \u2014 every tap pays' },
+    // v7.39 (Loran study) \u2014 a DISTINCT plan from selftap's, for the same reason the rail families
+    // are distinct: selftap wants to be tapped, tapability wants to be UNTAPPED. Without this
+    // entry buildGamePlans would render all 336 tap-activated commanders plan-less, the same
+    // ATOM->ARCHETYPES gap that draw2 (v6.90), vehicles (v6.79) and goad (v6.85) each closed.
+    tapability: { name: 'Tap-Activated Engine', win: 'the commander IS the engine \u2014 protect it, untap or blink it every turn, and copy the activation until one ability buries the table' },
     voltron: { name: 'Voltron', win: '21 commander damage from one protected attacker' },
     equipment: { name: 'Voltron', win: '21 commander damage from one protected attacker' },
     auras: { name: 'Voltron', win: '21 commander damage from one protected attacker' },
@@ -7113,12 +7321,20 @@ function buildEngineModel(commander) {
     // quoted GRANTED abilities stripped first, so "creatures you control have
     // '{T}: …'" doesn't count. Effects are kept so the copy rail can respect the
     // mana-ability exclusion printed on Rings of Brighthearth / Illusionist's Bracers.
-    const tapFx = (o.replace(/\([^)]*\)/g, ' ').replace(/"[^"]*"/g, ' ').match(/\{t\}[^:.]{0,40}:\s*[^.;\n]*/g) || []).map(s => s.replace(/^\{t\}[^:.]{0,40}:\s*/, ''));
+    // v7.39 — now the SHARED reader (see tapActivations at module scope). Byte-identical logic,
+    // one definition, so extractAtoms's ATOM_TAPENGINE push and these rails read one text.
+    // v7.40 — the gate on the WHOLE tap family. See tapEngineActivations at module scope: this
+    // was raw `tapActivations(o).length > 0`, dealing Untap & Reset + Haste Enablers to 56 commanders
+    // whose only {T} is a one-mana rider or a DFC transform cost (the Ixalan gods, Giada, Esika).
+    const tapEngineFx = tapEngineActivations(o);
     // Which FACE carries the {T} ability (Tergrid study): summoning sickness gates
     // {T} only on CREATURES — a {T} on a noncreature face (Tergrid's Lantern) makes
     // the haste rail dead cardboard, and creature-untap effects can't reach it.
+    // v7.40 — reads the ENGINE activations through the same shared filter, so a DFC whose mana
+    // face taps and whose engine face is the creature can no longer point the untap suite at the
+    // wrong half (the Ixalan gods' land back face was setting the face types for all five).
     const tapFaceTypes = ((commander.card_faces && commander.card_faces.length) ? commander.card_faces : [commander])
-        .filter(f => /\{t\}[^:.]{0,40}:/.test(String(f.oracle_text || '').toLowerCase().replace(/\([^)]*\)/g, ' ').replace(/"[^"]*"/g, ' ')))
+        .filter(f => tapEngineActivations(String(f.oracle_text || '').toLowerCase()).length > 0)
         .map(f => String(f.type_line || commander.type_line || '').toLowerCase());
     const P = {
         xRestricted: /spells? with \{x\}|\{x\} in (its|their) mana cost/.test(o),
@@ -7175,7 +7391,7 @@ function buildEngineModel(commander) {
         // backwards, since 1/1 tokens neither raise her power nor win the draw. Scryfall-scoped to
         // the power-scaled MANA ability (among legendary creatures only Selvala + Avatar Kyoshi
         // carry it — both power-ramp engines that want the same rails).
-        powerMana: /add x mana[^.]{0,70}greatest power among creatures you control/.test(o),
+        powerMana: isPowerManaEngine(o),
         // GITROG generalization (The Gitrog Monster study): "one or more land CARDS are put
         // into your graveyard from anywhere" (Gitrog, Slogurk, Titania Voice of Gaea) is the
         // SAME lands-hit-the-yard trigger as "lands you control are put into a graveyard" — the
@@ -7313,7 +7529,7 @@ function buildEngineModel(commander) {
         // cannot touch the other cast-creature-draw commanders (Helga wants BIG creatures +
         // is a tap-mana engine; Eshki wants power-4+ bodies; Inga wants creature-mana +
         // untappers; Volo's draw isn't from casts) — whose engines differ from Chulane's.
-        castDrawRamp: /whenever you cast a creature spell/.test(o) && /land card from your hand onto the battlefield/.test(o),
+        castDrawRamp: isCastDrawRamp(o),
         // TRIBAL GRAVEYARD RECURSION (Rivaz study): "cast a <Tribe> creature spell from
         // your graveyard" (+ tribe-locked ramp) is NOT generic spellslinger — the
         // trigger only sees that tribe's creatures, recast out of the yard. She is a
@@ -7461,9 +7677,14 @@ function buildEngineModel(commander) {
             : 'any') : null,
         // v7.32 — the restriction printed on whatever gets doubled. See readTrigAmpSubject.
         trigAmpSubj: /triggers? an additional time/.test(o) ? readTrigAmpSubject(o) : null,
-        // tap-activated engine (Krenko study): see tapFx above
-        tapActivated: tapFx.length > 0,
-        tapNonMana: tapFx.some(fx => !/^add\b/.test(fx)),
+        // tap-activated engine (Krenko study): see tapEngineFx above
+        tapActivated: tapEngineFx.length > 0,
+        // v7.39 — the shared predicate, which adds the DFC transform-cost exclusion. Measured
+        // 348 -> 343 over the full commander pool; the five that leave are exactly the Ixalan
+        // god cycle (Ojer Taq / Ojer Axonil / Ojer Kaslem / Ojer Pakpatiq / Aclazotz), each of
+        // which was reading its own LAND back face's "{4}{W}{W}, {T}: Transform" as an engine
+        // and being dealt Ability Copiers for it. See tapNonManaEngine.
+        tapNonMana: tapNonManaEngine(o),
         tapCreature: tapFaceTypes.some(t => /creature/.test(t)),
         tapArtifact: tapFaceTypes.some(t => /artifact/.test(t)),
         // MADNESS ENGINE (Anje Falkenrath study): a commander whose {T}-discard loot is a
@@ -7473,7 +7694,7 @@ function buildEngineModel(commander) {
         // engine. Scoped to the discard-for-madness plan so it does NOT fire for colorless
         // beaters that merely HAVE madness (Emrakul, the World Anew: 'madness' but no discard
         // outlet / no "whenever you discard").
-        madness: /madness/.test(o) && (/whenever you discard/.test(o) || /discard a card:/.test(o) || /discard your hand/.test(o)),
+        madness: isMadnessEngine(o),
         // INTRINSIC HASTE (Anje study): a commander that already has the haste keyword gains
         // nothing from haste-GRANTERS, so the tap-engine Haste Enablers rail (whose whole job
         // is to let the commander tap the turn it lands) is dead cardboard for it.
@@ -8633,10 +8854,22 @@ function buildEngineModel(commander) {
         // Tergrid study: match the untap suite to the FACE that taps — creature-untap
         // effects can't touch a noncreature source (Tergrid's Lantern), where the
         // Voltaic Key / Unwinding Clock artifact cluster is the live one.
+        // v7.39 (Loran study) — THE FLICKER ARM. A blink IS an untap for this family: the
+        // permanent returns fresh, so the ability is live again, and any enter trigger fires a
+        // second time on the way — which for Loran of the Third Path means a second Disenchant.
+        // The suite was untap-only, so EDHREC's #1 high-synergy card for her (Ephemerate) and
+        // four of the next nine (Cloudshift, Teleportation Circle, Conjurer's Closet, Eerie
+        // Interlude) appeared on NO shelf the app deals. ORed into the existing arms rather than
+        // dealt as its own rail because self-flicker alone is a WU card class (measured W 22 /
+        // U 13 but B 2 / R 2 / G 2 / C 2) and this repo's rule is that a two-card shelf is worse
+        // than none; merged, the suite measures W 101 / U 142 / B 47 / R 70 / G 79 / C 35.
+        // Added to BOTH creature-bearing arms and NOT to the artifact-only arm: Tergrid's
+        // Lantern is a noncreature tap source and this pool only flickers creatures, so adding
+        // it there would deal exactly the dead cardboard the Tergrid study removed.
         const tapUq = !P.tapCreature && P.tapArtifact ? '(o:"untap target artifact" OR o:"untap all artifacts" OR o:"untap target permanent" OR o:"untap another target permanent")'
-            : P.tapCreature && P.tapArtifact ? '(o:"untap target creature" OR o:"untap all creatures" OR o:"untap target artifact" OR o:"untap all artifacts")'
-            : '(o:"untap target creature" OR o:"untap all creatures" OR o:"untap another target" OR o:"untap equipped creature")';
-        out.push({ key: 'tap-untap', role: 'amplifier', title: 'Untappers', sub: 'Activate, untap, repeat', q: base + ' ' + tapUq, why: firstName + '’s {T} ability is the engine — every untap effect is another activation this turn.' });
+            : P.tapCreature && P.tapArtifact ? '(o:"untap target creature" OR o:"untap all creatures" OR o:"untap target artifact" OR o:"untap all artifacts" OR ' + TAP_BLINK_Q + ')'
+            : '(o:"untap target creature" OR o:"untap all creatures" OR o:"untap another target" OR o:"untap equipped creature" OR ' + TAP_BLINK_Q + ')';
+        out.push({ key: 'tap-untap', role: 'amplifier', title: 'Untap & Reset', sub: 'Activate, untap or blink, repeat', q: base + ' ' + tapUq, why: firstName + '’s {T} ability is the engine — every untap effect is another activation this turn, and a blink returns ' + firstName + ' untapped with any enter trigger back on top.' });
         // summoning sickness gates {T} on CREATURES only — a noncreature tap source
         // (an artifact face) activates the turn it lands, so haste is dead cardboard.
         if (!P.deployOnAttack && P.tapCreature && !P.hasHaste) out.push({ key: 'tap-haste', role: 'enabler', title: 'Haste Enablers', sub: 'Activate the turn it lands', q: base + ' ((o:haste -keyword:haste) OR o:"creatures you control have haste")', why: 'summoning sickness gates {T} abilities — haste (or an as-though-haste activator) lets ' + firstName + ' tap the turn it lands, before removal can answer.' });
@@ -9425,6 +9658,8 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    {"build": "v7.40", "date": "2026-08-06", "focus": "verify", "commander": "Loran of the Third Path", "summary": "VERIFY Loran of the Third Path — THE RAIL GATE THAT NEVER SHARED THE READER. v7.39 hoisted tapActivations so the atom and the rails 'can never hold different opinions about what a tap engine is', but it only rewired the ATOM and P.tapNonMana (which gates the Ability Copiers rail alone). The gate on the WHOLE family, P.tapActivated, was still raw tapActivations(o).length > 0 — ANY {T} at all, mana abilities and transform costs included. Measured live over all 3,348 commander-legal commanders: that dealt 56 commanders the Untap & Reset + Haste Enablers shelves with no tap atom behind them, telling the user their {T} 'is the engine' when it is a one-mana rider. New shared tapEngineActivations() closes it: untapping a MANA ability earns a shelf only when the mana SCALES or is worth more than one. Rail gate 397 -> 371; 26 commanders lose two dead shelves and ZERO gain any, so the change is a strict subset with no new false positives. The losers are exactly the incidental-rider class — the five Ixalan gods reading their own LAND back face (Ojer Taq, Ojer Axonil, Ojer Kaslem, Ojer Pakpatiq, Aclazotz; v7.39 had ruled these a bug and fixed only the copy rail), plus Giada Font of Hope (Angel typal), Esika God of the Tree (legendary/superfriends), Ruby Daring Tracker, Bugenhagen and Yuna. EDHREC ground truth confirms the split: Marwyn's own high-synergy top ten contains TWO untappers (Wirewood Lodge, Wirewood Symbiote) and she KEEPS the shelf, while Giada's top ten is ten Angels and Esika's is Nicol Bolas planeswalkers, neither containing a single untap or blink. Loran, Krenko, Arcanis, Ghoulcaller Gisa, Saryth, Tergrid, Marwyn, Zaxara, Dalakos and Helga are all unchanged; the tap atom is untouched at 341 commanders. Also audited this run: Loran's merged untap+flicker rail (63 cards, blink and untap interleaved through the whole visible head in both mono-W and mono-U, so no genuine untapper is pushed off the tail) and the atom's oq, executed live for the first time — HTTP 200, 266 commanders, Loran leading her own pool."},
+    {"build": "v7.39", "date": "2026-08-06", "focus": "study", "commander": "Loran of the Third Path", "summary": "STUDY Loran of the Third Path — THE TAP-ACTIVATED COMMANDER GETS AN ATOM. Measured over all 3,348 commander-legal commanders through the shipped extractAtoms: 336 carry a non-mana {T} ability and every one of them was dealt tap SHELVES by the Krenko-study parameter block but had NO ATOM — so gamePlans came back empty, with no archetype label, no chip and no Oracle's Read. 51 rendered atomically blank (Loran #350, Arcanis the Omnipotent, Heartless Hidetsugu, Zirda, The Peregrine Dynamo, Obeka, Mangara of Corondor, Visara, Glissa Sunseeker, Tawnos, Garth One-Eye) and 38 more were led by an incidental w1–w3 noun (Arcum Dagsson 'artifacts', Hanna Ship's Navigator 'graveyard', Experiment Kraj and Mikaeus the Lunarch 'counters'). ATOM_TAPENGINE (w4) closes it card-level: 89 new leads, 247 commanders keep the lead they had and gain only the label, 3,012 untouched. It rides the SAME shared reader and the SAME supersede gate as the rails, so Anje (madness), Selvala Heart of the Wilds (power-mana) and Chulane (cast-draw-ramp) are excluded exactly as their own studies ruled. Also: the untap suite gains a FLICKER arm — a blink returns the commander untapped and re-fires its enter trigger, so EDHREC's #1 Loran card (Ephemerate) and four of the next nine were on no shelf the app dealt; the rail is now 'Untap & Reset' and leads Ephemerate / Conjurer's Closet / Cloudshift / Thousand-Year Elixir / Teleportation Circle. And the shared tap reader now excludes DFC transform costs, which removes a false Ability Copiers shelf from the five Ixalan gods."},
     {"build": "v7.38", "date": "2026-08-05", "focus": "ui", "commander": "—", "summary": "DAILY HOUSEKEEPING (KEEP). Staleness guard passed (local v7.37 == live v7.37, no-cache Chrome fetch). DEBTS CLEARED: err.txt + err_tmp strays deleted and 92 backups >3 days pruned (46 remain) — the long-standing Cowork delete grant was obtained this run; STUDY_DB re-confirmed fully oracle_id-keyed (20 literal + appended entries, 0 name keys); worklog rows in order. CONSOLIDATION: no-op, verified clean — scope-aware CSS parse (1,148 top-level rules, 52 media blocks) found ZERO fully-shadowed duplicate rules (the 57 recurring selectors each add distinct properties = legitimate cascade layering), and all six script blocks have zero duplicate top-level function/const definitions. NECESSITY AUDIT (Dispatches hero art window): the hero unconditionally reserved a 158px art box even when the lead NEWS item has no img, rendering a large empty rectangle at the top of the Reading Room — live on today's front page over the artless Miku lead. Simplified: the hero art window now renders only when the lead item has art; artless leads read text-first. Small items keep their deliberate 108px placeholder (grid alignment). HERALD: one swap, live-verified this run — added 'Banned & Restricted announcement lands Aug 10' (source: wizards.com June 29 B&R page, fetched today, which states 'Next announcement: August 10, 2026'; the first window since February's bracket update that could move Commander bans or Game Changers); dropped the aged 'Mystery Booster Commander Edition' item (released Jul 30). The Hobbit (Aug 14, with art) now leads; 5 items, all within window. Regression walk at 390/768/1200px + console check logged in the worklog.", "tags": ["housekeeping", "herald", "audit"]},
     {"build": "v7.37", "date": "2026-08-05", "focus": "verify", "commander": "Henzie \"Toolbox\" Torre", "summary": "VERIFY Henzie \"Toolbox\" Torre - THE STUDY RUN WROTE THE FAMILY'S RULE INTO ITS OWN HEADER AND THEN LEFT ONE RAIL OUT OF IT. v7.36's RAILS.bigcast header states the rule the family exists to enforce - 'a high band on CREATURE spells and a high band on INSTANTS AND SORCERIES are opposite decks that happen to print the same number, and dealing either one the other's shelf is the whole class of defect this engine keeps removing' - and it applied that rule to 'Above the Band' (via MV_SUBJECT_Q) and to the two front-loaded creature shelves (via a conditional test on readManaBand). It then dealt EVERY member of the family the SAME flat, unscoped cost-reducer string. Read card-by-card on the rendered Henzie shelf against live Scryfall: FOUNDRY INSPECTOR came back SECOND on a CREATURE band and was NAMED IN THE RAIL'S OWN why AS A HEADLINE CARD, and it reduces ARTIFACT spells only; HERALD OF THE PANTHEON (enchantment only), PRIMAL AMULET, MANA MATRIX and SPELLBINDING SOPRANO (instant/sorcery only) came with it. The v7.36 changelog's claim of 'zero junk' on that shelf was false. A discount the commander's own class can never claim is not a discount, and this was the family's own defect surviving on the one rail nobody scoped. FIX: MV_REDUCE_EXC, the second half of the MV_SUBJECT_Q table, one row per subject, folded into the rail by turning its q from a flat string into a function of ctx exactly as 'Above the Band' already is - no new code path, no per-commander patch, and `any` absent from the table so the 12 band-printing commanders who name no class keep the unscoped pool and cannot move. THE TOKENS ARE MEASURED, NOT REASONED: all four class scopes run against the reducer POOL over every commander-legal card give 35 creature-scoped / 7 artifact-scoped / 6 enchantment-scoped / 24 instant-and-sorcery-scoped carriers, and ALL SIX pairwise intersections are ZERO, so no row can drop a reducer the band's own class could use. The tokens are also deliberately short of 'you cast', which was measured rather than assumed: the longer form left THREE creature-only reducers on an instant/sorcery shelf because they phrase the subject differently - URZA'S INCUBATOR ('Creature spells OF THE CHOSEN TYPE'), WARDEN OF EVOS ISLE and WATCHER OF THE SPHERES ('Creature spells WITH FLYING you cast') - and the disjointness measurement above is the WIDE one, so the widening costs nothing anywhere else. TWO CARVE-OUTS, BOTH FOUND BY READING THE CARDS THE TOKEN CAUGHT RATHER THAN BY ARGUMENT: (1) the `artifact` row does NOT exclude enchantment reducers, because MV_SUBJECT_TABLE folds `enchantment` into `artifact` and BELLO, BARD OF THE BRAMBLES prints ONE clause naming BOTH classes ('each non-Equipment artifact and non-Aura enchantment you control with mana value 4 or greater'); verified live that Bello keeps Herald of the Pantheon and Foundry Inspector and loses Bontu's Monument, which is right. (2) the `spell` row wraps the enchantment token in a NESTED NEGATION, because that token has exactly two compound carriers - MANA MATRIX ('Instant and enchantment spells you cast cost {2} less') and STARNHEIM COURSER ('Artifact and enchantment') - and Mana Matrix is a REAL discount for an instant/sorcery band; -(o:\"enchantment spells\" -o:instant) drops the enchantment-only reducers and keeps Mana Matrix, and Scryfall parses it with zero warnings. GENERALIZES TO 11 COMMANDERS, EVERY ONE MEASURED LIVE, HTTP 200 AND ZERO SCRYFALL WARNINGS ON ALL OF THEM: HENZIE 90->85, RUNADI 51->47, KALEMNE 68->61, HELGA 117->93 (creature), FARAMIR 91->69 (legendary), Y'SHTOLA 110->84, JIN-GITAXIAS 65->48, THE SCARLET WITCH 51->37 (spell), BELLO 73->51, T'CHALLA 72->53, ZURI 51->33 (artifact). MATHISE is the twelfth subject-scoped member and is FULLY BYTE-IDENTICAL because the 9-core-rail budget means he never renders this rail at all - a fact found by running the model rather than by assuming the census answered it. COUNTER-CASE, MEASURED NOT ARGUED: both builds' REAL buildEngineModel run old-vs-new over a 20-commander corpus of verbatim Scryfall cards, comparing every section's key|title|sub|q|why plus atoms and gamePlans. 6 byte-identical, 14 changed, ZERO structural diffs, ZERO atom diffs, ZERO gamePlan diffs, ZERO errors. Of the 14, ELEVEN are qDiff=1 (the real fix) and THREE are qDiff=0 whyDiff=1 - IMOTI, THRYX and ZHULODOK, the `any`-subject members, whose QUERY IS BYTE-IDENTICAL and whose only change is the rail's prose, which no longer names Foundry Inspector and now states the filter. KRENKO, THALIA and BARAL are the unrelated controls; GADDOCK TEEG and AO THE DAWN SKY are the POINTED controls - both print 'mana value N or greater/less' and both are byte-identical, which re-proves the v7.36 ownership guard rather than merely re-asserting it. RENDERING SAFETY PROVED BY DIFF: script blocks 0-4 BYTE-IDENTICAL, so the mobile viewport/keyboard IIFE was provably never touched; the roster pipeline is untouched; no CSS, markup or layout changed. node --check PASS 6/6; both builds boot clean in a Node VM with ATOMS 85 == 85, RAILS 63 == 63, ARCHETYPES 94 == 94, STUDY_DB 147 == 147 - this run adds no atom, no rail and no archetype, it only makes an existing rail obey the rule its own family already published. No regex terms added, so the v7.27 per-term ceiling is untouched. LEADS RECORDED RATHER THAN CHASED: the shelf still carries OFF-COLOUR reducers (Sapphire and Pearl Medallion, Oketra's Monument on Henzie in BGR) - a COLOUR scope defect, not a TYPE scope one, and a separate run; and EQUIPMENT is a fifth class the table has no row for (Danitha Capashen, Paragon on Y'shtola). Build identity SYNCED: meta == console banner == CHANGELOG[0].build == v7.37. Backup index-backup-20260805-1740-preVerifyHenzie.html; git untouched; build tag bumped LAST."},
     {"build": "v7.36", "date": "2026-08-05", "focus": "study", "commander": "Henzie \"Toolbox\" Torre", "summary": "STUDY Henzie \"Toolbox\" Torre - THE ENGINE READ POWER BANDS AND HAD NEVER LEARNED TO READ MANA-VALUE BANDS AT ALL. v7.32 established the rule for POWER and v7.33 spent it deck-wide: a commander that prints a band on its own creatures is telling you the SHAPE OF THE DECK, so every query must be a function of the number the card PRINTED rather than a constant. The identical sentence pointed at MANA VALUE had no reader anywhere in the file - measured live, 64 commander-legal commanders print 'mana value N or greater/less' and not one character of that number reached a query. HENZIE is the proof and the worst case: 18,424 decks, ZERO atoms, ZERO game plans and ZERO synergy rails, because his whole card is one clause - 'Each creature spell you cast with mana value 4 or GREATER has blitz' - whose only other English lives inside blitz's reminder text, correctly dropped by v7.34's classifier as a dictionary entry ('You may CHOOSE to cast...' is what a term MEANS, not what a card DOES). EDHREC reads him Reanimator 927 / Aggro 583 / Aristocrats 497 / Birthing Pod 464 / Toolbox 381 / Sacrifice 316 / Haste 289 / Ramp 260, with a high-synergy column that is nothing but four-plus-drops whose value is FRONT-LOADED into entering or dying - Junji the Midnight Sky, Solemn Simulacrum, Etali Primal Storm, Seedguide Ash, Primeval Herald, Rampant Rejuvenator, Bringer of the Last Gift, Ravenous Chupacabra. THREE FIXES, ALL AT THE LOGIC LEVEL. (A) readManaBand + MV_HIGH_RE, the MV sibling of readPowerBand, and THE OWNERSHIP GUARD IS BUILT INTO THE SUBJECT RATHER THAN BOLTED ON AS A STRIP. readPowerBand needs POWER_FOREIGN_RE because 'power 3 or greater' is printed bare inside the evasion idiom; a mana-value band is never bare, so anchoring on 'you cast' / 'you control' does the whole job. MEASURED, NOT ASSUMED: a candidate MV_FOREIGN_RE was written first and run old-vs-new over all 3,348 commander-legal commanders - it stripped ZERO commanders out of the hit set, so it was NOT shipped and the measurement is recorded in the file so no future run repeats it. GADDOCK TEEG ('Noncreature spells with mana value 4 or greater CAN'T BE CAST' - symmetric stax, the exact Delney error waiting to happen), REIDANE and LAVINIA are excluded BY CONSTRUCTION, and 'TOTAL mana value' (Ao, Joshua, Kairi, Tocasia, The Capitoline Triad) cannot match because the literal 'with mana value' is absent from 'with TOTAL mana value'. CENSUS with the SHIPPED constants over all 3,348: fires on EXACTLY 24, every one genuinely you-scoped, and on none of the other 3,324 - a fully enumerated blast radius. The 40 remaining 'mana value N or less' commanders are deliberately untouched: they print a cap on a REANIMATION or CHEAT TARGET, which is a restriction on one effect and not the curve of the deck. (B) THE SUBJECT OF THE BAND, read the same way and for the same reason v7.35 reads a token's subject - the THIRD time that rule has paid. A high band on CREATURE spells (Henzie, Helga, Kalemne, Runadi) and a high band on INSTANTS AND SORCERIES (Mathise, The Scarlet Witch, Jin-Gitaxias, Y'shtola) are opposite decks that print the same number. Split measured at any 12 / creature 4 / spell 4 / artifact 3 / legendary 1; 'legendary' is its own row rather than an alias of 'creature' because FARAMIR's trigger demands a LEGENDARY creature at MV 4+, and 'any' leaves the pool unscoped rather than guessing. (C) mvFold - the generic opt-in, the THIRD of this exact shape after v7.33's capFold and v7.35's subjFold, honoured only when the commander actually printed a band. It SUBSTITUTES rather than ANDs where a rail already prints a floor, a branch added by measurement: the wrap-only form produced '(-t:land mv>=6 mv>=6)' on Imoti, needlessly rewriting a correct shelf. Declared on two measured rails - RAILS.cascade's 'Worth Cascading Into', whose hardcoded mv>=6 is the fossil of IMOTI's number and is WRONG for ZHULODOK, whose grant reads SEVEN (139 colourless haymakers led by Meteor Golem, Myr Battlesphere, All Is Dust, Blightsteel Colossus, Kozilek), and RAILS.legendary's 'Legendary Density', which FARAMIR only cashes at MV 4+ (595 cards led by The One Ring, Helm of the Host, Mondrak, Mangara). Inert for Maelstrom Wanderer, Averna, Yidris, Apex Devastator, Sisay, Kethis, Jodah and Katilda, none of whom prints a band. NEW ATOM + FAMILY + PLAN: bigcast (w5, sitting directly after the two POWER band atoms because it is their sibling on the other stat), RAILS.bigcast and ARCHETYPES 'Cast Above the Band' - added together so the family can never render plan-less, the v7.34 lesson applied up front. TWO CARVE-OUTS FOUND BY READING THE RENDERED SHELF CARD-BY-CARD, not reasoned about in advance, and both the same defect - a shelf that repeats a shelf the report already carries: the unscoped band shelf returns 4,846 cards on Henzie and its EDHREC-sorted first screen IS the first screen of the two front-loaded shelves it is a superset of, so a CREATURE band is served by the two scoped shelves alone; and for a band that GRANTS CASCADE the cascade family's own payoff, now folded to the same number, is already that pool exactly. RESULT, HENZIE: an empty report becomes 'Pays the Moment It Lands' (1,178 cards, EDHREC-led by Solemn Simulacrum, Roaming Throne, Gray Merchant, Avenger of Zendikar, Craterhoof, Massacre Wurm, Terror of the Peaks), 'Pays on the Way Out' (304, led by Solemn Simulacrum, Pitiless Plunderer, Syr Konrad, Massacre Wurm, Wurmcoil Engine and JUNJI THE MIDNIGHT SKY - his #1 EDHREC high-synergy card) and 'Shave the Price' (90, Herald's Horn, Foundry Inspector, all five Medallions, Urza's Incubator, Cloud Key, Bontu's Monument, zero junk), plus the plan 'Cast Above the Band'. GENERALIZES TO 24 COMMANDERS, all measured: eleven that had no theme at all gain one (HENZIE, GILANRA, KERUGA, BRINELIN, RHINO, ASHLING and the rest go from plan-less or generic to a real family), and the thirteen with a stronger printed mechanic keep the lead they had and gain the band behind it (IMOTI cascade w7, GLARB exileplay w7, ZHULODOK cascade w7, JIN-GITAXIAS draw2 w6, THE SCARLET WITCH costdown w6). Three shelves that were the COMPLEMENT of the commander's own band are displaced: MATHISE loses 'Cheap Cantrips to Chain' (mv<=2 - literally the spells his mv>=3 trigger ignores) for the mv>=3 pool; RUNADI loses 'Haste Enablers' he already grants himself; T'CHALLA loses 'Counter Amplifiers' and 'Counter Payoffs', the counters-are-a-RESULT error v7.24 named on Indoraptor. COUNTER-CASE, MEASURED NOT ARGUED: both builds' REAL buildEngineModel run old-vs-new over a 32-commander corpus of REAL Scryfall cards carried by djb2 hash (11,774 bytes, hash 641565b5, verified byte-for-byte in the sandbox against the value computed in the browser - NOTHING typed from memory), comparing every section's key|title|sub|q|why plus atoms and gamePlans: 8 BYTE-IDENTICAL, 24 changed, ZERO unexplained diffs, ZERO errors, and the 24 are EXACTLY the 24 the census enumerates. KRENKO, THALIA, BARAL, ZINNIA and DELNEY are the unrelated controls; GADDOCK TEEG, LAVINIA OF THE TENTH and AO THE DAWN SKY are the POINTED controls - all three print 'mana value N or greater/less' and all three are byte-identical, which is what proves the ownership guard rather than merely asserting it. LIVE QA: every new shelf RE-EXTRACTED FROM THE SAVED FILE via a Node VM rather than retyped, then run EDHREC-sorted through api.scryfall.com - HTTP 200 and ZERO Scryfall warnings on all of them (Faramir 595/438, Zhulodok 139, Mathise 826, T'Challa 899, Thryx, Kalemne, Henzie 1178/304/90). No regex terms added, so the v7.27 per-term ceiling is untouched and assertRegexTermBudget reports ZERO console errors on boot. RENDERING SAFETY PROVED BY DIFF: script blocks 0-4 BYTE-IDENTICAL, so the mobile viewport/keyboard IIFE was provably never touched; non-script bytes 193,989 -> 193,989 IDENTICAL, so no CSS, markup or layout changed; roster pipeline untouched. node --check PASS 6/6; both builds boot clean in a Node VM with ATOMS 84 -> 85, RAILS 62 -> 63, ARCHETYPES 93 -> 94, STUDY_DB 146 -> 147 (147 unique keys); SPOILERS_V2 markers 8 -> 8; html/body/script 2/2/6. Added STUDY_DB[Henzie] with 5 traps, the second of which is the one nobody guesses: it is a MANA-VALUE floor and not a POWER floor, so a 6/6 for three mana is NOT a Henzie card and a 1/1 for five mana IS - cheap efficient beaters are the anti-synergy here, which is true in almost no other Jund deck. Build identity SYNCED: meta == console banner == CHANGELOG[0].build == v7.36. Backup index-backup-20260805-preStudyHenzie.html; git untouched; build tag bumped LAST."},
