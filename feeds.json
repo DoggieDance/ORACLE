@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-06T05:15:13.270Z",
+  "updated": "2026-08-06T09:15:43.738Z",
   "deals": [
     {
       "t": "Gamenerdz Reality Fracture pre-order collector booster $399 play booster $119 etc.",
@@ -53,17 +53,17 @@
       "f": ""
     },
     {
-      "t": "[TRC] Badgey, Malicious Glitch",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vgaw2v/trc_badgey_malicious_glitch/",
-      "s": 0,
-      "c": 1785944398,
-      "f": ""
-    },
-    {
       "t": "[TRK] He's Dead, Jim",
       "u": "https://www.reddit.com/r/magicTCG/comments/1vgalhy/trk_hes_dead_jim/",
       "s": 0,
       "c": 1785943760,
+      "f": ""
+    },
+    {
+      "t": "[TRC] Badgey, Malicious Glitch",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vgaw2v/trc_badgey_malicious_glitch/",
+      "s": 0,
+      "c": 1785944398,
       "f": ""
     },
     {
@@ -74,17 +74,17 @@
       "f": ""
     },
     {
+      "t": "[TRK] A Good Day to Die",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vgojze/trk_a_good_day_to_die/",
+      "s": 0,
+      "c": 1785975001,
+      "f": ""
+    },
+    {
       "t": "[TRK] Humpback Whales",
       "u": "https://www.reddit.com/r/magicTCG/comments/1vgayli/trk_humpback_whales/",
       "s": 0,
       "c": 1785944546,
-      "f": ""
-    },
-    {
-      "t": "[TRK] Hive Mind Coprocessor",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vgcw6e/trk_hive_mind_coprocessor/",
-      "s": 0,
-      "c": 1785948649,
       "f": ""
     }
   ]
