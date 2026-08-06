@@ -1,6 +1,13 @@
 {
-  "updated": "2026-08-06T12:15:26.357Z",
+  "updated": "2026-08-06T22:15:25.309Z",
   "deals": [
+    {
+      "t": "Codex bundle target $104.99",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vhh6qd/codex_bundle_target_10499/",
+      "s": 0,
+      "c": 1786051427,
+      "f": ""
+    },
     {
       "t": "Gamenerdz Reality Fracture pre-order collector booster $399 play booster $119 etc.",
       "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vglxw4/gamenerdz_reality_fracture_preorder_collector/",
@@ -35,30 +42,9 @@
       "s": 0,
       "c": 1785779178,
       "f": ""
-    },
-    {
-      "t": "MTG Flash Sale @Ripnship Gaming Avatar Play $99.99",
-      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vdk2qk/mtg_flash_sale_ripnship_gaming_avatar_play_9999/",
-      "s": 0,
-      "c": 1785682315,
-      "f": ""
     }
   ],
   "wire": [
-    {
-      "t": "[TRK] Khaaaaaaaaaaaannn!",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vgabw3/trk_khaaaaaaaaaaaannn/",
-      "s": 0,
-      "c": 1785943183,
-      "f": ""
-    },
-    {
-      "t": "[TRK] He's Dead, Jim",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vgalhy/trk_hes_dead_jim/",
-      "s": 0,
-      "c": 1785943760,
-      "f": ""
-    },
     {
       "t": "[TRK] A Good Day to Die",
       "u": "https://www.reddit.com/r/magicTCG/comments/1vgojze/trk_a_good_day_to_die/",
@@ -74,17 +60,31 @@
       "f": ""
     },
     {
+      "t": "[TRC] Ceti Eel",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vgoign/trc_ceti_eel/",
+      "s": 0,
+      "c": 1785974888,
+      "f": ""
+    },
+    {
+      "t": "[TRK] He's Dead, Jim",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vgalhy/trk_hes_dead_jim/",
+      "s": 0,
+      "c": 1785943760,
+      "f": ""
+    },
+    {
+      "t": "[TRK] Khaaaaaaaaaaaannn!",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vgabw3/trk_khaaaaaaaaaaaannn/",
+      "s": 0,
+      "c": 1785943183,
+      "f": ""
+    },
+    {
       "t": "[TRC] Badgey, Malicious Glitch",
       "u": "https://www.reddit.com/r/magicTCG/comments/1vgaw2v/trc_badgey_malicious_glitch/",
       "s": 0,
       "c": 1785944398,
-      "f": ""
-    },
-    {
-      "t": "[TRK] Humpback Whales",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vgayli/trk_humpback_whales/",
-      "s": 0,
-      "c": 1785944546,
       "f": ""
     }
   ]
