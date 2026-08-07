@@ -4369,3 +4369,69 @@ run's stale files, the same trap Row 3 flagged. Version triple in sync at v7.98.
 freeze — JS answered in **3 ms** with 0 long tasks, 0 running animations, 0 shimmer,
 `visibilityState: "hidden"`. C-001's signature was 148 shimmers. Judge renderer health with JS probes
 here, never screenshots.
+
+**Post-publish (deployed v7.98, ~15:15 sweep):** census on the deployed build returns 1,225
+commanders / **14,399 rails** / **2,411 snippet blurbs** / 0 errors — rail and blurb counts identical
+to v7.97, so the two copy edits moved no content. Every signature 0, including empty blurbs and
+dangling em-dashes. Krenko's Token Doublers now renders *"Doubling Season, Parallel Lives, and Primal
+Vigor double every mint — Ojer Taq triples it."* and his report's scroll height is **13,737 px,
+unchanged**. Herald + dossier + Scouting Report all render; 7 console messages over 5 boots, all the
+version banner, **zero errors**. C-034's 6 double-stops still present, unchanged and expected.
+
+---
+
+### v7.99 · 2026-08-07 · CRITIQUE-FIX (MODE FIX) · C-006 · Krenko, Mob Boss
+
+**THE ACROSS-TURNS UNTAP CLASS IS MIXED BY CARD TYPE, AND THE ONE SHELF THAT IS TYPE-SCOPED WAS
+READING IT UNSCOPED.** Reproduced live on deployed v7.98 before any edit: Krenko — a Goblin Warrior —
+was dealt **Unwinding Clock at RANK 1** and **Manifold Key at rank 6** of *Untap & Reset*, a shelf
+whose own sentence reads "every untap effect is another activation this turn". Unwinding Clock untaps
+**artifacts**; Manifold Key untaps **another target artifact**. Neither can untap him.
+
+**Two leaks, same rail.** (1) v7.46's `ACROSS_TURNS_UNTAP_Q` was ORed onto all three `tapUq` branches
+unscoped. v7.46 was right that the class is one template and 13/13 correct — but correct as a CLASS,
+not as a SHELF: of the closed 13, seven untap creatures you control, two untap artifacts, **four
+untap nothing but themselves** (Bender's Waterskin, Victory Chimes, Endbringer, Thousand Moons
+Infantry) and one untaps **only an enchanted land** (Urban Burgeoning). The three branches exist
+precisely because the commander's type differs. (2) `o:"untap another target"` is a **prefix, not a
+term** — Scryfall's `o:` is substring, so it completes to "…another target ARTIFACT" and dealt
+Manifold Key and Sonic Screwdriver to creature commanders.
+
+**Shipped:** `ACROSS_TURNS_CREATURE_Q` / `ACROSS_TURNS_ARTIFACT_Q` / `ACROSS_TURNS_EITHER_Q` behind a
+shared `ACROSS_TURNS_SELF_FENCE`, selected by a `tapUqAcross` ternary written in the **same order as
+`tapUqBase`'s** so the two can never drift; plus `ANOTHER_TARGET_UNTAP_Q`. Artifacts fenced
+**positively** (exactly two printed templates — complete, cannot drift), creatures **negatively**
+(open-ended — Ohabi Caleria's "untap all Archers you control" is already that shape — so it names
+only the shapes it refuses, the v7.85 `PUMP_SIGN_FENCE` idiom, and admits future cards automatically).
+**The shared constant was deliberately NOT edited**, which is why these are new names: on
+`RAILS.flash`'s *Untap & Hold Up Mana* a rock that untaps itself every opponent's turn and Urban
+Burgeoning's land **are the shelf** — scoping in place would have deleted the best cards from the one
+rail that reads the class correctly. All four other consumers untouched. Trap avoided and recorded:
+*Dazzling Theater // Prop Room* carries its untap on the **back face** and is a genuine creature
+untapper — **kept**; a name-based fence would have dropped it.
+
+**Census (deployed engine, all 3,348 commander-legal commanders, 37,665 rails, 0 errors):** 371 carry
+`tap-untap` — **346 CREATURE / 20 BOTH / 5 ARTIFACT-ONLY**. Entire blast radius. **Krenko 37 → 31,
+six removed and ZERO added** (strict subset — no new false positive possible), each proven unable to
+untap a Goblin. **Shelf health, no floor breached:** CREATURE C 19→13, W 48→41, U 53→47, B 19→13,
+R 37→31, G 44→37; BOTH C 19→16, U 55→52, WU 86→82; ARTIFACT C 18→15, U 55→52, WU 61→55. The CREATURE
+"old" column **reproduces v7.91's shipped baseline exactly** — an independent check the harness reads
+the real engine. Every dropped card audited card-by-card. **Counter-case:** Atraxa 9, Talrand 10,
+Meren 12, Muldrotha 10, Thalia 8, Prosper 10 rails — none carries a `tap-untap` rail at all, so all
+six are untouched *by construction*. Known edge recorded not patched: Shorikai is a Vehicle that
+makes its own Pilots, so a creature untapper reaches it **while crewed**; the artifact branch's base
+arm already excluded creature untappers by v7.90 design and the across-turns arm now agrees with its
+own branch.
+
+**Ship checks.** `node --check` **PASS 6/6** (fresh `mktemp` extract). **Script blocks 0–4
+BYTE-IDENTICAL** → mobile viewport/keyboard IIFE untouched by construction. **Non-script bytes
+194,666 → 194,666 IDENTICAL** → no CSS/markup/layout change. **Every static engine literal identical
+old-vs-new:** 277 q, 94 oq, 456 titles, 444 subs, 277 keys, 345 roles, 365 why, 72 tests, 104
+weights — so no rail can appear, disappear or reorder and every atom, plan and trap is unchanged.
+Both builds boot clean in a Node VM, structure identical (RAILS 74 / ATOMS 89 / ARCHETYPES 100 /
+GATES 2 / BLENDS 47 / STUDY_DB 171; CHANGELOG 383→384), and the new constants evaluate to exactly the
+strings measured against Scryfall. New query 395 chars vs ~1008 ceiling, HTTP 200. html/body/script
+2/2/6; meta == banner == CHANGELOG[0] == v7.99 · 2026-08-07. Deployed app: 2 cache-busted boots, 2
+console messages, both the version banner, **zero errors**; Herald renders. Backup
+`index-backup-20260807-1535-preFixRailCorrectness.html`. ORACLE INDEX only; **git untouched**;
+roster/tile pipeline untouched. Next run = **VERIFY of C-006**.
