@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v7.81 · 2026-08-07">
+<meta name="oracle-build" content="v7.83 · 2026-08-07">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1762,7 +1762,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v7.81 \u00B7 2026-08-07', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v7.83 \u00B7 2026-08-07', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -5140,6 +5140,133 @@ function stripModeLifegain(t) {
 // tribal, Kadena w7 face-down) is never touched — this only fires where the report was
 // empty, which is exactly why it cannot regress a commander that had something to say.
 const ATOM_BIGBOMB = { key: 'bigbomb', w: 4, chip: 'Big Mana', title: 'Ramp to the Bomb', sub: 'The commander is the payoff', q: '(otag:ramp OR otag:mana-rock OR otag:mana-dork)', oq: '(otag:ramp OR otag:mana-rock)', why: 'costs so much that the deck itself is the runway — every slot either casts it earlier, cheats it in, or buys it back' };
+// v7.82 (Ghalta, Primal Hunger STUDY 2026-08-07) — WHEN THE COMMANDER'S OWN BOARD SETS ITS
+// PRICE, THE PRINTED MANA VALUE IS NOT THE PRICE. ATOM_BIGBOMB directly above fires off
+// `card.cmc >= 7`, and for one class of card that number is a lie the card itself tells you to
+// ignore: GHALTA, PRIMAL HUNGER is printed at {10}{G}{G} and is cast for {G}{G} off a board of
+// six power. The engine was therefore prescribing the exact opposite of his deck — mana
+// DOUBLERS, cost REDUCERS, and worst of all "Put It Onto the Battlefield / Skip the cost
+// entirely", which hands a Sneak Attack or an Elvish Piper to a commander whose own first line
+// already reduced the cost to two mana. v7.02 named Ghalta by name as a commander for whom that
+// put-from-hand half "is still correct"; reading his EDHREC page card-by-card this run, it is
+// not, and neither is any other shelf the family deals him.
+// THE RULE, AND IT IS THE SAME SHAPE AS v7.81's: a `{X}` in a cost reduction is mana you DEDUCT,
+// and v7.81 already stopped the xspells atom reading it as mana you PAY. This run reads the
+// clause's SUBJECT — the fifth time the strip-then-read idiom has been followed by a
+// read-the-subject reader (v7.15 tribe, v7.32 powLow, v7.35 tokenSubject, v7.36 mvSubject,
+// v7.74 teamKw). The subject answers the only question that matters for this class: WHOSE
+// BOARD PAYS, AND IN WHAT CURRENCY.
+// CENSUS — CLOSED AT FOUR, TWICE OVER, and measured live over every legendary creature whose
+// oracle prints "less to cast" or "less to activate" (125 cards, of which 13 carry a {X}
+// reduction): only these four use the SELF-REFERENTIAL "this spell costs {X} less" template
+// scaled by CREATURES YOU CONTROL — GHALTA PRIMAL HUNGER (total power), MITOTIC ULTIMUS
+// (greatest power), THE LORD OF THE EAGLES (total power, with flying) and THE PRIDE OF HULL
+// CLADE (total toughness). The other nine reduce something OTHER than themselves or scale off
+// something other than a board they own, and every one of them is excluded BY CONSTRUCTION
+// rather than by a list: BARU WURMSPEAKER reduces WURM SPELLS and counts "among Wurms you
+// control"; KAZA ROIL CHASER and ELMINSTER reduce instants and sorceries; AGATHA OF THE VILE
+// CAULDRON reduces ACTIVATED ABILITIES; THE SCARLET WITCH, VADRIK ASTRAL ARCHMAGE and AGATHA
+// scale off the COMMANDER'S OWN power, not the board's (P.selfPow already owns that read and
+// keeps it); COMMANDER LIARA PORTYR counts PLAYERS BEING ATTACKED; ROWAN SCION OF WAR and WILL
+// SCION OF PEACE count LIFE; SAMUT THE DRIVING FORCE counts SPEED. Those same four are exactly
+// the four that fire ATOM_BIGBOMB today, so the blast radius of the suppression and the reach
+// of the replacement are the SAME closed set, and nothing else in the app can move.
+// BOMB_MV is the app's own existing definition of "this card is a bomb", lifted out of the
+// inline literal it lived in so the two reads that now depend on it can never drift: a body at
+// or above it is itself a bomb, and a bomb cannot be the thing that PAYS for your bomb, which
+// is precisely why the ratio rail below caps its pool one point under it (Kozilek, Butcher of
+// Truth is pow 12 > mv 10 and was leading the uncapped pool — a ten-drop does not help you cast
+// a twelve-drop).
+const BOMB_MV = 7;
+const SELF_DISCOUNT_RE = /this spell costs \{x\} less to cast, where x is the (total|greatest) (power|toughness) (?:of|among) creatures you control(?: with (\w+))?/;
+function readSelfDiscount(o) { const m = SELF_DISCOUNT_RE.exec(o || ''); return m ? { scope: m[1], stat: m[2], qual: m[3] || null } : null; }
+// v7.84 (Agatha study) — WHAT THE CARD CALLS ITSELF.
+// Seven oracle-matching sites in this file ask "does the commander's text name the commander?"
+// — P.selfPow ("<name>'s power"), P.counterFuel and P.tokenFueledSelfCounter ("+1/+1 counter on
+// <name>"), the Voltron gear read ("attached to <name>"), and the two counter-strip regexes.
+// Every one of them derived the needle as `name.split(',')[0]`, i.e. it assumed a card's
+// self-reference short name is always the text before the comma. That is the DOMINANT convention,
+// not the RULE. Magic lets a card refer to itself by its full name OR by a rules-legal shortened
+// form, and the shortening is not always comma-delimited: AGATHA OF THE VILE CAULDRON says
+// "where X is Agatha's power", BRAULIOS OF PHERES BAND says "Braulios's power", DRIZZT DO'URDEN
+// says "Drizzt's power", GIMLI OF THE GLITTERING CAVES says "a +1/+1 counter on Gimli". For all of
+// them `split(',')[0]` returns the WHOLE name, the indexOf misses, and the app concludes the card
+// never mentions itself. It fails in the other direction too — A-UURG, SPAWN OF TURG prints its
+// FULL name including the comma, so the comma-prefix needle is too SHORT there.
+// One reader, consumed by all seven sites, generating every rules-legal candidate: the full name,
+// the comma prefix, the prefix before an " of "/" the "/" and " title, and the bare first word.
+// Candidates under 3 characters are dropped so a one-letter fragment can never match loose prose.
+function selfRefNames(name) {
+    const full = String(name || '').split(' //')[0].trim();
+    const out = [];
+    const add = function (s) { s = String(s || '').trim(); if (s.length > 2 && out.indexOf(s) === -1) out.push(s); };
+    add(full);
+    if (full.indexOf(',') !== -1) add(full.split(',')[0]);
+    const m = full.match(/^(.*?)(?:,| of the | of | the | and )/);
+    if (m) add(m[1]);
+    add(full.split(' ')[0]);
+    return out;
+}
+// `o` is expected already lowercased, as it is at all seven call sites.
+function selfRefHas(o, names, before, after) {
+    o = o || ''; before = before || ''; after = after || '';
+    for (let i = 0; i < names.length; i++) { if (o.indexOf(before + names[i].toLowerCase() + after) !== -1) return true; }
+    return false;
+}
+// Regex-alternation form for the two counter-strip sites, which need to REMOVE the self-reference
+// rather than merely detect it. Longest-first so the alternation cannot match a short prefix and
+// leave the rest of the name behind as stray prose.
+function selfRefAlt(names) {
+    return names.slice().sort(function (a, b) { return b.length - a.length; })
+        .map(function (n) { return n.toLowerCase().replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&'); }).join('|');
+}
+// v7.84 (Agatha study) — THE DISCOUNT THAT IS NOT ON A SPELL.
+// v7.82's SELF_DISCOUNT_RE reads "this SPELL costs {X} less to cast" and its census explicitly
+// set AGATHA OF THE VILE CAULDRON aside as "reduces ACTIVATED ABILITIES" — correctly excluded,
+// and then read by nothing at all. An activated-ability discount is a different deck from a spell
+// discount: a spell discount buys you a CHEAPER CARD, an ability discount buys you a REPEATABLE
+// ENGINE, so the payoff is not "play expensive spells", it is "play creatures whose abilities are
+// priced to be unaffordable". Returns the SUBJECT (whose abilities) and whether the amount is a
+// live {X} or a printed flat number, because those pick different enabler rails.
+const ACT_DISCOUNT_RE = /activated abilities of ([a-z ]{0,26}?)s? you control cost (?:up to )?\{(x|\d+)\} less to activate/;
+// The pool the discount is FOR: creatures whose activated ability is priced in four or more
+// generic mana. That price is the whole reason the card is unplayable at rate and the whole
+// reason it is playable here. Written once, module-scope, because both the payoff rail and the
+// counter-case measurement have to be asking Scryfall the same question.
+const PRICEY_ABILITY_Q = '(t:creature o:/\\{[4-9]\\}[^:\\n]{0,14}:/)';
+function readActivatedDiscount(o) {
+    const m = ACT_DISCOUNT_RE.exec(o || '');
+    return m ? { subject: m[1].trim(), amount: m[2], scaled: m[2] === 'x' } : null;
+}
+// v7.83 (Ghalta VERIFY) — THE FACE THE QUERY IS ACTUALLY TALKING ABOUT.
+// Scryfall's stat and type operators match ANY FACE of a double-faced card, and this app has
+// never said which face it meant. For most rails that is harmless — a rail about a TRIGGER or a
+// KEYWORD is happy to find it on either side. For the handful of rails whose entire thesis is a
+// PRINTED NUMBER THE DECK SPENDS, it is a silent leak, because the number is being read off a
+// face the deck cannot choose to have.
+//
+// THE RULE, and it is a rules-level truth rather than a heuristic: a TRANSFORMING double-faced
+// card is always cast as its FRONT face. The back is a STATE reached only through a condition
+// the deck does not control — a turn on which no spells were cast (every werewolf), a battle
+// that must first be defeated (Invasion of Ikoria), a creature that must first die (Ojer
+// Kaslem), a land that must first be fed six creatures (Westvale Abbey). A card whose advertised
+// number lives on a face you cannot elect to have is not a card that supplies that number.
+// MODAL double-faced cards are deliberately NOT excluded: both of their faces are castable, so
+// either one is a face the deck can choose, and `is:transform` does not match them.
+//
+// MEASURED, ON THE THREE SHELVES THAT READ A SPENT NUMBER (front-face audit of every card in
+// each live pool, this run): `selfscale`'s ratio rail 14 leaks / 171 for Ghalta in mono-G, 2 / 16
+// for The Lord of the Eagles, 27 / 315 for The Pride of Hull Clade; `heavy` 18 / 575 in RG;
+// `tough` 27 / 902 in UB. The leaks are not marginal — they are three MANA ROCKS (Mystic Skull,
+// Jade Seedstones, Kaslem's Stonetree), a BATTLE and a LAND (Westvale Abbey, on a shelf titled
+// "High-Toughness Bodies"), and a run of werewolf day-sides printed at power 2, 3 and 4 sitting
+// on shelves headed "One giant sets X" and "Every point is a mana off".
+const CAST_FACE_Q = '-is:transform';
+// Pushed UNCONDITIONALLY where ATOM_BIGBOMB is gated on `bombTopW < 6`, and the asymmetry is
+// deliberate: bigbomb is a fallback for a report that had nothing to say, whereas this is a
+// positive read of the commander's FIRST PRINTED LINE. At w5 it sits behind any genuine w6+
+// theme on the ordinary weight sort anyway, so it can displace nothing that a w6 atom owns.
+const ATOM_SELFSCALE = { key: 'selfscale', w: 5, chip: 'Self-Discount', title: 'Build the Discount', sub: 'The board pays for the commander', q: '(t:creature pow>=5 pow>mv mv<=6 ' + CAST_FACE_Q + ')', oq: '(t:creature pow>=5 pow>mv ' + CAST_FACE_Q + ')', why: 'discounts its own casting cost by a number its own board sets, so the board is not merely a board \u2014 it is the mana' };
 const ATOM_VOLTRON = { key: 'voltron', w: 5, sup: ['anthem'], chip: 'Voltron', title: 'Voltron Protection & Gear', sub: 'One big threat', q: '(t:equipment OR (t:aura o:"enchanted creature gets") OR o:"double strike" OR o:hexproof OR o:indestructible)', oq: '(keyword:hexproof OR keyword:indestructible OR keyword:"double strike")', why: 'is built to swing alone' };
 // v7.12 (Spider-Man, Web-Slinger study) — KEYWORD-ABILITY ATOM LAYER, and the blind spot it
 // closes. extractAtoms reads ORACLE TEXT, and its very first act is to strip every parenthetical,
@@ -5903,7 +6030,13 @@ function extractAtoms(card) {
     // reports and never displaces a real theme. See ATOM_BIGBOMB above.
     const bombMV = Number(card.cmc || 0);
     const bombTopW = found.reduce(function (mx, f) { return Math.max(mx, f.atom.w || 1); }, 0);
-    if (bombMV >= 7 && /creature/.test(String(card.type_line || '').toLowerCase()) && bombTopW < 6) {
+    // v7.82 (Ghalta study) — SELF-DISCOUNT SUPERSEDES BIG-BOMB, expressed as an if/ELSE rather
+    // than two independent tests so the mutual exclusion is STRUCTURAL and cannot drift apart.
+    // See SELF_DISCOUNT_RE above for the closed four-commander census.
+    const selfDisc = readSelfDiscount(o);
+    if (selfDisc) {
+        found.push({ atom: ATOM_SELFSCALE, snippet: '' });
+    } else if (bombMV >= BOMB_MV && /creature/.test(String(card.type_line || '').toLowerCase()) && bombTopW < 6) {
         found.push({ atom: ATOM_BIGBOMB, snippet: '' });
     }
     // v7.39 (Loran of the Third Path study 2026-08-06) — TAP-ACTIVATED COMMANDER. Card-level and
@@ -5971,6 +6104,22 @@ const STUDY_DB = {
     // been silently swallowed by the later duplicate (last key wins in an object literal, and
     // `assertStudyKeys` cannot see a collision the parser has already collapsed) — recorded in
     // the worklog as a tooling gap rather than papered over.
+    // v7.82 (Ghalta, Primal Hunger STUDY 2026-08-07) — authored against the card and ALL FOUR of
+    // its Gatherer rulings, fetched VERBATIM this run from Scryfall (card b0b6be0c-\u2026/rulings).
+    // He is the most-played commander the self-discount census contains (EDHREC rank #466) and
+    // the sharpest failure the big-bomb family had: the engine read his printed {10}{G}{G} as
+    // the deck's problem and prescribed mana doublers, cost reducers and a put-it-from-hand
+    // cheat, while EDHREC's page for him contains none of the three.
+    "b0b6be0c-41cf-4757-9f0e-87227b6ba6b3": {
+        insight: "Ghalta, Primal Hunger is a {10}{G}{G} 12/12 that a real deck casts on turn four or five for {G}{G}, and almost every mistake made with him comes from taking the printed number seriously. His cost line reads \u201CThis spell costs {X} less to cast, where X is the total power of creatures you control,\u201D and TOTAL power across the board is a number mono-green reaches trivially: a Llanowar Elves, a Topiary Stomper and a Gigantosaurus is sixteen power on three cards, which is more discount than the ability can even use. That inverts the usual big-creature deckbuilding. He does not want ramp that produces MANA \u2014 he wants ramp that produces a BODY, which is why his most-played card is Llanowar Elves and not Sol Ring, and why his high-synergy column is Topiary Stomper, Gigantosaurus, Hulking Raptor, Llanowar Tribe and Wayward Swordtooth rather than a single mana doubler. It also means his deck is playing two games with one board: the same power total that pays his cost is the resource Return of the Wildspeaker, Rishkar\u2019s Expertise, Garruk\u2019s Uprising and Momentous Fall convert into cards, and the thing Craterhoof Behemoth and Overwhelming Stampede convert into lethal damage. He is a 12/12 trampler for two mana attached to a draw engine, and the deck\u2019s only real vulnerability is that all three of those functions live on the same fragile board.",
+        traps: [
+            "THE COST IS LOCKED BEFORE YOU PAY IT, AND THAT IS A FREE ROLL MOST BUILDERS NEVER TAKE. The ruling is explicit: \u201CThe total cost to cast Ghalta is locked in before you pay that cost. For example, if you control three 2/2 creatures, including one you can sacrifice to add {C}, the total cost of Ghalta is {4}{G}{G}. Then you can sacrifice the creature when you activate mana abilities just before paying the cost.\u201D The discount counts the creature\u2019s power FIRST and you still get to eat it for mana afterwards. This is why a mana dork is doing two jobs on this card and a Signet is doing one \u2014 Llanowar Elves adds its power to the discount, then taps for the mana that pays what is left. Deploy the whole board, let the cost lock, then start activating.",
+            "HIS MANA VALUE IS ALWAYS TWELVE, NO MATTER WHAT YOU ACTUALLY PAID. Per the ruling, \u201CGhalta\u2019s mana value remains unchanged, no matter what the total cost to cast it was.\u201D Casting him for {G}{G} does not make him a two-drop for anything else in the game: Bolas\u2019s Citadel flips him and charges you twelve life, cascade off a Maelstrom Wanderer can never hit him, Chalice of the Void and every \u201Cmana value 3 or less\u201D tutor read TWELVE, and a Fierce Guardianship-style free-spell clause treats him as the twelve-drop he is printed as. The cheap cast is a cost event only.",
+            "THE FLOOR IS {G}{G}, SO POWER PAST TEN IS NOT PAYING FOR HIM \u2014 IT IS PAYING FOR SOMETHING ELSE. \u201CGhalta\u2019s first ability can\u2019t reduce its cost below {G}{G}.\u201D Ten total power buys the entire discount and the eleventh point buys nothing, which is the single best argument for the draw and trample shelves: once the board clears ten power, every further point should be going into Return of the Wildspeaker or through a Craterhoof, because it has stopped being mana. Builders who keep adding bodies purely to \u2018cast him faster\u2019 are adding cards that do nothing after the first ten power.",
+            "COMMANDER TAX IS SWALLOWED BY THE DISCOUNT, WHICH MAKES HIM UNUSUALLY CHEAP TO LOSE. The rulings fix the order of operations: \u201Cstart with the mana cost \u2026 add any cost increases, then apply any cost reductions.\u201D The tax is an increase and is therefore applied BEFORE the reduction, so a board with fifteen power recasts a twice-killed Ghalta for {G}{G} all the same. He is one of the few expensive commanders genuinely indifferent to being answered \u2014 provided the BOARD survives. That is the whole reason protection here is protecting your mana rather than your threat: Heroic Intervention and Asceticism keep the cost line collapsed, while a resolved sweeper re-prices him to twelve and strands him in hand.",
+            "CHEATING HIM INTO PLAY IS AN ANTI-SYNERGY, AND THE APP USED TO RECOMMEND IT. Sneak Attack, Elvish Piper and Quicksilver Amulet spend a card and a slot to skip a cost this deck has already reduced to two mana, and Sneak Attack hands him back at end of turn. Reanimation is worse still \u2014 there is no value in returning a body whose only text is trample and a discount you no longer need. EDHREC\u2019s page for him contains no cheat and no reanimator; the correct \u2018cheat\u2019 in this deck is a second cheap fatty. Related, and equally counterintuitive: \u201Cif a creature\u2019s power is somehow less than 0, it subtracts from the total power of your other creatures,\u201D so -1/-1 counter effects and 0-power utility bodies are quietly taxing the cost line."
+        ]
+    },
     "bbd7b756-bbee-451e-9446-06019791cb36": {
         insight: "The Pride of Hull Clade is a {10}{G} 2/15 that is almost never cast for ten mana, and reading her as a big-green-fatty or an X-spell deck — which is how the engine used to read her — misses the card entirely. Her cost line is “This spell costs {X} less to cast, where X is the total toughness of creatures you control,” and TOTAL toughness across your whole board is a number that gets large absurdly fast: four defensive bodies averaging 0/4 already pay for her outright, and her floor is {G}. So the deck is a cheap, defensive, high-toughness board that deploys her on turn four or five as a free 2/15 wall, and her real text is the third line — “{2}{U}{U}: Until end of turn, target creature you control gets +1/+0, gains ‘Whenever this creature deals combat damage to a player, draw cards equal to its toughness,’ and can attack as though it didn't have defender.” That is a repeatable, targeted DRAW ENGINE bolted to an unlock, and pointed at her own 15 toughness it draws fifteen cards on connection. The +1/+0 is not decoration: it is there so a 0-power wall assigns nonzero combat damage without needing a toughness-for-power grant at all, which is why she plays perfectly well WITHOUT Assault Formation and why she wants unblockable-makers (Tetsuko Umezawa, Rogue's Passage, Slip Out the Back) far more than she wants anthems. Build her as blue-green defensive ramp: cheap high-toughness bodies, defender mana (Overgrown Battlement, Axebane Guardian), evasion for one enormous butt, and enough interaction to survive to the swing.",
         traps: [
@@ -7491,6 +7640,51 @@ const RAILS = {
     // test), Protect & Recast 15 -> 10 with Command Beacon, Temur Sabertooth, Cloudstone Curio,
     // Sanctum of Eternity, Campfire and Erratic Portal as the top of the rail and every
     // one-shot bounce body gone.
+    // v7.82 (Ghalta, Primal Hunger STUDY 2026-08-07) — THE SELF-DISCOUNT FAMILY, and it exists
+    // because the four commanders in SELF_DISCOUNT_RE's closed census were being handed the
+    // BIG-BOMB family directly below, which asks three questions none of them has. A big bomb
+    // asks "how do I reach nine mana"; a self-discounting bomb has already answered that on its
+    // own card, and asks a different question entirely: "what do I put on the board so the
+    // number is big enough?" Ground-truthed card-by-card against EDHREC's Ghalta page (rank
+    // #466) rather than reasoned about — his High Synergy column is TOPIARY STOMPER (5/5 for
+    // three), GIGANTOSAURUS (10/10 for five), HULKING RAPTOR (6/5 for four), LLANOWAR TRIBE,
+    // GORECLAW and WAYWARD SWORDTOOTH, and his Top Cards are LLANOWAR ELVES, GARRUK'S UPRISING,
+    // RETURN OF THE WILDSPEAKER, RISHKAR'S EXPERTISE, UNNATURAL GROWTH and SWIFTFOOT BOOTS.
+    // Not one mana doubler, not one reanimator, not one put-it-from-hand cheat on the page.
+    // EVERY QUERY FOLDS ON railCtx.discount, never on a constant and never on a commander name,
+    // so the same four rails read `pow` for Ghalta and Mitotic Ultimus, `tou` for The Pride of
+    // Hull Clade, and append `keyword:flying` for The Lord of the Eagles — the v7.32 rule
+    // (read the number the card printed) restated on a third stat.
+    // Live-QA'd EDHREC-sorted this run. Ghalta in mono-G: 171 / 18 / 55 / 130 cards, all HTTP
+    // 200, led by Wayward Swordtooth, Kogla and Hulking Raptor; then Garruk's Uprising, Return
+    // of the Wildspeaker and Rishkar's Expertise; then Swiftfoot Boots and Heroic Intervention;
+    // then Garruk's Uprising, Craterhoof and Rancor. Pride in GU: 315 / 55.
+    selfscale: {
+        rails: [
+            // THE RATIO RAIL, and the mana cap is the whole point of it. The two shelves this
+            // family supersedes both read a bare threshold — `heavy` is `pow>=6` and `tough` is
+            // `tou>=5`, neither capped — so the uncapped pool is led by KOZILEK, BUTCHER OF
+            // TRUTH and ARTISAN OF KOZILEK, cards that are pow>mv on paper and completely
+            // useless in practice, because a ten-mana body cannot precede a twelve-mana
+            // commander. Capping at BOMB_MV-1 states that in the app's own vocabulary: a body
+            // that is ITSELF a bomb cannot be the thing that pays for your bomb.
+            { role: 'enabler', title: 'Cheap Bodies, Big Numbers', sub: 'Every point is a mana off', q: function (ctx) { const d = ctx.discount || {}; const st = d.stat === 'toughness' ? 'tou' : 'pow'; return '(t:creature ' + st + '>=5 ' + st + '>mv mv<=' + (BOMB_MV - 1) + (d.qual ? ' keyword:' + d.qual : '') + ' ' + CAST_FACE_Q + ')'; }, why: 'this commander is not cast off ramp \u2014 it is cast off BODIES, and the only bodies that help are the ones whose stat is larger than their price, so Topiary Stomper, Gigantosaurus, Hulking Raptor and Wayward Swordtooth each knock more mana off the commander than they cost to deploy; the cap keeps the shelf to bodies that can actually land FIRST, because a card that costs as much as the commander is competing with it rather than paying for it' },
+            // POWER ONLY, and measured rather than assumed: the toughness fold of this query
+            // returns FOUR cards in GU (Last March of the Ents, Momentous Fall, Nissa's
+            // Revelation and Pride herself), which is not a shelf. The power fold returns 18,
+            // every one of them correct, three of them in Ghalta's EDHREC top six.
+            { role: 'payoff', title: 'Turn the Board Into Cards', sub: 'Size is a resource', test: function (o) { const d = readSelfDiscount(o); return !!d && d.stat === 'power'; }, q: '((o:/draw cards equal to/ o:power) OR (o:/power \\d or greater enters/ o:draw))', why: 'the board you built to pay the discount is sitting there as a second resource, and these are the cards that spend it twice \u2014 Garruk\u2019s Uprising, Return of the Wildspeaker, Rishkar\u2019s Expertise, Elemental Bond and Momentous Fall all read the same power total the commander\u2019s cost line reads, so every point you added to cast it also draws you a card' },
+            // The non-obvious shelf, and the one a human builder gets wrong: for this class a
+            // board wipe is not a tempo loss, it is a RE-PRICING. Ghalta goes from {G}{G} back
+            // to {10}{G}{G} the moment the board dies, so protection here is mana protection.
+            { role: 'payoff', title: 'Protect What Pays', sub: 'Your board is your mana', q: '((o:/(?:creatures|permanents) you control/ (o:hexproof OR o:indestructible)) OR (t:equipment (o:hexproof OR o:indestructible)))', why: 'a sweeper does not merely cost you creatures here \u2014 it RE-PRICES your commander, snapping the cost line straight back to its printed number and stranding it in hand for the rest of the game, which is why Heroic Intervention, Swiftfoot Boots, Asceticism and Veil of Summer are protecting your MANA and not just your board' },
+            // POWER ONLY. Trample and haste are the right conversion for a 12/12 Elder Dinosaur
+            // and flatly wrong for The Pride of Hull Clade, a 2/15 DEFENDER whose own text
+            // already sells the unlock — the same stat split the bigcast family makes between
+            // creature and instant/sorcery bands.
+            { role: 'payoff', title: 'Make the Size Count', sub: 'Trample and haste', test: function (o) { const d = readSelfDiscount(o); return !!d && d.stat === 'power'; }, q: '((o:/(?:creatures|permanents) you control/ (o:trample OR o:haste)) OR (t:aura o:"enchanted creature" (o:trample OR o:haste)))', why: 'a huge body that gets chump-blocked has converted none of the work that cast it, so trample is not a nice-to-have here \u2014 Garruk\u2019s Uprising, Rancor, Overwhelming Stampede and Craterhoof Behemoth turn the same power total into damage, and haste collects it the turn the commander lands instead of handing the table a turn to answer it' }
+        ]
+    },
     bigbomb: {
         rails: [
             { role: 'enabler', title: 'Double Your Mana', sub: 'Ramp past the curve', q: Q_MANAMULT, why: 'a seven-plus-mana commander is not cast off ordinary ramp \u2014 it is cast off MULTIPLIERS, so Wild Growth, Utopia Sprawl, Fertile Ground, Mana Reflection, Mirari\u2019s Wake, Zendikar Resurgent, Caged Sun, Nyxbloom Ancient, Vorinclex, Bear Umbra and Sword of Feast and Famine are the real curve; the staple Ramp rail below still covers the Cultivate/Farseek base' },
@@ -8468,6 +8662,7 @@ const ARCHETYPES = {
     // distinctly from 'Cheat Big Creatures' (massdeploy) and 'Big Mana X' (xspells) on
     // purpose: buildGamePlans dedupes by NAME, and this plan is about ONE commander-sized
     // threat rather than a hand full of fatties or a lethal X spell.
+    selfscale: { name: 'Build the Discount', win: 'the commander discounts its own cast by a number its own board sets, so the deck is not a ramp deck at all \u2014 deploy bodies whose stat beats their price until the cost line collapses, land the commander years before its printed number says you should, and protect the board afterwards because losing it re-prices the commander back to full' },
     bigbomb: { name: 'Ramp to the Bomb', win: 'the commander IS the deck \u2014 double your mana or cheat past the cost to land it years early, then keep it: bounce it to hand in response to removal so it dodges the answer, resets its tax and re-triggers its enters ability every time it comes back' },
     // v7.36 — the plan for the mana-value band family. Named distinctly from 'Ramp to the Bomb'
     // (bigbomb, ONE commander-sized threat) and 'Cheat Big Creatures' (massdeploy, skip the cost
@@ -9211,6 +9406,10 @@ function buildEngineModel(commander) {
     // below is built from, so no rail can ever again deal the commander back to its own deck.
     const base = (ci ? 'id<=' + ci : 'id:c') + ' legal:commander -t:basic' + selfExcludeQ(commander.name);
     const firstName = (commander.name || '').split(',')[0].split(' //')[0];
+    // v7.84 — every rules-legal way this card can name itself. `firstName` stays exactly as it was
+    // and remains the DISPLAY name used in every `why` string; `selfNames` is the MATCHING needle
+    // set, so the two jobs that were conflated into one variable are now separate.
+    const selfNames = selfRefNames(commander.name);
     // v7.34 — was the RAW lowercased oracle, so every rail family's eTest/pTest, every conditional
     // rail `test`, `railCtx.o` and `readPowerBand` read a keyword's DICTIONARY ENTRY as if the
     // commander had printed it (RAILS.attack's eTest 413 -> 336 across the corpus). Same classifier
@@ -9258,6 +9457,11 @@ function buildEngineModel(commander) {
     // (v7.35) and `mvHigh`/`mvSubject` (v7.36) were. Null for every commander that grants nothing,
     // so the field is inert unless a rail asks for it.
     railCtx.teamKw = readTeamKeyword(o);
+    // v7.82 — `discount`: WHOSE BOARD PAYS, AND IN WHAT CURRENCY, read off the commander's own
+    // cost-reduction clause and added to the context exactly as `tribe` (v7.15), `powLow`
+    // (v7.32), `tokenSubject` (v7.35), `mvHigh`/`mvSubject` (v7.36) and `teamKw` (v7.74) were.
+    // Null for every commander outside the closed four, so the field is inert unless asked for.
+    railCtx.discount = readSelfDiscount(o);
     // v7.75 (Iroas VERIFY 2026-08-07) — `staticGrant`: TRUE only for a commander who reached the
     // `attack` atom through v7.74's static-keyword door and through NO other. It is the answer to
     // "which door did you come in?", and it is deliberately the CONJUNCTION of both halves: a
@@ -9443,10 +9647,20 @@ function buildEngineModel(commander) {
         statOverride: /base power and toughness \d+\/\d+/.test(o),
         selfLoops: /at the beginning of [^.]{0,60}return [^.]{0,80}graveyard to the battlefield/.test(o),
         xIsDiscount: /cost \{x\} less/.test(o),
+        // v7.82 (Ghalta study) — the JOIN this layer never made. `xIsDiscount` (above) already
+        // knew the {X} was a discount and `countPower`/`countToughness` (below) already knew what
+        // it counted, but nothing ever put the two together, so the counted stat was dealt an
+        // ATTACK-flavoured shelf ("Heavy Hitters / One giant sets X", whose why reads "X reads
+        // the greatest power in the attack") for a clause that has nothing to do with attacking.
+        // One reader, consumed by both this layer and the rail layer, so they cannot disagree.
+        selfDiscount: readSelfDiscount(o),
+        // v7.84 (Agatha study) — the ABILITY-side sibling of selfDiscount. Same reader shape,
+        // consumed by both this layer and the rail layer so they cannot drift apart.
+        actDiscount: readActivatedDiscount(o),
         artifactCopy: /whenever another nontoken artifact you control enters[^.]{0,60}/.test(o) && /copy/.test(o),
         countPower: /where x is [^.]{0,36}power/.test(o),
         countToughness: /where x is [^.]{0,36}toughness/.test(o),
-        selfPow: o.indexOf(firstName.toLowerCase() + "'s power") !== -1 || /where x is this creature's power/.test(o),
+        selfPow: selfRefHas(o, selfNames, '', "'s power") || /where x is this creature's power/.test(o),
         // v7.00 (Old Stickfingers VERIFY) — THE COUNTED RESOURCE, NOT THE PRINTED STAT.
         // P.selfPow fires on any reference to the commander's own power and pushes a "Pump the
         // Commander" rail of Equipment and Auras. That is right for a creature whose power is a
@@ -9719,7 +9933,7 @@ function buildEngineModel(commander) {
         // self-counter discount engine (Animar study): the commander's own cast
         // trigger banks +1/+1 counters on ITSELF and a static turns each one into a
         // growing discount — the counters are a cost DIAL, not a board theme
-        counterFuel: /whenever you cast/.test(o) && /less to cast for each \+1\/\+1 counter/.test(o) && (o.indexOf('+1/+1 counter on ' + firstName.toLowerCase()) !== -1 || o.indexOf('+1/+1 counter on this creature') !== -1),
+        counterFuel: /whenever you cast/.test(o) && /less to cast for each \+1\/\+1 counter/.test(o) && (selfRefHas(o, selfNames, '+1/+1 counter on ', '') || o.indexOf('+1/+1 counter on this creature') !== -1),
         // TOKEN-FUELED SELF-COUNTER FINISHER (Baylen, the Haymaker study 2026-07-29): the
         // commander's abilities are POWERED by TAPPING (or sacrificing) untapped tokens you
         // control, and one line banks +1/+1 counters on ITSELF (Baylen: tap four tokens ->
@@ -9728,7 +9942,7 @@ function buildEngineModel(commander) {
         // body he swings with. Generalizes to any token-CONSUMING commander that self-pumps
         // with +1/+1 counters; guarded to that exact shape (a token COST + a self-counter),
         // so it never fires on token PRODUCERS or on counters-go-wide commanders.
-        tokenFueledSelfCounter: /(?:tap|sacrifice)s? [^:.]{0,30}tokens? you control/.test(o) && (o.indexOf('+1/+1 counter on ' + firstName.toLowerCase()) !== -1 || o.indexOf('+1/+1 counters on ' + firstName.toLowerCase()) !== -1 || /\+1\/\+1 counters? on (?:it|this creature)\b/.test(o)),
+        tokenFueledSelfCounter: /(?:tap|sacrifice)s? [^:.]{0,30}tokens? you control/.test(o) && (selfRefHas(o, selfNames, '+1/+1 counter on ', '') || selfRefHas(o, selfNames, '+1/+1 counters on ', '') || /\+1\/\+1 counters? on (?:it|this creature)\b/.test(o)),
         // mass-deploy parameters (Kaalia study): which types can be put, and is the put attack-gated?
         // v7.57 (Strefan study) — the deploy's printed TYPE, re-read as a TYPE/SUBTYPE GRAMMAR
         // instead of the single sentence shape `put <subtypes> CREATURE cards`. The shipped reader
@@ -9972,7 +10186,7 @@ function buildEngineModel(commander) {
             // nothing outside the equipment/aura atoms can be reached by this clause.
             return /for each [^.]{0,34}(aura|equipment)[^.]{0,20}attached/.test(o)
                 || /attached to (it|him|her|them)\b/.test(o)
-                || o.indexOf('attached to ' + firstName.toLowerCase()) !== -1
+                || selfRefHas(o, selfNames, 'attached to ', '')
                 || /as long as [^.]{0,30}(is )?(equipped|enchanted)/.test(o)
                 || /(?:equipped|enchanted) creatures? you control/.test(o)
                 || /creatures? you control that are (?:[a-z]+ )?(?:equipped|enchanted)/.test(o)
@@ -10677,7 +10891,7 @@ function buildEngineModel(commander) {
         // counters archetype — strip the counter rails/plan when the ONLY +1/+1
         // wording sits on the commander itself. Mazirek-class "counter on each creature
         // you control" is board-wide, not self, so it correctly survives.
-        const fnl = firstName.toLowerCase().replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const fnl = selfRefAlt(selfNames);
         const ctrRest = o.replace(new RegExp('\\+1\\/\\+1 counters? on (?:' + fnl + '|this creature|itself|him|her|it)\\b', 'g'), ' ');
         if (/\+1\/\+1 counter/.test(o) && !/\+1\/\+1 counter/.test(ctrRest)) {
             for (let i = out.length - 1; i >= 0; i--) if (/^counters/.test(out[i].key || '')) out.splice(i, 1);
@@ -10697,7 +10911,7 @@ function buildEngineModel(commander) {
     // Atraxa has no +1/+1 text at all. (The P.sacValue strip is deliberately kept looser
     // for that known-incidental context, so permSac commanders are unchanged.)
     {
-        const fnLC = firstName.toLowerCase().replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const fnLC = selfRefAlt(selfNames);
         const selfCtrRe = new RegExp('a \\+1\\/\\+1 counter on (?:' + fnLC + '|this creature|itself|himself|herself)\\b', 'g');
         if (/\+1\/\+1 counter/.test(o) && !/\+1\/\+1 counter/.test(o.replace(selfCtrRe, ' '))) {
             for (let i = out.length - 1; i >= 0; i--) if (/^counters/.test(out[i].key || '')) out.splice(i, 1);
@@ -11490,8 +11704,11 @@ function buildEngineModel(commander) {
         out.unshift(...ta);
     }
     // counted-stat parameters: "where X is ..." tells you what to maximize
-    if (P.countToughness) {
-        out.push({ key: 'tough', role: 'enabler', title: 'High-Toughness Bodies', sub: 'Big butts dig deepest', q: base + ' (t:creature tou>=5)', why: 'X reads toughness \u2014 every point is reach.' });
+    if (P.countToughness && !P.selfDiscount) {
+        // CAST_FACE_Q \u2014 the number this shelf promises has to be on the board while X is being
+        // counted, and a transform back face is a state the deck cannot elect to be in. 27 leaks
+        // of 902 in UB, led by WESTVALE ABBEY, a LAND, on a shelf titled "High-Toughness Bodies".
+        out.push({ key: 'tough', role: 'enabler', title: 'High-Toughness Bodies', sub: 'Big butts dig deepest', q: base + ' (t:creature tou>=5 ' + CAST_FACE_Q + ')', why: 'X reads toughness \u2014 every point is reach.' });
     }
     if (P.selfPow && P.statZone) {
         // stat is a ZONE COUNT -> deal the rail that grows the COUNTED RESOURCE, never gear.
@@ -11528,8 +11745,44 @@ function buildEngineModel(commander) {
         }
     } else if (P.selfPow) {
         out.push({ key: 'selfpump', role: 'enabler', title: 'Pump the Commander', sub: 'Grow the number', q: base + ' (((t:aura OR t:equipment) o:"gets +") OR (o:"+1/+1 counter" o:target))', why: 'X reads ' + firstName + "'s power \u2014 every +1 raises it." });
-    } else if (P.countPower) {
-        out.push({ key: 'heavy', role: 'enabler', title: 'Heavy Hitters', sub: 'One giant sets X', q: base + ' (t:creature pow>=6)', why: 'X reads the greatest power in the attack \u2014 one huge body carries the count.' });
+    } else if (P.countPower && !P.selfDiscount) {
+        // CAST_FACE_Q \u2014 same rule, same reason: 18 leaks of 575 in RG, and a shelf that promises
+        // "one giant sets X" was offering a BATTLE plus werewolf day-sides printed at 2, 3 and 4.
+        out.push({ key: 'heavy', role: 'enabler', title: 'Heavy Hitters', sub: 'One giant sets X', q: base + ' (t:creature pow>=6 ' + CAST_FACE_Q + ')', why: 'X reads the greatest power in the attack \u2014 one huge body carries the count.' });
+    }
+    // v7.84 (Agatha study) \u2014 ACTIVATED-ABILITY DISCOUNT. A spell discount and an ability discount
+    // look identical in the oracle text and are opposite decks. A spell discount is a ONE-SHOT
+    // saving on a card you were going to cast anyway, so its rails point at expensive SPELLS. An
+    // ability discount is a PERMANENT price change on an engine you can run every turn, so its
+    // rails point at creatures whose printed activation cost is the only thing wrong with them \u2014
+    // the Invoker cycle ({7}{R}: ...), Magus of the Candelabra, Soulbright Flamekin, Captivating
+    // Crew, Soul of New Phyrexia. EDHREC's high-synergy column for Agatha is that pool almost card
+    // for card, and before this run the app offered none of it.
+    // Folded on the SUBJECT rather than hardcoded to creatures, so a reducer aimed at another
+    // permanent class gets the shelf pointed at that class instead of at the wrong one.
+    if (P.actDiscount) {
+        const ad = P.actDiscount;
+        const subj = ad.subject;
+        const typeQ = /creature/.test(subj) ? PRICEY_ABILITY_Q
+            : /artifact/.test(subj) ? '(t:artifact o:/\\{[4-9]\\}[^:\\n]{0,14}:/)'
+                : /land/.test(subj) ? '(t:land o:/\\{[4-9]\\}[^:\\n]{0,14}:/)'
+                    : /permanent/.test(subj) ? '(o:/\\{[4-9]\\}[^:\\n]{0,14}:/ -t:instant -t:sorcery)' : null;
+        if (typeQ) {
+            pushUniqueRail(out, {
+                key: 'actdisc', role: 'payoff', title: 'Abilities Priced to Be Unaffordable', sub: 'The discount is the deck',
+                q: base + ' ' + typeQ,
+                why: firstName + ' does not make your cards cheaper \u2014 ' + firstName + ' makes your ABILITIES cheaper, and an ability is a card you get to use EVERY TURN. That inverts what a good card looks like: the ' + subj + 's you want are the ones whose activation cost is the only thing wrong with them, because that cost is exactly what is being refunded. The Invoker cycle, Magus of the Candelabra, Soulbright Flamekin, Captivating Crew and Soul of New Phyrexia are all unplayable at their printed rate and all excellent at this one, while a card with a cheap ability gains almost nothing here \u2014 the floor means a {1} ability was already as cheap as it will ever get.'
+            });
+            pushUniqueRail(out, {
+                key: 'actdisc-stack', role: 'amplifier', title: 'Stack the Discount', sub: 'Reducers compound',
+                q: base + ' (o:"less to activate" OR o:"cost {2} less to activate")',
+                why: 'Cost reductions on activated abilities ADD rather than overwrite, so Training Grounds, Biomancer\u2019s Familiar, Zirda and Heartstone each stack on top of ' + firstName + ' \u2014 and because the floor is applied ONCE at the end rather than per-effect, a second reducer is what drags a genuinely expensive ability down to the floor instead of merely partway.'
+            });
+        }
+        // The amount is a live {X} rather than a printed number -> the number has to be BUILT, and
+        // when it is the commander's own power that is the `selfpump` rail, which P.selfPow above
+        // already deals. Recorded here rather than duplicated: the two reads meet on the same
+        // commander by construction, so a second pump shelf would be the same shelf twice.
     }
     // XENAGOS COMBAT POWER-DOUBLER transform (Xenagos study): he doubles ONE creature's
     // power at the beginning of combat and hands it haste, so the deck is a Gruul haymaker
@@ -12398,6 +12651,8 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v7.83', date: '2026-08-07', focus: 'verify', commander: 'Ghalta, Primal Hunger', summary: "VERIFY Ghalta, Primal Hunger — HIS THREE PAYOFF RAILS AUDITED CLEAN AND THE DEFECT WAS IN THE ONE THE STUDY WAS PROUDEST OF. Read card-by-card against EDHREC, 'Turn the Board Into Cards' (18), 'Protect What Pays' (55) and 'Make the Size Count' (130) are correct top to bottom — Garruk's Uprising, Return of the Wildspeaker, Rishkar's Expertise; Swiftfoot Boots, Heroic Intervention, Mithril Coat; Craterhoof, Overwhelming Stampede, Rancor — which is EDHREC's own columns in order. The RATIO rail is not. THE DEFECT, AND IT HAD NOTHING TO DO WITH THE RATIO: Scryfall's stat and type operators match ANY FACE of a double-faced card, and this app has never once said which face it meant. For a rail about a TRIGGER or a KEYWORD that is harmless — either side will do. For a rail whose entire thesis is a PRINTED NUMBER THE DECK SPENDS it is a silent leak, because the number is read off a face the deck cannot elect to have. Front-face audit of every card in every affected pool this run: Ghalta's 'Cheap Bodies, Big Numbers' shelf carried 14 leaks of 171 — three of them MANA ROCKS (Mystic Skull, Jade Seedstones, Kaslem's Stonetree), one a BATTLE (Invasion of Ikoria), the rest werewolf day-sides printed at power 3 and 4 — every one of them contributing ZERO to a discount whose sub-header reads 'Every point is a mana off'. THE RULE, and it is a rules-level truth rather than a heuristic: a TRANSFORMING double-faced card is always cast as its FRONT face, and the back is a STATE reached only through a condition the deck does not control — a turn on which no spells were cast (every werewolf), a battle that must first be defeated, a creature that must first die, a land that must first be fed six creatures. A card whose advertised number lives on a face you cannot elect to have is not a card that supplies that number. MODAL double-faced cards are deliberately NOT excluded, and the distinction is the whole precision of the fix: both of their faces are castable, so either one is a face the deck can choose, and is:transform does not match them. SHIPPED AT THE LOGIC LEVEL: ONE module-scope constant, CAST_FACE_Q, referenced at exactly FOUR code sites — ATOM_SELFSCALE's q and oq, the selfscale family's ratio rail, and the two shelves that family supersedes, 'heavy' and 'tough'. Not a per-commander patch and not a per-query literal, so the next rail that spends a printed number adopts it by name. GENERALIZES, MEASURED RATHER THAN ASSERTED, AND THE OTHER TWO SHELVES CARRY THE IDENTICAL BUG: 'Heavy Hitters / One giant sets X' leaks 18 of 575 in RG, offering a Battle and werewolf day-sides at power 2, 3 and 4 to a shelf that promises a giant; 'High-Toughness Bodies' leaks 27 of 902 in UB, led by WESTVALE ABBEY — a LAND — on a shelf titled 'High-Toughness Bodies'. Named beneficiaries beyond the four self-discount commanders: ARAHBO ROAR OF THE WORLD, AGATHA OF THE VILE CAULDRON, ATOGATOG, BARU WURMSPEAKER, ALOY SAVIOR OF MERIDIAN, CORAM THE UNDERTAKER and DINA, plus PHENAX GOD OF DECEPTION, PANTLAZA SUN-FAVORED, GERALF VISIONARY STITCHER, CAPTAIN AMERICA WINGS OF FREEDOM and VENOM DEADLY DEVOURER. COUNTER-CASE — CLOSED, NOT SAMPLED, THROUGH THE APP'S OWN buildEngineModel OVER THE WHOLE CORPUS: all 3,266 unique commander-legal creature commanders modelled live, ZERO errors, and the set that renders any of the three affected shelves is exactly 37 — heavy 31, tough 6, no overlap, plus the four ratio-rail members. 3,229 commanders are byte-identical BY CONSTRUCTION rather than by inspection, because CAST_FACE_Q is referenced at four sites and no other query string in the file can move. Controls all byte-identical: KRENKO MOB BOSS, ZAXARA THE EXEMPLARY, DORAN THE SIEGE TOWER, ATRAXA PRAETORS' VOICE, KOZILEK BUTCHER OF TRUTH, TALRAND SKY SUMMONER, EDGAR MARKOV, YAROK THE DESECRATED. PRECISION MEASURED IN BOTH DIRECTIONS, AND THE COST STATED HONESTLY: on Ghalta the gate removes all 14 leaks and ZERO leaks survive it, at a cost of exactly THREE over-drops — Ojer Kaslem, Vorinclex and Burly Breaker, transform cards whose front face does qualify, all three at 6 power for 5 mana, which is the weakest tier the shelf admits. 14 dead cards for 3 marginal ones, and the three lost are lost only because Scryfall has no front-face operator. Pools: Ghalta 171 -> 154, The Lord of the Eagles 16 -> 14, The Pride of Hull Clade 315 -> 287. RENDERING SAFETY PROVED BY DIFF: script blocks 1-4 BYTE-IDENTICAL and block 0 differs only in the banner version string, so the mobile viewport/keyboard IIFE was provably never touched; non-script bytes 193,887 -> 193,887, so no CSS, markup or layout changed at all. node --check PASS 6/6; ATOMS/RAILS/ARCHETYPES/BLENDS/STUDY_DB all UNCHANGED — this run added no atom, rail, archetype, blend or study entry, only corrected which face four existing queries were reading. STALENESS GUARD RAN AND PASSED FOR THE FIFTH BUILD RUNNING: local v7.82, live (?cb= no-store) v7.81 — local AHEAD, no HALT. Backup index-backup-20260807-0540-preVerifyGhalta.html (SHA1 90418f241ecd488d2d52c3dfedfe188537e4a812, byte-verified with cmp); git untouched; ORACLE INDEX only; build tag bumped LAST." },
+    { build: 'v7.82', date: '2026-08-07', focus: 'study', commander: 'Ghalta, Primal Hunger', summary: "STUDY Ghalta, Primal Hunger — THE ENGINE WAS READING A PRINTED MANA VALUE THE CARD ITSELF TELLS YOU TO IGNORE. ATOM_BIGBOMB fires off card.cmc >= 7, and Ghalta is printed at {10}{G}{G} but cast for {G}{G} off a board of six power, so the app prescribed the exact inverse of his deck: mana DOUBLERS, cost REDUCERS, Protect & Recast, and worst of all 'Put It Onto the Battlefield / Skip the cost entirely', which hands Sneak Attack and Elvish Piper to a commander whose own first line already reduced the cost to two mana. v7.02 named Ghalta by name as a commander for whom that put-from-hand half is 'still correct'; read card-by-card against EDHREC this run, it is not — his page (rank #466) contains no mana doubler, no reanimator and no cheat at all. Half his report was generic staples and the other half was someone else's deck. THE RULE, and it is the same shape as v7.81's: a {X} in a cost reduction is mana you DEDUCT, and v7.81 already stopped the xspells atom reading it as mana you PAY. This run reads the clause's SUBJECT — the fifth read-the-subject reader after v7.15 tribe, v7.32 powLow, v7.35 tokenSubject, v7.36 mvSubject and v7.74 teamKw — because the subject answers the only question this class asks: WHOSE BOARD PAYS, AND IN WHAT CURRENCY. SHIPPED AT THE LOGIC LEVEL: module-scope SELF_DISCOUNT_RE + readSelfDiscount() returning {scope, stat, qual}; BOMB_MV lifted out of its inline literal so the two reads that depend on it cannot drift; ATOM_SELFSCALE pushed in an if/ELSE against ATOM_BIGBOMB so the supersession is STRUCTURAL rather than two tests that can drift; railCtx.discount; P.selfDiscount, which finally JOINS two parameters that had sat side by side unjoined since v5.21 — P.xIsDiscount already knew the {X} was a discount and P.countPower/countToughness already knew what it counted, so the counted stat was being dealt an ATTACK-flavoured shelf ('Heavy Hitters / One giant sets X', whose why literally reads 'X reads the greatest power in the attack') for a clause that has nothing to do with attacking. FOUR NEW RAILS, every query FOLDED on railCtx.discount rather than on a constant or a name, so one family reads pow for Ghalta and Mitotic Ultimus, tou for The Pride of Hull Clade, and appends keyword:flying for The Lord of the Eagles. The ratio rail is the heart of it: the two shelves it supersedes read BARE thresholds (heavy is pow>=6, tough is tou>=5, neither capped), so the uncapped pool was led by KOZILEK, BUTCHER OF TRUTH and ARTISAN OF KOZILEK — pow>mv on paper and useless in practice, because a ten-mana body cannot precede a twelve-mana commander. Capping at BOMB_MV-1 states that in the app's own vocabulary: a body that is ITSELF a bomb cannot be the thing that pays for your bomb. Two rails are POWER-GATED by measurement, not preference — the toughness fold of 'Turn the Board Into Cards' returns FOUR cards in GU, which is not a shelf, and trample/haste is flatly wrong for a 2/15 DEFENDER. LIVE-QA'd EDHREC-sorted: Ghalta mono-G 171 / 18 / 55 / 130 cards, HTTP 200, led by Wayward Swordtooth, Kogla and Hulking Raptor; then Garruk's Uprising, Return of the Wildspeaker and Rishkar's Expertise; then Swiftfoot Boots and Heroic Intervention; then Craterhoof and Rancor — which is EDHREC's own high-synergy and top-cards columns, card for card. Pride in GU 315 / 55. RESULT: Ghalta's four bigbomb shelves plus Heavy Hitters become Cheap Bodies, Big Numbers | Turn the Board Into Cards | Protect What Pays | Make the Size Count, and his plan goes 'Ramp to the Bomb' -> 'Build the Discount'. Pride sheds three bigbomb shelves and the uncapped tough shelf for two correctly-folded ones and KEEPS her whole v7.80 defenders family (def-bodies, def-grant, def-pump) and her attack rails. CENSUS — CLOSED, NOT SAMPLED, AND MEASURED THREE WAYS. (1) Over ALL 291 cards in Magic printing 'this spell costs ... less to cast', the reader fires on 8 and only FOUR are legendary creatures: GHALTA PRIMAL HUNGER, MITOTIC ULTIMUS, THE LORD OF THE EAGLES, THE PRIDE OF HULL CLADE (the other four — Molten Monstrosity, The Great Henge, The Skullspore Nexus, Volcanic Salvo — can never be a commander). (2) Of the 13 legendary creatures carrying ANY {X} cost reduction, the other nine are excluded BY CONSTRUCTION rather than by a list: BARU WURMSPEAKER reduces WURM SPELLS and counts among Wurms; KAZA ROIL CHASER and ELMINSTER reduce instants and sorceries; AGATHA OF THE VILE CAULDRON reduces ACTIVATED ABILITIES; THE SCARLET WITCH and VADRIK ASTRAL ARCHMAGE scale off the COMMANDER'S OWN power (P.selfPow already owns that read and keeps it); COMMANDER LIARA PORTYR counts PLAYERS BEING ATTACKED; ROWAN SCION OF WAR and WILL SCION OF PEACE count LIFE; SAMUT THE DRIVING FORCE counts SPEED. (3) The two suppressions are FULLY ENUMERATED: P.countPower fires on 68 legendary creatures and v7.82 suppresses 'heavy' on exactly THREE, with the other 65 untouched (Agatha, Arahbo, Atogatog, Azog, Baru, Aloy, Amy Rose, Vivi Ornitier named); P.countToughness fires on SEVEN and v7.82 suppresses 'tough' on exactly ONE (Pride), with the other six untouched and every one of them named — Captain America Wings of Freedom, Geralf Visionary Stitcher, Hamza Might of the Yathan, Pantlaza Sun-Favored, Phenax God of Deception, Venom Deadly Devourer. COUNTER-CASE MEASURED THROUGH THE REAL buildEngineModel, old file vs new: 4 CHANGED, 6 BYTE-IDENTICAL, and the three sharpest are the point — KOZILEK, BUTCHER OF TRUTH keeps his entire bigbomb family, proving the suppression is scoped to the DISCOUNT and not to mana value; ARAHBO, ROAR OF THE WORLD keeps 'heavy'; PHENAX, GOD OF DECEPTION keeps 'tough'. ZAXARA THE EXEMPLARY (a genuine X-spells commander), DORAN THE SIEGE TOWER (v7.80's own subject) and KRENKO MOB BOSS byte-identical as controls. New STUDY_DB entry for Ghalta (oracle_id b0b6be0c) authored against all FOUR Gatherer rulings fetched verbatim this run, whose traps are the ones nobody guesses: the cost is LOCKED before you pay it, so a mana dork adds its power to the discount AND still gets sacrificed for mana afterwards; his mana value is ALWAYS twelve for Bolas's Citadel, cascade and every 'mv 3 or less' tutor; the floor is {G}{G}, so power past ten has stopped being mana and should be going into draw or through a Craterhoof; commander tax is applied BEFORE the reduction and is therefore swallowed by it, making him unusually cheap to lose provided the BOARD survives; and cheating him into play is an ANTI-SYNERGY the app itself used to recommend. node --check PASS 6/6; assertStudyKeys and assertStudyTrapCap both []; boots at ATOMS 86 / RAILS 68->69 / ARCHETYPES 96->97 / BLENDS 46 / STUDY_DB 166->167. Backup index-backup-20260807-0505-preStudyGhalta.html; mobile viewport/keyboard IIFE, roster pipeline and git untouched." },
     {"build": "v7.81", "date": "2026-08-07", "focus": "verify", "commander": "The Pride of Hull Clade", "summary": "VERIFY The Pride of Hull Clade — HER REPORT STILL LED WITH X SPELLS, AND THE CAUSE WAS THE LOOSEST TEST IN THE FILE. v7.80 gave her the Defenders family and the three toughness rails are correct card-by-card, but reading the rendered report top-down, the shelves ABOVE them were untouched and still wrong: sections 0 and 1 were `X Spells / Dump the mana in` (`m:{X}` — Fireball, Comet Storm, Hydras) and `Mana Engines / Make X huge`. `ATOMS.xspells` ships with the test `/\\{x\\}/`, the bare symbol, so ANY commander whose oracle text contains it anywhere is read as an X-spells deck at w5. Her `{X}` is in `This spell costs {X} less to cast, where X is the total toughness of creatures you control` — a COST REDUCTION. THE RULE, AND IT IS A RULES-LEVEL TRUTH RATHER THAN A HEURISTIC: `{X}` occurs in two opposite polarities. In an X spell it is mana you PAY and the deck is built to make it enormous; in a cost reduction it is mana you DEDUCT, and it is a discount on a plan the card states elsewhere in the same breath. Reading one as the other inverts the deck. Same rule and the same STRIP-then-READ cure as the v7.08 tax clause (a tax names what the deck PUNISHES), the v7.23 ward cost (paid by the OPPONENT) and v7.32's POWER_FOREIGN_RE (a threshold about the other side's creatures) — a symbol inside a clause whose polarity the deck does not own is not the deck's theme. SHIPPED: module-scope X_REDUCE_RE beside POWER_FOREIGN_RE, an `oX` text variant in extractAtoms beside oPow, and ONE new arm on the per-atom text dispatch. ATOM-SCOPED for the v7.47 reason and it matters more than usual here: the strip removes the WHOLE reduction clause, and that clause is exactly where these commanders print their real subject nouns (\"where X is the total TOUGHNESS of creatures you control\", \"the total POWER…\", \"the number of WIZARDS…\"), so the text is handed to `xspells` ALONE and every other atom goes on reading the sentence intact. CENSUS over all 3,677 commander-legal commanders fetched live this run: the atom fires on 80 and drops to 66 — exactly 14 — and the blast radius is closed rather than merely bounded, because ZERO commanders print a reduction clause AND a second `{X}` elsewhere, so the strip can never take a real X spell with it. The fourteen: AGATHA OF THE VILE CAULDRON, BARU WURMSPEAKER, COMMANDER LIARA PORTYR, ELMINSTER, GHALTA PRIMAL HUNGER, KAZA ROIL CHASER, MITOTIC ULTIMUS, ROWAN SCION OF WAR, SAMUT THE DRIVING FORCE, THE LORD OF THE EAGLES, THE PRIDE OF HULL CLADE, THE SCARLET WITCH, VADRIK ASTRAL ARCHMAGE and WILL SCION OF PEACE. Not one is an X-spells deck. DROPPED, NOT DEMOTED, and that is a measurement rather than a preference: v7.33's rule is to demote when the atom is the commander's ONLY read, and it is nobody's only read here — the smallest report after the strip is Agatha's at 6 sections and none reaches zero, so the empty-report hazard cannot fire. RESULT, PRIDE: 16 -> 15 sections, `X Spells` and `Mana Engines` gone along with `Synergy Ramp`, whose pool is `o:\"instant and sorcery spells\" o:cost o:less` — Baral-class reducers, dead cardboard for a commander who discounts her own CREATURE spell, and reached only because FAM.xspells feeds the `castish` gate. Her report now leads Evasion Enablers and Combat Triggers with the v7.80 Defenders family — def-bodies, def-grant, def-pump, tough — intact behind them, and the plans read Defenders > Combat Aggro > Ramp to the Bomb. GENERALIZES, with the four best cases named: GHALTA PRIMAL HUNGER, MITOTIC ULTIMUS and THE LORD OF THE EAGLES each had the literal LEAD TITLE `X Spells` and are the same card shape as Pride — a huge creature discounted by its own board — while KAZA ROIL CHASER and ELMINSTER trade the two xspells rails for spellslinger rails and BARU WURMSPEAKER trades one for `tokens:payoff0`, the Wurm tokens he actually makes; AGATHA, LIARA and ROWAN drop the phantom Synergy Ramp. COUNTER-CASE, MEASURED NOT ARGUED, AND ON THE WHOLE CORPUS RATHER THAN A SAMPLE: the REAL buildEngineModel run old-vs-new over ALL 3,531 unique commander-legal commanders, comparing every section's key|title|sub|q|why plus plans, traps, insight, novel and verified — 3,520 BYTE-IDENTICAL, 11 CHANGED, ZERO errors, and the 11 are a SUBSET of the 14 the census enumerates. THE THREE THAT CARRY THE CLAUSE AND DO NOT MOVE ARE THE SHARPEST COUNTER-CASE AVAILABLE: SAMUT THE DRIVING FORCE, THE SCARLET WITCH and VADRIK ASTRAL ARCHMAGE are inside the census and share the code path, and they are byte-identical because each carries six stronger atoms so `xspells` never made the `found.slice(0,6)` cut — which proves the change removes an INCIDENTAL read rather than narrowing the family. ZAXARA THE EXEMPLARY is the pointed control on the other side — a genuine X commander (\"whenever you cast a spell with {X} in its mana cost\") — byte-identical, proving the strip cannot reach a real X spell. DORAN THE SIEGE TOWER and BILL THE PONY, v7.80's own two subjects, are byte-identical, so last run's work is provably undisturbed; KRENKO, ATRAXA and TALRAND byte-identical as unrelated controls. Blast radius bounded BY CONSTRUCTION: `oX` is referenced exactly once, on the `xspells` arm of the dispatch. VERIFIED LIVE IN CHROME, INCLUDING THE 390 px PASS: the deployed page was driven through its own UI to her card modal and Scouting Report with the delta active in-page, and the rendered ORACLE'S READ carries no `Big X` chip while the ENGINE MAP reads Evasion Enablers / Combat Triggers / Double Your Mana / Shave the Cost / Put It Onto the Battlefield / Protect & Recast the Bomb / High-Toughness Bodies with no X Spells and no Mana Engines. Mobile checked by same-origin 390x844 iframe (innerWidth 386, matchMedia('(max-width: 430px)') TRUE): scrollWidth == clientWidth == 386, NO OVERFLOW. HAND-OFF ITEM (a) DISCHARGED: Doran, the Siege Tower leads with the re-pooled `Big-Butt Attackers / Toughness is the damage` and plans Defenders; Bill the Pony leads Food > Aristocrats and carries no defender rail at all — both exactly as v7.80 predicted. RENDERING SAFETY PROVED BY DIFF: script blocks 1-4 BYTE-IDENTICAL and block 0 differs ONLY in the banner version string, so the mobile viewport/keyboard IIFE was provably never touched; non-script bytes 193,887 -> 193,887 IDENTICAL, so no CSS, markup or layout changed; html/body/script 2/2/6. node --check PASS 6/6; assertStudyKeys and assertStudyTrapCap both return []; boots at ATOMS 86 / RAILS 68 / ARCHETYPES 96 / BLENDS 46 / STUDY_DB 166 UNCHANGED — this run added no atom, rail, archetype, blend or study entry, only corrected logic. STALENESS GUARD RAN AND PASSED FOR THE FOURTH BUILD RUNNING: local <meta> v7.80, live (?cb= no-store) v7.79 — local AHEAD, no HALT; extractAtoms and the ATOMS literal were additionally proved BYTE-IDENTICAL between live and local by djb2 (9a3d3326 / d72db48a, both sides), which is what makes the in-browser corpus measurement transfer to the shipped build. Build identity SYNCED: meta == console banner == CHANGELOG[0].build == v7.81. Backup index-backup-20260807-0435-preVerifyPride.html (SHA1 4a9417d52948f4311d77b2af3e3c9b91ba836af5, byte-verified with cmp); git untouched; ORACLE INDEX only; build tag bumped LAST."},
     {"build": "v7.80", "date": "2026-08-07", "focus": "study", "commander": "The Pride of Hull Clade", "summary": "STUDY The Pride of Hull Clade — THE DEFENDERS FAMILY READ THE GRANT AND NEVER READ THE UNLOCK, SO IT LED SIX OF NINE COMMANDERS WITH A SHELF OF CREATURES THAT CANNOT ATTACK. `P.defenders` (v5.67) fired on ONE flat regex — \"creature with defender\" OR \"combat damage equal to its toughness\" — and then handed every commander it admitted the SAME three rails whose lead is `t:creature keyword:defender`. That lead is correct only for a commander who also prints the DEFENDER UNLOCK (\"can attack as though it/they didn't have defender\", or a trigger keyed on defenders); for everyone else a wall is a blocker in a deck whose entire win condition is attacking with toughness. MEASURED ON EDHREC'S OWN DATA, NOT ASSERTED, and the separation is perfect: every commander who prints the unlock has Defenders in EDHREC's top two themes (ARCADES 2335, FELOTHAR 1648, THE PRIDE OF HULL CLADE 190) and every commander who does not is at 83 or below (DORAN THE SIEGE TOWER 83, BALDIN 12, KINGPIN 4, RASAAD 1, PLAGON and BILL absent). Scoring each shelf's EDHREC-ordered top 18 against the commander's own 70-card EDHREC list, `keyword:defender` returns 16/18, 17/18 and 15/18 for the three UNLOCK commanders and 5, 11, 6, 6, 4 and 6 of 18 for the six who do not unlock. SHIPPED: `readToughnessGrant` + TOUGH_AS_DMG_TEAM_RE / TOUGH_AS_DMG_SINGLE_RE / DEFENDER_UNLOCK_RE / TOUGH_PAYOFF_RE, placed beside `readTeamKeyword` because it is the same shape of reader, returning THREE INDEPENDENT SIGNALS because they answer different questions — `scope` (does the toughness->damage conversion cover a CLASS of creatures or one chosen creature), `unlock` (may my defenders actually attack — this is what picks the lead rail's pool) and `payoff` (does the commander reward high toughness while granting nothing). SCOPE, NOT A STRIP, exactly as v7.19 anthemWide / v7.36 mvSubject / v7.74 readTeamKeyword / v7.79 entrySubj: each arm is anchored to the clause carrying the mechanic, so an unrelated sentence mentioning toughness cannot reach 'team', and a grant printed on the OPPONENTS' side cannot reach it either — both are unit tests, 13/13. THE LEAD RAIL NOW READS THE UNLOCK, same key and same slot, two pools: UNLOCK keeps the shipped `keyword:defender` query CHARACTER FOR CHARACTER, so ARCADES and FELOTHAR are BYTE-IDENTICAL reports and the family's best members pay nothing; NO UNLOCK widens to `(keyword:defender OR (tou>=5 pow<=2))`, a UNION and never a swap, so no commander can lose a card the old shelf already showed — and the union measured >= the old query for EVERY ONE of the six (6>=5, 12>=11, 7>=6, 9>=6, 7>=4, 10>=6; 38 -> 51 of 108 total, +34%). `tou>=5 pow<=2` was chosen over the obvious `tou>=4 tou>pow` BY MEASUREMENT: the obvious one has better raw coverage but its EDHREC-ordered top is Gray Merchant of Asphodel, Seedborn Muse and Sheoldred, format staples with an incidental big butt, and it scored 2/18 on Doran where the union scores 6/18. CENSUS over all 3,348 legal commanders through the shipped regexes: the family moves 8 -> 9 and both directions are measured — THE PRIDE OF HULL CLADE joins (EDHREC Toughness Matters 544 / Defenders 190, previously rendering X Spells, Mana Engines and Combat Triggers and not one line of defender or toughness content, because she grants an unlock and never a swap) and DORAN, BESIEGED BY TIME joins (EDHREC Defenders 287, a pure toughness-matters commander the old regex could not see at all); BILL THE PONY leaves, his only toughness line being \"Sacrifice a Food: ... target creature you control assigns...\", a single-target cost-gated one-shot on a commander EDHREC ranks Food 29 / Lifegain 33 with 2 of his top 50 creatures carrying defender. 3,339 commanders are provably untouched. COUNTER-CASE, the REAL buildEngineModel run old-vs-new over a 31-commander corpus whose oracle text was fetched VERBATIM from Scryfall this run: 23 BYTE-IDENTICAL, 8 CHANGED, ZERO errors. Five of the eight are EXACTLY ONE RAIL RE-POOLED with SAME section count, SAME plans, SAME traps; Bill the Pony loses the three defender rails and keeps his Food, sac and drain engine untouched; Pride and Doran II gain them. ONE rail is displaced anywhere in the corpus and it is recorded rather than hidden: Doran, Besieged by Time drops `attack:payoff1` to the rail budget. Controls byte-identical include the four DEFENDER-KEYWORD BOUNDARY CASES that prove a self-defender is not a walls deck — PRAMIKON SKY RAMPART, OPAL-EYE KONDA'S YOJIMBO, SOKRATES ATHENIAN TEACHER and THE WALLS OF BA SING SE — plus CHARIX THE RAGING ISLE and TETSUKO UMEZAWA on the toughness boundary, and KRENKO, ATRAXA, TALRAND, ISSHIN, TATYOVA, TITANIA, LATHLISS, EPHARA, THASSA, BRAGO, EZURI, ISU, YOSHIMARU, PROSPER and MEREN. STUDY_DB entry added for The Pride of Hull Clade (165 -> 166), insight plus five traps authored against ALL SIX of her Gatherer rulings fetched verbatim this run, four quoting a ruling directly: the cost is locked at announcement and opponents cannot shrink your board in response, the reduction cannot go below {G} and HER MANA VALUE IS ALWAYS 11 so every mv-matters card in the deck reads eleven, the activated ability is the card and she is not a toughness-for-power commander at all, it is one target and one turn for {2}{U}{U} every time, and the draw trigger remembers the toughness if the attacker dies after damage. A TOOLING GAP FOUND AND RECORDED RATHER THAN PAPERED OVER: an Arcades entry authored earlier in this run would have been SILENTLY SWALLOWED — he already has a v5.67 entry later in the same object literal, last key wins, and `assertStudyKeys` cannot see a collision the parser has already collapsed. A source-level duplicate-key check is now the open tooling item. RENDERING SAFETY PROVED BY DIFF: script blocks 1-4 BYTE-IDENTICAL and block 0 differs ONLY in the banner version string, so the mobile viewport/keyboard IIFE was provably never touched; non-script bytes 193,995 -> 193,995 IDENTICAL, so no CSS, markup or layout changed; the spoiler-board style and code marker comments held at 10 (this row is deliberately worded so the marker token is not spelled out, keeping phase detection clean); html/body/script 2/2/6. node --check PASS 6/6; assertStudyKeys and assertStudyTrapCap both return []; boots at ATOMS 86 / RAILS 68 / ARCHETYPES 96 / BLENDS 46 UNCHANGED — this run added no atom, rail family, archetype or blend, only a reader, a profile field and a second pool on an existing rail. STALENESS GUARD RAN AND PASSED: local <meta> v7.79, live (?cb= no-store) v7.77 — local AHEAD, no HALT. Build identity SYNCED: meta == console banner == CHANGELOG[0].build == v7.80. Backup index-backup-20260807-0405-preStudy.html (SHA1 340058806d8b6f7660bf8bce2bae5cdc2b927169, byte-verified with cmp); git untouched; ORACLE INDEX only; build tag bumped LAST."},
     {"build": "v7.79", "date": "2026-08-07", "focus": "verify", "commander": "Ephara, God of the Polis", "summary": "VERIFY Ephara, God of the Polis — EPHARA HERSELF VERIFIES CLEAN, AND THE DEFECT IS ONE LAYER OUT: v7.78 TAUGHT THE ENGINE TO READ *THAT* SOMETHING ENTERS AND NEVER TAUGHT IT TO READ *WHAT*. Her three new shelves were re-read card-by-card against live Scryfall (order=edhrec, the app's own fetch) and every one is correct — 'Blink & Flicker', 'ETB Value Creatures' and 'ETB Trigger Doublers', the 'Blink & Value' plan, insight and all five traps render, and because her subject is the bare \"another creature\" all 20 of her top ETB payoffs genuinely trigger her. The widening's COST is paid by the commanders whose subject is NOT bare. v7.78's new arm admits a QUALIFIED subject between article and verb, and then hands every commander it admitted the same unqualified shelf. MEASURED, NOT ASSERTED: of ARCADES, THE STRATEGIST's top 20 'ETB Value Creatures', ZERO have defender — his trigger is \"a creature you control WITH DEFENDER enters\", so twenty of twenty recommended cards do not trigger the commander at all; ISU THE ABOMINABLE is 0/20 snow; YOSHIMARU, EVER FAITHFUL 3/20 legendary. SHIPPED: `readEntrySubject` + `ENTRY_SUBJ_RULES`, placed beside ETB_ENTER_TRIGGER_RE because it reads the very clause that regex locates, and `entryFold` — the FIFTH generic opt-in of the capFold (v7.33) / subjFold (v7.35) / mvFold (v7.36) / kwFold (v7.74) shape, wired through `railCtx.entrySubj` so any rail in any family may claim it. SAFETY IS IN THE SCOPE, NOT IN A STRIP (the v7.19 anthemWide / v7.36 mvSubject / v7.74 readTeamKeyword rule): the qualifier is read ONLY from the substring ETB_ENTER_TRIGGER_RE actually matched, never from the whole card, which makes the obvious false positive unreachable BY CONSTRUCTION — a commander whose entry trigger is unqualified but whose OTHER sentence says \"legendary creatures you control get +1/+1\" cannot contribute `t:legendary`, and that exact case is one of the 10 unit tests, 10/10. A WHITELIST, NOT A BLACKLIST, bounds the blast radius: only defender/snow/legendary/artifact/enchantment and a printed `power N or less|greater` map to an exact Scryfall term, anything else returns '' and the rail is byte-identical. `nontoken`/`token` are DELIBERATELY ABSENT — every card in a recommendation pool is a nontoken card, so the term is dead against the pool (the v7.74 kwFold/Nylea lesson). DECLARED ON ONE RAIL OF THE FAMILY'S THREE, and the restriction is measured rather than tasteful: 'ETB Value Creatures' is the only rail that sells the PERMANENT THAT ENTERS. 'Blink & Flicker' sells blink SPELLS and 'ETB Trigger Doublers' sells Panharmonicon-class ARTIFACTS, and folding there is not merely dead but destructive — on Arcades the doubler shelf would demand a Panharmonicon WITH DEFENDER, a card that does not exist, so a correct shelf would render EMPTY. CENSUS over all 3,348 legal commanders through the deployed build's own `stripReminders`: 93 fire the entry clause, exactly 11 carry a readable qualifier, and the other 82 — EPHARA, PURPHOROS, THASSA, BRAGO, KODAMA OF THE EAST TREE, GYOME and AMARETH included — are provably untouched. GENERALIZES TO, FULLY ENUMERATED: ARCADES (keyword:defender), EZURI, CLAW OF PROGRESS (pow<=2), ISU THE ABOMINABLE (t:snow), LOSHEEL, CLOCKWORK SCHOLAR (t:artifact) and the seven-strong legendary bucket CADRIC SOUL KINDLER, FRODO BAGGINS, GIMLI OF THE GLITTERING CAVES, JEDIT OJANEN MERCENARY, LEGOLAS GREENLEAF, LORAN DISCIPLE OF HISTORY and YOSHIMARU. EVERY constrained pool was fetched live and NONE is empty: Arcades 2007->26 (Wall of Omens, Wall of Blossoms, Carven Caryatid, Shield-Wall Sentinel — his EDHREC staples, none of which the old shelf showed), Isu 2007->6, Gimli 529->37, Legolas 666->46, Yoshimaru/Loran 710->66, Cadric 1167->117, Losheel 710->122, Frodo 1316->130, Jedit 2007->245, Ezuri 1280->638 (Solemn Simulacrum, Eternal Witness, Reclamation Sage, Mulldrifter — all power<=2, all now actually granting experience). COUNTER-CASE, MEASURED NOT ARGUED: the REAL buildEngineModel run old-vs-new over a 25-commander corpus whose oracle text was fetched VERBATIM from Scryfall this run, comparing every section's key|title|sub|q|why plus plans, traps, insight, novel and verified — 17 BYTE-IDENTICAL, 8 CHANGED, ZERO errors, and all 8 changes are EXACTLY ONE QUERY NARROWED with SAME section count, SAME plans and SAME traps: nothing added, nothing removed, no rail pushed off the budget. GIMLI, LEGOLAS and LOSHEEL are in the qualifier census yet are byte-identical, and the reason is recorded rather than hidden: they fire the atom but the `legendary`/`artifacts` family wins their rail budget, so they render ZERO etb sections and the fold has nothing to act on. Unrelated controls byte-identical: KRENKO MOB BOSS, ATRAXA PRAETORS' VOICE, TALRAND SKY SUMMONER, ISSHIN TWO HEAVENS AS ONE, and the landfall/nontoken-tribal boundary cases TATYOVA BENTHIC DRUID, TITANIA PROTECTOR OF ARGOTH and LATHLISS DRAGON QUEEN — Lathliss's \"another nontoken Dragon\" proves a TRIBAL qualifier is outside the whitelist and reaches nothing. RENDERING SAFETY PROVED BY DIFF: script blocks 0–4 BYTE-IDENTICAL, so the mobile viewport/keyboard IIFE was provably never touched; non-script bytes 193,887 -> 193,887 IDENTICAL, so no CSS, markup or layout changed. node --check PASS 6/6; assertStudyKeys and assertStudyTrapCap both return []; boots at ATOMS 86 / RAILS 68 / ARCHETYPES 96 / BLENDS 46 / STUDY_DB 165 UNCHANGED — this run added no atom, family, archetype, blend or study entry, only a reader and a fold. STALENESS GUARD RAN AND PASSED: local <meta> v7.78, live (?cb= no-store) v7.77 — local AHEAD, no HALT. Build identity SYNCED: meta == console banner == CHANGELOG[0].build == v7.79. Backup index-backup-20260807-0335-preVerifyEphara.html (SHA1 ffa3575945c42307fd7725624ab5d979c858ee9b, byte-verified with cmp); git untouched; ORACLE INDEX only; build tag bumped LAST."},
