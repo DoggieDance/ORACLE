@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v7.89 · 2026-08-07">
+<meta name="oracle-build" content="v7.91 · 2026-08-07">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1762,7 +1762,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v7.89 \u00B7 2026-08-07', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v7.91 \u00B7 2026-08-07', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -4299,7 +4299,128 @@ const TAP_BLINK_Q = '(o:/exiles? (?:up to (?:one|two|three) |another |any number
 // is Ephemerate, Conjurer's Closet, Cloudshift, Thousand-Year Elixir, Teleportation Circle,
 // Staff of Domination (EDHREC's own high-synergy column for her, in very nearly its own order),
 // while a mono-G tap commander gets Seedborn Muse, Thousand-Year Elixir and Devoted Druid.
-const TAP_RESET_Q = '(o:"untap target creature" OR o:"untap another target creature" OR o:"untap target permanent" OR o:"untap another target permanent" OR o:"untap target artifact or creature" OR o:"untap all creatures you control" OR o:"untap all permanents you control" OR o:"untap all creatures" OR o:"untap enchanted creature" OR o:"untap equipped creature" OR o:"untap this creature" OR o:"untap up to two target creatures" OR ' + TAP_BLINK_Q + ')';
+const TAP_UNTAP_Q = '(o:"untap target creature" OR o:"untap another target creature" OR o:"untap target permanent" OR o:"untap another target permanent" OR o:"untap target artifact or creature" OR o:"untap all creatures you control" OR o:"untap all permanents you control" OR o:"untap all creatures" OR o:"untap enchanted creature" OR o:"untap equipped creature" OR o:"untap this creature" OR o:"untap up to two target creatures")';
+const TAP_RESET_Q = '(' + TAP_UNTAP_Q + ' OR ' + TAP_BLINK_Q + ')';
+// v7.91 (Marvin, Murderous Mimic VERIFY 2026-08-07) — A BLINK IS NOT AN UNTAP, AND THE RULES SAY
+// SO. The two comment blocks above assert, twice, that "a flicker IS an untap for a tap-activated
+// commander: the permanent returns fresh, so the ability is live again". The first half of that
+// sentence is FALSE. CR 302.6: a creature's activated ability with {T} in its cost cannot be
+// activated unless the creature "has been under its controller's control continuously since their
+// most recent turn began". A flickered permanent is a NEW OBJECT that entered this turn, so it is
+// summoning-sick and its {T} ability is UNAVAILABLE for the rest of the turn. Blink does not buy a
+// tap commander a second activation; it buys back the ENTER TRIGGER, and nothing else.
+// The v7.39 study was right about the CARDS and wrong about the REASON — and the reason is what
+// generalised. LORAN OF THE THIRD PATH, the commander the arm was written for, prints "When Loran
+// enters, destroy up to one target artifact or enchantment", so Ephemerate really is her #1
+// EDHREC synergy card — for the ETB, not for the tap. MARVIN, MURDEROUS MIMIC prints NO enter
+// trigger at all, and CONJURER'S CLOSET was leading his untap shelf: blinking Marvin at your end
+// step re-selects nothing, re-triggers nothing, and hands back a summoning-sick body.
+// Censused live over all 3,348 commander-legal commanders on 2026-08-07 through the shipped
+// `tapEngineActivations` gate: 374 commanders are dealt a TAP_RESET_Q-derived shelf, and only 33
+// of them print an enter trigger of their own. The blink arm was dead cardboard on the other 341
+// — Krenko Mob Boss #1102, Kiki-Jiki Mirror Breaker #1225 (blink him and he cannot copy anything
+// this turn), Marwyn the Nurturer #1241 (blink also wipes her counters), Selvala Heart of the
+// Wilds #433, Saryth #1230, Feldon of the Third Path #1483, Experiment Kraj, Trazyn, Rex, Marvin.
+// It stays exactly where it was measured to belong: Loran #350, Emry Lurker of the Loch #602
+// ("When Emry enters, mill four"), Ayara First of Locthwain #836, Cayth, Pippin, Go-Shintai,
+// Mairsil the Pretender and the four FF "Dominant" DFCs.
+// The reader is the ONE definition of "this card's own enter trigger", written against v7.84's
+// self-reference choke point rather than `name.split(',')[0]`, so it reads Kaho, Rona, Rhys and
+// Volo (short forms) as well as the generic "when this creature enters" template. Two arms beyond
+// the bare form, both measured: the CONJUNCTION arm catches AYARA ("whenever Ayara or another
+// black creature you control enters") and GO-SHINTAI, which the adjacent form misses outright,
+// and "your commander enters" catches NAKIA, WAKANDAN OPERATIVE, who IS the commander. Validated
+// against every tap commander whose text contains any `when… enters` clause: the remaining
+// non-matches (Selvala, Trostani, Marwyn, Lonis, Faldorn, Rydia) are all OTHER-creature entry
+// triggers, which a self-blink does not fire — zero false negatives, and all 33 keepers
+// hand-checked against their printed oracle for zero false positives.
+const SELF_ENTER_TRIGGER_RE = /\bwhen(?:ever)? (?:this (?:creature|artifact|permanent|enchantment|card|token|land)|your commander) enters\b/;
+function hasSelfEnterTrigger(o, selfNames) {
+    o = String(o || '');
+    if (SELF_ENTER_TRIGGER_RE.test(o)) return true;
+    const alt = selfRefAlt(selfNames || []);
+    if (!alt) return false;
+    return new RegExp('\\bwhen(?:ever)? (?:' + alt + ')(?: or (?:another|an|a|one or more)[^.]{0,45})? enters\\b').test(o)
+        || new RegExp('\\bwhen(?:ever)? (?:another|an|a|one or more)[^.]{0,45} or (?:' + alt + ') enters\\b').test(o);
+}
+// THE CHOKE POINT. FOUR sites compose an untap pool for a tap-activated commander — the
+// `tapability` atom's q, RAILS.actdisc's 'Untap & Activate Again', RAILS.abilityshare's 'Untap and
+// Borrow Again' and the parameter layer's 'Untap & Reset' — and before this run each of them
+// pasted the blink arm in unconditionally. One function decides for all four, so a fifth family
+// cannot reintroduce the error, and any future widening of either half reaches every consumer.
+function tapResetQ(blinkPays) { return blinkPays ? TAP_RESET_Q : TAP_UNTAP_Q; }
+
+// v7.90 (Marvin, Murderous Mimic STUDY 2026-08-07) — THE ABILITY-SHARING FAMILY.
+// A commander that says "~ has all activated abilities of <things>" is not a keyword, not a
+// trigger and not a static buff: it is a DONOR/RECIPIENT engine, and until this run the app had
+// no reader for it at all. MARVIN, MURDEROUS MIMIC (#1117) extracted ZERO ATOMS and rendered as
+// five generic staple shelves — the single largest named zero-atom commander in the top 1,050.
+// Census of all 3,348 commander-legal legends (fetched live this run, the regex below applied to
+// reminder-stripped oracle text): SEVEN commanders print this template —
+//   Marvin, Murderous Mimic #1117 · Drana and Linvala #1871 · Rex, Cyber-Hound #9571 ·
+//   Trazyn the Infinite #10047 · Experiment Kraj #10876 · Mairsil, the Pretender #18272 ·
+//   Sharkey, Tyrant of the Shire #19804
+// TWO OF THE SEVEN MUST NOT FIRE, and the negative lookahead is what keeps them out. DRANA AND
+// LINVALA and SHARKEY borrow from creatures/lands YOUR OPPONENTS CONTROL — you cannot stock an
+// opponent's board, so a "donors worth playing" shelf is dead cardboard for them and they keep
+// the `taxes` read they already had, byte-identical. LINVALA, KEEPER OF SILENCE (#2562) is the
+// same hoser without the borrow half and never reaches the regex at all: `hasAllAct` = 7 while
+// the looser `activated abilities of` = 11, and the four it drops (Linvala, Agatha, Sam, Mutagen
+// Man) are exactly the four that share no deck with this family.
+const ABILITY_SHARE_RE = /\b(?:has|have|gains?) all activated abilities of (?![^.]{0,60}your opponents)/;
+const ABILITY_SHARE_SRC_RE = /\b(?:has|have|gains?) all activated abilities of ([^.]{0,90})/;
+// The type the donor must be is printed in the CAGE clause, not in the borrow clause: Mairsil
+// says "exile an ARTIFACT OR CREATURE card", Rex says "choose target CREATURE card in a
+// graveyard", and neither noun appears in the sentence that does the borrowing. Read both.
+const CAGED_TYPE_RE = /(?:exile|choose target)[^.]{0,60}?\b(artifact or creature|artifact|creature)\b[^.]{0,30}card/;
+// A BORROWABLE ability is a printed activated ability — a {T} cost or a mana cost followed by a
+// colon (Gatherer's own definition: "Activated abilities contain a colon", Marvin ruling 1). The
+// same ruling is why this family must never be dealt trigger or static payoffs: Marvin gains
+// ONLY activated abilities, so an ETB creature is a blank on his shelf however good it is.
+const BORROWABLE_ABILITY_Q = '(o:/\\{t\\}[^:\\n]{0,18}:/ OR o:/\\{[0-9x]\\}[^:\\n]{0,18}:/)';
+// v7.90 — the ARTIFACT half of the untap package, hoisted as its own constant rather than folded
+// into TAP_RESET_Q, and the distinction is a rules fact rather than taste: Voltaic Key, Clock of
+// Omens, Voltaic Construct and Unwinding Clock untap an ARTIFACT, so they can only reset a
+// commander that IS one. TAP_RESET_Q is consumed by RAILS.actdisc and by the `tapability` atom's
+// q, whose commanders are frequently NOT artifacts (LORAN OF THE THIRD PATH, EXPERIMENT KRAJ),
+// and widening it in place would deal all four of those cards to every one of them as dead
+// cardboard. Kept separate and switched on `railCtx.selfArtifact`, it is additive where it works
+// and absent where it does not — and is available by name to any future family with the same
+// shape. Measured live in id:c: TAP_RESET_Q alone 34 cards, plus this arm 43, and the five it
+// adds (Unwinding Clock, Clock of Omens, Voltaic Key, Voltaic Construct, Victory Chimes) include
+// two of EDHREC's ten highest-synergy Marvin cards.
+// (ACROSS_TURNS_UNTAP_Q — the Seedborn/Unwinding-Clock template — is declared further down with
+// RAILS.manatap, so it is composed in at CALL time in the rail below rather than referenced here,
+// where it would sit in its own temporal dead zone.)
+const ARTIFACT_UNTAP_Q = '(o:"untap target artifact" OR o:"untap another target artifact" OR o:"untap all artifacts")';
+function readBorrowSource(o) {
+    const m = ABILITY_SHARE_SRC_RE.exec(o || '');
+    if (!m || /your opponents/.test(m[1])) return null;
+    const tail = m[1];
+    const zone = /\bin exile\b|\bexiled\b/.test(tail) ? 'exile' : /graveyard/.test(tail) ? 'graveyard' : 'battlefield';
+    let type = /artifact cards?\b/.test(tail) ? 'artifact' : 'creature';
+    if (zone !== 'battlefield') {
+        const c = CAGED_TYPE_RE.exec(o || '');
+        if (c) type = c[1] === 'artifact or creature' ? 'both' : c[1];
+    }
+    return { zone: zone, type: type };
+}
+// The donor pool, scoped by the two facts the reader recovered. THE ZONE-SCOPED MANA FENCE is
+// the one judgement call in here and it is worth stating: a mana rock or dork ON THE BATTLEFIELD
+// is already a live engine, so borrowing its tap is a genuine second activation — PALLADIUM MYR
+// is EDHREC's single most played Marvin card and must stay. The same rock sitting in a GRAVEYARD
+// or under a cage counter produced nothing on its way there; you would simply have cast it, and
+// unfenced it buries the shelf (Trazyn's artifact pool leads Sol Ring, Arcane Signet, Fellwar
+// Stone, Thought Vessel, Mind Stone, Commander's Sphere — six signets before the first card whose
+// ability is the point). Fenced, the same shelf leads The One Ring, Idol of Oblivion, Sensei's
+// Divining Top, Shadowspear, Mystic Forge, Walking Ballista, Strionic Resonator, Isochron
+// Scepter, Thousand-Year Elixir and Staff of Domination. 810 -> 611 cards, and every one of the
+// 199 removed is a mana ability.
+function borrowPoolQ(src) {
+    const s = src || { zone: 'battlefield', type: 'creature' };
+    const t = s.type === 'artifact' ? 't:artifact' : s.type === 'both' ? '(t:artifact OR t:creature)' : 't:creature';
+    return '(' + t + ' ' + BORROWABLE_ABILITY_Q + (s.zone === 'battlefield' ? '' : ' -o:"}: add"') + ')';
+}
 // v7.39 — THE SHARED TAP READER. The parameter layer has read the commander's own `{T}`
 // activations since the Krenko study; this hoists that reader to module scope so extractAtoms
 // and buildEngineModel can never again hold different opinions about what a tap engine IS (the
@@ -4874,6 +4995,13 @@ const ATOMS = [
     { key: 'costdown', w: 6, chip: 'Cost reducer', title: 'Big Spells Cheap', sub: 'Discount engine', test: COSTDOWN_RE, q: '((t:instant OR t:sorcery) mv>=4)', oq: '(o:"spells you cast" o:"less")', why: 'discounts the spells you build the deck out of' },
     { key: 'massdeploy', w: 7, chip: 'Mass deploy', title: 'Cheat Into Play', sub: 'Skip the mana', test: HAND_DEPLOY_RE, q: '(t:creature (pow>=7 OR mv>=7))', oq: 'o:"from your hand onto the battlefield"', why: 'deploys creatures without paying' },
     { key: 'selftap', w: 6, chip: 'Tap engine', title: 'Tap Triggers', sub: 'Value every tap', test: /whenever [^.]{0,30}becomes tapped/, q: TAP_CREATURE_Q, oq: 'o:"becomes tapped"', why: 'triggers whenever it becomes tapped — crew a Vehicle or tap it to a mana rock/land, repeatably (v5.03 audit: dropped keyword:convoke, a one-shot incidental tap whose EDHREC-popular hits buried the repeatable outlets; v7.13 re-measured and confirmed the drop)' },
+    // v7.90 (Marvin, Murderous Mimic STUDY 2026-08-07) — see ABILITY_SHARE_RE. w7 because for
+    // every commander that prints it this IS the deck: Marvin held NO atom at all, and for Trazyn
+    // (graveyard/artifacts), Mairsil (countersgen/graveyard), Kraj (tapability/counters) and Rex
+    // (energy/mill/countersgen/attack) the atoms they DID hold each describe a cost the card pays
+    // to reach the borrow, never the borrow itself. Sorted ahead of `tapability` (w4) deliberately
+    // — a printed {T} ability is a thing this commander HAS, the borrowed ones are the deck.
+    { key: 'abilityshare', w: 7, chip: 'Borrowed abilities', title: 'Borrowed Activated Abilities', sub: 'Their abilities, on your commander', test: ABILITY_SHARE_RE, q: '(t:creature ' + BORROWABLE_ABILITY_Q + ')', oq: 'o:"all activated abilities of"', why: 'takes the ACTIVATED abilities of other cards for itself — so the deck is bought for its abilities rather than its bodies, and an ability you can use twice a turn is worth more than a body twice the size' },
     { key: 'discover', w: 5, chip: 'Discover', title: 'Discover & Impulse', sub: 'Free casts off the top', test: /\bdiscover \d|\bdiscover x\b/, q: '(o:discover)', oq: 'o:discover', why: 'discovers off the top' },
     { key: 'xspells', w: 5, chip: 'Big X', title: 'X Spells & Big Mana', sub: 'Go over the top', test: /\{x\}/, q: '(m:{X})', oq: 'o:"{x}"', why: 'scales with big mana' },
     // v7.32 — `power4` now reads `oPow`, the POWER_FOREIGN_RE-stripped text (see extractAtoms):
@@ -6278,7 +6406,12 @@ function extractAtoms(card) {
     // Explorer Returned `casttrigger` w3) — 89 new leads, 247 commanders keeping the lead they
     // had and gaining only the label, and 3,012 commanders untouched.
     if (tapNonManaEngine(o) && !tapEngineSuperseded(o)) {
-        found.push({ atom: ATOM_TAPENGINE, snippet: '' });
+        // v7.91 — the atom's `q` is composed PER COMMANDER rather than read off the frozen
+        // literal, because whether a blink belongs in this pool is a fact about THIS card (does it
+        // print an enter trigger?) and not about the mechanic. Object.assign onto a fresh object
+        // leaves ATOM_TAPENGINE itself untouched, so the shared literal can never be mutated by a
+        // previous commander's render — the bug shape a per-commander `q` invites.
+        found.push({ atom: Object.assign({}, ATOM_TAPENGINE, { q: tapResetQ(hasSelfEnterTrigger(o, selfRefNames(card.name))) }), snippet: '' });
     }
     // v7.86 (Tom Bombadil STUDY 2026-08-07) — A SAGA IS AN ENCHANTMENT. This is a RULES FACT
     // (CR 205.2a: Saga is an enchantment subtype), not a synergy opinion, and the engine was not
@@ -6339,6 +6472,18 @@ function trimSnippet(s) {
 }
 // Distilled from COMMANDER_STUDY_LEDGER.json (56 verified teardowns)
 const STUDY_DB = {
+    // v7.90 (Marvin, Murderous Mimic STUDY 2026-08-07) — authored against the card and ALL THREE of
+    // its Gatherer rulings, fetched VERBATIM this run from the Scryfall rulings endpoint.
+    "22f0dbbb-9d8d-42bc-8903-fc0b65e00952": {
+        insight: "Marvin, Murderous Mimic is a TWO-MANA COLORLESS artifact creature that says one thing and it is not a stat line: it has every ACTIVATED ability of every other creature you control. That makes him the rare commander whose deck is bought entirely for the text AFTER the colon \u2014 a 2/2 body is irrelevant, and so is any creature whose value is an enters-the-battlefield trigger or a static buff, because he gains neither. Two consequences shape the whole build. First, he is an ARTIFACT creature in a colorless identity, which means the artifact untap package (Voltaic Key, Clock of Omens, Voltaic Construct, Unwinding Clock, Thousand-Year Elixir, Staff of Domination) can reset him where it cannot reset an ordinary commander \u2014 and every untap is a second use of every borrowed {T} ability at once, not just one of them. Second, an ability that names its own card is REWRITTEN to name Marvin, so a donor whose ability untaps ITSELF untaps HIM instead: that self-reference rule is where the deck\u2019s loops live, and it is why Voltaic Construct plus any creature that taps for two mana ends the game. He is cheap enough to redeploy through removal all game, which is the real reason a 2/2 is acceptable.",
+        traps: [
+            "he gains ONLY activated abilities \u2014 Gatherer is explicit that he \u201cdoesn\u2019t gain triggered abilities or static abilities,\u201d so the two card classes that dominate most colorless creature piles are blanks here. Foundry Inspector and Forsaken Monument are top-played cards in his decks and contribute NOTHING to his text; an ETB creature, however strong, is a body he cannot borrow from. Read every creature slot as \u201cwhat is written after the colon,\u201d and if there is no colon, it is being played for some other reason.",
+            "the borrowed ability still costs whatever it printed, and it still includes the {T} \u2014 which is MARVIN\u2019s tap, not the donor\u2019s. That means summoning sickness gates him the turn he lands, and it means the whole borrowed suite is capped at ONE {T} ability per turn until you untap him. The deck is not \u2018play good creatures\u2019, it is \u2018play cheap donors and buy untappers\u2019, and it wants far more of the second than instinct suggests.",
+            "self-naming abilities are rewritten to name Marvin (Gatherer ruling 2, which walks through Floodpits Drowner) \u2014 this cuts BOTH ways. It is the combo engine when the ability untaps or protects its own card, and it is a liability when the ability SACRIFICES or shuffles its own card away, because that clause now points at your commander. Screen donors for self-sacrifice and self-bounce before screening them for power.",
+            "duplicate names are excluded by the card itself (\u2018that don\u2019t have the same name as this creature\u2019), which matters far less than it looks \u2014 but the real once-only limit does not exist here: unlike Mairsil, Marvin has NO \u2018only once each turn\u2019 clause, so a single donor\u2019s ability can be activated as many times as you can pay for it and untap him. Sizing the untap package is the single highest-leverage build decision.",
+            "the donor is not needed after the fact \u2014 Gatherer ruling 3: once an ability has been activated, it still resolves even if the creature that granted it leaves the battlefield. Do not hold back a sacrifice or a chump block to \u2018protect the grant\u2019 mid-resolution; protect the donors at sorcery speed instead, because losing them before you activate is what actually costs you."
+        ]
+    },
     // v7.86 (Tom Bombadil STUDY 2026-08-07) — authored against the card and ALL THREE of its
     // Gatherer rulings, fetched VERBATIM this run from the Scryfall rulings endpoint.
     "89a2d5bc-df06-47e8-8b4a-6d1f0a63c78d": {
@@ -7998,7 +8143,7 @@ const RAILS = {
             // of it. It does not duplicate the `tap-untap` shelf: that one fires on a commander
             // with a printed {T} ability, and this one fires on a commander whose DECK is full of
             // them, which is why it goes through pushUniqueRail at the call site.
-            { role: 'amplifier', title: 'Untap & Activate Again', sub: 'A cheap ability, twice', q: TAP_RESET_Q, why: 'Making an ability cheap only matters if you get to use it, and the binding constraint on nearly every ability worth discounting is not mana but the ONE activation per turn its {T} allows. Seedborn Muse, Thousand-Year Elixir, Unwinding Clock and the untap-target effects convert the discount into a second and third activation each turn cycle — which is worth far more here than another cost reduction, because the printed floor means the second reduction saves at most a mana while the second activation is a whole extra ability.' }
+            { role: 'amplifier', title: 'Untap & Activate Again', sub: 'A cheap ability, twice', q: function (ctx) { return tapResetQ(ctx.blinkPays); }, why: 'Making an ability cheap only matters if you get to use it, and the binding constraint on nearly every ability worth discounting is not mana but the ONE activation per turn its {T} allows. Seedborn Muse, Thousand-Year Elixir, Unwinding Clock and the untap-target effects convert the discount into a second and third activation each turn cycle — which is worth far more here than another cost reduction, because the printed floor means the second reduction saves at most a mana while the second activation is a whole extra ability.' }
         ]
     },
     selfscale: {
@@ -8386,6 +8531,25 @@ const RAILS = {
     // draw2. ATOM_TAPENGINE closes it; a rail list here would have dealt Loran a fourth shelf
     // that said the same thing as the first three. An empty list is honest and inert:
     // buildEngineModel filters it to [], the fail-safe re-slices it to [], and nothing is pushed.
+    // v7.90 (Marvin, Murderous Mimic STUDY 2026-08-07) — THE ABILITY-SHARING FAMILY, and the
+    // sibling of `tapability` directly below it. `tapability` fires on an ability the commander
+    // PRINTED; this one fires on abilities it BORROWS, which is why the pool rail is the lead
+    // half here and absent there. pTest only: the commander is always the recipient, never the
+    // donor, so the enabler half is always the one the deck is missing.
+    abilityshare: {
+        pTest: ABILITY_SHARE_RE,
+        rails: [
+            { role: 'enabler', title: 'Abilities Worth Borrowing', sub: 'Buy the ability, not the body', q: function (ctx) { return borrowPoolQ(ctx.borrowSource); }, why: 'this commander copies ACTIVATED abilities and nothing else (Gatherer: "Marvin gains only activated abilities. It doesn\u2019t gain triggered abilities or static abilities"), so a card is worth its slot here for the text after its colon \u2014 an ETB body, however strong, contributes exactly nothing. The pool is scoped to the zone and card type this commander actually borrows from, so a graveyard/cage commander is never shown a donor it cannot reach' },
+            // GATED ON selfArtifact, and the gate is what keeps this from becoming a second copy of a
+            // shelf the app already deals. Measured old-vs-new in a Node harness: EXPERIMENT KRAJ already
+            // carries `Untap & Reset` and MAIRSIL's own text caps him at one activation per cage per turn
+            // ("You may activate each of those abilities only once each turn"), so untappers are near-dead
+            // for him — dealing this rail to either would repeat or mislead. For the three ARTIFACT members
+            // (Marvin, Rex, Trazyn) it is the only shelf in the file that reaches Voltaic Key, Clock of
+            // Omens, Voltaic Construct and Unwinding Clock, none of which can untap a non-artifact body.
+            { role: 'payoff', test: function (o, ctx) { return !!(ctx && ctx.selfArtifact); }, title: 'Untap and Borrow Again', sub: 'One ability, twice a turn', q: function (ctx) { return '(' + tapResetQ(ctx.blinkPays) + ' OR ' + ARTIFACT_UNTAP_Q + ' OR ' + ACROSS_TURNS_UNTAP_Q + ')'; }, why: 'a borrowed {T} ability is capped at once per turn by the tap, so every untap is a second activation \u2014 and because a borrowed ability that names its own card is rewritten to name THIS one (Gatherer ruling 2), a donor whose ability untaps itself untaps your commander instead, which is where this deck\u2019s combos live' }
+        ]
+    },
     tapability: { pTest: TAP_ENGINE_RE, rails: [] },
     xspells: {
         eTest: /add \{c\}\{c\}|add (two|three|x) mana|twice that much mana/,
@@ -9100,6 +9264,7 @@ const ARCHETYPES = {
     // are distinct: selftap wants to be tapped, tapability wants to be UNTAPPED. Without this
     // entry buildGamePlans would render all 336 tap-activated commanders plan-less, the same
     // ATOM->ARCHETYPES gap that draw2 (v6.90), vehicles (v6.79) and goad (v6.85) each closed.
+    abilityshare: { name: 'Borrowed Abilities', win: 'the commander is a second copy of every activated ability on the table you can reach — fill the board with cheap donors whose text after the colon is the whole card, then untap the commander to spend each borrowed ability more than once a turn until one of them loops' },
     tapability: { name: 'Tap-Activated Engine', win: 'the commander IS the engine \u2014 protect it, untap or blink it every turn, and copy the activation until one ability buries the table' },
     voltron: { name: 'Voltron', win: '21 commander damage from one protected attacker' },
     equipment: { name: 'Voltron', win: '21 commander damage from one protected attacker' },
@@ -10019,6 +10184,16 @@ function buildEngineModel(commander) {
     // enters. Read once here, beside the other deck-wide invariants, so it is available to every
     // present and future rail rather than being the private property of the etb family.
     railCtx.entrySubj = readEntrySubject(o);
+    // v7.90 — WHERE THE BORROWED ABILITIES COME FROM, and whether the commander is itself an
+    // artifact. Both are deck-wide facts read once here rather than inside the family that needed
+    // them first (the v7.33 `powLow` lesson), so any future rail may scope on either.
+    railCtx.borrowSource = readBorrowSource(o);
+    // v7.91 — DOES A FLICKER PAY THIS COMMANDER? Read once here, beside the other deck-wide facts,
+    // so the four untap-pool sites and every future rail ask the question in one place. See
+    // hasSelfEnterTrigger: for a tap-activated body a blink is worth a shelf slot ONLY when there
+    // is an enter trigger to re-fire, because CR 302.6 denies the {T} to the returned object.
+    railCtx.blinkPays = hasSelfEnterTrigger(o, selfNames);
+    railCtx.selfArtifact = /\bartifact\b/.test(String((commander.type_line || (commander.card_faces && commander.card_faces[0] && commander.card_faces[0].type_line) || '')).toLowerCase());
     found.slice(0, 6).forEach(f => {
         const a = f.atom;
         if (seen[a.key]) return;
@@ -10036,7 +10211,14 @@ function buildEngineModel(commander) {
             // (creature vs treasure) and any other mechanic whose direction lives in the text.
             // Fail-safe: if the filter empties the family, fall back to the full list, so a rail
             // family can never silently vanish from a report because a test was too narrow.
-            let rails = spec.rails.filter(r => !r.test || (typeof r.test === 'function' ? r.test(o) : r.test.test(o)));
+            // v7.90 — the v7.00 conditional-rail predicate now receives `railCtx` as a SECOND argument.
+            // Backward compatible by construction (every existing test is a RegExp or a one-arg
+            // function and ignores it), and it closes the one gap v7.00 left: `test` could read only
+            // the ORACLE TEXT, so a rail could not be conditioned on a fact that is not printed in a
+            // sentence — the commander's TYPE LINE, its colour identity, or any reader already run
+            // into the context. The ability-sharing family is the first caller (artifact untappers can
+            // only reset an artifact commander), and the same door now serves any future family.
+            let rails = spec.rails.filter(r => !r.test || (typeof r.test === 'function' ? r.test(o, railCtx) : r.test.test(o)));
             if (!rails.length) rails = spec.rails.slice();
             // v7.75 — RAIL SUBSTITUTION, the fifth reusable opt-in and the first that replaces a
             // shelf rather than narrowing one (v7.33 `capFold`, v7.35 `subjFold`, v7.36 `mvFold`,
@@ -12157,14 +12339,19 @@ function buildEngineModel(commander) {
         // Lantern is a noncreature tap source and this pool only flickers creatures, so adding
         // it there would deal exactly the dead cardboard the Tergrid study removed.
         const tapUqBase = !P.tapCreature && P.tapArtifact ? '(o:"untap target artifact" OR o:"untap all artifacts" OR o:"untap target permanent" OR o:"untap another target permanent")'
-            : P.tapCreature && P.tapArtifact ? '(o:"untap target creature" OR o:"untap all creatures" OR o:"untap target artifact" OR o:"untap all artifacts" OR ' + TAP_BLINK_Q + ')'
-            : '(o:"untap target creature" OR o:"untap all creatures" OR o:"untap another target" OR o:"untap equipped creature" OR ' + TAP_BLINK_Q + ')';
+            : P.tapCreature && P.tapArtifact ? '(o:"untap target creature" OR o:"untap all creatures" OR o:"untap target artifact" OR o:"untap all artifacts"' + (railCtx.blinkPays ? ' OR ' + TAP_BLINK_Q : '') + ')'
+            : '(o:"untap target creature" OR o:"untap all creatures" OR o:"untap another target" OR o:"untap equipped creature"' + (railCtx.blinkPays ? ' OR ' + TAP_BLINK_Q : '') + ')';
+        // v7.91 — THE BLINK ARM IS NOW CONDITIONAL, AND SO IS THE SENTENCE THAT SOLD IT. This
+        // shelf is the family's headline and it reaches all 374 tap commanders; its why-copy read
+        // "a blink returns <name> untapped with any enter trigger back on top", which is a rules
+        // error (CR 302.6 — see hasSelfEnterTrigger). The pool and the promise now move together:
+        // 33 commanders that print an enter trigger keep both, 341 that do not keep neither.
         // v7.46 — class (C) is added to ALL THREE branches at once rather than being hand-copied
         // into each, which is how the eight untap literals drifted apart in the first place. A
         // commander whose engine is a {T} ability gets one extra activation per OPPONENT from an
         // across-turns untapper, so this class outranks every targeted untapper the branches list.
         const tapUq = '(' + tapUqBase + ' OR ' + ACROSS_TURNS_UNTAP_Q + ')';
-        out.push({ key: 'tap-untap', role: 'amplifier', title: 'Untap & Reset', sub: 'Activate, untap or blink, repeat', q: base + ' ' + tapUq, why: firstName + '’s {T} ability is the engine — every untap effect is another activation this turn, and a blink returns ' + firstName + ' untapped with any enter trigger back on top.' });
+        out.push({ key: 'tap-untap', role: 'amplifier', title: 'Untap & Reset', sub: railCtx.blinkPays ? 'Activate, untap or blink, repeat' : 'Activate, untap, activate again', q: base + ' ' + tapUq, why: firstName + '’s {T} ability is the engine — every untap effect is another activation this turn' + (railCtx.blinkPays ? ', and because ' + firstName + ' also prints an enter trigger a blink buys that trigger a second time — note the returned body is summoning-sick, so the {T} itself waits for your next untap step (CR 302.6).' : '. Flicker effects are deliberately NOT on this shelf: a blinked permanent is a new object that has not been under your control since the turn began, so CR 302.6 denies it the {T} for the rest of the turn — and ' + firstName + ' prints no enter trigger to make the flicker worth it anyway.') });
         // summoning sickness gates {T} on CREATURES only — a noncreature tap source
         // (an artifact face) activates the turn it lands, so haste is dead cardboard.
         if (!P.deployOnAttack && P.tapCreature && !P.hasHaste) out.push({ key: 'tap-haste', role: 'enabler', title: 'Haste Enablers', sub: 'Activate the turn it lands', q: base + ' ((o:haste -keyword:haste) OR o:"creatures you control have haste")', why: 'summoning sickness gates {T} abilities — haste (or an as-though-haste activator) lets ' + firstName + ' tap the turn it lands, before removal can answer.' });
@@ -13199,6 +13386,8 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v7.91', date: '2026-08-07', focus: 'verify', commander: 'Marvin, Murderous Mimic', summary: "VERIFY Marvin, Murderous Mimic — A BLINK IS NOT AN UNTAP, AND THE SHELF THAT SAID IT WAS REACHED 374 COMMANDERS. Reading Marvin's two new rails card-by-card against live Scryfall, the donor pool was sound — Ornithopter of Paradise, Walking Ballista, Palladium Myr, Steel Overseer, Millikin, Hangarback Walker, Crystalline Crawler, 188 cards, and the zone-scoped mana fence holding — but CONJURER'S CLOSET led 'Untap and Borrow Again', a shelf whose entire thesis is a second activation THIS turn. The cause was a rules error, hoisted and reused: TAP_BLINK_Q (v7.39) is documented twice as 'a flicker IS an untap for a tap-activated commander: the permanent returns fresh, so the ability is live again'. CR 302.6 says otherwise — a flickered permanent is a NEW OBJECT that has not been under your control since the turn began, so it is summoning-sick and its {T} ability is unavailable for the rest of the turn. A blink never buys a tap commander a second activation; it buys back the ENTER TRIGGER, and nothing else. The v7.39 study was right about the CARDS and wrong about the REASON, and the reason is what generalised: LORAN OF THE THIRD PATH, the commander the arm was written for, prints 'When Loran enters, destroy up to one target artifact or enchantment', so Ephemerate really is her #1 EDHREC synergy card — for the ETB. MARVIN prints no enter trigger at all. THE FIX IS ONE PREDICATE AND ONE CHOKE POINT, not a Marvin patch: new hasSelfEnterTrigger() (written against v7.84's selfRefNames/selfRefAlt self-reference reader, so it reads Kaho, Rona, Rhys and Volo short forms as well as the generic 'when this creature enters' template, plus a CONJUNCTION arm for AYARA 'whenever Ayara or another black creature you control enters' and GO-SHINTAI, plus 'your commander enters' for NAKIA), TAP_RESET_Q split into TAP_UNTAP_Q + the blink arm, and tapResetQ(blinkPays) as the single composer that all FOUR sites which had each pasted the blink arm in unconditionally now call — the `tapability` atom's q, RAILS.actdisc's 'Untap & Activate Again', RAILS.abilityshare's 'Untap and Borrow Again' and the parameter layer's 'Untap & Reset'. railCtx.blinkPays is read once beside railCtx.selfArtifact so any future rail can scope on it. The user-facing promise moves with the pool: 'Untap & Reset' no longer tells 374 commanders that 'a blink returns <name> untapped with any enter trigger back on top'; the 33 that print an enter trigger get an accurate version that names the summoning sickness, and the 341 that do not are told why flicker is absent. CENSUS (live, all 3,348 commander-legal commanders, through the shipped tapEngineActivations gate): 374 tap commanders, 33 keep the blink arm, 341 lose it. COUNTER-CASE (Node VM, old-vs-new full-model diff): UNCHANGED — Loran of the Third Path, Emry Lurker of the Loch ('When Emry enters, mill four'), Ayara First of Locthwain, and the unrelated Atraxa, Talrand and Ghalta are byte-identical; CHANGED and correct — Marvin, Trazyn (abilityshare rail), Krenko Mob Boss, Kiki-Jiki Mirror Breaker (blink him and he cannot copy anything this turn), Marwyn the Nurturer (blink also wipes her counters), Experiment Kraj, Zirda (tap-untap rail) and Agatha of the Vile Cauldron (actdisc rail) — all four consumer sites exercised. Loran's shelf verified live still leading Ephemerate / Conjurer's Closet / Cloudshift / Teleportation Circle / Restoration Angel at 69 cards, and Marvin's now leading Unwinding Clock / Thousand-Year Elixir / Manifold Key / Staff of Domination / Clock of Omens / Voltaic Key at 46. Shelf-health measured in every identity so no shelf falls under the v7.32 two-card floor: W 69->48, U 65->53, B 20->19, R 38->37, G 45->44, C 20->19. node --check PASS 6/6; all four boot assertions silent; script blocks 0-4 byte-identical and ZERO non-script bytes changed, so the mobile viewport/keyboard IIFE and every pixel of CSS are untouched by construction. Backup index-backup-20260807-0935-preVerifyMarvin.html. Roster pipeline and git untouched." },
+    { build: 'v7.90', date: '2026-08-07', focus: 'study', commander: 'Marvin, Murderous Mimic', summary: "STUDY Marvin, Murderous Mimic — THE APP HAD NO READER AT ALL FOR A COMMANDER THAT BORROWS OTHER CARDS' ACTIVATED ABILITIES, AND THE FORMAT'S LARGEST NAMED ZERO-ATOM COMMANDER WAS THE PROOF. Marvin (#1117) extracted ZERO ATOMS and rendered as five generic staple shelves with no game plan. His whole card is 'has all activated abilities of creatures you control', a DONOR/RECIPIENT engine the file could not see. Census of all 3,348 commander-legal legends, fetched live: SEVEN print the template — Marvin #1117, Drana and Linvala #1871, Rex, Cyber-Hound #9571, Trazyn the Infinite #10047, Experiment Kraj #10876, Mairsil, the Pretender #18272, Sharkey, Tyrant of the Shire #19804. (1) NEW `abilityshare` ATOM (w7) behind ABILITY_SHARE_RE, whose negative lookahead deliberately EXCLUDES the two members that borrow from creatures/lands YOUR OPPONENTS control (Drana and Linvala, Sharkey) — you cannot stock an opponent's board, so a donor shelf is dead cardboard there and both keep the `taxes` read they already had, byte-identical. Linvala, Keeper of Silence (#2562) is the same hoser without the borrow half and never reaches the regex. (2) NEW RAILS.abilityshare + readBorrowSource(), which recovers the ZONE and CARD TYPE the commander actually borrows from — battlefield/creature (Marvin, Kraj), graveyard/artifact (Trazyn), exile/creature (Rex), exile/artifact-or-creature (Mairsil) — reading the type out of the CAGE clause, since Mairsil's 'exile an artifact or creature card' and Rex's 'target creature card in a graveyard' never appear in the sentence that does the borrowing. (3) ZONE-SCOPED MANA FENCE on the donor pool: a rock on the BATTLEFIELD is a live engine and borrowing its tap is a real second activation (Palladium Myr is EDHREC's most played Marvin card and must stay), but the same rock in a graveyard or under a cage produced nothing — unfenced, Trazyn's shelf opened Sol Ring, Arcane Signet, Fellwar Stone, Thought Vessel, Mind Stone, Commander's Sphere; fenced it opens The One Ring, Idol of Oblivion, Sensei's Divining Top, Shadowspear, Mystic Forge, Walking Ballista (810 -> 611, every card removed a mana ability). (4) NEW ARTIFACT_UNTAP_Q, hoisted rather than folded into TAP_RESET_Q, because Voltaic Key, Clock of Omens, Voltaic Construct and Unwinding Clock untap an ARTIFACT and can only reset a commander that IS one — TAP_RESET_Q is consumed by RAILS.actdisc and the `tapability` atom, whose commanders often are not (Loran, Kraj), so widening it in place would deal all four as dead cardboard. (5) THE v7.00 CONDITIONAL-RAIL PREDICATE NOW RECEIVES `railCtx` AS A SECOND ARGUMENT — backward compatible by construction, and it closes the gap that `test` could read only the oracle TEXT, so a rail could not be conditioned on the type line. First caller gates the untap rail on `railCtx.selfArtifact`, which is also what stops it duplicating a shelf the app already deals: Kraj already carries 'Untap & Reset' and Mairsil's own text caps him at one activation per cage per turn, so neither is dealt a second untap pile. (6) ARCHETYPES.abilityshare ('Borrowed Abilities') so the family is no longer plan-less, and a STUDY_DB entry authored against all three Gatherer rulings — the first ('gains only activated abilities') is why an ETB or static creature is a blank here, the second (a self-naming ability is rewritten to name Marvin) is where the loops live. COUNTER-CASE / NO REGRESSION: measured old-vs-new in a Node VM harness — 5 of 7 family members change (Marvin, Rex, Trazyn, Kraj, Mairsil), the 2 opponent-scoped members are byte-identical, and Linvala Keeper of Silence, Loran of the Third Path, Zirda the Dawnwaker, Krenko, Atraxa and Kinnan are byte-identical old-vs-new. node --check PASS 6/6; all four boot assertions silent; meta == console banner == CHANGELOG[0] == v7.90. Backup index-backup-20260807-0910-preStudyMarvin.html. Mobile viewport IIFE, roster pipeline and git untouched." },
     { build: 'v7.89', date: '2026-08-07', focus: 'verify', commander: 'Xenagos, God of Revels', summary: "VERIFY Xenagos, God of Revels — A SHELF THAT PROMISED TO SKIP THE COST WAS LED BY THE THREE SPELLS THAT CHARGE YOU FOR IT, AND THE CLASS HAD BEEN HAND-WRITTEN TWICE. Reading his report card-by-card against EDHREC and Scryfall, four of five synergy rails were sound — but 'Put Them Straight Into Play' ('Skip the cast, keep the swing') opened with Finale of Devastation, Chord of Calling and Green Sun's Zenith, three spells whose OWN cost contains {X}, so you pay the body's mana value to put it down — and on Green Sun's Zenith you pay MORE. Sneak Attack sat 9th and Natural Order, an EDHREC Game Changer on Xenagos's own page, sat 10th. The cause was structural, not local: Magic splits cheating and reanimating across two prepositions (reanimate is 'return ... TO the battlefield', cheat is 'put ... ONTO the battlefield'), and the app owned a hoisted constant for the first (REANIMATE_Q) but had written the second TWICE as two disagreeing strings — RAILS.bigcast's 'Put It Onto the Battlefield' (v7.02, anchored on 'from your hand') and RAILS.hastegrant's own looser copy (v7.88). This run hoists CHEAT_INTO_PLAY_Q beside REANIMATE_Q as its price-fenced sibling and points BOTH families at it, so the class has one definition and a third copy can never be written. The fence is -mana:{X} and it reads the MANA COST, not the oracle text, which is what keeps the sac-priced upgraders (Eldritch Evolution, Birthing Ritual, Birthing Pod) — their X is read off a creature you SACRIFICED, not off mana you paid, so the body still lands for a fixed price; the oracle-text form was measured first and wrongly took all three. STRICTLY SUBTRACTIVE across all eight identities measured live: hastegrant RG 94->86, GRU 116->106, UR 55->52, RW 43->41, mono-R 39->38, all-colours 184->173; bigcast all-colours 72->71, mono-G 34->33, mono-W 15->15 (exactly neutral). ZERO cards are ADDED anywhere, so the fence cannot leak. Xenagos's shelf now leads Eldritch Evolution / Last March of the Ents / Portal to Phyrexia / Defense of the Heart / Sneak Attack / Natural Order — the cards the rail's own why argues for. GENERALIZES to nine commanders measured directly: the haste family's URABRASK THE HIDDEN, MAELSTROM WANDERER, BRUDICLAD, DUKE ULDER RAVENGARD and PURPHOROS, BRONZE-BLOODED, and the mana-value-band family's AVACYN, ANGEL OF HOPE, ELESH NORN, GRAND CENOBITE and ZOPANDREL, HUNGER DOMINUS — every one changing ONLY the query string, with title, sub, why, role and key byte-identical. COUNTER-CASE: GHALTA, PRIMAL HUNGER, KOZILEK, BUTCHER OF TRUTH (whose v7.02 cast-gate correctly still suppresses the rail), ATRAXA, KRENKO, TOM BOMBADIL, MEREN, AGATHA and ARAHBO all render byte-identical models. Also measured and DELIBERATELY NOT PATCHED: 'Bombs Worth Hasting' and the combat-doubler 'Heavy Hitters' share 10 of the 20 cards a reader actually sees, but a census of all 3,348 commander-legal legends puts hasteGrant AND combatDoubler at exactly ONE card (Xenagos) and hasteGrant AND countPower at two (Xenagos, Agatha), so a gate there would be a one-commander patch and was refused — recorded for the next run instead. node --check clean 6/6; ATOMS 87, RAILS 72, ARCHETYPES 98, BLENDS 47, STUDY_DB 169 all unchanged; meta == console banner == CHANGELOG[0] == v7.89. Backup index-backup-20260807-0840-preVerifyXenagos.html; roster pipeline, mobile viewport IIFE and git untouched." },
     { build: 'v7.88', date: '2026-08-07', focus: 'study', commander: 'Xenagos, God of Revels', summary: "STUDY Xenagos, God of Revels \u2014 THE TEMPO SIBLING v7.74 WROTE DOWN AND LEFT UNBUILT, AND THE 56 COMMANDERS RENDERING WITH NO ATOM AT ALL. Measured live over all 1,050 top-ranked commander-legal commanders: `extractAtoms` returns ZERO atoms for 56 of them, and the largest single coherent cause is one family \u2014 42 commanders print a board-wide keyword grant and 21 of those, HALF, render on one atom or none. TEAM_GRANT_SRC's own comment names the hole: 'haste / vigilance / first strike / double strike are TEMPO, not evasion \u2014 left out on purpose\u2026 recorded here so a future run widening the set does it deliberately.' THE DELIBERATE CHOICE IS NOT TO WIDEN IT: handing haste granters RAILS.attack's evasion shelves is the v7.75 Iroas defect exactly (a family's door opened for a commander the shelves behind it were not written for), so TEAM_GRANT_RE is not touched by one character and haste gets its OWN reader, atom and three shelves. NEW `HASTE_GRANT_RE` + `readHasteGrant`, TWO ARMS. Arm 1 is TEAM_GRANT_SRC's anchor byte-for-byte with `haste` swapped in for the evasion alternation \u2014 IT IS THE SAME SENTENCE \u2014 so it inherits every v7.74 guard by construction: subject must be exactly `creature(s)/creature token(s) you control` (ALIBOU's artifact scope, ESIKA's legendary scope excluded), the board-wide COUNTING idiom cannot reach the keyword through a 24-char letters-only filler (BETOR, FINNEAS), and a quoted granted ability cannot match because `\"` is outside the filler class. Arm 2 is the REPEATABLE COMBAT ENGINE \u2014 'at the beginning of combat / whenever ~ attacks \u2026 creature you control gains haste' \u2014 free, uncosted, every turn, which is XENAGOS's whole card. THE VERB IS THE DISCRIMINATOR AND THE FIRST DRAFT PROVED IT: letting arm 1 take `gain`/`get` admitted exactly two cards, both wrong, both caught before shipping \u2014 PIPPIN, WARDEN OF ISENGARD ('{T}, Sacrifice four Foods: \u2026 gain haste until end of turn', a Food deck's sorcery-speed finisher) and AGATHA OF THE VILE CAULDRON ('{4}{R}{G}: \u2026', the cost-reduction commander v7.84/v7.85 built `actdisc` FOR, whose lead this would have taken). English does the work: a STATIC ability says `have`, a one-shot says `gain \u2026 until end of turn`. CENSUS CLOSED AT FIFTEEN, audited card-by-card against verbatim oracle text over ALL 299 commander-legal commanders whose text contains 'haste', ZERO false positives \u2014 Xenagos, Maelstrom Wanderer, Urabrask the Hidden, Brudiclad, Purphoros Bronze-Blooded, Tannuk, Samut Voice of Dissent, Duke Ulder Ravengard, Surrak the Hunt Caller, Dragonlord Kolaghan, Smellerbee, Garna the Bloodflame, Phabine, Yarus, Living Lightning \u2014 and all 87 near-misses read too and every one a correct exclusion (KIKI-JIKI/FELDON/JAXIS/RIONYA/GOGO/ORTHION haste a TOKEN COPY, THE LOCUST GOD/MAGDA/QUEEN MARCHESA/CAESAR/LAGOMOS print haste ON a token, SKITHIRYX/ALEXIOS haste THEMSELVES, ALIBOU is artifact-scoped). NEW `hastegrant` ATOM (w5, placed beside `extracombat` for the TIE-BREAK, not for tidiness) + `RAILS.hastegrant`, three shelves: Bombs Worth Hasting (payoff, `-keyword:haste` is the kwFold argument stated positively \u2014 a card that PRINTS haste wastes the grant), Extra Combat Steps, Put Them Straight Into Play (cheating a fatty in is a liability without haste and a finish with it; `-o:\"land card\"` is load-bearing or the shelf deals Burgeoning). WEIGHT CHOSEN ON EDHREC, NOT ON TASTE \u2014 all four contested leads checked against their own theme counts first: URABRASK taxes->haste (Aggro 25 / Extra Combats 26 beat Stax 16), SAMUT voltron->haste (Aggro 67 is #1, Voltron 22 is #6), SURRAK power4->haste (Aggro #1, Ferocious not a listed theme), SMELLERBEE discard->haste (Aggro 13 beats Discard 6); MAELSTROM WANDERER keeps `cascade` w7 (Cascade 923), BRUDICLAD keeps `copyperm`, PURPHOROS keeps `massdeploy`, TANNUK keeps `exileplay`, YARUS keeps `facedown`. A DUPLICATE-SHELF COLLISION WAS FOUND BY AUDIT AND FIXED AT THE LOGIC LEVEL: `P.combatDoubler` already pushes `xen-combats` carrying `(o:\"additional combat\" OR o:\"extra combat\")` BYTE-FOR-BYTE, so Xenagos \u2014 the study's own commander \u2014 would have been dealt one query twice under two titles, the v6.94 duplication defect. Its regex pair is now hoisted to module scope as `isCombatDoubler` (P.combatDoubler behaviourally byte-identical) and the new rail carries `test: !isCombatDoubler`, so the one commander holding both branches keeps the OLDER rail, whose `why` is written about his own +X/+X. Re-audited: zero repeated queries across all fifteen reports. DIFFERENTIAL, MEASURED NOT ARGUED: the shipped code run inside the LIVE page's own buildEngineModel over all 1,050 commanders changes EXACTLY 7 and leaves 1,043 BYTE-IDENTICAL, and all 7 are census members (the other 8 sit outside the top 1,050). Eleven of the fifteen are PURELY ADDITIVE (lose nothing); Brudiclad, Kolaghan, Phabine and Yarus each lose a THIRD rail of an already-represented family to the existing 9-core-rail budget and v7.70's `out.length < 9` ncdrain gate \u2014 the documented trade, not a new behaviour. Xenagos goes from ZERO atoms and a wholly generic report to leading with Bombs Worth Hasting (586 cards live: Etali, Ghalta, Ancient Copper Dragon, Hellkite Tyrant) and Put Them Straight Into Play (94: Finale, Chord, GSZ, Eldritch Evolution, Portal to Phyrexia); Duke Ulder Ravengard and Living Lightning also go 0 -> full family. COUNTER-CASE CONTROLS, all IDENTICAL on every field: the entire readTeamKeyword evasion census (IROAS, NYLEA), both first-draft false positives (AGATHA, PIPPIN), the near-miss traps (ALIBOU, KIKI-JIKI, THE LOCUST GOD), the other team-granters (SARYTH, VITO, JETMIR, TEYSA KARLOV, HELIOD, ODRIC LUNARCH MARSHAL) and unrelated staples (ATRAXA, KRENKO, TOM BOMBADIL, EDGAR MARKOV, MEREN, TALRAND). XENAGOS's STUDY_DB entry gains a fifth trap authored from his Gatherer rulings fetched verbatim this run \u2014 'Xenagos's abilities function as long as it's on the battlefield, regardless of whether it's a creature', so devotion is not a switch you have to pay for; 'the value of X is calculated only once, as the ability resolves', so pump BEFORE the trigger resolves \u2014 and its insight now names the atom-layer fix. node --check 6/6; all four boot assertions silent; script blocks 0-4 BYTE-IDENTICAL (mobile viewport/keyboard IIFE provably untouched) and NON-SCRIPT BYTES IDENTICAL at 193,911, so no CSS, markup or layout changed at all and 390px is untouched BY CONSTRUCTION. ATOMS 86 -> 87, RAILS 71 -> 72; ARCHETYPES 98, BLENDS 47, STUDY_DB 169 unchanged; no `o:/.../` term added, assertRegexTermBudget clean. meta == console banner == CHANGELOG[0] == v7.88. Backup index-backup-20260807-0810-preStudyTransform.html; roster pipeline and git untouched." },
     { build: 'v7.87', date: '2026-08-07', focus: 'verify', commander: 'Tom Bombadil', summary: "VERIFY Tom Bombadil — re-read the two new Saga rails card-by-card and found a RULES defect in the enabler, then built the post-fetch predicate the hand-off has been asking for since the -is:transform item. THE DEFECT: `t:saga` searches EVERY FACE, so the shelf was being filled by cards that are NOT Sagas anywhere the deck needs them to be. By CR 712.4a a transforming double-faced card outside the battlefield has ONLY its front face's characteristics — so Urabrask // The Great Work, Sheoldred // The True Scriptures, Vorinclex // The Grand Evolution, Jin-Gitaxias // The Great Synthesis, Elesh Norn // The Argent Etchings and the Final Fantasy Dominants (Clive, Joshua, Dion, Jill, Jecht, Terra) are LEGENDARY CREATURES in the library that only become Sagas after the creature half has died. That is not a preference: Tom Bombadil's own trigger reads 'reveal cards from the top of your library until you reveal a SAGA CARD', and his engine CANNOT FIND A SINGLE ONE OF THEM — nor can Satsuki put a lore counter on one, nor Garnet remove one. Measured live: EIGHT of the thirty cards dealt on his shelf (27%) were this class, led by Urabrask at slot 5 and Sheoldred at slot 7, and they sat that high purely because EDHREC popularity is GLOBAL — the praetors are played in thousands of decks as creatures while a real Saga is ranked only by Saga-deck play, the exact v7.17/v7.19 distortion in a third family. THE MECHANISM, and it is the general part: a rail already said WHAT TO FETCH (`q`, v7.14) and WHAT TO SHOW FIRST (`lead`, v7.17/v7.19); it could not say WHAT TO KEEP. New shared `gate` field + `railGate` post-fetch predicate + `frontFaceType(word)` factory, applied to the whole fetched page BEFORE the lead ordering and BEFORE the cap (the v7.17 reason: the cards it promotes are not in the first 30 at all). OPTIONAL AND DEFENSIVE so the mechanism is inert by construction — railGate returns the INPUT ARRAY BY OBJECT IDENTITY when there is no gate or nothing to remove, and a gate that throws KEEPS the card; `poolOf` is corrected by exactly the number removed from the page so the v7.42 scarcity reclaim still reads a pool the shelf could be built from. SPLIT, ADVENTURE and FLIP are deliberately OUTSIDE the hidden-back set, each for a rules reason (a split card has both sets of characteristics in every zone, CR 709.4; an adventure's card_faces[0] is already the half the card is everywhere but the stack, CR 715.3). RESULT, verified live through the VERBATIM shipped fetch/gate/lead/dedupe/cap-30 loop against api.scryfall.com (HTTP 200, pool 215, page 175, 14 gated, 30 dealt, 30/30 with art): the shelf is now Urza's Saga / Binding the Old Gods / Summon: Bahamut / Fable of the Mirror-Breaker / The Eldest Reborn / Summon: Titan / Summon: Fenrir / There and Back Again — THIRTY of THIRTY genuine front-face Sagas, ZERO leak. SELF-PROVING: the transform cards whose FRONT is a Saga all correctly SURVIVE (Fable, The Legend of Kyoshi, The Restoration of Eiganjo, The Legend of Roku, Azusa's Many Journeys, The Legend of Yangchen), so the gate is reading the face and not the layout. EDHREC ADJUDICATES IT ONE-DIRECTIONALLY: all EIGHT cards the gate drops are ABSENT from ALL THIRTEEN of Tom's EDHREC card lists, while FOUR of the eight it promotes are on his page — KIORA BESTS THE SEA GOD is one of his TOP CARDS and was unreachable, plus City of Death and Phyrexian Scriptures (Enchantments) and Summon: Valefor (Creatures). Zero played cards out, four played cards in. GENERALIZES ACROSS THE WHOLE FAMILY, all seven measured live, every one a strict subtraction that starves nothing (all still deal a full 30): Tom Bombadil 215->201 with 8 dropped from the dealt 30, Sigurd Jarl of Ravensthorpe 120->111 (7), Narci Fable Singer 117->110 (4), Satsuki the Living Lore 79->74 (4), Garnet Princess of Alexandria 79->74 (4), Barbara Wright 43->40 (3), Chong and Lily Nomads 34->32 (2). COUNTER-CASE, AND IT CHANGED THE DESIGN: the gate is DELIBERATELY NOT APPLIED to the tribal rails, measured over 14 tribes live — sliver 0 back-face-only members, elf 0, zombie 1, dragon 5, angel 2, goblin 3, and the only two reaching a top 30 are FABLE OF THE MIRROR-BREAKER in Goblins and SEPHIROTH, FABLED SOLDIER in Angels, BOTH real tribal cards those decks want. The cases are not the same: a transformed praetor IS a full Angel on the battlefield where the lords live, but a Saga's whole function is a CHAPTER CLOCK that only runs while the card is on the battlefield AS a Saga. NO REGRESSION, proved structurally rather than sampled: booting the pre-edit backup and the edited file side by side in a Node VM, the diff across ALL 181 rails in ALL 71 families is EXACTLY ONE FIELD — the new `gate` on sagas#0 — and the other 180 rails are identical by construction because railGate hands back the same array object. Section descriptors old-vs-new: Tom Bombadil 10->10, Satsuki 14->14, Krenko Mob Boss 16->16, Atraxa Praetors' Voice 9->9, all identical ignoring the additive field, with the gate present on exactly one rail for the two Saga commanders and on NONE for the two unrelated ones. 17 predicate cases pass including the split/adventure/flip and null guards. ALSO CHECKED AND FOUND CLEAN (recorded so the next run does not re-derive it): Urza's Saga and the Summon: cycle are CORRECT at the top of the shelf — Urza's Saga is in Tom's EDHREC Utility Lands and Summon: Bahamut and Summon: Primal Odin are both TOP CARDS — so the hand-off's suspicion that the fixed edhrec sort was burying cheap short Sagas was right in direction but the real carrier was this face class, not card cost. node --check PASS 6/6; boots clean in a Node VM with all four boot assertions silent; blocks 0-4 BYTE-IDENTICAL to the pre-edit backup so the mobile viewport/keyboard IIFE is provably untouched, and NON-SCRIPT BYTES ARE IDENTICAL (193,887 -> 193,887), so no CSS, markup or layout changed at all and 390px is untouched by construction. html/body/script 2/2/6. ATOMS 86, RAILS 181, ARCHETYPES 98, BLENDS 47, STUDY_DB 169 — all unchanged; no regex term added, assertRegexTermBudget untouched. meta == console banner == CHANGELOG[0] == v7.87. Backup index-backup-20260807-0740-preVerifyBombadil.html; roster pipeline and git untouched." },
