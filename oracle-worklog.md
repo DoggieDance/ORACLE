@@ -4435,3 +4435,104 @@ strings measured against Scryfall. New query 395 chars vs ~1008 ceiling, HTTP 20
 console messages, both the version banner, **zero errors**; Herald renders. Backup
 `index-backup-20260807-1535-preFixRailCorrectness.html`. ORACLE INDEX only; **git untouched**;
 roster/tile pipeline untouched. Next run = **VERIFY of C-006**.
+
+---
+
+## 2026-08-07 · CRITIQUE-FIX **MODE VERIFY** · C-006 · **no build shipped** (local & live stay v7.99)
+
+**C-006 CLOSED.** Verified on the **deployed** build with evidence gathered independently of the run
+that fixed it, and with a genuine BEFORE: the publisher had not yet swept, so the original scenario
+was first re-reproduced **in the rendered UI on deployed v7.98** — Krenko's *Untap & Reset* opened on
+**Unwinding Clock #1, Bender's Waterskin #2, Manifold Key #6, Sonic Screwdriver #14**, i.e. **4 of the
+14 cards a user actually sees were dead** — and the wait for the sweep was spent capturing
+order-sensitive hash baselines for every surface the fix could touch. After the sweep the identical
+click path on **v7.99** opens on Aggravated Assault and runs **14/14 cards that can untap a Goblin,
+zero dead**; engine **37 → 31**, matching the pre-sweep prediction exactly.
+
+**No new false positive is structurally possible, and that is proved rather than sampled.** Every new
+arm is the old arm ANDed with extra terms, so v7.99's pool is a **strict subset** of v7.98's on all
+three branches — confirmed at **0 additions on 7 of 7** commanders measured. Type discrimination
+verified in BOTH directions, the check a count-only pass would miss: Unwinding Clock is **removed**
+from creature commanders (Krenko 37→31, Emry 65→59, Marwyn 44→37) and correctly **retained** on
+artifact-bodied ones (Shorikai 61→55, Tergrid 18→15, Mr. House 69→65, Urtet 149→146). Marwyn also
+drops Urban Burgeoning, caught by the self-fence.
+
+**Collateral: none.** All **8** rails belonging to the four untouched consumers of the shared
+`ACROSS_TURNS_UNTAP_Q` are **byte-identical by ordered hash** — Kinnan *Untappers* 70, Marvin 46 and
+Trazyn 58 *Untap and Borrow Again*, Selvala 36, and *Untap & Hold Up Mana* for Yeva 12 / Elsha 11 /
+Raff 10 / Liberator 5. Confirmed in the rendered UI too: Yeva's shelf still deals **Unwinding Clock,
+Bender's Waterskin, Endbringer, Victory Chimes and Urban Burgeoning** — exactly the cards Row 5
+declined to scope out of the shared constant, and her own *Traps to Avoid* names Unwinding Clock as a
+real enabler, so that decision is now confirmed against rendered output. Six unrelated controls
+unchanged (rail count, ordered rail-key hash, trap count). Console: **2 boots, 2 messages, both the
+INFO banner, zero errors**; Herald renders fully.
+
+**Two bookkeeping corrections to Row 5, neither affecting the fix.** (1) "Blocks 0–4 byte-identical /
+non-script identical" is not literally true — block 0 and the non-script region each differ by
+**exactly one character**, the `v7.98`→`v7.99` version string. The substantive claim is now proved
+more precisely instead: **block 3 carries the owner-gated mobile viewport/keyboard IIFE and is
+byte-identical**, and block 5's code delta is exactly **2 lines removed, 10 added**. (2) The ARTIFACT
+branch has a **6th** member — **Throne of the Grim Captain // The Grim Captain** — missing from Row
+5's enumerated 5; the fix handles it correctly, only the population figure was narrow.
+
+**New finding raised, deliberately not patched — C-035 (MAJOR).** Deck → Stats **froze the renderer
+for over 4 minutes** on v7.99 (three 30s `captureScreenshot` timeouts); a fresh load restored the app
+instantly, so the build is healthy and the fault is confined to the Stats render path. Recorded with
+byte-level proof that **v7.99 did not cause it** (CSS/markup byte-identical, blocks 1–4
+byte-identical, Stats never consults `tapUq`) and with a pre-click measurement — **212 animations,
+only 1 infinite, 1,174 DOM nodes** — that does **not** support the standing "mass of infinite shimmer"
+hypothesis for this surface, so the next run should profile Stats itself rather than re-patch shimmer.
+
+**Nothing shipped, on purpose.** The verify found the fix complete, so no code changed and **no build
+tag was bumped** — minting a version whose only content is "we checked and changed nothing" would
+republish an identical file and put a contentless build in the ledger. meta == banner ==
+`CHANGELOG[0]` remain in sync at **v7.99 · 2026-08-07**; deployed engine confirmed at RAILS 74 /
+ATOMS 89 / ARCHETYPES 100 / STUDY_DB 171 / CHANGELOG 384. Backup
+`index-backup-20260807-1542-preVerifyC006.html`. ORACLE INDEX only; **git untouched**; roster/tile
+pipeline and the mobile IIFE untouched. Next run = **FIX** (suggested: **C-035**, else C-013/C-018,
+C-019, C-033, C-002, or cosmetic C-034).
+
+---
+
+## v8.00 · 2026-08-07 · CRITIQUE-FIX (MODE FIX) · C-019 · Krenko, Mob Boss
+
+**AN ANTHEM SCOPED TO A COLOUR CLASS IS NOT A GO-WIDE PAYOFF.** Reproduced live on deployed v7.99
+first: mono-red **Krenko** was dealt **Forsaken Monument** ("Colorless creatures you control get
++2/+2") at **rank 7 of 147** on *Go-Wide Payoffs*, alongside **It That Heralds the End** and
+**Kozilek, the Broken Reality** — three anthems pumping a class a Goblin deck cannot field. Forsaken
+Monument is the exemplar v7.59 claimed excluded; that fix reached a different rail, which is why the
+critic reopened C-019. **The defect:** the rail's anthem arm is the bare substring
+`o:"creatures you control get" o:"+"`, which reads the noun and cannot see the adjective in front of
+it, so every colour-scoped anthem in the format lands on every token commander's payoff shelf.
+
+**Shipped:** a per-commander fence ANDed onto that one rail, built from the colour words the deck's
+board provably cannot be. **Boundary-anchored, and that is the safety property, not a detail** — the
+obvious substring spelling was measured deleting three innocent cards before it shipped: **Angel of
+Jubilation** ("Other **non**black…"), **Glass of the Guildpact** ("Multicolo**red**…") and **Battle
+Frenzy** ("Green… | **non**green…"). `\b` kills the first two by construction; the third needs the
+**re-admitting OR arm**, because a card may print a dead colour clause and a live one in the same box
+— so exclusion requires the card to be dead on BOTH. **`colorless` is not treated as an off-identity
+colour**, because it is not one: it is fenced only where the commander has a colour identity AND its
+own text is not artifact/colorless-matters.
+
+**Monotone by construction** — the fence only ever ANDs, so no card can be ADDED to any rail anywhere
+in the app. **Counter-cased with the shipped source text run against the deployed engine:** Krenko
+147→144, Adeline 311→307 (+Juniper Order Advocate, a true hit in mono-white), Rhys 487→484, Titania
+167→164, Ghired **653→650** by full `total_cards`, and **Sai 55→55 / Urza 55→55** — the artifact
+carve-out holding at zero movement. Zero cards added anywhere; Angel of Jubilation, Glass of the
+Guildpact, Battle Frenzy and Impact Tremors survive on every commander tested.
+
+**C-035 (Deck→Stats freeze) investigated FIRST and did not reproduce — measured, left OPEN, not
+patched.** Cold combo snapshot 101ms download / 3ms decode / 43ms parse / 40ms index over 96,532
+combos; **0 longtasks, 0 frame gaps >120ms**; Stats DOM 243 nodes / 0 animations / 1 image; +23 MB
+heap against a 4,192 MB limit; screenshot capture working throughout; 1 console message (the version
+banner), zero errors. Also corrected: the finding's "212 animations / 1,174 nodes / 7 images on the
+Deck tab" is the **Herald** — the Deck tab measures 0 / 856 / 1. Patching a path that measures at
+zero long tasks would be changing code against no evidence, so it was left alone.
+
+**Follow-on raised, not patched:** the **type** axis of the same shelf (Chief of the Foundry, Myr
+Galvanizer) — same defect, different word class, deliberately left for its own run.
+
+node --check PASS 6/6; meta == banner == CHANGELOG[0] == v8.00 · 2026-08-07. Backup
+`index-backup-20260807-1630-preFixC035.html`. ORACLE INDEX only; **git untouched**; roster/tile
+pipeline and mobile IIFE untouched. Next run = **VERIFY** of C-019 on deployed v8.00.
