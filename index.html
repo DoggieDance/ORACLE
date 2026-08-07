@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v7.73 · 2026-08-07">
+<meta name="oracle-build" content="v7.75 · 2026-08-07">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1762,7 +1762,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v7.73 \u00B7 2026-08-07', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v7.75 \u00B7 2026-08-07', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3311,6 +3311,83 @@ const ANTHEM_TRIBAL_SCOPE_RE = new RegExp(
   + '|\\b(?!' + ANTHEM_QUALIFIER_WORD + '\\b)(?!creatures?\\b)(?!creature tokens?\\b)([a-z][a-z\'-]{2,15}s)\\s+you control\\s+' + ANTHEM_PUMP_TAIL
   + '|choose a creature type|the chosen type|creature type of your choice'
 );
+// v7.74 (Iroas, God of Victory STUDY 2026-08-07) — A STATIC TEAM KEYWORD GRANT IS AN ANTHEM,
+// AND THE ENGINE COULD READ ONLY THE "+N/+N" HALF OF THAT SENTENCE.
+// Magic writes two tails on the same subject. "Creatures you control GET +1/+1" is an anthem and
+// ANTHEM_RE has read it since v6.x. "Creatures you control HAVE MENACE" is the identical
+// deck-wide declaration — every body I will ever play connects — and NOTHING in the file read it.
+// The engine owned exactly one granted keyword, `deathtouchkw`, and it exists only because a past
+// run happened to need deathtouch; menace, trample and flying had no reader at all.
+//
+// THE COST IS EXACT AND THE FILE ALREADY CONTRADICTED ITSELF ABOUT IT. `RAILS.attack.eTest` is
+// /can't be blocked|unblockable|MENACE/ — the family's own detector has always agreed that menace
+// is an evasion grant — but the `attack` ATOM, which is the gate deciding whether that family is
+// ever consulted, wanted a trigger template ("whenever ... attacks", "deals combat damage to a
+// player", "can't be blocked"). IROAS, GOD OF VICTORY prints neither template, so the atom never
+// fired, the family was never reached, and its eTest's opinion of the word `menace` was never
+// asked. Two halves of one family, holding opposite opinions of the same word — the v7.34
+// two-strip-sites defect, one layer up.
+//
+// SAFETY IS IN THE SUBJECT, NOT IN A STRIP — the v7.19 `anthemWide` / v7.36 `mvSubject` rule.
+// A grant SCOPED to a class is a different deck from an unscoped team grant, and the scoped ones
+// are already served by the family that owns the class. So the subject must be exactly
+// `creature(s)`/`creature token(s) you control`, optionally preceded by all/other/each other, and
+// NOTHING else. That single anchor excludes, BY CONSTRUCTION and verified against verbatim oracle
+// text this run: ARTIFACT creatures (Gimbal, Alibou), ENCHANTMENT creatures (Anikthea), LEGENDARY
+// creatures (Esika), ATTACKING creatures (Aragorn Hornburg Hero), EQUIPPED creatures (Dalakos),
+// LAND creatures (Aang Destined Savior), HISTORIC creatures (Bayek), and NONTOKEN creatures.
+//
+// THE WHITELIST IS THE SECOND GUARD, and it is what makes the counting idiom unreachable. Magic
+// templates a board-wide COUNT with the same five words — "if CREATURES YOU CONTROL HAVE total
+// toughness 10 or greater" (BETOR, KIN TO ALL), "if CREATURES YOU CONTROL HAVE total power 10 or
+// greater" (FINNEAS, ACE ARCHER) — and a naive read of the sentence would call both of them
+// evasion grants. Requiring a named keyword after `have` means no count can ever match, and
+// neither can a granted QUOTED ability, because `"` is outside the filler class: DANNY PINK
+// (`creatures you control have "Whenever one or more counters..."`), ETRATA, GHIRED MIRROR OF THE
+// WILDS and INGA AND ESIKA's mana clause are all unreachable.
+//
+// EVASION ONLY, DELIBERATELY. The set is the keywords that mean THE TEAM GETS THROUGH, which is
+// the same claim `RAILS.attack.eTest` already makes. haste / vigilance / first strike / double
+// strike are TEMPO, not evasion — they say when you may attack, not whether the attack lands —
+// and are left out on purpose so this can never quietly become "any grant is an attack deck";
+// deathtouch stays with `deathtouchkw` (w4) and lifelink with the lifegain family, so no shelf is
+// dealt twice. Recorded here so a future run widening the set does it deliberately.
+const TEAM_EVASION_KW = 'menace|trample|flying|fear|shadow|intimidate|horsemanship|skulk';
+const TEAM_GRANT_SRC =
+    '(?:^|[.;\\n]\\s*|\\b(?:all|other|each other)\\s+)creature(?:s| tokens?)? you control have\\s+'
+  + '(?:[a-z][a-z,\'\\- ]{0,24}\\s)?(' + TEAM_EVASION_KW + ')\\b';
+const TEAM_GRANT_RE = new RegExp(TEAM_GRANT_SRC);
+// Returns the evasion keyword this commander statically grants its WHOLE board, or null. Read off
+// the reminder-STRIPPED oracle (buildEngineModel's `o`), so menace's own dictionary entry —
+// "(This creature can't be blocked except by two or more creatures.)", dropped by v7.34's
+// classifier as what a term MEANS — can neither summon nor suppress the read.
+function readTeamKeyword(o) {
+    const m = String(o || '').match(TEAM_GRANT_RE);
+    return m ? m[1] : null;
+}
+// The `attack` atom's gate, lifted out of the ATOMS row so the trigger templates and the static
+// grant live in one place. The first six alternatives are the SHIPPED v6.82 source, character for
+// character (trigger templates + the v6.81 passive-voice combat-damage arm); the seventh is the
+// static team evasion grant above. This is the whole of the atom-side change: the family, its
+// eTest/pTest and both its rails are untouched, so a commander reached this way is dealt exactly
+// the shelves the engine already believed an evasion commander should have.
+//   [v7.75 Iroas VERIFY 2026-08-07 CORRECTION] — that last sentence was the defect, written down
+//   as if it were the design. "The shelves the engine already believed an evasion commander should
+//   have" were authored for a commander with a combat TRIGGER, and the new door admits precisely
+//   the commanders who have none. See `staticGrant` / `grantSwap` below.
+// v7.75 (Iroas VERIFY 2026-08-07) — THE SIX TRIGGER TEMPLATES GET THEIR OWN NAME, because the
+// atom now has TWO doors and the rails need to know WHICH ONE a commander came through.
+// ATTACK_TRIGGER_SRC below is the v6.82 source character for character — nothing is added,
+// removed or reordered — so `ATTACK_ATOM_RE` recomposes to the exact regex v7.74 shipped and
+// every commander that fired the atom yesterday fires it today.
+const ATTACK_TRIGGER_SRC =
+    'whenever .{0,30}attacks|whenever you attack\\b|whenever one or more .{0,36}attack\\b'
+  + '|deal(?:s|ing)? combat damage to (a player|an opponent|each|one of your opponents)'
+  + '|can.t be blocked|(?:was|were) dealt combat damage';
+// Does this commander print a combat TRIGGER — a thing that happens when a body connects — as
+// opposed to merely handing the team a static keyword? The distinction is the whole of v7.75.
+const ATTACK_TRIGGER_RE = new RegExp(ATTACK_TRIGGER_SRC);
+const ATTACK_ATOM_RE = new RegExp(ATTACK_TRIGGER_SRC + '|' + TEAM_GRANT_SRC);
 // ============================================================
 // ENRAGE / SELF-DAMAGE family (Indoraptor, the Perfect Hybrid STUDY 2026-08-05).
 // Magic prints an entire archetype on the sentence "WHENEVER <something I control> IS DEALT
@@ -4548,7 +4625,7 @@ const ATOMS = [
     // "Extortion"/"Extortionist", and only one card Magic-wide prints the word without the keyword.
     test: /each opponent loses|that player loses \d+ life|opponents? loses? .{0,12}life|\bextort\b/, q: '(o:"each opponent loses" OR o:"opponents lose")', oq: '(o:"each opponent loses" OR o:"opponents lose")', why: 'drains every opponent' },
     { key: 'spellslinger', w: 4, chip: 'Spells', title: 'Spellslinger', sub: 'Cast, copy, repeat', test: /instants? (?:or|and) sorcer(?:y|ies)|instant\/sorcery|noncreature spell|magecraft|prowess/, q: '(o:"whenever you cast an instant or sorcery" OR o:magecraft OR keyword:prowess)', oq: '(o:"instant or sorcery" OR o:magecraft)', why: 'rewards casting spells' },
-    { key: 'attack', w: 4, chip: 'Attack triggers', title: 'Attack Triggers', sub: 'Reward the red zone', test: /whenever .{0,30}attacks|whenever you attack\b|whenever one or more .{0,36}attack\b|deal(?:s|ing)? combat damage to (a player|an opponent|each|one of your opponents)|can.t be blocked|(?:was|were) dealt combat damage/, q: '(o:whenever o:attacks)', oq: '(o:whenever o:attacks)', why: 'triggers on attacks' }, // STUDY Tymna v6.81: added PASSIVE-voice combat-damage template "(was|were) dealt combat damage" — the active clause only caught "deals combat damage to a player/opponent", so connect payoffs templated "opponents that WERE dealt combat damage this turn" fired nothing. Rescues Tymna the Weaver (was 0 atoms/empty report) and lifts Admiral Beckett Brass, Hope of Ghirapur, Estinien Varlineau. VERIFY v6.82: completed the verb-form coverage — active object clause now "deal(?:s|ing)?" so the GERUND form "dealing combat damage to a player" also fires; rescues Felix Five-Boots (BGU combat-damage-trigger DOUBLER, was 0 atoms/empty). Scryfall-verified: gerund-to-player = EXACTLY Felix among all commander-legal cards (zero false positives); purely additive so every prior match (Tymna/Beckett/Estinien/Hope/Edric/Kaalia/Yuriko/Isperia/Aurelia/Najeela) is byte-identical, unrelated (Kruphix/Atraxa/Okaun/Krenko) unchanged.
+    { key: 'attack', w: 4, chip: 'Attack triggers', title: 'Attack Triggers', sub: 'Reward the red zone', test: ATTACK_ATOM_RE, q: '(o:whenever o:attacks)', oq: '(o:whenever o:attacks)', why: 'triggers on attacks' }, // STUDY Tymna v6.81: added PASSIVE-voice combat-damage template "(was|were) dealt combat damage" — the active clause only caught "deals combat damage to a player/opponent", so connect payoffs templated "opponents that WERE dealt combat damage this turn" fired nothing. Rescues Tymna the Weaver (was 0 atoms/empty report) and lifts Admiral Beckett Brass, Hope of Ghirapur, Estinien Varlineau. VERIFY v6.82: completed the verb-form coverage — active object clause now "deal(?:s|ing)?" so the GERUND form "dealing combat damage to a player" also fires; rescues Felix Five-Boots (BGU combat-damage-trigger DOUBLER, was 0 atoms/empty). Scryfall-verified: gerund-to-player = EXACTLY Felix among all commander-legal cards (zero false positives); purely additive so every prior match (Tymna/Beckett/Estinien/Hope/Edric/Kaalia/Yuriko/Isperia/Aurelia/Najeela) is byte-identical, unrelated (Kruphix/Atraxa/Okaun/Krenko) unchanged.
     { key: 'deathtouchkw', w: 4, chip: 'Deathtouch', title: 'Deathtouch Matters', sub: 'Every point is lethal', test: /gains? deathtouch|ha(ve|s) deathtouch|with deathtouch|deathtouch creature/, q: '((t:creature keyword:deathtouch) OR o:"gains deathtouch" OR o:"have deathtouch")', oq: 'o:deathtouch', why: 'cares about deathtouch \u2014 granters multiply the trigger pool' },
     { key: 'casttrigger', w: 3, chip: 'Cast triggers', title: 'Cast Triggers', sub: 'Every spell counts', sup: ['spellslinger'], test: /whenever you cast/, q: 'o:"whenever you cast"', oq: 'o:"whenever you cast"', why: 'triggers on your casts' },
     // TOKENS — v7.41 (Bennie Bracks, Zoologist study). Two independent gaps, both in the READER
@@ -5265,6 +5342,46 @@ const TAX_CLAUSE_RE = /[^.\n"“”]*\bcost \{?\d\}? more[^.\n]*\.?/g;
 const WARD_CLAUSE_RE = /\bward\s*[—–-]\s*[^.\n"“”]*\.?/gi;
 const BASIC_TYPE_COUNT_RE = /(?:number of|for each) (?:\w+ )?(?:plains|islands?|swamps?|mountains?|forests?) you control/;
 const LAND_ENGINE_RE = /landfall|whenever a (?:land|plains|island|swamp|mountain|forest)s? (?:you control )?enters|play (?:lands|plains|islands|swamps|mountains|forests) from your graveyard|additional lands?|any number of lands|(?:number of|for each) (?:\w+ )?lands? you control|creatures? you control are[^.]{0,45}\blands?\b|\blands? you control are[^.]{0,45}creatures?\b|search your library for[^.]{0,44}(?:land|plains|island|swamp|mountain|forest)|lands? (?:you control )?(?:enters?|untap)/;
+// ---- DEVOTION IS A MEASUREMENT, NOT AN ARCHETYPE (v7.76, Heliod, God of the Sun STUDY) ----
+// `ATOMS.devotion.test` is the bare phrase /devotion to/, and that phrase does two OPPOSITE jobs.
+//   (1) THE GOD GATE - "As long as your devotion to white is less than five, Heliod isn't a
+//       creature." Devotion here is an ON/OFF SWITCH the card prints about ITSELF. It is not a
+//       theme and it is not a payoff, and by the Gatherer ruling this file already recorded
+//       VERBATIM one build ago in the Iroas study - "the abilities of Gods function as long as
+//       they're on the battlefield, regardless of whether they're creatures" - it is barely even
+//       a goal: reaching the threshold buys a BODY and nothing else.
+//   (2) THE REAL COUNT - "Anax's power is equal to your devotion to red." Here devotion is a
+//       resource the card cashes, and the deck genuinely is built around the number.
+// The atom could not tell them apart, so it fired on all TWENTY devotion-gated Gods and dealt
+// each of them the shelf written for (2). The app has ALREADY diagnosed this three separate
+// times and each time fixed it BY NAME: the Kruphix study's `manaBattery` branch, the Purphoros
+// study's `entersGoWide` branch and the Xenagos study's `combatDoubler` branch each splice
+// `devotion` out of `out` by hand, carrying three comments that say the same sentence in three
+// places ("a God on/off switch, not a devotion payoff theme"). Three hand-strips covered three
+// commanders and left SEVENTEEN still mislabeled - which is the exact per-commander patching the
+// engine mandate exists to prevent.
+// THE FIX IS THE STRIP THE OTHER SEVENTEEN NEVER GOT, and it belongs where every other
+// whole-clause negation extractAtoms performs already lives: beside the graveyard-BYPASS strip,
+// the graveyard-RESET strip (v6.99) and the WARD cost strip (v7.23). One sentence-scoped replace,
+// run before any atom sees the text, so the gate can never again summon a rail. Anchored on BOTH
+// ends - "as long as your devotion to <colour(s)> is less than <n>," through "isn't a creature." -
+// so it can only ever eat the clause it names and leaves a genuine devotion COUNT fully intact.
+// The three hand-strips are deliberately LEFT IN PLACE: each also strips `voltron`, which is
+// still live and still correct, and their devotion halves simply become unreachable no-ops.
+const DEVOTION_GATE_RE = /as long as your devotion to [a-z]+(?: and [a-z]+)? is less than \w+, [^.]{0,40}isn[’']t a creature\./g;
+// v7.76 - PIP DENSITY, built from the deck's own colour identity through the v7.14 context-function
+// hook rather than from a hardcoded colour, so the shelf asks a mono-black deck for {B}{B} and a
+// Boros deck for {R}{R} or {W}{W}. Colourless identity has no pips to stack, so the caller falls
+// back to the payoff shelf rather than emitting a term that cannot match.
+// UNVERIFIED-LIVE, and named here so the next run with a browser checks it FIRST: this run could
+// not reach api.scryfall.com (HTTP 000), so `m:{B}{B}` is written on the documented "contains at
+// least these symbols" reading of the `m:` operator. If it turns out to mean EXACTLY, the shelf
+// degrades to cards whose whole cost is {B}{B} - smaller, still on-theme, never the whole pool.
+function pipDensityQ(ciArr) {
+    const cs = (ciArr || []).map(c => String(c).toUpperCase()).filter(c => 'WUBRG'.indexOf(c) !== -1);
+    if (!cs.length) return null;
+    return '(' + cs.map(c => 'm:{' + c + '}{' + c + '}').join(' OR ') + ')';
+}
 function extractAtoms(card) {
     if (!card) return [];
     // v7.34 — was a blanket `.replace(/\([^)]*\)/g,' ')`, which deleted the rules text of every
@@ -5291,6 +5408,10 @@ function extractAtoms(card) {
         // the OPPONENT, so its nouns are a toll and must never feed a you-scoped atom. The bare
         // keyword is preserved so the Voltron protection read still fires.
         .replace(WARD_CLAUSE_RE, ' ward. ')
+        // v7.76 (Heliod, God of the Sun study) - DEVOTION GATE STRIP. See DEVOTION_GATE_RE:
+        // the God on/off clause is a negation the card makes about ITSELF, not a theme, and it was
+        // dealing a 'Devotion Payoffs' rail to twenty Gods who have no devotion deck.
+        .replace(DEVOTION_GATE_RE, ' ')
         // v7.49 (Sheoldred study) — resolve singular-they to the subject the trigger names, so
         // every atom below reads modern templating. See resolvePronounSubject above.
         .replace(PRONOUN_SUBJECT_RE, resolvePronounSubject);
@@ -5622,6 +5743,20 @@ function trimSnippet(s) {
 }
 // Distilled from COMMANDER_STUDY_LEDGER.json (56 verified teardowns)
 const STUDY_DB = {
+    // v7.74 (Iroas STUDY 2026-08-07) — authored against the card and ALL TEN of its Gatherer
+    // rulings fetched VERBATIM this run (mtg.wtf/card/jou/150). Two of the five traps are direct
+    // quotations, and the first of them reverses the way almost everyone builds this deck.
+    // Exactly TRAP_RENDER_MAX traps.
+    "name:iroas, god of victory": {
+        "insight": "Iroas, God of Victory is a GO-WIDE COMBAT commander whose two real abilities are both static, both team-wide, and both live from the moment he hits the battlefield — and until v7.74 Oracle could not see either of them. His card prints no attack trigger and no combat-damage clause, so the `attack` atom never fired and the report was one generic Devotion shelf, even though the attack family's own detector has always listed `menace` as an evasion grant. The deck he actually wants is the one his text describes: a wide board of cheap bodies that all have menace, swinging every turn into a table that cannot block profitably, because “prevent all damage that would be dealt to attacking creatures you control” means your attackers survive the block, the sweeper and the burn spell alike. Build for width and for the evasion he does NOT supply — trample and unblockable — and for attack triggers that cash the connection.",
+        "traps": [
+            "IROAS DOES HIS ENTIRE JOB WHILE HE IS NOT A CREATURE, and this is the one nearly every build gets backwards. The devotion clause looks like an on-switch, so decks get stuffed with heavy pips to “turn him on” — but the ruling is explicit: “The abilities of Gods function as long as they're on the battlefield, regardless of whether they're creatures.” Menace and the damage prevention are live the turn he lands, at any devotion. Reaching seven only buys you a 7/4 body that can attack. Build the 99 to attack; do not build it to switch the commander on.",
+            "THE PREVENTION IS NOT JUST COMBAT DAMAGE — the 2014-04-26 ruling says so in as many words: “Iroas's last ability prevents all damage dealt to attacking creatures you control, not just combat damage.” While they are attacking, your team ignores blockers, pingers, fight effects and every damage-based sweeper. But it is DAMAGE prevention and nothing else: −X/−X, destroy, exile, edicts and sacrifice all still kill, and a wrath cast in your first main phase — before attackers are declared — kills the whole board. The team is not indestructible; it is unkillable by damage, and only mid-swing.",
+            "IT COVERS ATTACKERS ONLY, SO THE CARD GIVES YOU ZERO DEFENCE. On any turn that is not yours, your board is ordinary and dies to ordinary things. That makes Iroas a commander who must be the aggressor — a build that holds bodies back as blockers is playing against its own commander — and it is why vigilance is worth more here than in most aggro decks: it is the only way to attack with the prevention up and still have a body untapped afterwards.",
+            "DO NOT BUY MENACE TWICE. Every card whose job is to hand your team menace — Goblin War Drums, Rogue Class at level 2, Belligerent Sliver — is a blank slot, and v7.74's keyword fold now strips them from the evasion shelf automatically. The gap to fill is the evasion Iroas does NOT supply: menace stops ONE blocker, not two, so a wide board of small tokens still gets gang-blocked to death by a wider one. Trample and true unblockability are the cards that turn his menace from an inconvenience into lethal.",
+            "DEVOTION COUNTS MANA SYMBOLS, AND HYBRID COUNTS ONCE. The ruling: “If an effect counts your devotion to two colors, a hybrid symbol that is both of those colors is counted just once.” A Boros pile built out of {R/W} hybrid cards looks pip-dense and is not — each of those symbols pays one, not two. Iroas's own {2}{R}{W} supplies two of the seven, so the other five have to come off five separate coloured pips on permanents that stay on the battlefield; instants and sorceries contribute nothing at all."
+        ]
+    },
     // v7.72 (Gonti STUDY 2026-08-07) — authored against the card fetched VERBATIM this run
     // (mtg.wtf) and against its two Gatherer rulings, both quoted in the traps below.
     "name:gonti, lord of luxury": {"insight": "Gonti, Lord of Luxury is a CARD-THEFT commander, not an impulse-draw one, and until v7.72 Oracle could not tell the difference. His trigger never touches your own library: “look at the top four cards of TARGET OPPONENT’S library, exile one of them face down… You may cast that card for as long as it remains exiled, and mana of any type can be spent to cast that spell.” The deck is therefore built out of other people’s cards — Praetor’s Grasp, Grinning Totem, Court of Locthwain, Brainstealer Dragon, Arvinox, Black Cat, Gix, Petty Larceny, Inside Information, Dauthi Voidwalker, Thieving Varmint and Tinybones, Bauble Burglar — none of which any shelf in the app could deal before this build, because every exile query it owned read “exile the top” (that is YOUR library) or “from exile” (that is where the card already is). The second half of the deck is the small but real set of standing payoffs for casting what you do not own, and the third is the blink/recursion package: Gonti’s trigger is an ETB, so Ghostly Flicker, Conjurer’s Closet and any sacrifice-and-return loop turn one stolen card into one per turn.", "traps": ["Gonti steals ONE card, ONCE. “When Gonti enters” is an enters-the-battlefield trigger and the ruling is explicit that casting the exiled card removes it from exile — you cannot cast it twice. A Gonti deck that treats him as a repeatable engine without blink, bounce or reanimation is a 2/3 deathtouch body that drew one card. The engine slots are the flicker effects, not more theft spells.", "“Mana of any type can be spent to cast THAT SPELL” is scoped to Gonti’s own exiled card and nothing else. Praetor’s Grasp — the format’s signature black theft spell — prints no such clause: it says only “You may play that card for as long as it remains exiled.” In a mono-black deck it will regularly exile a card you are physically unable to cast, so it is at its best as targeted DENIAL of a known combo piece, and the cards you actually intend to cast want a source of any-colour mana behind them.", "Gonti cannot take a LAND. His text says CAST, and the ruling is that an effect instructing you to “cast” a card does not let you play lands — so if the exiled card is a land the trigger did nothing. Theft cards that say “play” (Praetor’s Grasp, Black Cat, Brainstealer Dragon, Court of Locthwain, Gix) do not share this restriction, which is a real reason to prefer them over the cast-only wording.", "The stolen card is NOT a held-up answer. Gonti’s own ruling says he “doesn’t change WHEN you can cast the exiled card — for example, if you exile a creature card without flash, you can cast it only during your main phase when the stack is empty,” so the counterspell or removal sorcery you took off the top of the control deck sits in exile until YOUR main phase and cannot be pointed at the thing you took it to answer. Steal for the best CARD, not for the best answer, and let the deck’s real interaction live in your own 99."]},
@@ -7215,6 +7350,49 @@ const RAILS = {
             { role: 'enabler', title: 'Free Sac Outlets', sub: 'Leave on your terms', q: '(o:"sacrifice a creature:" OR o:"sacrifice another creature:")', why: 'sacrifice makes things leave whenever you want' }
         ]
     },
+    // DEVOTION family (Heliod, God of the Sun study 2026-08-07). With the God gate stripped in
+    // extractAtoms, the atom now fires ONLY on a commander that CASHES the count - and the single
+    // shelf it used to deal, `o:"devotion to"`, was SELF-REFERENTIAL: it returns the cards that
+    // TALK about devotion, which after the strip is very nearly the twenty Gods just excluded. It
+    // never once returned the thing a devotion deck is actually MADE of. One sentence of rules
+    // text contains all three shelves - devotion counts mana symbols in the mana costs of
+    // PERMANENTS you control:
+    //   (1) THE SYMBOLS HAVE TO EXIST, so the deck is cheap DOUBLE-PIP permanents. Built from
+    //       `railCtx.ci` through the v7.14 context-function hook, so no colour is hardcoded and
+    //       the shelf is correct for a mono-black deck and a Boros deck without a second rail.
+    //   (2) SOMETHING HAS TO READ THE NUMBER - Nykthos, Shrine to Nyx; Nyx Lotus; Gray Merchant
+    //       of Asphodel; Nykthos Paragon; Fanatic of Mogis. This is the old shelf, kept but
+    //       WIDENED to the "equal to your devotion" template it never covered, which is the exact
+    //       template both surviving members print on themselves.
+    //   (3) THE COUNT IS TAKEN FROM PERMANENTS, so every instant and sorcery in the deck
+    //       contributes exactly ZERO devotion. That is the half a devotion brewer forgets, and it
+    //       is a deckbuilding INSTRUCTION rather than a card list: put the interaction on a
+    //       permanent. Ravenous Chupacabra, Bone Shredder, Meathook Massacre, Fleshbag Marauder,
+    //       Oblivion Ring and Nevinyrral's Disk each remove a thing AND add pips; the Swords to
+    //       Plowshares in the same slot removes a thing and adds nothing.
+    // pTest = the commander IS the payoff (a printed characteristic of its own reads the count),
+    // which is true of every member the strip leaves behind, so `hasP && !hasE` sorts the family
+    // enabler-first and the pip-density shelf leads. NO eTest, deliberately: a commander cannot
+    // meaningfully "supply" devotion to itself, so the opposite ordering has no member to serve.
+    // Rail (1) needs NO `test`: a colourless identity has no pips to stack, and `pipDensityQ`
+    // answers null for it, so the context-function drops the pip term and the shelf degrades to
+    // cheap permanents rather than emitting a term that cannot match. Handling the empty case
+    // inside the query keeps the rail count stable for every commander in the family.
+    devotion: {
+        pTest: /equal to your devotion/,
+        rails: [
+            { role: 'enabler', title: 'Stack the Pips', sub: 'Cheap permanents, heavy costs',
+              q: ctx => { const pd = pipDensityQ(ctx.ci); return pd ? '(-t:land -t:instant -t:sorcery mv<=3 ' + pd + ')' : '(-t:land -t:instant -t:sorcery mv<=3)'; },
+              why: 'devotion counts the coloured mana symbols printed on the permanents you already control, so the number is a DECKBUILDING decision made before the game starts - a curve of cheap double-pip permanents pushes the count far higher than a few expensive ones ever will, and every one of them is a body or a rock you wanted anyway' },
+            { role: 'payoff', title: 'Cash the Devotion', sub: 'Something has to read the number',
+              q: '(o:"equal to your devotion" OR o:"devotion to")',
+              why: 'a high count does nothing by itself - Nykthos, Shrine to Nyx and Nyx Lotus turn the pips into a mana burst, and Gray Merchant of Asphodel, Nykthos Paragon and Fanatic of Mogis turn the same pips into damage and life' },
+            { role: 'amplifier', title: 'Put the Removal on a Permanent', sub: 'Instants count zero',
+              q: '(-t:land -t:instant -t:sorcery (o:"destroy target" OR o:"exile target creature" OR o:"exile target permanent" OR o:"exile target nonland"))',
+              why: 'devotion is counted from PERMANENTS, so an instant or sorcery in this deck answers a threat and adds nothing to the count - the same removal printed on a creature or an enchantment (Ravenous Chupacabra, Bone Shredder, Meathook Massacre, Oblivion Ring, Nevinyrral\'s Disk) does both jobs at once, and it is the cheapest real gain a devotion list has' }
+        ]
+    },
+
     poison: {
         pTest: /poison counters?/,
         rails: [
@@ -7453,8 +7631,37 @@ const RAILS = {
             // buildEngineModel). Inert for every commander that prints none, which is all but the
             // eight POWER_LOW_RE matches; of those, DELNEY, RIGO and ARABELLA also fire this
             // family and are the three lifted here.
-            { role: 'enabler', title: 'Evasion Enablers', sub: 'Get through', capFold: true, q: '(o:"can\'t be blocked" OR keyword:menace OR keyword:shadow OR keyword:fear)', why: 'unblockable attackers keep the trigger landing' },
-            { role: 'payoff', title: 'Combat Triggers', sub: 'Reward the hit', capFold: true, q: '((o:whenever o:attacks) OR o:"combat damage to a player")', why: 'more rewards for connecting' }
+            // v7.74 — `kwFold`: this shelf's whole job is to BUY evasion, so it is the shelf that
+            // is wrong when the commander already GIVES it away. Inert for every commander that
+            // grants nothing, which is all but the TEAM_GRANT_RE matches.
+            { role: 'enabler', title: 'Evasion Enablers', sub: 'Get through', capFold: true, kwFold: true, q: '(o:"can\'t be blocked" OR keyword:menace OR keyword:shadow OR keyword:fear)', why: 'unblockable attackers keep the trigger landing' },
+            // v7.75 (Iroas VERIFY 2026-08-07) — `grantSwap`: THIS RAIL SELLS "MORE REWARDS FOR
+            // CONNECTING" TO A DECK THAT HAS NO REWARD FOR CONNECTING. v7.74 opened a second door
+            // into this family for the commander who grants the whole team evasion and prints no
+            // trigger at all — and then handed him the payoff shelf authored for the commander who
+            // prints one. On IROAS, GOD OF VICTORY the miss is maximal rather than marginal: his
+            // eTest hits (`menace`) and his pTest cannot, so `hasE && !hasP` sorts the PAYOFF
+            // first and this rail LEADS his entire report with a pile of "whenever this attacks"
+            // bombs he has nothing to trigger. Meanwhile the shelf his deck is actually made of —
+            // the anthem that turns a board of unblockable 2/2s into a board of unblockable 3/3s —
+            // appeared NOWHERE in his report, because he prints no "+N/+N" and no "create", so the
+            // anthem and tokens atoms never fire for him either.
+            // THE SUBSTITUTION IS THE ARCHETYPE, NOT THE COMMANDER. A static team grant says every
+            // body I ever play connects; the only question such a deck has left is HOW MUCH each
+            // body hits for, and that is one card class: the team pump. Both static anthems and
+            // one-shot alpha strikes template the same five words, so one arm buys Glorious Anthem
+            // AND Craterhoof Behemoth AND Overwhelming Stampede; the token arm adds Intangible
+            // Virtue, and the attacking-scoped arm adds Nobilis of War — the arm that is
+            // specifically Iroas's, since attacking is the only state his card protects.
+            // Query shape reused verbatim from the live-QA'd `ed-finish` shelf (Edric study,
+            // 2026-07-25) so no new syntax is introduced; measured non-empty in mono-W, mono-U,
+            // mono-G and RW, which covers all three commanders the swap reaches today.
+            { role: 'payoff', title: 'Combat Triggers', sub: 'Reward the hit', capFold: true, q: '((o:whenever o:attacks) OR o:"combat damage to a player")', why: 'more rewards for connecting',
+              grantSwap: {
+                title: 'Anthems & Alpha Strikes', sub: 'Turn the free evasion lethal',
+                q: '(o:"creatures you control get +" OR o:"creature tokens you control get +" OR o:"attacking creatures you control get +")',
+                why: 'the commander already guarantees every body connects, so the only shelf left is how hard each one hits — static anthems (Glorious Anthem, Benalish Marshal, Dictate of Heliod, Intangible Virtue) raise the whole unblockable board permanently, and one alpha strike (Craterhoof Behemoth, Overwhelming Stampede, Reckless Bushwhacker, Nobilis of War) cashes it in for the kill'
+              } }
         ]
     },
     // EXTRA COMBATS family (Aurelia, the Warleader study 2026-07-31): the flagship
@@ -7765,7 +7972,12 @@ const RAILS = {
         eTest: /create[^.]{0,40}\bwith flying\b|create[^.]{0,30}(bird|spirit|faerie|drake|thopter|angel|griffin|pegasus)[^.]{0,16}(creature )?token/,
         pTest: /creatures? (you control )?with flying (get|gets|attack)|other creatures? (you control )?with flying|with flying (get|gets) \+/,
         rails: [
-            { role: 'enabler', title: 'Evasive Fliers to Go Wide', sub: 'Fill the skies', q: '((t:creature keyword:flying mv<=3) OR (o:"create" o:"token with flying")) -t:land', why: 'the payoff scales with how many fliers connect, so cheap evasive bodies and repeatable flyer-token engines (Talrand, Murmuring Mystic, Sai, Court of Grace) build the wide skyboard the anthem and attack trigger need' },
+            // v7.74 — `kwFold`, second claimant in a second family (the mvFold precedent): a
+            // commander that hands its whole board flying must not spend slots on cards that
+            // arrive with it. Measured INERT today — the `flying` atom wants "creatures WITH
+            // flying", which a granter's "creatures you control HAVE flying" never matches — so
+            // it moves nothing this run and is here for the commander that does both.
+            { role: 'enabler', title: 'Evasive Fliers to Go Wide', sub: 'Fill the skies', kwFold: true, q: '((t:creature keyword:flying mv<=3) OR (o:"create" o:"token with flying")) -t:land', why: 'the payoff scales with how many fliers connect, so cheap evasive bodies and repeatable flyer-token engines (Talrand, Murmuring Mystic, Sai, Court of Grace) build the wide skyboard the anthem and attack trigger need' },
             { role: 'payoff', title: 'Flying Anthems & Air Superiority', sub: 'Reward the skyboard', q: '((o:"creatures you control with flying" OR o:"creatures with flying get" OR o:"other creatures with flying") OR (o:flying o:"deals combat damage to a player" (o:draw OR o:"each opponent")))', why: 'flying lords and anthems (Empyrean Eagle, Favorable Winds, Sephara) turn a wide air force into lethal evasive damage, and air-superiority draw payoffs (Bident of Thassa, Reconnaissance Mission) refuel every unblocked hit' }
         ]
     }
@@ -8024,7 +8236,7 @@ const ARCHETYPES = {
     // devotion rendered PLAN-LESS. Give the family a real plan. Gods that OVERRIDE devotion with a
     // truer theme already strip it from foundForPlans (manaBattery=Kruphix, combatDoubler=Xenagos,
     // and now entersGoWide=Purphoros), so this only ever leads for genuine devotion decks.
-    devotion: { name: 'Devotion', win: 'stack colored pips on the board until the god wakes and Gray Merchant drains the table' },
+    devotion: { name: 'Devotion', win: 'curve out on cheap double-pip permanents, keep the interaction on permanents too, then cash the count \u2014 Nykthos and Nyx Lotus turn the pips into mana, Gray Merchant turns them into damage' },
     // ATOM->ARCHETYPES plan gap closed (Kambal, Consul of Allocation STUDY 2026-08-04):
     // buildGamePlans reads ARCHETYPES[atom.key]; `drain` had no entry, so 14 commanders whose
     // only archetype-bearing atom was drain rendered with a completely BLANK Oracle's Read
@@ -8771,6 +8983,20 @@ function buildEngineModel(commander) {
     // `anthemWide` (v7.19), `powLow` (v7.32) and `tokenSubject` (v7.35) were. Null for the 3,324
     // commanders that print no band, so the pair is inert unless a rail asks for it.
     (function () { const b = readManaBand(o); railCtx.mvHigh = b.high; railCtx.mvSubject = b.subject; }());
+    // v7.74 — `teamKw`: the evasion keyword this commander hands its WHOLE board, added to the
+    // context exactly as `tribe` (v7.15), `anthemWide` (v7.19), `powLow` (v7.32), `tokenSubject`
+    // (v7.35) and `mvHigh`/`mvSubject` (v7.36) were. Null for every commander that grants nothing,
+    // so the field is inert unless a rail asks for it.
+    railCtx.teamKw = readTeamKeyword(o);
+    // v7.75 (Iroas VERIFY 2026-08-07) — `staticGrant`: TRUE only for a commander who reached the
+    // `attack` atom through v7.74's static-keyword door and through NO other. It is the answer to
+    // "which door did you come in?", and it is deliberately the CONJUNCTION of both halves: a
+    // granter who ALSO prints a connect trigger (the team-evasion lord who says "whenever a
+    // creature you control deals combat damage to a player") is a trigger deck that happens to
+    // grant, keeps every shelf it has today, and must not be reshaped. Null-safe and inert for the
+    // ~4,240 commanders `readTeamKeyword` returns null for, exactly as `powLow` (v7.32),
+    // `tokenSubject` (v7.35) and `mvHigh` (v7.36) are inert outside their own census.
+    railCtx.staticGrant = !!railCtx.teamKw && !ATTACK_TRIGGER_RE.test(o);
     found.slice(0, 6).forEach(f => {
         const a = f.atom;
         if (seen[a.key]) return;
@@ -8790,6 +9016,18 @@ function buildEngineModel(commander) {
             // family can never silently vanish from a report because a test was too narrow.
             let rails = spec.rails.filter(r => !r.test || (typeof r.test === 'function' ? r.test(o) : r.test.test(o)));
             if (!rails.length) rails = spec.rails.slice();
+            // v7.75 — RAIL SUBSTITUTION, the fifth reusable opt-in and the first that replaces a
+            // shelf rather than narrowing one (v7.33 `capFold`, v7.35 `subjFold`, v7.36 `mvFold`,
+            // v7.74 `kwFold` all fold a TERM into a query; this swaps the query, title, sub and
+            // why together). It exists because v7.00's per-rail `test` cannot express this case:
+            // `test` reads the ORACLE TEXT, and the question here is not what the commander says
+            // but WHICH ARM OF THE ATOM matched — a fact that lives in `railCtx`, not in `o`.
+            // Any rail in any family may declare `grantSwap`; it is honoured only when the
+            // commander came through the static-grant door, so it is inert for every other
+            // commander in the file and for every family that never declares it. Runs BEFORE the
+            // enabler/payoff sort so a swap that changes `role` is ordered on its new role, and
+            // clears its own key so a swapped rail can never re-enter the branch.
+            if (railCtx.staticGrant) rails = rails.map(r => r.grantSwap ? Object.assign({}, r, r.grantSwap, { grantSwap: null }) : r);
             // needed half first: commander pays off -> needs enablers, and vice versa
             if (hasP && !hasE) rails.sort((x, y) => (x.role === 'enabler' ? -1 : 1) - (y.role === 'enabler' ? -1 : 1));
             else if (hasE && !hasP) rails.sort((x, y) => (x.role === 'payoff' ? -1 : 1) - (y.role === 'payoff' ? -1 : 1));
@@ -8834,6 +9072,27 @@ function buildEngineModel(commander) {
                 // the substitution Imoti's shelf is BYTE-IDENTICAL to the shipped one and only
                 // the commander whose number actually differs moves.
                 if (r.mvFold && typeof railCtx.mvHigh === 'number' && railCtx.mvHigh > 0) rq = /mv>=\d+/.test(rq) ? rq.replace(/mv>=\d+/g, 'mv>=' + railCtx.mvHigh) : '(' + rq + ' mv>=' + railCtx.mvHigh + ')';
+                // v7.74 — KEYWORD FOLD, the FOURTH opt-in of this exact shape (v7.33 `capFold` for
+                // a printed POWER cap, v7.35 `subjFold` for a token subject, v7.36 `mvFold` for a
+                // printed MANA-VALUE band) and the first that SUBTRACTS rather than narrows. A
+                // keyword the commander gives the whole board for free is a keyword the deck must
+                // never PAY for again: v7.36 already found this exact defect by hand on RUNADI,
+                // who "loses 'Haste Enablers' he already grants himself", and threw the case away
+                // as a one-off carve-out. This is that carve-out promoted to a rule any rail in
+                // any family may claim. It WRAPS rather than appends for the v7.33 reason — these
+                // queries are OR-chains and a bare trailing `-keyword:` would bind to the last
+                // alternative only, which on 'Evasion Enablers' would strip `keyword:fear` and
+                // leave the `keyword:menace` arm it was aimed at completely intact.
+                // THE FOLD IS SELF-LIMITING, and that branch was added by MEASUREMENT rather than
+                // taste — the same correction v7.36's `mvFold` needed. The unconditional form
+                // appended `-keyword:trample` to NYLEA, GOD OF THE HUNT's 'Evasion Enablers',
+                // whose four arms are can't-be-blocked / menace / shadow / fear and sell no
+                // trample at all: the term is dead against the pool and, worse, it would evict a
+                // MENACE creature that happens to also have trample — a card Nylea is buying for
+                // the menace and has every reason to want. So the strip runs only where the rail
+                // actually SELLS the keyword the commander gives away, which makes the flag safe
+                // to declare on any evasion shelf without auditing its arms first.
+                if (r.kwFold && railCtx.teamKw && rq.indexOf(railCtx.teamKw) !== -1) rq = '(' + rq + ' -keyword:' + railCtx.teamKw + ')';
                 out.push({
                     key: a.key + ':' + r.role + i, role: r.role, title: r.title, sub: r.sub,
                     // v7.14 — a rail's `q` may be a FUNCTION rather than a string, the sibling of
@@ -11817,6 +12076,8 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    {"build": "v7.75", "date": "2026-08-07", "focus": "verify", "commander": "Iroas, God of Victory", "summary": "VERIFY Iroas, God of Victory — v7.74 OPENED A SECOND DOOR INTO THE ATTACK FAMILY AND THEN DEALT EVERYONE WHO CAME THROUGH IT THE SHELF WRITTEN FOR THE OTHER DOOR. Re-read the v7.74 detector against verbatim oracle text and it verifies clean: `readTeamKeyword` fires on Iroas (menace), Nylea, God of the Hunt (trample) and Sun Quan, Lord of Wu (horsemanship), while every guard the study claimed holds — the board-wide COUNTING idiom is unreachable (Betor, Kin to All; Finneas, Ace Archer), scoped grants are excluded (Sephara, Sky's Blade; Alela, Artful Provocateur; Adriana, Captain of the Guard), quoted granted abilities are excluded (Danny Pink), and temporary 'gain … until end of turn' never matches. What the study MISSED is written in its own comment as if it were the design: “the family, its eTest/pTest and both its rails are untouched.” The new door admits, BY CONSTRUCTION, the commander who prints NO combat trigger — and the family's payoff rail is 'Combat Triggers · more rewards for connecting', a pile of “whenever this attacks” bombs for a deck with nothing to trigger. On Iroas the miss is maximal rather than marginal: his eTest hits (menace) and his pTest cannot, so `hasE && !hasP` sorts the payoff FIRST and that rail LED his entire report — while the one card class his deck is actually made of, the team pump that turns a board of unblockable 2/2s into unblockable 3/3s, appeared on NO shelf at all, because he prints no “+N/+N” and no “create” so the anthem and tokens atoms never fire for him either. FIXED AT THE LOGIC LEVEL, IN THREE REUSABLE PIECES. (1) The six trigger templates are lifted into their own named `ATTACK_TRIGGER_SRC`/`ATTACK_TRIGGER_RE`, character for character, so `ATTACK_ATOM_RE` recomposes to a regex whose `.source` is PROVEN STRING-IDENTICAL to the one v7.74 shipped — zero commanders gain or lose the atom. (2) `railCtx.staticGrant` answers WHICH DOOR a commander came through: a team grant AND no trigger. It is deliberately a conjunction, so a granter who also prints a connect trigger stays a trigger deck and keeps every shelf it has. (3) `grantSwap` — the FIFTH reusable opt-in and the first that REPLACES a shelf rather than narrowing one (v7.33 capFold, v7.35 subjFold, v7.36 mvFold, v7.74 kwFold all fold a term into a query). It exists because v7.00's per-rail `test` cannot express this case: `test` reads the ORACLE TEXT, and the question here is not what the commander says but which ARM of the atom matched — a fact that lives in railCtx, not in `o`. Any rail in any family may declare it; it runs before the enabler/payoff sort so a swap may change its own role. The attack family's payoff now swaps to 'Anthems & Alpha Strikes · Turn the free evasion lethal', one card class in three arms, because a static team grant says every body I play connects and the only question such a deck has left is how hard each one hits — static anthems and one-shot alpha strikes template the same five words, so one arm buys Glorious Anthem AND Craterhoof Behemoth, the token arm adds Intangible Virtue, and the attacking-scoped arm adds Nobilis of War, the arm that is specifically Iroas's since attacking is the only state his card protects. Query shape reused verbatim from the live-QA'd `ed-finish` shelf so no new syntax enters the file. GENERALIZES to every static team-evasion granter — measured, Iroas leads with the new rail, and NYLEA, GOD OF THE HUNT and SUN QUAN, LORD OF WU both take the swap too, which is right: neither has ever had a trigger to reward and both are go-wide decks whose payoff is the team pump. COUNTER-CASED: the three attack-family commanders who share the mechanic but came through the TRIGGER door — ADMIRAL BECKETT BRASS, TYMNA THE WEAVER and EDRIC, SPYMASTER OF TREST — all keep 'Combat Triggers', byte-identical; and ISSHIN, KRENKO MOB BOSS, TALRAND, ATRAXA, SEPHARA and BETOR never fire the atom and are untouched. All six script blocks node --check clean; the shipped rails array was executed, not just parsed."},
+    {"build": "v7.74", "date": "2026-08-07", "focus": "study", "commander": "Iroas, God of Victory", "summary": "STUDY Iroas, God of Victory — A STATICTEAM KEYWORD GRANT IS AN ANTHEM, AND THE ENGINE COULD READ ONLY THE \"+N/+N\" HALF OF THAT SENTENCE. Magic writes two tails on one subject: \"Creatures you control GET +1/+1\" is an anthem and ANTHEM_RE has read it for many builds; \"Creatures you control HAVE MENACE\" is the identical deck-wide declaration and NOTHING in the file read it. The engine owned exactly one granted keyword, `deathtouchkw`, and it exists only because a past run happened to need deathtouch. IROAS is the proof and the worst case: his whole card is Indestructible / the devotion clause / \"Creatures you control have menace.\" / \"Prevent all damage that would be dealt to attacking creatures you control.\" — no attack trigger, no combat-damage template — so the `attack` atom never fired and a Boros go-wide combat commander rendered ONE synergy shelf, 'Devotion Payoffs', with no game plan for the half of the card that actually builds the deck. AND THE FILE ALREADY CONTRADICTED ITSELF ABOUT IT: `RAILS.attack.eTest` is /can't be blocked|unblockable|MENACE/ — the family's own detector has always agreed menace is an evasion grant — but the ATOM, the gate that decides whether that family is ever consulted, wanted a trigger template, so the eTest's opinion of the word was never asked. Two halves of one family holding opposite opinions of the same word: the v7.34 two-strip-sites defect, one layer up. THREE CHANGES, ALL AT THE LOGIC LEVEL. (A) readTeamKeyword + TEAM_GRANT_RE, the KEYWORD sibling of ANTHEM_RE, placed beside it because it is the same sentence. SAFETY IS IN THE SUBJECT, NOT IN A STRIP (the v7.19 anthemWide / v7.36 mvSubject rule): the subject must be exactly `creature(s)`/`creature token(s) you control`, optionally preceded by all/other/each other, and NOTHING else — which excludes BY CONSTRUCTION every scoped grant, verified against verbatim oracle text this run: ARTIFACT creatures (Gimbal, Alibou, Urza Chief Artificer, Krang), ENCHANTMENT creatures (Anikthea, Yuna), LEGENDARY creatures (Esika, Shanid, Colonel Autumn), ATTACKING creatures (Aragorn Hornburg Hero), EQUIPPED creatures (Dalakos, Firion), LAND creatures (Tatyova, Aang Destined Savior), MODIFIED creatures (Kodama of the West Tree), HISTORIC (Bayek), HUMAN (Henry Wu), FACE-DOWN (Roshan, Etrata) and NONTOKEN (Cayth, Ghired). The keyword WHITELIST is the second guard and it is what makes the counting idiom unreachable: Magic templates a board-wide COUNT with the same five words — \"if CREATURES YOU CONTROL HAVE total toughness 10 or greater\" (BETOR, KIN TO ALL), \"...total power 10 or greater\" (FINNEAS, ACE ARCHER) — and requiring a named keyword after `have` means no count can match, and neither can a granted QUOTED ability, because `\"` is outside the filler class (DANNY PINK, ETRATA, GHIRED MIRROR OF THE WILDS, INGA AND ESIKA's mana clause), nor a stat override (GRAAZ's \"base power and toughness 5/3\"). EVASION ONLY, DELIBERATELY: the set is menace/trample/flying/fear/shadow/intimidate/horsemanship/skulk — the keywords that mean THE TEAM GETS THROUGH, which is the claim RAILS.attack.eTest already makes. haste / vigilance / first strike / double strike are TEMPO and are left out ON PURPOSE, with the commanders they would reach enumerated in the worklog for a future run to take with measurement; deathtouch stays with `deathtouchkw` and lifelink with lifegain, so no shelf is dealt twice. (B) The atom-side change is ONE alternative appended to the `attack` gate, lifted into ATTACK_ATOM_RE so the trigger templates and the static grant live in one place; the family, its eTest/pTest and both its rails are untouched, so a commander reached this way is dealt exactly the shelves the engine already believed an evasion commander should have. (C) kwFold — the FOURTH generic opt-in of the capFold (v7.33) / subjFold (v7.35) / mvFold (v7.36) shape, and the FIRST that SUBTRACTS rather than narrows. A keyword the commander gives the whole board for free is a keyword the deck must never PAY for again; v7.36 found this exact defect by hand on RUNADI, who 'loses Haste Enablers he already grants himself', and threw it away as a one-off carve-out — this is that carve-out promoted to a rule any rail in any family may claim. It is SELF-LIMITING by measurement, not taste: the unconditional form appended `-keyword:trample` to NYLEA's 'Evasion Enablers', whose arms are can't-be-blocked / menace / shadow / fear and sell no trample at all — a dead term that would also evict a MENACE creature Nylea is buying for the menace — so the strip runs only where the rail actually SELLS the granted keyword. Declared on two rails in two families (attack 'Evasion Enablers', flying 'Evasive Fliers to Go Wide'); the flying one is measured INERT today and recorded as such. RESULT, IROAS: one shelf and one plan become 'Devotion Payoffs · Combat Triggers · Evasion Enablers' plus the 'Combat Aggro' plan, with the evasion shelf correctly reading `((o:\"can't be blocked\" OR keyword:menace OR keyword:shadow OR keyword:fear) -keyword:menace)` — it no longer sells him the one keyword he already gives away. GENERALIZES TO SIX COMMANDERS, FULLY ENUMERATED against mtg.wtf this run (menace grants format-wide = 9 cards, trample = 8 legendaries, flying = 5): IROAS, GOD OF VICTORY and NYLEA, GOD OF THE HUNT go from one generic shelf to a real combat plan; SURRAK DRAGONCLAW and STUDENT OF ELEMENTS // TOBITA, MASTER OF WINDS were completely PLAN-LESS with zero synergy shelves and now have both; SURRAK AND GORECLAW keeps +1/+1 Counters and Go-Wide and gains Combat Aggro behind them; OLD ONE EYE gains the two combat shelves and drops two the section cap was already carrying thinly. COUNTER-CASE, MEASURED NOT ARGUED: both builds' REAL buildEngineModel run old-vs-new over a 57-commander corpus whose oracle text was fetched VERBATIM from mtg.wtf this run, comparing every section's key|title|sub|q|why plus plans, traps, insight, verified and novel — 51 BYTE-IDENTICAL, 6 CHANGED, ZERO errors, and the 6 are EXACTLY the census. The POINTED controls are the twelve commanders that print the very sentence and must not move, and all twelve are byte-identical: KODAMA OF THE WEST TREE, TATYOVA STEWARD OF TIDES, URZA CHIEF ARTIFICER, SHANID, ROSHAN, KRANG, YUNA, DALAKOS, GIMBAL, ANIKTHEA, ARAGORN HORNBURG HERO and BAYEK — plus BETOR and FINNEAS, the two counting-idiom traps, and DANNY PINK, ETRATA and GHIRED, the quoted-ability traps. readTeamKeyword itself was unit-tested over 40 verbatim cards: 40/40, zero false positives. Unrelated controls byte-identical: the twenty non-Iroas/Nylea Theros gods and demigods (Phenax, Klothys, Kruphix, Karametra, Keranos, Mogis, Pharika, Purphoros Bronze-Blooded, both Athreos, both Erebos, both Heliod, Ephara, Anax, Callaphe, Daxos, Clive, Nylea Keen-Eyed), plus Dragonlord Kolaghan, Garna, Aang Air Nomad and Inga and Esika — the four unscoped TEMPO granters, whose identity is what proves the evasion-only line is real and not merely asserted. Added STUDY_DB[Iroas] with 5 traps authored against ALL TEN Gatherer rulings fetched verbatim, two of them direct quotations; the first reverses how the deck is normally built — 'The abilities of Gods function as long as they're on the battlefield, regardless of whether they're creatures', so menace and the prevention are live at ANY devotion and reaching seven only buys a 7/4 body. RENDERING SAFETY PROVED BY DIFF: script blocks 0–4 BYTE-IDENTICAL, so the mobile viewport/keyboard IIFE was provably never touched; non-script bytes 193,995 -> 193,995 IDENTICAL, so no CSS, markup or layout changed; archetype-tile 12, ROSTER 14, visualViewport 8, SPOILERS_V2 9, html/body/script 2/2/6 all held. node --check PASS 6/6; all four asserts return []; boots at ATOMS 86 / RAILS 67 / ARCHETYPES 96 / BLENDS 46 unchanged (no atom, family or archetype added — this run only widened one gate and added one fold) and STUDY_DB 162 -> 163. STALENESS GUARD PASSED for the first time in six builds: live index.html read via jsdelivr returned v7.71 · 2026-08-06, local v7.73 — local ahead, safe. Build identity SYNCED: meta == console banner == CHANGELOG[0].build == v7.74. Backup index-backup-20260807-0110-preStudy.html; git untouched; ORACLE INDEX only; build tag bumped LAST."},
     {"build": "v7.73", "date": "2026-08-07", "focus": "verify", "commander": "Gonti, Lord of Luxury", "summary": "VERIFY Gonti, Lord of Luxury — v7.72 SPLIT THE ATOM AND LEFT THE DEAD SHELF STANDING. v7.72 taught the atom layer to tell IMPULSE (exile the top of YOUR library and play it) from THEFT (exile from an OPPONENT'S zone and cast it), then deliberately let BOTH atoms fire on a thief so that 'nothing is taken away'. Reading Gonti's rendered report card-by-card shows what that reasoning cost: the exile-play family's ENABLER rail is `o:\"exile the top\" (o:play OR o:cast)` — cards that exile the top of YOUR OWN library — and a commander whose every exile-and-play clause points at somebody else's library can neither trigger those cards nor be triggered by them. Light Up the Stage does not interact with Gonti's ETB in any way, and the shelf was being dealt ABOVE five generic shelves. THE OTHER HALF OF THE FAMILY IS NOT DEAD AND IS DELIBERATELY LEFT ALONE, which is why this is a RAIL-level split and not an atom-level veto: 'Cast-from-Exile Payoffs' pays on the CAST, and casting a card you stole out of an opponent's library IS casting a spell from exile — Prosper's own Treasure trigger fires on Gonti's stolen card. The atom, the chip and the game plan all stay exactly where v7.72 put them (demote-never-drop, v7.33); only the inert shelf is gated. THE MECHANISM IS v7.00's, NOT A NEW ONE: RAILS.mill already proves one atom can serve two opposite readings of a shared verb through a per-rail `test`, mill having a DIRECTION (my library vs theirs) and exile-play an OWNER (my library vs theirs) — the same question asked of a different verb, and nothing was added to the rail runner. NEW SHARED READER `IMPULSE_SELF_SRC`/`IMPULSE_SELF_RE` + `impulseSelfRail()`, kept as a source string beside its theft sibling so any future detector can ask 'does this commander impulse off its OWN library?' without re-deriving it. Anchored on the TOP idiom — impulse is always off the top — so a same-sentence 'exile … then shuffle your library' cannot be mistaken for it. THE GATE IS WRITTEN AS 'NOT PURELY A THIEF' RATHER THAN 'IS AN IMPULSER' ON PURPOSE: a commander that pays off casting from exile but prints no impulse clause of its own still NEEDS the density shelf and must never lose it, so the shelf is withheld only from a commander that demonstrably steals AND demonstrably never touches its own library. MEASURED, NOT ASSERTED: old-vs-new over a 24-commander corpus, TWENTY-THREE of them fetched VERBATIM from mtg.wtf this run, comparing sections + rail QUERIES + traps + gamePlans + insight + verified + novel — 15 BYTE-IDENTICAL, 9 STRUCTURAL, and all 9 are pure-theft commanders losing exactly one shelf: GONTI, DAXOS OF MELETIS, GRENZO HAVOC RAISER, RAGAVAN NIMBLE PILFERER, RAMIREZ DEPIETRO PILLAGER, RENO AND RUDE, VAAN STREET THIEF, THE MAGIC BANDIT and PEP RAUCOUS RAIDER. Three of the nine — RAMIREZ, VAAN and PEP — GAIN a real shelf as the freed slot promotes one from under the section cap (Combat Triggers, Treasure Producers, Combat Triggers), so the change is a net gain and not only a subtraction. THE POINTED COUNTER-CASE IS THE SYMMETRIC WORDING, and it is what proves the reader reads the OWNER: 'exile the top card of EACH PLAYER'S library' takes YOUR top card too, so ETALI PRIMAL STORM, EVELYN THE COVETOUS, NASHI MOON SAGE'S SCION, NATHAN DRAKE TREASURE HUNTER and TIBALT COSMIC IMPOSTOR are all byte-identical and all correctly KEEP both halves. Every pure impulser is byte-identical: BREECHES EAGER PILLAGER, BELL BORCA, FALDORN, COMMANDER LIARA PORTYR, ERUTH TORMENTED PROPHET, GOLOS, DRAGONHAWK FATE'S TEMPEST, ANNIE FLASH, ATSUSHI, PAKO ARCANE RETRIEVER and PROSPER TOME-BOUND. Nine unrelated controls byte-identical: Krenko, Atraxa, Thalia, Talrand, Meren, Korvold, Sheoldred, Yarok, Prosper. SECOND FIX, THE PAIR v7.72 CREATED AND NEVER DESCRIBED: `BLENDS['Card Theft|Impulse & Exile']` added, because the two plans now co-occur on fifteen commanders and were being handed the generic 'no known conflict — count your slots' fallback; the new row says the true thing, that the PAYOFF half is shared and the ENABLER half is not. THIRD, THE STUDY'S OWN TRAPS RE-READ AGAINST THE CARD: all three v7.72 traps verify against Gonti fetched verbatim this run and his seven Gatherer rulings, and a FOURTH is added from the ruling the study did not spend — 'Gonti doesn't change WHEN you can cast the exiled card', so a stolen counterspell or sorcery sits in exile until YOUR main phase and is not the held-up answer players build toward. node --check PASS 6/6; assertRegexTermBudget / assertStudyKeys / assertStudyTrapCap / assertSelfSubjectExcl all []. Script blocks 1-4 BYTE-IDENTICAL (mobile viewport/keyboard IIFE provably untouched), non-script bytes 193,989 -> 193,989 with ZERO differing lines. Boots at RAILS 67 / ATOMS 86 / ARCHETYPES 96 / STUDY_DB 162 / CHANGELOG 358; archetype-tile 11, ROSTER 13, visualViewport 7, html/body/script 2/2/6. meta == console banner == CHANGELOG[0].build == v7.73. Backup index-backup-20260807-0035-preVerifyGonti.html; git untouched; build tag bumped LAST."},
     {"build": "v7.72", "date": "2026-08-07", "focus": "study", "commander": "Gonti, Lord of Luxury", "summary": "STUDY Gonti, Lord of Luxury — THE EXILE-PLAY FAMILY COULD READ THE ZONE BUT NOT THE OWNER, AND A WHOLE ARCHETYPE HAD NO SHELF ANYWHERE IN THE APP. v7.71 taught the pronoun arm to tell exile from graveyard. It still could not tell YOUR library from THEIRS, and Magic prints two different decks with the same verb: IMPULSE (exile the top of your own library and play it — Prosper, Bell Borca, Faldorn, Breeches, Klaw, Codie) and THEFT (exile from an opponent's zone and cast it — Gonti, Grenzo, Etali, Brainstealer Dragon, Arvinox, Black Cat, Sen Triplets, Xanathar, Wrexial). Both collapsed onto one chip, one plan ('out-card the table by playing everything from exile') and one lead shelf, so GONTI led with a self-impulse query that has nothing to do with his trigger, and the theft package his deck is made of — Praetor's Grasp, Grinning Totem, Court of Locthwain, Gix, Petty Larceny, Inside Information — could not be dealt by ANY of the app's 66 rail families. NEW `cardtheft` atom (w:8, one above exileplay) + RAILS.cardtheft + ARCHETYPES.cardtheft, all built from a shared THEFT_OWNER_SRC/THEFT_TAKE_SRC pair composed into one zero-width RegExp so the two halves stay independently readable. EVERY ARM MEASURED LIVE ON mtg.wtf AND TWO WERE REJECTED ON THE MEASUREMENT: `o:\"an opponent owns\"` looks like the payoff and is 10/14 BATTLE FOR ZENDIKAR PROCESSORS that BIN the stolen card, and a bare opponent-zone arm without a play/cast permission deals exile-only stax (Earwig Squad) and mill (Life's Finale). The payoff arms are written plural / spell-scoped so the one false positive in the ten-card `o:\"you don't own\"` census (Sentinel of Lost Lore, Adventure hate) is cut by construction. KEYED `cardtheft` BECAUSE `theft` ALREADY EXISTS and means PERMANENT theft (control-magic + sac outlet); the first draft silently overwrote it and the RAILS/ARCHETYPES counts staying at 66/95 is the only thing that caught it. Differential over a 49-commander corpus (12 fetched VERBATIM this run): 34 BYTE-IDENTICAL, 15 STRUCTURAL and all 15 are the theft family. ARVINOX, SEN TRIPLETS and XANATHAR went from an EMPTY game plan and zero archetype shelves to a real deck. Every impulse commander is untouched. Gonti also gains a STUDY_DB entry authored against his verbatim text and his two Gatherer rulings."},
     {"build": "v7.71", "date": "2026-08-06", "focus": "verify", "commander": "Prosper, Tome-Bound", "summary": "VERIFY Prosper, Tome-Bound \u2014 THE SELF-SUBJECT EXCLUSION, HOISTED OUT OF v7.70 AND SPENT AGAIN ON A DIFFERENT FAMILY, PLUS A ZONE-BLIND ATOM ARM THAT WAS HANDING A GRAVEYARD COMMANDER TWO EXILE SHELVES. Re-read v7.70's report card-by-card against live oracle data (mtg.wtf Scryfall-syntax search, the only live card channel any run has had in fourteen; Scryfall's own /cards/search and Chrome are both still unavailable). THE ncdrain SHELF v7.70 BUILT AUDITS CLEAN and the STUDY_DB entry audits clean against the VERBATIM card fetched again this run (\"Mystic Arcanum \u2014 At the beginning of your end step, exile the top card of your library. Until the end of your next turn, you may play that card. Pact Boon \u2014 Whenever you play a card from exile, create a Treasure token.\"), so the run went at the two shelves v7.70 explicitly recorded as UNVERIFIED. DEFECT 1 \u2014 THREE OF THE NINE CARDS ON `Cast-from-Exile Payoffs` WERE DEAD, AND THEY SORTED TO THE TOP. Measured: `o:\"card from exile\"` returns 7 cards in Prosper's identity and THREE of them pay nothing \u2014 ETERNAL SCOURGE (\"You may cast this card from exile\"), LUCIUS THE ETERNAL (\"return this card from exile to the battlefield\") and LUKKA, COPPERCOAT OUTCAST (grants exiled creature cards \"You may cast this card from exile\") \u2014 none of which triggers off casting from exile at all. THE ROOT CAUSE IS THE SAME DEFECT CLASS v7.70 FOUND ON ARTIFACTS, WHICH IS THE EVIDENCE IT IS A CLASS: Magic prints the same event words twice, once as a STANDING PAYOFF watching the event happen to any card the deck owns, and once as a card describing the event happening to ITSELF. Class (b) is disproportionately damaging because every rail is fetched order=edhrec and EDHREC rank is GLOBAL, so a self-recurring card popular for unrelated reasons (Eternal Scourge and Misthollow Griffin are Food Chain combo pieces) outranks the shelf's real cards \u2014 and these payoff pools are tiny, so the leak is not at position 40, it is at position 1. FIX: new module-scope `selfSubjectExcl()` declared beside TOKEN_MULT_VERB / DAMAGE_MIRROR_EXCL / NONCREATURE_ARISTOCRAT_Q, with a registry (SELF_SUBJECT_EXCL_CENSUS) and a boot-time contract guard `assertSelfSubjectExcl()` that refuses any phrase not naming the card as its own subject \u2014 because a generic phrase written into a NEGATED query would silently delete the shelf's real cards and the shelf would still look plausible. MEASURED ACROSS ALL COLOURS, NOT ARGUED: `o:\"this card from exile\" legal:commander` returns EXACTLY SIX cards in the entire format \u2014 Eternal Scourge, Misthollow Griffin, Torrent Elemental, Lucius the Eternal, Lukka and Monk Class \u2014 and NOT ONE is a cast-from-exile payoff, so the cut is surgical format-wide and not merely inside one identity. ETERNAL SCOURGE IS COLOURLESS, so it was leaking onto this shelf in EVERY colour identity in the app. AND IT COSTS THE REPORT NOTHING: Lukka and Monk Class both print \"exile the top\", so the `Impulse Draw` enabler rail one row above still deals them \u2014 they move to the correct shelf rather than leaving the report. Confirmed live: `o:\"card from exile\" -o:\"this card from exile\" id<=br` returns 4 (Klaw, Norin, Prosper, Visions of Phyrexia), Prosper is removed again by the app's own selfExcludeQ, so the shelf now deals SIX cards and every one is real (Klaw, Norin, Visions of Phyrexia, plus Kami of Celebration, Nalfeshnee and Passionate Archaeologist off the `o:\"spell from exile\"` arm, all three fetched verbatim). v7.70's inline artifact exclusion now routes through the same helper and its emitted string is BYTE-IDENTICAL, so every report already rendering `ncdrain` is unchanged \u2014 the point is one vocabulary with one contract, not a second opinion. DEFECT 2 \u2014 THE `exileplay` ATOM'S PRONOUN ARM WAS ZONE-BLIND. `you may (play|cast) (it|that|them|those|a spell)` is the impulse template's TAIL, where the pronoun refers back to whatever the sentence just exiled; written alone it names a PRONOUN and no ZONE, so it fired the whole exile family on commanders that cast the pronoun out of the GRAVEYARD. Measured over a 71-commander probe corpus the mislabel is EMRY, LURKER OF THE LOCH \u2014 \"Choose target artifact card in your graveyard. You may cast it this turn.\" \u2014 who never exiles anything and was nevertheless handed `Impulse Draw` and `Cast-from-Exile Payoffs` as her FIRST TWO shelves, evicting the artifact and graveyard rails her deck is actually made of. The arm now requires a preceding `exile`, which is correct by construction: a card with no exile anywhere in its text is not an exile-play card, whatever pronoun it uses. THE FIRST DRAFT OF THAT ARM USED `\\bexile\\b` AND THE CORPUS DIFFERENTIAL CAUGHT IT BEFORE IT SHIPPED: the word-boundary form DELETED THE WHOLE FAMILY FROM GRENZO, HAVOC RAIDER, who prints the conjugated \"Target opponent EXILES the top card of their library. You may play that card this turn.\" \u2014 which is also why the `exile the top` arm never matched him. The shipped stem is unbounded (`exile`), covering exiles/exiled/exiling; no other English word contains the stem. MEASURED, NOT ASSERTED: old-vs-new differential over a 71-commander corpus (1 VERBATIM, 70 labelled structural probes) comparing sections + rail QUERIES + traps + gamePlans + insight + verified + novel + chips + archetype \u2014 57 BYTE-IDENTICAL, 12 QUERY-ONLY (identical sections and identical non-section fields, the exclusion simply appended), 2 STRUCTURAL and both are the intended Emry fix. ZERO unintended structural changes anywhere. GENERALISES TO every commander in the app that renders the exile family, each verified query-only and section-identical: KLAW MASTER OF SOUND, KAMI OF CELEBRATION, ETALI PRIMAL STORM, GRENZO HAVOC RAIDER, NORIN SWIFT SURVIVALIST, FALDORN DREAD WOLF HERALD, BREECHES EAGER PILLAGER, BRAINSTEALER DRAGON, YUSRI FORTUNE'S FLAME, CODIE VOCIFEROUS CODEX and BELL BORCA SPECTRAL SERGEANT alongside PROSPER \u2014 and, because Eternal Scourge is colourless, the cut lands in every one of those identities. EMRY correctly LOSES the family (and, dropping below the ncdrain budget gate at the branch, correctly gains `Artifact & Token Drains`, a shelf her artifact family does want). COUNTER-CASE CONTROLS, byte-identical on every field: Thalia, Talrand, Baral, Atraxa, Meren, Krenko, Edgar Markov, Lathliss, Sheoldred, Purphoros, Sram, Titania PoA, Omnath Locus of Rage, The Ur-Dragon, Yarok, Marchesa, Shirei, Delney, Ashaya, Adeline, Teysa Karlov, Chatterfang, Jetmir, Kinnan, Muldrotha, Jhoira, Marneus Calgar, Breya, Peregrin Took, Korvold, Ognis, Kalain, Slobad, Malcolm, Daretti, Urza, Sai, Gyome, Osgir, Magda, Yawgmoth, Alesha, Syr Konrad, Prossh, Ghave, Chainer \u2014 and the POINTED set, seven GRAVEYARD-CAST commanders who correctly never fired the exile family before or after and prove the tightening did not simply narrow the atom by accident: Gisa and Geralf, Kess, Karador, Sedris, Araumi, Melek and Muldrotha. assertSelfSubjectExcl() returns [] (census: 2 phrases, both self-subject); assertRegexTermBudget(), assertStudyKeys() and assertStudyTrapCap() all return []. node --check PASS 6/6; boots clean at RAILS 66 / ATOMS 85 / STUDY_DB 161 / CHANGELOG 355 -> 356. meta == console banner == CHANGELOG[0].build == v7.71. Backup index-backup-20260806-1800-preVerifyProsper.html; mobile viewport/keyboard IIFE and roster pipeline untouched; git untouched; ORACLE INDEX only. STILL OWED: the `Impulse Draw` arms `keyword:foretell` and `keyword:plot` are on-theme for Prosper (both are exile-now-play-later and both trigger Pact Boon) but remain UNMEASURED for flood on a 184-card core pool; `o:\"cards from exile\"` and `o:\"land from exile\"` are still unmeasured and may be dead arms; and nothing here is RENDERED live \u2014 mtg.wtf verified the pools, Scryfall itself is still down, so the composed query has never been run against the API the app actually calls."},
