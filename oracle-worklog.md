@@ -4536,3 +4536,93 @@ Galvanizer) — same defect, different word class, deliberately left for its own
 node --check PASS 6/6; meta == banner == CHANGELOG[0] == v8.00 · 2026-08-07. Backup
 `index-backup-20260807-1630-preFixC035.html`. ORACLE INDEX only; **git untouched**; roster/tile
 pipeline and mobile IIFE untouched. Next run = **VERIFY** of C-019 on deployed v8.00.
+
+### v8.00 addendum — C-035 root-caused during the live verify: the "renderer freeze" is a hidden tab
+
+The v8.00 verify accidentally reproduced the C-035 symptom **with probes attached**.
+`Page.captureScreenshot` timed out at 30s ("renderer may be frozen"), clicks stopped working — and at
+that moment: **JS responded instantly**, `setTimeout` fired, **`requestAnimationFrame` fired 0 times
+in 6,000 ms**, and **`document.visibilityState === "hidden"` / `document.hidden === true`** (with
+`document.hasFocus() === true`) — the browser **window was minimised or fully occluded on the host**.
+
+A hidden document produces no frames, so `captureScreenshot` cannot complete (→ the 30s timeout), the
+rAF-scheduled re-render stops (→ clicks look dead), and JS keeps running (→ the "main thread stays
+alive, so it must be decode/raster" conclusion that both C-001 and C-035 drew). "A fresh load restored
+it instantly" fits as well — navigating re-activates the tab. It also happened on the **search grid,
+not Deck→Stats**, while Stats had already measured clean (243 nodes, 0 animations, **0 longtasks**,
+screenshot succeeding). **Every element of C-035's evidence is explained by tab visibility with
+nothing left over; suggested re-file: NOT A BUG — instrument artefact.**
+
+**Knock-on, stated carefully:** C-001's severity evidence is the *same instrument* (screenshot timeout
++ extension dropping offline), so it cannot support a claim about what a human sees and should be
+re-derived from `longtask`/frame-gap data. This does **not** retract C-001's v7.96 dormant-skeleton
+fix, which was verified by animation count, not screenshot timing. **The freeze family now needs a
+human-observed repro before any more code is changed for it.**
+
+**Live verify of the shipped fix, completed before the tab went hidden:** deployed **v8.00**, console
+**zero errors**, engine RAILS 74 / ATOMS 89 / STUDY_DB 171 / CHANGELOG 385. Krenko's rendered
+*Go-Wide Payoffs* shelf now reads Impact Tremors, Terror of the Peaks, Banner of Kinship, Purphoros,
+Warstorm Surge, Rising of the Day, **Castle Embereth**, Great Train Heist, Enduring Courage, Agate
+Instigator, Molten Gatekeeper, Witty Roastmaster, Eldrazi Monument, Battle Hymn — **14/14 pay a red
+Goblin board, Forsaken Monument gone from the shelf a user actually sees**, 147 → 144. All 16 rails
+render in the same order (Token Producers 14, Token Doublers 2, Goblin Anthems & Banners 14). Six
+unrelated controls reproduce Row 5's baselines exactly (Atraxa 9, Talrand 10, Meren 12, Muldrotha 10,
+Thalia 8, Prosper 10) and none carries a `Go-Wide Payoffs` rail. Publisher cosmetic note: the commit
+message says `build v8.0`; the file, banner and CHANGELOG all correctly say **v8.00**.
+
+---
+
+## 2026-08-07 · critique-fix **Row 8** — MODE **VERIFY** · **C-019 CLOSED** · deployed v8.00 · **no build shipped**
+
+**Pre-flight.** Local `<meta>` v8.00 · 2026-08-07 == live. Stronger than required: the **deployed file
+is BYTE-IDENTICAL to the working folder** — SHA-256 over a `cache:'no-store'` fetch inside the page
+matches the working-folder hash, both **2,972,608 bytes** (`last-modified` Fri 07 Aug 2026 21:16:36
+GMT) — so every source claim describes what users get. Backup
+`index-backup-20260807-1730-preVerifyC019.html`. Engine RAILS 74 / ATOMS 89 / STUDY_DB 171 /
+CHANGELOG 385. Git untouched; roster/tile pipeline and the mobile IIFE untouched (nothing edited).
+
+**C-019 re-reproduced in the RENDERED UI and gone.** Krenko's *Go-Wide Payoffs*: Impact Tremors,
+Terror of the Peaks, Banner of Kinship, Purphoros, Warstorm Surge, Rising of the Day, **Castle
+Embereth**, Great Train Heist, Enduring Courage, Agate Instigator, Molten Gatekeeper, Witty
+Roastmaster, Eldrazi Monument, Battle Hymn — **14/14 pay a red Goblin board**, Forsaken Monument gone
+from the rank-7 slot. Mono-white **Adeline** independently: 14/14 white payoffs, zero off-colour
+anthems. Eldrazi Monument surviving on both is the discrimination working — it pumps *creatures*, not
+*colorless creatures*.
+
+**The safety property proved at the PARSE level, not sampled.** The real hazard with an appended
+` (X OR Y)` is precedence: Scryfall binds AND tighter than OR, so a **top-level** OR in the base query
+would leave the fence bound to the last arm only. Walking the composed query with a paren-depth counter
+that skips regex literals gives **depth-0 OR count = 0** — every disjunction is inside one top-level
+group. The fence is therefore a strict conjunction over the whole rail, the fenced pool is a strict
+**subset**, and **no card can be ADDED to any rail anywhere in the app** as a consequence of the
+grammar. No-op where the rail is absent (Kozilek 8 sections, Jetmir 8).
+
+**Counter-case, full-pool `total_cards` (base with the fence sliced off vs fenced, on one build):**
+Krenko (R) 147→**144**, Adeline (W) 311→**307**, Rhys (GW) 487→**484**, Ghired (GRW) 653→**650**,
+Sai (U) 55→**55** with `colorless` correctly absent from his dead list. Every Row 7 number reproduced
+independently. **The over-removal check Row 7 did not run: HONOR OF THE PURE survives on mono-white
+Adeline** — same-colour anthems are kept by construction. Angel of Jubilation and Glass of the
+Guildpact survive (the `\b` boundary cases); Juniper Order Advocate is removed (a true hit). Crusade,
+Intangible Virtue and Anointed Procession measure **0 in the UNFENCED base too** — pre-existing
+absences, not fence hits, which is the difference between a counter-case and a coincidence.
+
+**Collateral: none.** Krenko's 16 sections render in order — Token Producers 14, Token Doublers 2,
+Anthems 14. Six unrelated controls reproduce baseline exactly (Atraxa 9, Talrand 10, Meren 12,
+Muldrotha 10, Thalia 8, Prosper 10), none carrying the rail; Atraxa also walked in the rendered UI from
+a cold load. **Zero console errors/warnings over two cold boots**; meta == banner == CHANGELOG[0] ==
+v8.00. Row 7's "15 vs 16 rails" wobble resolved in Row 7's favour — the early 15 was *Synergy Ramp*
+caught pre-hydration.
+
+**Two NEW findings raised, neither caused by v8.00, neither patched (Row 4 precedent).**
+**C-036 (MAJOR)** — switching commanders keeps the previous commander's rail **titles, subtitles and
+traps prose** while the cards underneath correctly refresh: Adeline's report renders section 0 as
+"**More Goblins**" over her Evasion Enablers, says "Goblin" 14 times, and carries Krenko's whole TRAPS
+block. Reproduced both directions, absent from a cold load of either commander alone; `buildEngineModel`
+is correct when called directly, so it is a stale render on the commander-change path. Not caused by
+v8.00 — that diff cannot touch screen state. **C-037 (MINOR)** — the C-019 defect class survives one
+shelf down: Krenko's *Goblin Anthems & Banners* (81 cards, no fence) still serves **Forsaken Monument**
+and **It That Heralds the End**, because the fence is scoped by `title === 'Go-Wide Payoffs'`.
+
+**Ship: nothing.** No file edited, so no `node --check`, no tag bump, no CHANGELOG entry — Row 6's
+precedent that a verify with nothing to finish should not mint a version. **Next run = FIX**, target
+order **C-036** → **C-037** / the Row 7 TYPE axis → C-013/C-018 → C-033 → C-002 → C-034.
