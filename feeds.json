@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-06T22:15:25.309Z",
+  "updated": "2026-08-07T01:15:13.277Z",
   "deals": [
     {
       "t": "Codex bundle target $104.99",
@@ -53,17 +53,17 @@
       "f": ""
     },
     {
-      "t": "[TRK] Federation Probe",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vgnvio/trk_federation_probe/",
-      "s": 0,
-      "c": 1785973251,
-      "f": ""
-    },
-    {
       "t": "[TRC] Ceti Eel",
       "u": "https://www.reddit.com/r/magicTCG/comments/1vgoign/trc_ceti_eel/",
       "s": 0,
       "c": 1785974888,
+      "f": ""
+    },
+    {
+      "t": "[TRK] Federation Probe",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vgnvio/trk_federation_probe/",
+      "s": 0,
+      "c": 1785973251,
       "f": ""
     },
     {
