@@ -4248,3 +4248,124 @@ The hourly publisher picked v7.96 up while this run was still open (live `<meta>
 **NEW FOR THE SITE-CRITIC.** (1) **C-008 follow-up quantified:** opening a Scouting Report runs **96 `.sk-img`/`.sk-line` shimmers at 2.65 Mpx/frame**, confirmed **transient** (`skImgRemaining → 0` after rails load) — same defect family as C-001, one component over, same one-line class of fix; deserves its own finding. (2) **C-003 re-confirmed broader:** dealing **Aristocrats** renders *"View all 360 +1/+1 Growth commanders →"* — the string is hardcoded in the shared footer so every school mislabels its own pool; still **deferred — owner-gated (roster/tile pipeline)**. (3) **C-031 re-confirmed on v7.96:** Continue Brewing reads *"e.g. Atraxa Superfriends"* for the Okaun deck. (4) **Environment note:** the automation tab is `hidden` even when focused, suspending rAF and IntersectionObserver — frame-timing claims are unmeasurable here; use `longtask` + forced-layout timing and drive with real input events.
 
 **NEXT RUN = FIX.** Recommended target is the critic's own #1 priority, the **copy-hygiene family C-026 / C-027 / C-028 / C-015** — one class (blurb keying + render-time stripping of dev-ledger text and raw query tokens), fixed at the blurb-render level rather than per commander. The FIX run's `srcSet`/`sizes` lead on the search grid stays recorded as a good follow-up, but copy hygiene outranks it as the stated #1 trust problem.
+
+---
+
+## v7.97 — 2026-08-07 · CRITIQUE-FIX (MODE **FIX**) · C-028 / C-026 / C-027 / C-015 · copy hygiene
+
+**PRE-FLIGHT.** Staleness guard **PASSED** (local `v7.96 · 2026-08-07` == live `v7.96 · 2026-08-07`,
+cache-busted). Backup `index-backup-20260807-1405-preFixCopyHygiene.html`. Git untouched. Last
+critique-fix row was a VERIFY (C-001 CLOSED) → this run is a **FIX**, on the critic's own stated #1
+priority, the copy-hygiene family.
+
+**REPRODUCED FIRST — AND ONE BLURB HELD THREE FINDINGS.** Sanwell's live v7.96 *Ways to Tap* blurb:
+"Sanwell triggers whenever it becomes tapped … repeatably **(v5.03 audit: dropped keyword:convoke …
+v7.13 re-measured and confirmed the drop)** — “whenever sanwell becomes tapped”**⎵**Crewing Vehicles
+and creature-tapping rocks/lands **tap Kilo without attacking — every tap is another proliferate**."
+That is C-027, C-028 and C-026 in a single sentence. C-015 reproduced on Krenko's Token Doublers.
+
+**ROOT CAUSE.** C-028 is a **punctuation bug in the blurb composer**, not a query leak: the quoted
+fragment is the commander's own normalised oracle text, and the snippet branch closed the quote with
+no terminator while the no-snippet branch ended `'.'` — so the rail sentence fused onto the evidence
+clause. C-026 / C-027 / C-015 are the same shape one level up: study-commander specifics and author's
+scoping notes left inside **shared family strings**, therefore asserted for every commander matched.
+
+**FIX — six sites, all copy, zero logic.** Composer `'”'` → `'”.'` (both branches); `selftap` rail
+blurb de-named off Kilo/proliferate; `selftap` atom's `(v5.03 audit: …)` build-log parenthetical
+removed (rationale already in the family comment); Voltron *Double the Strike* "NOT unblockable / NOT
+protection" rationale (which named atom and rail keys) demoted to a comment; Token Doublers' Ant-Man
+clause "for a commander whose counters BECOME tokens" dropped.
+
+**BLAST RADIUS — 1,225-commander EDHREC census, `buildEngineModel` 0 errors.** C-028 **1,044
+commanders (85.2%)**, 2,411 snippet blurbs; C-015 **163**; C-026 **7** + Sanwell; C-027 **7** and
+**2** (Squall, Raiyuu). **Safety proof for the 85% change: 0 of the 2,411 snippets end in `.`/`!`/`?`,
+so the appended stop can never double up** (50 end in an ellipsis → `…”.`, correct style).
+
+**COUNTER-CASES — CONTENT UNMOVED, AND THE DIFF PROVES IT.** Word-level diff vs backup: every changed
+byte is a `why` string, a comment, or one punctuation site — no `q`, no `test`, no weight, no
+ordering, so **no card can move on or off any shelf**. Kilo (the de-named family's own study
+commander) reads correctly and loses nothing; Krenko and Adeline gain a true doubler blurb; **Atraxa,
+Meren and Prosper differ by exactly one period and nothing else**; Sanwell's C-028 example is fixed
+verbatim ("— “exile the top”. Standing rewards…").
+
+**DEFERRED, NAMED NOT GLOSSED — the other half of C-027.** The "From the study ledger:" paragraph
+(`STUDY_DB.insight`): **50 of 175** entries contain engine internals (Krenko's names `P.tapActivated`).
+A render-time sentence-stripper was **built and rejected** — it creates dangling references
+(**Lathliss** → "Every one of them makes mana…" with the antecedent deleted; **Jhoira** left opening
+on a case that has been removed) and empties 6 of 175. The prose interleaves real EDH teaching with
+build history sentence by sentence, so no regex separates them. **Authored copy owned by the study
+lanes.** Logged `deferred — needs authored copy in STUDY_DB (50 entries)`.
+
+**SHIP CHECKS.** `node --check` **PASS 6/6** (re-run in a fresh temp dir after an earlier invocation
+silently reused stale extracts). Structure identical to backup: `<html>` 2/2, `<body>` 2/1, 6 script
+tags. Version triple in sync: `<meta>` `v7.97 · 2026-08-07` == console banner `ORACLE v7.97 ·
+2026-08-07` == `CHANGELOG[0].build` `v7.97`. Backup taken; **git untouched** — shipped by bumping the
+tag for the hourly publisher.
+
+**NEXT RUN = VERIFY** (`oracle-critique-fixes.md` Row 3): re-reproduce Sanwell's Ways to Tap and
+Krenko's Token Doublers live on v7.97, confirm all four are gone, then hunt collateral across the
+snippet-carrying majority (85% of reports touched) and 3+ unrelated commanders.
+
+**POST-PUBLISH LIVE CONFIRMATION (v7.97 deployed ~13:15 CDT).** Re-ran everything against the served
+page: Sanwell's Ways to Tap (the sentence that held C-026 + C-027 + C-028 at once) and his
+Cast-from-Exile Payoffs both read clean in the live DOM; Krenko's Token Doublers clause gone; Kilo
+(counter-case) reads correctly. **Full re-census on the deployed build: 1,225 commanders, 14,399
+rails, 2,411 snippet blurbs, 0 model errors, 0 residual defects on all five probes, 0 double full
+stops** — and the snippet-blurb count is **identical to the pre-fix census (2,411)**, independently
+confirming no rail gained or lost content. Herald, dossier, Scouting Report (13 blurbs + Game Plans +
+Engine Map + cards), Deck and Deck→Stats all render. **Zero console errors on two cache-busted boots.**
+**Environment note:** `Page.captureScreenshot` timed out twice on the Deck views, but the renderer was
+NOT frozen — JS answered in 0 ms with 0 long tasks, 0 animations, 0 shimmer and full Stats content in
+the DOM (C-001's signature was 148 shimmers / 10.73 Mpx per frame). That is the hidden-tab compositor
+suspension the C-001 VERIFY run flagged; judge renderer health with JS probes here, not screenshots.
+
+---
+
+## v7.98 — 2026-08-07 · CRITIQUE-FIX lane, MODE **VERIFY** (Row 4) · copy hygiene
+
+**Verified v7.97 and closed three findings; finished a fourth that had been recorded as complete.**
+
+Staleness guard passed (local v7.97 == live v7.97), backup
+`index-backup-20260807-1435-preVerifyCopyHygiene.html`, git untouched. Before measuring anything, the
+deployed file was hashed against the working folder — **2,947,957 bytes, SHA-256 `f82e53d6…`,
+byte-identical** — so source-level claims describe what users actually get.
+
+**CLOSED: C-026, C-015, C-028.** Each was re-reproduced by hand through the real UI first (search →
+dossier → Consult the Oracle), not just modelled. Sanwell's Ways to Tap — the sentence that carried
+three findings — now reads "…tap your commander on your own terms — every tap re-fires the trigger
+without sending it into combat", with the evidence clause terminated. Krenko's Token Doublers no
+longer claims his counters become tokens. An independent 1,225-commander census through the deployed
+`buildEngineModel` reproduced v7.97's own numbers exactly (14,399 rails, 2,411 snippet blurbs,
+0 errors) and returned **0** for every defect signature. The regression check that mattered for an
+85%-of-corpus punctuation change: `[.!?]”.` occurs **0** times in all 2,411 snippet blurbs — the fix
+provably cannot double-punctuate. Content proof re-derived independently: **407/407 queries, 57 tests,
+104 weights, 345 roles, 452 titles, 277 keys byte-identical**; exactly 4 of 365 `why` strings changed.
+No card can move on or off any shelf.
+
+**C-027 finished (this build).** v7.97 recorded its `why`-half as closed; sweeping all 365 `why`
+strings for the defect *class* rather than the two known instances showed it was not. Two more
+author's-notes-about-the-query were still being read by users — "The token/counter qualifier keeps
+rival “twice that many” doublers (Bruvac mills) out" (**163** commanders, sitting inside the very
+string the C-015 fix edited) and "name-anchored (~) … stop leaking in" (**41**), where `~` is raw
+Scryfall syntax. Both demoted to code comments; queries byte-identical, both replacements checked
+well-formed across all 204 affected commanders. Two "rail"-flavoured blurbs were left alone on
+purpose — ENABLER/PAYOFF is vocabulary the UI shows the user, and rewriting them would be taste
+rather than hygiene. The STUDY_DB "From the study ledger:" half remains deferred (authored copy,
+50 of 175 entries); confirmed still rendering on Krenko, which is expected, not a regression.
+
+**New finding C-034, raised not patched.** Agatha, Sam and Mutagen Man render a blurb ending `..` on
+two rails whose `why` strings already end in `.` while the composer appends another. Proven
+**pre-existing** — identical in the pre-fix backup, composer trailing-dot sites byte-identical across
+builds. Six rails of 14,399; the fix is a one-line guard, but a guard is logic at the exact site
+C-028 just changed, so it was left OPEN for a FIX run instead of bolted onto a verify.
+
+Collateral: Kilo (still names himself, correctly), Krenko, Adeline + unrelated Atraxa, Meren, Prosper
+all model clean; Search, Deck, Deck→Stats (Deck Doctor, Known Combos, curve, ~1 s), My Decks all
+render; **two cache-busted boots, zero console errors**. `node --check` **6/6** on extracts taken in a
+fresh `mktemp` dir — the first attempt's `rm -rf` failed on permissions and passed the *previous*
+run's stale files, the same trap Row 3 flagged. Version triple in sync at v7.98.
+
+**Environment note, unchanged:** `Page.captureScreenshot` timed out again on the Deck view. Not a
+freeze — JS answered in **3 ms** with 0 long tasks, 0 running animations, 0 shimmer,
+`visibilityState: "hidden"`. C-001's signature was 148 shimmers. Judge renderer health with JS probes
+here, never screenshots.
