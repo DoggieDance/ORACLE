@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v7.85 · 2026-08-07">
+<meta name="oracle-build" content="v7.87 · 2026-08-07">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1762,7 +1762,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v7.85 \u00B7 2026-08-07', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v7.87 \u00B7 2026-08-07', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -5790,6 +5790,17 @@ function pipDensityQ(ciArr) {
     if (!cs.length) return null;
     return '(' + cs.map(c => 'm:{' + c + '}{' + c + '}').join(' OR ') + ')';
 }
+// v7.86 (Tom Bombadil STUDY 2026-08-07) — the two halves of the CONDITIONAL-KEYWORD read used by
+// the third `oSelf` strip in extractAtoms. Kept as named module-level constants for the same
+// reason SELF_TAX_RE and ANTHEM_RE are: the sentence scope and the exception are two separate
+// claims about English and a future caller must be able to see both at once.
+// COND_SENTENCE_RE is ONE SENTENCE carrying the words "as long as" — `[^.]*` on both sides can
+// only reach back to the previous period and forward to the next one, so it can never swallow a
+// neighbouring line that states a keyword unconditionally.
+const COND_SENTENCE_RE = /[^.]*\bas long as\b[^.]*\./g;
+// COND_TEMPORAL_RE is the condition the PASSAGE OF TIME satisfies. Nothing is assembled, so the
+// sentence is kept and the keyword still counts.
+const COND_TEMPORAL_RE = /\bas long as it's (?:not )?your turn\b/;
 function extractAtoms(card) {
     if (!card) return [];
     // v7.34 — was a blanket `.replace(/\([^)]*\)/g,' ')`, which deleted the rules text of every
@@ -6054,7 +6065,39 @@ function extractAtoms(card) {
     //     Toski — keyword is in kws) is unaffected: those fire via the kws branch below.
     const oSelf = o
         .replace(/(other )?(creatures|planeswalkers|permanents|\w+s) you control (have|gain|get)[^.]*\./g, ' ')
-        .replace(/\b(?:gains?|gets?|have|has)\b[^.]*?until (?:end of turn|your next turn|the end of your next turn|end of combat)/g, ' ');
+        .replace(/\b(?:gains?|gets?|have|has)\b[^.]*?until (?:end of turn|your next turn|the end of your next turn|end of combat)/g, ' ')
+        // v7.86 (Tom Bombadil STUDY 2026-08-07) — (3) CONDITIONAL protection. Strips (1) and (2)
+        // above already remove the keyword a commander hands its TEAM and the keyword it hands
+        // ITSELF only UNTIL END OF TURN. This is the third and last shape in that series, and it
+        // is the one the Voltron contract actually turns on: a keyword the commander does not
+        // HAVE until the deck has first ASSEMBLED something. "As long as there are four or more
+        // lore counters among Sagas you control, Tom Bombadil has hexproof and indestructible"
+        // is not a protected attacker, it is a REWARD for finishing the engine — the deck spends
+        // its whole game reaching the condition, and reads Voltron rails the entire way there.
+        // MEASURED live this run over the exact population that can move: Scryfall
+        // `is:commander legal:commander -keyword:hexproof -keyword:indestructible -keyword:shroud
+        // -keyword:"double strike" o:"as long as" (o:hexproof OR o:indestructible OR o:shroud OR
+        // o:"double strike")` = 35 commanders, of which the SHIPPED extractAtoms pushes
+        // ATOM_VOLTRON on exactly TEN: TOM BOMBADIL, the whole MYOJIN cycle (OF LIFE'S WEB, OF
+        // NIGHT'S REACH, OF SEEING WINDS, OF CLEANSING FIRE, OF INFINITE RAGE), DOCTOR DOOM,
+        // DOC OCK, MAARIKA and RAYAMI. The five Myojin are the sharpest case in the format: each
+        // reads "has indestructible as long as it has a divinity counter on it", and the divinity
+        // counter arrives ONCE, from hand, and is REMOVED to fire the Myojin's one huge ability —
+        // so the shield is a self-consuming fuse on a one-shot bomb, and MYOJIN OF SEEING WINDS
+        // fires only `countersgen` besides, which made the phantom HALF her report.
+        // THE TEMPORAL EXCEPTION IS PART OF THE RULE, NOT A CARVE-OUT. A condition the TURN alone
+        // satisfies is not something the deck assembles — on the only turn that matters, yours,
+        // when you attack, the keyword is simply on. MAARIKA, BRUTAL GLADIATOR ("As long as it's
+        // your turn, Maarika has indestructible", beside a sacrifice-fuelled pump) is the one
+        // commander in the ten that shape describes, and she KEEPS Voltron. RAYAMI also keeps it,
+        // correctly and by construction: his keyword sentence ("The same is true for first
+        // strike, double strike, … hexproof, indestructible …") carries no condition of its own,
+        // and inheriting a pile of keywords onto one body IS the Voltron read.
+        // STRUCTURALLY INCAPABLE OF TOUCHING A REAL VOLTRON COMMANDER: this string feeds ONLY the
+        // `!kws.length && voltronRe.test(oSelf)` branch below, so any commander that PRINTS a
+        // static keyword (SIGARDA, TOSKI, ZURGO) reaches Voltron through the `kws` branch and
+        // never reads `oSelf` at all.
+        .replace(COND_SENTENCE_RE, m => COND_TEMPORAL_RE.test(m) ? m : ' ');
     // INCIDENTAL-INDESTRUCTIBLE (GOD) GUARD (Kruphix, God of Horizons study): a God's printed
     // static "indestructible" is a devotion-gated DURABILITY keyword (Theros/Amonkhet Gods stay
     // alive so their devotion engine survives) — NOT a Voltron identity. On its own it must never
@@ -6139,6 +6182,30 @@ function extractAtoms(card) {
     if (tapNonManaEngine(o) && !tapEngineSuperseded(o)) {
         found.push({ atom: ATOM_TAPENGINE, snippet: '' });
     }
+    // v7.86 (Tom Bombadil STUDY 2026-08-07) — A SAGA IS AN ENCHANTMENT. This is a RULES FACT
+    // (CR 205.2a: Saga is an enchantment subtype), not a synergy opinion, and the engine was not
+    // reading it: `sagas` and `enchantments` are two independent entries in the ATOMS array whose
+    // tests share no vocabulary — `enchantments` fires on the bare word /enchantment/, and a Saga
+    // commander can print an entire engine without ever typing it. TOM BOMBADIL is the proof:
+    // his text says "Sagas", "lore counters" and "final chapter ability" and NOT ONCE the word
+    // "enchantment", so a WUBRG commander whose EDHREC #2 theme is ENCHANTRESS (1,278 decks,
+    // second only to Sagas at 3,056, fetched live this run) fired no enchantment atom at all and
+    // could not be dealt SANCTUM WEAVER, JUKAI NATURALIST, SETESSAN CHAMPION or ENCHANTRESS'S
+    // PRESENCE — his own EDHREC Top Cards — by any shelf in the app.
+    // ADMITTING THE ATOM IS THE WHOLE FIX, and it is deliberately preferred to writing an
+    // enchantress rail into RAILS.sagas: RAILS.enchantments ALREADY deals exactly those two
+    // shelves (Enchantment Ramp & Density / Constellation & Enchantment Payoffs), and shipping a
+    // second copy of a shelf under a new title is the duplication defect v6.94 removed from the
+    // exalted family. One push, no new query, no new shelf.
+    // PURELY ADDITIVE AND SORT-SAFE: `enchantments` is w2 and `sagas` is w6, so the Saga read
+    // still LEADS every commander it fires on and the enchantment read lands behind it — which
+    // is EDHREC's own order for this family. Inert for the two Saga commanders that already fire
+    // it (SATSUKI THE LIVING LORE, NARCI FABLE SINGER, both of whom print the word), and no atom
+    // in the file lists 'enchantments' in a `sup` array, so the push can suppress nothing.
+    if (found.some(f => f.atom.key === 'sagas') && !found.some(f => f.atom.key === 'enchantments')) {
+        const enchAtom = ATOMS.filter(a => a.key === 'enchantments')[0];
+        if (enchAtom) found.push({ atom: enchAtom, snippet: '' });
+    }
     const have = {};
     found.forEach(f => { have[f.atom.key] = 1; });
     // v7.49 (Sheoldred study) — CONDITIONAL SUPPRESSION. `sup` was an unconditional veto: atom A
@@ -6174,6 +6241,18 @@ function trimSnippet(s) {
 }
 // Distilled from COMMANDER_STUDY_LEDGER.json (56 verified teardowns)
 const STUDY_DB = {
+    // v7.86 (Tom Bombadil STUDY 2026-08-07) — authored against the card and ALL THREE of its
+    // Gatherer rulings, fetched VERBATIM this run from the Scryfall rulings endpoint.
+    "89a2d5bc-df06-47e8-8b4a-6d1f0a63c78d": {
+        insight: "Tom Bombadil is a WUBRG 5-drop whose two lines point in opposite directions, and reading them as one card is the whole deckbuilding problem. The bottom line is the engine: whenever the FINAL chapter of a Saga you control finishes resolving, you dig until you hit a Saga card and put it onto the battlefield free. The top line is the reward: at four or more lore counters among Sagas you control he has hexproof and indestructible. Builders read the top line first and reach for Voltron — EDHREC has him at Sagas 3,056 decks and Enchantress 1,278, and VOLTRON at 23, behind seventeen other themes — because the protection is not a plan, it is what happens once the plan is already working, and it is ANTI-CORRELATED with the engine firing: the final chapter that gets you a free Saga is also the chapter that SACRIFICES that Saga, taking its lore counters with it. The deck is therefore built like an enchantress deck that happens to win: a Saga is an enchantment, so every Saga in the deck is also a draw trigger for Enchantress\u2019s Presence, Setessan Champion, Sythis and Eidolon of Blossoms, and it is a mana trigger for Sanctum Weaver and a discount for Jukai Naturalist — which is why his own EDHREC Top Cards are Sanctum Weaver, Jukai Naturalist, Setessan Champion and Historian\u2019s Boon rather than a single piece of equipment. The other half nobody builds is CHAPTER SPEED: a Saga advances by lore counter, and proliferate puts one on EVERY Saga you control at once, so Karn\u2019s Bastion, Evolution Sage, Flux Channeler and Inexorable Tide are not counters cards here, they are the fastest way to reach four counters AND to reach final chapters, which are the two things his card actually asks for. Run twelve to eighteen Sagas, not four.",
+        traps: [
+            "HIS OWN ENGINE TURNS OFF HIS OWN SHIELD, and the ruling is explicit about how badly. Gatherer: \u201CIf you control Tom Bombadil with at least 4 damage on it as well as a single Saga which has four or more lore counters on it, and that Saga leaves the battlefield later in the turn, Tom Bombadil will be destroyed. This will be true even if that Saga leaves the battlefield as a result of its final chapter ability leaving the stack; state-based actions will be checked before Tom Bombadil\u2019s triggered ability could get you another Saga.\u201D The counters are counted ACROSS Sagas, so a board of several part-read Sagas is a far more stable four than one Saga sitting on chapter IV, and blocking with him on a turn you are about to cash a final chapter is how he dies.",
+            "THE TRIGGER IS ONCE EACH TURN, PRINTED ON THE CARD, so stacking final chapters into one big turn is worth nothing. Two Sagas finishing on the same turn get you ONE free Saga, not two. This inverts the usual instinct: cards that make Sagas finish FASTER all at once (a pile of proliferate in one turn) are worse than a board that finishes ONE Saga per turn for six turns, and it is the reason read-ahead and lore-counter removal (Garnet, Satsuki) are about SPREADING chapters across turns rather than bunching them.",
+            "THE FREE SAGA IS PUT ONTO THE BATTLEFIELD, NOT CAST, so every \u201Cwhenever you CAST an enchantment\u201D payoff misses it. Build the enchantress half on ENTERS wording — Enchantress\u2019s Presence, Setessan Champion, Eidolon of Blossoms, Archon of Sun\u2019s Grace, Historian\u2019s Boon all read \u201Center\u201D and all trigger; cast-triggers such as the cost-reducer half of the shelf do not. It also means the hit is a SAGA CARD from your library only: if the library holds no Saga you reveal your whole deck and get nothing, which is the real reason the count wants to be twelve or more.",
+            "\u201CFINAL CHAPTER\u201D IS DEFINED BY THE SAGA, NOT BY THE NUMBER FOUR. Gatherer: \u201CThe final chapter ability of a Saga is the ability with the greatest chapter number among chapter abilities that Saga has.\u201D A three-chapter Saga finishes on III and a two-chapter one on II, so CHEAP short Sagas are the engine\u2019s fuel and expensive four-chapter ones are its payload \u2014 a deck of nothing but big Sagas triggers him half as often as a curve that includes two- and three-chapter cards.",
+            "HE SEES A SAGA THAT BRINGS HIM BACK. Gatherer: \u201Cif Tom Bombadil is returned to the battlefield by the final chapter ability of Elspeth Conquers Death, it will be on the battlefield in time to see that final chapter ability finish resolving, and thus Tom Bombadil\u2019s last ability will trigger.\u201D Sagas whose last chapter REBUILDS the board (Elspeth Conquers Death, The Eldest Reborn, Binding the Old Gods) are therefore strictly better here than their raw rate suggests \u2014 they answer the removal that killed him AND pay him the trigger on the way back."
+        ]
+    },
     // v7.80 (The Pride of Hull Clade STUDY 2026-08-07) — authored against the card and ALL SIX of
     // its Gatherer rulings, fetched VERBATIM this run from Scryfall (card bbd7b756-…/rulings).
     // Chosen as the STUDY subject because she is the sharpest failure the defenders/toughness
@@ -8540,6 +8619,67 @@ const RAILS = {
     // a payoff commander like Sythis the enabler (fuel) rail leads. Queries live-QA'd
     // EDHREC-sorted in GW: ramp → Wild Growth/Enduring Vitality/Mirari's Wake/Fertile
     // Ground; payoff → Eidolon of Blossoms/Setessan Champion/Archon of Sun's Grace.
+    // ─────────────────────────────────────────────────────────────────────────────────────
+    // v7.86 (Tom Bombadil STUDY 2026-08-07) — THE SAGA ARCHETYPE HAD NO RAIL FAMILY.
+    // `sagas` is a w6 atom, which means it LEADS every commander it fires on, but RAILS carried
+    // no entry for it — so the family fell through to the atom's own `q` and EVERY Saga commander
+    // in the format got ONE undifferentiated pile of `t:saga` and nothing else.
+    // MEASURED live this run (Scryfall `is:commander legal:commander` against the atom's own
+    // test vocabulary): SEVEN commanders fire it — TOM BOMBADIL (WUBRG), SATSUKI, THE LIVING
+    // LORE (GW), NARCI, FABLE SINGER (BGW), GARNET, PRINCESS OF ALEXANDRIA (GW), SIGURD, JARL OF
+    // RAVENSTHORPE (RGW), CHONG AND LILY, NOMADS (R) and BARBARA WRIGHT (W) — and BARBARA WRIGHT
+    // fires `sagas` AND NOTHING ELSE, so that single pile plus the generic fallback shelves was
+    // her ENTIRE report.
+    // TWO RAILS, and deliberately not three: the enchantress half of a Saga deck is served by
+    // admitting the `enchantments` atom (see the push in extractAtoms), so it is NOT re-written
+    // here under a second set of titles.
+    // RAIL 1 IS THE OLD PILE, UNCHANGED IN POOL. `t:saga` is byte-identical to what the atom's
+    // fallback `q` was dealing, so no Saga commander loses a single card it can see today; it
+    // gains a role, a sub and a `why`, and a second shelf beside it.
+    // RAIL 2 IS THE HALF NOTHING IN THE APP COULD REACH. A Saga advances by LORE COUNTER, and
+    // PROLIFERATE puts one on EVERY Saga you control at once — the single most efficient thing a
+    // Saga deck can do, and a shelf no query in the file was pointed at. MEASURED in this run's
+    // identities: WUBRG 106 cards, GW 48, mono-W 22, mono-R 16, so every member of the family
+    // gets a live shelf, and the EDHREC-sorted top of the WUBRG pool is KARN'S BASTION, EVOLUTION
+    // SAGE, THRUMMINGBIRD, TEZZERET'S GAMBIT, INEXOROBLE TIDE, FLUX CHANNELER, CONTAGION CLASP,
+    // CONTAGION ENGINE, GRATEFUL APPARITION — the canonical proliferate suite, ZERO leak, every
+    // one of which reads "put another +1/+1 counter, … or lore counter" and advances a chapter.
+    // THE SECOND ARM IS NOT REDUNDANT WITH THE FIRST: `o:"lore counter"` reaches the cards that
+    // MOVE lore counters rather than adding them generically — SATSUKI, THE LIVING LORE (tap: a
+    // lore counter on EACH Saga), GARNET, PRINCESS OF ALEXANDRIA (remove them to re-run a
+    // chapter) and CLASH OF THE EIKONS — which is why the shelf is honest for BOTH directions the
+    // family is built in, the accelerators and the resetters. `-t:saga` keeps rail 1's own pool
+    // out of rail 2, so the two shelves are disjoint by construction.
+    // NO REGEX TERMS: both queries are plain `t:` / `o:` phrases, so assertRegexTermBudget is
+    // untouched.
+    sagas: {
+        eTest: /saga cards?|put[^.]{0,60}\bsagas?\b onto the battlefield|create[^.]{0,40}saga/,
+        pTest: /final chapter|chapter abilit|lore counters? (?:among|on)|whenever[^.]{0,60}\bsagas? you control\b/,
+        rails: [
+            // v7.87 — THE GATE (see frontFaceType/railGate). `t:saga` searches EVERY face, and the
+            // pool it returns is over-inclusive by exactly the DFCs whose BACK face is the Saga:
+            // the four Phyrexian praetors (Urabrask // The Great Work, Sheoldred // The True
+            // Scriptures, Vorinclex // The Grand Evolution, Jin-Gitaxias // The Great Synthesis),
+            // Elesh Norn // The Argent Etchings, and the Final Fantasy Dominants (Clive, Joshua,
+            // Dion, Jill, Jecht, Terra) — cards that are LEGENDARY CREATURES in the library and
+            // only become Sagas after the creature half has died. That is not a preference:
+            // TOM BOMBADIL's own trigger reads "reveal cards from the top of your library until
+            // you reveal a SAGA CARD", and by CR 712.4a a transforming DFC in the library has only
+            // its front face's characteristics — so his engine CANNOT find a single one of them.
+            // The same is true one step over for every other member of the family: SATSUKI puts a
+            // lore counter on each Saga she controls and GARNET removes them, and a praetor sitting
+            // in the command zone of a library as a 4/4 creature has no lore counters to move.
+            // MEASURED LIVE AGAINST EDHREC: all seven back-face Sagas that reach Tom's shelf are
+            // ABSENT from ALL THIRTEEN of his EDHREC card lists — they are not merely mis-sorted,
+            // they are not played. The gate is a STRICT SUBTRACTION and it starves nothing: the
+            // pool goes 215 -> 201 (WUBRG), 120 -> 111 (RGW), 117 -> 110 (BGW), 79 -> 74 (GW),
+            // 43 -> 40 (mono-W), 34 -> 32 (mono-R), so all seven commanders still deal a full 30.
+            // It is one-directional and self-neutralising: a rail whose page holds no hidden-back
+            // DFC gets the SAME ARRAY back by object identity.
+            { role: 'enabler', title: 'Sagas Worth Reading', sub: 'The chapters themselves', gate: frontFaceType('Saga'), q: 't:saga', why: 'the deck IS its Sagas — a Saga is a sorcery that fires three times for one card, so density is the engine and the good ones (Fable of the Mirror-Breaker, The Akroan War, Elspeth Conquers Death, Binding the Old Gods) each pay for themselves before the final chapter sacrifices them' },
+            { role: 'amplifier', title: 'Chapter Accelerators', sub: 'Advance every Saga at once', q: '((o:proliferate OR o:"lore counter") -t:saga)', why: 'proliferate puts a lore counter on EVERY Saga you control at once, so one Karn’s Bastion activation advances the whole board a chapter — and the same shelf holds the cards that move lore counters by hand (Satsuki adds one to each Saga, Garnet takes them off to re-read a chapter)' }
+        ]
+    },
     enchantments: {
         eTest: /search[^.]{0,40}enchantment|enchantment cards? (in|from) your graveyard|return[^.]{0,30}enchantment (card|spell)|create[^.]{0,30}enchantment token/,
         pTest: /whenever you cast (?:a|an|your first|another)[^.]{0,24}enchantment|constellation|for each enchantment|enchantments? you control|enchantment creatures? you control/,
@@ -8920,6 +9060,12 @@ const ARCHETYPES = {
     wheels: { name: 'Wheels', win: 'force the whole table to draw and discard, then punish every extra card with symmetric damage and drain while you refill fastest' }
 };
 const BLENDS = {
+    // v7.86 (Tom Bombadil STUDY 2026-08-07) — the pair this run created. Admitting the
+    // `enchantments` atom for every Saga commander (see extractAtoms) makes 'Sagas & Chapters'
+    // + 'Enchantress' the most common plan pair in the family — five of the seven members now
+    // read it — and the generic fallback ('no known conflict — count your slots') was the only
+    // thing they were being told about the strongest overlap in the archetype.
+    'Sagas & Chapters|Enchantress': ['great', 'they are the same card twice — a Saga IS an enchantment, so every Saga you resolve also trips Enchantress\u2019s Presence, Setessan Champion and Sanctum Weaver, and the enchantress half pays for the chapter half rather than competing with it for slots'],
     // v7.73 (Gonti VERIFY) \u2014 the pair v7.72 created and left undescribed. `cardtheft` and
     // `exileplay` now co-occur on every commander that exiles out of a library and casts what it
     // finds, and the generic fallback ("no known conflict \u2014 count your slots") was the only thing
@@ -9306,6 +9452,69 @@ function railLeadFirst(cards, lead) {
         return false;
     });
 }
+// ---------------------------------------------------------------------------------------------
+// v7.87 (Tom Bombadil VERIFY) — `gate`: THE THIRD AND LAST MEMBER OF A RAIL'S QUERY TOOLKIT, and
+// the post-fetch predicate the hand-off has been asking for since the `-is:transform` item.
+//
+// A rail already says WHAT TO FETCH (`q`, v7.14 a function) and WHAT TO SHOW FIRST (`lead`, v7.17
+// a subtype / v7.19 a predicate). The one thing it could not say is WHAT TO KEEP — and there is a
+// whole class of wrongness that only a post-fetch read can express, because Scryfall's syntax
+// cannot express it at all.
+//
+// THE GENERAL FACT, and it is a RULES fact rather than a synergy opinion: CR 712.4a — while a
+// transforming double-faced card is anywhere EXCEPT the battlefield, it has ONLY the
+// characteristics of its FRONT face. Scryfall's `t:` searches EVERY face. So a rail whose pool is
+// defined by a card TYPE is over-inclusive by exactly the set of DFCs whose BACK face carries the
+// type and whose front face does not — cards that are not the shelf's subject in the library, in
+// hand, in the graveyard, or on the stack, and only become it after the front half has already
+// done something else and left.
+//
+// `gate` is OPTIONAL and DEFENSIVE, so the mechanism is inert by construction: a rail that sets
+// none is byte-identical, and a gate that throws or returns undefined KEEPS the card. It can only
+// ever remove, never add and never reorder, so it composes with `lead` (which runs after it) and
+// with the v7.42 scarcity reclaim (whose `poolOf` is corrected below by exactly the number the
+// gate removed from the page — the count is measured, not estimated).
+//
+// DELIBERATELY NOT APPLIED TO THE TRIBAL RAILS, and the measurement is the reason. Over 14 tribes
+// live (EDHREC-sorted): sliver 0 back-face-only members, elf 0, zombie 1, dragon 5, angel 2,
+// goblin 3 — and the only two that reach a top 30 at all are FABLE OF THE MIRROR-BREAKER in
+// Goblins and SEPHIROTH, FABLED SOLDIER in Angels, BOTH of which are real tribal cards a Goblin or
+// Angel deck genuinely wants. The Saga case is not the tribal case: a transformed praetor IS a
+// full Angel/Goblin on the battlefield where the lords live, but a Saga's whole function is a
+// CHAPTER CLOCK that only ever runs while the card is on the battlefield AS a Saga — so for the
+// tribes the gate would be a false drop and for the Sagas it is the shelf's definition.
+const RAIL_HIDDEN_BACK_RE = /^(?:transform|modal_dfc|reversible_card|meld)$/;
+// SPLIT, ADVENTURE and FLIP are deliberately OUTSIDE that set and each for a rules reason: a split
+// card has BOTH sets of characteristics in every zone (CR 709.4), and an adventure/flip card's
+// `card_faces[0]` is already the half the card is everywhere but the stack (CR 715.3) — so their
+// top-level `type_line` is the honest answer and gating them would be a false drop.
+function frontFaceType(word) {
+    const re = new RegExp('\\b' + String(word).toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b');
+    return function (c) {
+        if (!c) return true;
+        const faces = c.card_faces;
+        if (RAIL_HIDDEN_BACK_RE.test(String(c.layout || '')) && Array.isArray(faces) && faces.length > 1) {
+            return re.test(String((faces[0] || {}).type_line || '').toLowerCase());
+        }
+        return true;
+    };
+}
+// Applied to the WHOLE fetched page BEFORE `lead` and BEFORE the cap, for the v7.17 reason: the
+// cards the gate promotes are not in the first 30 at all, so gating the cap would still deal the
+// same shelf. Returns the input array untouched when there is no gate or nothing to remove, so a
+// gate-less rail is identical by object identity and not merely by value.
+function railGate(cards, gate) {
+    if (typeof gate !== 'function' || !cards || !cards.length) return cards;
+    const out = [];
+    for (let i = 0; i < cards.length; i++) {
+        const c = cards[i];
+        let keep = true;
+        try { keep = gate(c) !== false; } catch (e) { keep = true; }
+        if (keep) out.push(c);
+    }
+    return out.length === cards.length ? cards : out;
+}
+// ---------------------------------------------------------------------------------------------
 // v7.42 (Bennie Bracks VERIFY) — RAIL_SHELF_CAP + the SCARCITY RECLAIM. THE STARVATION DEFECT
 // IN THE CROSS-RAIL DEDUP.
 // Every rail on a report is dealt through ONE shared `shown` map, so a card is claimed by
@@ -9746,6 +9955,10 @@ function buildEngineModel(commander) {
                     // v7.14: it returns a lead (subtype string OR predicate) computed from the
                     // commander, or null to order the rail as shipped. `lead` is unchanged.
                     lead: (typeof r.leadCtx === 'function' ? (r.leadCtx(railCtx) || null) : (r.lead || null)),
+                    // v7.87 — `gate` (see railGate/frontFaceType): the post-fetch "what to keep"
+                    // predicate. Carried exactly the way `lead` is, and null for every rail that
+                    // does not declare one, so this line is inert for all but the family below.
+                    gate: (typeof r.gateCtx === 'function' ? (r.gateCtx(railCtx) || null) : (r.gate || null)),
                     why: i === 0
                         ? firstName + ' ' + (a.why || 'works here') + (f.snippet ? ' \u2014 \u201C' + trimSnippet(f.snippet) + '\u201D' : '.') + ' ' + capWord(r.why) + '.'
                         : capWord(r.why) + '.'
@@ -9756,6 +9969,7 @@ function buildEngineModel(commander) {
                 key: a.key, role: 'synergy', title: a.title, sub: a.sub || '',
                 q: base + ' ' + a.q,
                 lead: a.lead || null,
+                gate: a.gate || null,
                 why: firstName + ' ' + (a.why || 'synergizes here') + (f.snippet ? ' \u2014 \u201C' + trimSnippet(f.snippet) + '\u201D' : '.')
             });
         }
@@ -12792,6 +13006,8 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v7.87', date: '2026-08-07', focus: 'verify', commander: 'Tom Bombadil', summary: "VERIFY Tom Bombadil — re-read the two new Saga rails card-by-card and found a RULES defect in the enabler, then built the post-fetch predicate the hand-off has been asking for since the -is:transform item. THE DEFECT: `t:saga` searches EVERY FACE, so the shelf was being filled by cards that are NOT Sagas anywhere the deck needs them to be. By CR 712.4a a transforming double-faced card outside the battlefield has ONLY its front face's characteristics — so Urabrask // The Great Work, Sheoldred // The True Scriptures, Vorinclex // The Grand Evolution, Jin-Gitaxias // The Great Synthesis, Elesh Norn // The Argent Etchings and the Final Fantasy Dominants (Clive, Joshua, Dion, Jill, Jecht, Terra) are LEGENDARY CREATURES in the library that only become Sagas after the creature half has died. That is not a preference: Tom Bombadil's own trigger reads 'reveal cards from the top of your library until you reveal a SAGA CARD', and his engine CANNOT FIND A SINGLE ONE OF THEM — nor can Satsuki put a lore counter on one, nor Garnet remove one. Measured live: EIGHT of the thirty cards dealt on his shelf (27%) were this class, led by Urabrask at slot 5 and Sheoldred at slot 7, and they sat that high purely because EDHREC popularity is GLOBAL — the praetors are played in thousands of decks as creatures while a real Saga is ranked only by Saga-deck play, the exact v7.17/v7.19 distortion in a third family. THE MECHANISM, and it is the general part: a rail already said WHAT TO FETCH (`q`, v7.14) and WHAT TO SHOW FIRST (`lead`, v7.17/v7.19); it could not say WHAT TO KEEP. New shared `gate` field + `railGate` post-fetch predicate + `frontFaceType(word)` factory, applied to the whole fetched page BEFORE the lead ordering and BEFORE the cap (the v7.17 reason: the cards it promotes are not in the first 30 at all). OPTIONAL AND DEFENSIVE so the mechanism is inert by construction — railGate returns the INPUT ARRAY BY OBJECT IDENTITY when there is no gate or nothing to remove, and a gate that throws KEEPS the card; `poolOf` is corrected by exactly the number removed from the page so the v7.42 scarcity reclaim still reads a pool the shelf could be built from. SPLIT, ADVENTURE and FLIP are deliberately OUTSIDE the hidden-back set, each for a rules reason (a split card has both sets of characteristics in every zone, CR 709.4; an adventure's card_faces[0] is already the half the card is everywhere but the stack, CR 715.3). RESULT, verified live through the VERBATIM shipped fetch/gate/lead/dedupe/cap-30 loop against api.scryfall.com (HTTP 200, pool 215, page 175, 14 gated, 30 dealt, 30/30 with art): the shelf is now Urza's Saga / Binding the Old Gods / Summon: Bahamut / Fable of the Mirror-Breaker / The Eldest Reborn / Summon: Titan / Summon: Fenrir / There and Back Again — THIRTY of THIRTY genuine front-face Sagas, ZERO leak. SELF-PROVING: the transform cards whose FRONT is a Saga all correctly SURVIVE (Fable, The Legend of Kyoshi, The Restoration of Eiganjo, The Legend of Roku, Azusa's Many Journeys, The Legend of Yangchen), so the gate is reading the face and not the layout. EDHREC ADJUDICATES IT ONE-DIRECTIONALLY: all EIGHT cards the gate drops are ABSENT from ALL THIRTEEN of Tom's EDHREC card lists, while FOUR of the eight it promotes are on his page — KIORA BESTS THE SEA GOD is one of his TOP CARDS and was unreachable, plus City of Death and Phyrexian Scriptures (Enchantments) and Summon: Valefor (Creatures). Zero played cards out, four played cards in. GENERALIZES ACROSS THE WHOLE FAMILY, all seven measured live, every one a strict subtraction that starves nothing (all still deal a full 30): Tom Bombadil 215->201 with 8 dropped from the dealt 30, Sigurd Jarl of Ravensthorpe 120->111 (7), Narci Fable Singer 117->110 (4), Satsuki the Living Lore 79->74 (4), Garnet Princess of Alexandria 79->74 (4), Barbara Wright 43->40 (3), Chong and Lily Nomads 34->32 (2). COUNTER-CASE, AND IT CHANGED THE DESIGN: the gate is DELIBERATELY NOT APPLIED to the tribal rails, measured over 14 tribes live — sliver 0 back-face-only members, elf 0, zombie 1, dragon 5, angel 2, goblin 3, and the only two reaching a top 30 are FABLE OF THE MIRROR-BREAKER in Goblins and SEPHIROTH, FABLED SOLDIER in Angels, BOTH real tribal cards those decks want. The cases are not the same: a transformed praetor IS a full Angel on the battlefield where the lords live, but a Saga's whole function is a CHAPTER CLOCK that only runs while the card is on the battlefield AS a Saga. NO REGRESSION, proved structurally rather than sampled: booting the pre-edit backup and the edited file side by side in a Node VM, the diff across ALL 181 rails in ALL 71 families is EXACTLY ONE FIELD — the new `gate` on sagas#0 — and the other 180 rails are identical by construction because railGate hands back the same array object. Section descriptors old-vs-new: Tom Bombadil 10->10, Satsuki 14->14, Krenko Mob Boss 16->16, Atraxa Praetors' Voice 9->9, all identical ignoring the additive field, with the gate present on exactly one rail for the two Saga commanders and on NONE for the two unrelated ones. 17 predicate cases pass including the split/adventure/flip and null guards. ALSO CHECKED AND FOUND CLEAN (recorded so the next run does not re-derive it): Urza's Saga and the Summon: cycle are CORRECT at the top of the shelf — Urza's Saga is in Tom's EDHREC Utility Lands and Summon: Bahamut and Summon: Primal Odin are both TOP CARDS — so the hand-off's suspicion that the fixed edhrec sort was burying cheap short Sagas was right in direction but the real carrier was this face class, not card cost. node --check PASS 6/6; boots clean in a Node VM with all four boot assertions silent; blocks 0-4 BYTE-IDENTICAL to the pre-edit backup so the mobile viewport/keyboard IIFE is provably untouched, and NON-SCRIPT BYTES ARE IDENTICAL (193,887 -> 193,887), so no CSS, markup or layout changed at all and 390px is untouched by construction. html/body/script 2/2/6. ATOMS 86, RAILS 181, ARCHETYPES 98, BLENDS 47, STUDY_DB 169 — all unchanged; no regex term added, assertRegexTermBudget untouched. meta == console banner == CHANGELOG[0] == v7.87. Backup index-backup-20260807-0740-preVerifyBombadil.html; roster pipeline and git untouched." },
+    { build: 'v7.86', date: '2026-08-07', focus: 'study', commander: 'Tom Bombadil', summary: "STUDY Tom Bombadil \u2014 A WUBRG SAGAS COMMANDER WAS RENDERING AS VOLTRON, AND THE WHOLE SAGA ARCHETYPE HAD NO RAIL FAMILY. He fired `sagas` (w6) + a phantom `voltron`, so his report was ONE undifferentiated `t:saga` pile followed by Suit Up / Shields Up / Make It Connect \u2014 while EDHREC (fetched live this run) themes him Sagas 3,056 / Enchantress 1,278 and VOLTRON 23, behind seventeen other themes. TWO logic-level fixes, no per-commander hardcode. (1) CONDITIONAL-KEYWORD STRIP: the keyword-Voltron read counted a keyword the commander does not HAVE until the deck has assembled something (\u2018As long as there are four or more lore counters among Sagas you control, Tom Bombadil has hexproof and indestructible\u2019). Added a third `oSelf` strip beside the existing team-grant and until-end-of-turn strips, with a rules-derived exception for a condition the TURN alone satisfies. MEASURED over the exact population that can move (Scryfall: 35 commanders print a Voltron keyword only inside an \u2018as long as\u2019 clause and print no static keyword): the shipped extractAtoms pushes voltron on TEN, and the strip takes it to TWO \u2014 DROPPED Tom Bombadil, DOCTOR DOOM, DOC OCK and the ENTIRE MYOJIN CYCLE (Life\u2019s Web, Night\u2019s Reach, Seeing Winds, Cleansing Fire, Infinite Rage), whose divinity-counter shield is a self-consuming fuse on a one-shot bomb; KEPT MAARIKA (\u2018as long as it\u2019s your turn\u2019 \u2014 temporal, nothing is assembled) and RAYAMI (his keyword-inheritance sentence carries no condition). One-directional and structurally incapable of touching a real Voltron commander: `oSelf` is read at exactly ONE call site, the `!kws.length` branch, so SIGARDA/TOSKI/ZURGO reach Voltron through `kws` and never read it. (2) RAILS.sagas + A SAGA IS AN ENCHANTMENT: `sagas` LEADS every commander it fires on but had no RAILS entry, so all SEVEN Saga commanders got the atom\u2019s fallback `t:saga` pile and nothing else \u2014 BARBARA WRIGHT fires `sagas` AND NOTHING ELSE, so that pile plus the generic shelves was her whole report. New two-rail family: Sagas Worth Reading (`t:saga`, pool byte-identical to the old fallback so nothing is lost) + Chapter Accelerators (`((o:proliferate OR o:\"lore counter\") -t:saga)` \u2014 proliferate puts a lore counter on EVERY Saga at once; measured WUBRG 106 / GW 48 / mono-W 22 / mono-R 16, EDHREC top is Karn\u2019s Bastion, Evolution Sage, Thrummingbird, Inexorable Tide, Flux Channeler, ZERO leak). The enchantress half is NOT rewritten under new titles \u2014 CR 205.2a says a Saga IS an enchantment, so extractAtoms now admits the w2 `enchantments` atom whenever `sagas` fires, and RAILS.enchantments\u2019 existing two shelves do the work (no new query, no duplicated shelf \u2014 the v6.94 defect). RESULT (real shipped code in a node VM, OLD vs NEW): Tom [sagas voltron] \u2192 [sagas enchantments], sections \u2018Sagas | Suit Up | Shields Up | Make It Connect\u2019 \u2192 \u2018Sagas Worth Reading | Chapter Accelerators | Enchantment Ramp & Density | Constellation & Enchantment Payoffs\u2019, plans \u2018Sagas & Chapters\u2019 + \u2018Enchantress\u2019 \u2014 EDHREC\u2019s #1 and #2 in EDHREC\u2019s own order. BARBARA WRIGHT 1 shelf \u2192 4. GENERALIZES to all seven `sagas` commanders (Tom Bombadil, Satsuki, Narci, Garnet, Sigurd, Chong and Lily, Barbara Wright) and to the eight de-Voltroned commanders above. COUNTER-CASE, same harness: KRENKO, ATRAXA, BARAL and MAARIKA are byte-identical old-vs-new in atoms AND sections; SATSUKI and NARCI already fired `enchantments` so the push is inert for them. One disclosed trade: Satsuki is over the 9-core-rail budget, so her breadth-first slot at depth 1 goes to Chapter Accelerators and \u2018Rebuy From the Yard\u2019 drops \u2014 the v7.51 floor still guarantees her graveyard family a shelf (Fill the Yard). New BLENDS pair \u2018Sagas & Chapters|Enchantress\u2019 = great. New STUDY_DB entry keyed by oracle_id, insight + 5 traps authored against ALL THREE Gatherer rulings fetched verbatim. node --check PASS 6/6; boot assertions clean; ATOMS 86 / ARCHETYPES 98 unchanged, RAILS 70\u219271, BLENDS 46\u219247, STUDY_DB 168\u2192169. Backup index-backup-20260807-0710-preStudy.html; git untouched; mobile viewport/keyboard IIFE and roster pipeline untouched." },
     { build: 'v7.85', date: '2026-08-07', focus: 'verify', commander: 'Agatha of the Vile Cauldron', summary: "VERIFY Agatha of the Vile Cauldron — HER TWO NEW ACTDISC SHELVES AUDIT CLEAN AND THE DEFECT IS ON THE THIRD RAIL, WHERE IT HAS BEEN SINCE THE RAIL WAS WRITTEN. Re-read the v7.84 report card-by-card against live Scryfall (order=edhrec, the app's own fetch): 'Abilities Priced to Be Unaffordable' (123 cards, led by Walking Ballista, Elvish Warmaster, Allosaurus Shepherd, Orthion, Soul of New Phyrexia, Svella) and 'Untap & Activate Again' (117, led by Seedborn Muse, Thousand-Year Elixir, Devoted Druid, Staff of Domination, Quirion Ranger) are correct card-by-card, the plan/insight/five traps all render, and the v7.84 hand-off's own second lead was confirmed exactly as written — 'Pump the Commander' opened Skullclamp, Sword of the Animist, Shadowspear, Blackblade Reforged. THE PROBLEM IS NOT THAT SKULLCLAMP IS OFF-THEME. IT IS THAT SKULLCLAMP READS \"gets +1/-1\" AND SHE IS A 1/1: the top recommendation on a shelf titled 'Pump the Commander' was a card that KILLS the commander. THE FILE ALREADY KNEW THE RULE AND HAD ONLY EVER APPLIED IT ON THE MINUS SIDE. MINUS_SUPPLY_Q reads a stat change as a SIGNED PAIR — `gets? -[0-9x]+\\/-[1-9x]` — because the -1/-1 family learned in v7.28 that the two halves of \"+N/-N\" mean opposite things. The +1/+1 side never learned it: FIVE separate rail queries across THREE families ask \"does this card RAISE a creature's stats?\" and all five asked it with the bare substring o:\"gets +\", which Magic satisfies with the exact five characters of a TRADE-OFF. AND IT LANDS AT POSITION 1 RATHER THAN AT POSITION 40, for the v7.17/v7.19 reason: every rail is fetched order=edhrec and EDHREC rank is GLOBAL, so Skullclamp — one of the most-played artifacts in the format, and played for DRAWING CARDS rather than for pumping anything — led the shelf in EVERY colour identity in the app. SHIPPED: module-scope PUMP_SIGN_FENCE, declared on the line after MINUS_SUPPLY_Q because it is the same idiom on the other sign, and routed through all five sites so the file can never again hold two opinions of what a pump is. IT IS A NEGATIVE FENCE, NOT A POSITIVE REWRITE, FOR TWO REASONS: Scryfall's o:/.../ is RE2 and has NO LOOKAHEAD (the v7.19 ANTHEM_UEOT_FENCE constraint), and negative is measurably SAFER — a positive `gets \\+[0-9X]+\\/\\+[0-9X]+` form was written FIRST and measured to drop ASPECT OF WOLF (\"gets +X/+Y\"), a genuine pump whose numerals nobody would have guessed. The fence names only the shape it refuses: a `+` half, then `/`, then `-`. CENSUS CLOSED, NOT SAMPLED, FETCHED LIVE THIS RUN OVER THE WHOLE COMMANDER-LEGAL POOL: the fence catches 101 cards format-wide, and inside the five pools it can actually reach it catches EXACTLY 34, every one enumerated and every one a genuine trade-off. Auras/Equipment, 19: SKULLCLAMP, Barbed Batterfist, Barbed Battlegear, Boon of Emrakul, Coils of the Medusa, Crown of Suspicion, Flowstone Blade, Flowstone Embrace, Grave Servitude, Guise of Fire, Immolation, Infectious Rage, Maggot Therapy, Mogis's Favor, Patriarch's Desire, Pemmin's Aura, Riot Spikes, Sangrite Backlash, Twisted Experiment. Targeted instants/sorceries, 15, and every one of them is a REMOVAL SPELL that was being sold on a PUMP shelf: Auger Spree, Bedeck // Bedazzle, Blood Lust, Defiling Tears, Desperate Measures, Eldrazi Confluence, Erratic Mutation, Flowstone Infusion, Flowstone Strike, Funeral Charm, Lash of Malice, Nameless Inversion, Piracy Charm, Spatial Contortion, Warped Physique. NOTHING LEAVES THE REPORT THAT BELONGS IN IT (the v7.71 doctrine): Skullclamp is otag:card-advantage and Nameless Inversion is otag:removal, so both are still dealt by the staple rails — they move to the correct shelf rather than disappearing. GENERALIZES TO 80 COMMANDERS ACROSS THREE FAMILIES, measured through the REAL buildEngineModel over ALL 3,266 commander-legal creature commanders with ZERO errors: `selfpump` renders on 78, RAILS.multicopy's 'Single-Target Cantrips & Pumps' on 1 (ZADA, HEDRON GRINDER) and costdownSubject's 'Auras & Targeted Pump' on 1 (KILLIAN, INK DUELIST). SIX of the 78 are printed with toughness 1 or less and were being handed a Murder as their #1 pump — AGATHA OF THE VILE CAULDRON 1/1, ELENDA THE DUSK ROSE 1/1, JACKAL GENIUS GENETICIST 1/1, MARWYN THE NURTURER 1/1, LOKI LAUFEYSON 2/1 and YORVO LORD OF GARENBRIG 0/0 — and the other 72 (Sisay Weatherlight Captain, Multani, Karn Legacy Reforged, Tanazir Quandrix, Narset Enlightened Exile, Halana and Alena, Syr Faren, Obuun, Velomachus, Yasova, Grenzo Dungeon Warden, Jor Kadeen, Lena, Okaun, Anax, Callaphe, Bell Borca, Adamaro, Evra, Helga, Krenko Tin Street Kingpin …) simply stop being sold a stat trade as a stat raise. LIVE-QA'd EDHREC-SORTED THROUGH THE APP'S OWN FETCH, HTTP 200 and ZERO Scryfall warnings on every one: Agatha GR 946 -> 938, mono-G 719, GW 1,146, mono-R 497, WB 893 — Skullclamp is gone from the front of the shelf in every identity measured and Sword of the Animist now leads; Zada 96 -> 92 (Expedite, Temur Battle Rage, Fists of Flame, Crimson Wisps, Twinferno); Killian 580 -> 573 (Darksteel Mutation, All That Glitters, Ethereal Armor, Sheltered by Ghosts, Mantle of the Ancients). NO shelf emptied and no shelf lost its identity. COUNTER-CASE MEASURED THROUGH THE REAL buildEngineModel, pre-edit backup vs new file, over a 20-commander corpus whose card objects were fetched VERBATIM from api.scryfall.com this run and carried by djb2 (10,362 bytes, hash 9ecffb1d, verified byte-for-byte in the sandbox against the value computed in the browser, plus all 20 per-card hashes — NOTHING typed from memory): 6 CHANGED, 14 BYTE-IDENTICAL, ZERO errors, and all 6 changes are EXACTLY ONE LINE — one query term appended and the rail's `why` extended — with SAME section count, SAME plans, SAME atoms and SAME traps. Nothing added, nothing removed, no rail pushed off the budget. The 6 are AGATHA, DRIZZT DO'URDEN, LOKI LAUFEYSON, RYAN SINCLAIR, VADRIK ASTRAL ARCHMAGE and THE SCARLET WITCH — the corpus's whole selfpump membership. THE POINTED CONTROLS ARE THE SEVEN OTHER COST-REDUCTION COMMANDERS FROM v7.82's OWN CENSUS, all byte-identical, which proves the fence is attached to the PUMP SHELF and not to the discount family: ROWAN SCION OF WAR, WILL SCION OF PEACE, COMMANDER LIARA PORTYR, SAMUT THE DRIVING FORCE, GHALTA PRIMAL HUNGER, MUTAGEN MAN LIVING OOZE and SAM LOYAL ATTENDANT. Also byte-identical: KRESH THE BLOODBRAIDED, KARLOV OF THE GHOST COUNCIL, ASHLING THE PILGRIM, ZURGO HELMSMASHER and GIMLI OF THE GLITTERING CAVES — the five v7.84 selfRefNames commanders, none of which reaches this rail — plus KRENKO MOB BOSS and KOZILEK BUTCHER OF TRUTH as unrelated controls. RENDERING SAFETY PROVED BY DIFF: script blocks 0–4 BYTE-IDENTICAL except block 0's single version digit, so the mobile viewport/keyboard IIFE was provably never touched; non-script bytes unchanged, so no CSS, markup or layout changed at all; html/body/script 2/2/6, and the spoiler-board, mobile-viewport, tile-roster and roster-pipeline marker counts all held at 10/9/13/15. node --check PASS 6/6; boots at ATOMS 86 / RAILS 70 / ARCHETYPES 98 / BLENDS 46 / STUDY_DB 168 UNCHANGED — this run added no atom, family, archetype or study entry, only one shared query fence. STALENESS GUARD RAN AND PASSED: local <meta> v7.84, live v7.83 (rendered in Chrome) / v7.71 (jsdelivr) — local AHEAD, no HALT. ALSO CONFIRMED THE v7.84 PUBLISHER INCIDENT IS REAL AND STILL LIVE: the deployed page is tagged v7.83 but carries `selfRefNames` and `readActivatedDiscount` while carrying NEITHER `RAILS.actdisc` NOR the Agatha STUDY_DB entry — a half-swept mid-edit file under a build tag that does not describe it. Build identity SYNCED: meta == console banner == CHANGELOG[0].build == v7.85. Backup index-backup-20260807-0640-preVerifyAgatha.html; git untouched; ORACLE INDEX only; build tag bumped LAST." },
     { build: 'v7.84', date: '2026-08-07', focus: 'study', commander: 'Agatha of the Vile Cauldron', summary: "STUDY Agatha of the Vile Cauldron — THE ENGINE COULD NOT TELL THAT THE CARD WAS TALKING ABOUT ITSELF. She rendered SIX sections, five of them generic staples, NO game plan at all, and one synergy shelf — 'Heavy Hitters / One giant sets X' — that was flatly wrong, because the X in her text is HER OWN power and no other giant sets it. The cause was not in the discount layer at all. Seven oracle-matching sites in this file ask 'does the commander's text name the commander?' and every one of them derived the needle as name.split(',')[0], i.e. it assumed a card's self-reference short name is always the text before the comma. That is the DOMINANT CONVENTION, NOT THE RULE: Magic lets a card refer to itself by its full name or by a rules-legal shortened form, and the shortening is not always comma-delimited. Her name has no comma, her text says 'where X is Agatha's power', the needle was 'agatha of the vile cauldron's power', and the app concluded she never mentions herself — so P.selfPow was false, the chain fell through to P.countPower, and she was dealt a shelf about somebody else's board. It fails in the other direction too: A-UURG, SPAWN OF TURG prints its FULL name including the comma, so there the comma-prefix needle was too SHORT. SHIPPED AT THE LOGIC LEVEL: one reader, selfRefNames(), generating every rules-legal candidate — full name, comma prefix, the prefix before an ' of '/' the '/' and ' title, and the bare first word — plus selfRefHas() for the five detection sites and selfRefAlt() for the two counter-strip sites that must REMOVE the self-reference rather than merely detect it. firstName is untouched and stays the DISPLAY name, so the two jobs that were conflated into one variable are now separate. CENSUS CLOSED OVER ALL 3,581 COMMANDER-LEGAL CREATURE COMMANDERS, not sampled: exactly 26 change, every one named — AGATHA, ASHLING THE PILGRIM, A-UURG SPAWN OF TURG, BRAULIOS OF PHERES BAND, CROVAX THE CURSED, DR. BEVERLY CRUSHER, DRIZZT DO'URDEN, GIMLI OF THE GLITTERING CAVES, ISU THE ABOMINABLE, KANG THE CONQUEROR, KARLOV OF THE GHOST COUNCIL, KING DARIEN XLVIII, KRESH THE BLOODBRAIDED, LEGOLAS GREENLEAF, LILIANA THE REPENTANT, LOKI LAUFEYSON, LUCKY THE PIZZA DOG, MARAXUS OF KELD, MIRRI THE CURSED, MJ RISING STAR, NAMOR THE SUB-MARINER, PURRAJ OF URBORG, RIKU OF MANY PATHS, RYAN SINCLAIR, UGLUK OF THE WHITE HAND and ZURGO HELMSMASHER. The other 3,555 are byte-identical BY CONSTRUCTION rather than by inspection, because the only predicates that can move are those seven sites and the new reader, and both were evaluated across the entire corpus. THE CHANGE FOUND AND FIXED ITS OWN REGRESSION: newly enabling P.selfPow risks handing the Equipment/Aura shelf to a commander whose power is a live COUNT, which is precisely the trap v7.00 named. All eight newly-selfPow commanders were checked one at a time — Braulios routes to landfall, A-Uurg to the graveyard family, Namor to Go-Wide, and Agatha, Drizzt, Loki and Ryan correctly want pump — but MARAXUS OF KELD fell straight through to gear, because P.statBoard knows 'the number of <TYPE>s you control' and nothing else, and he counts 'untapped artifacts, creatures, and lands'. Fixed at the logic level rather than special-cased: statBoard now reads the LIST form and returns 'permanent', and a new 'permanent' arm deals Cheap Permanents & Untappers. He is the only member in the current corpus and only became reachable at all this run. SECOND FAMILY, THE ONE THE COMMANDER IS ACTUALLY ABOUT: ACTIVATED-ABILITY DISCOUNT. v7.82's census set Agatha aside as 'reduces ACTIVATED ABILITIES' — correctly excluded from the spell-discount family, and then read by nothing. A spell discount is a ONE-SHOT saving on a card you were going to cast anyway; an ability discount is a PERMANENT price change on an engine you may run every turn, so the payoff is not 'play expensive spells' but 'play permanents whose printed ACTIVATION cost is the only thing wrong with them'. New module-scope ACT_DISCOUNT_RE + readActivatedDiscount() returning {subject, amount, scaled}, P.actDiscount, railCtx.actDiscount, ATOM_ACTDISC, ARCHETYPES.actdisc ('Discounted Activations') and RAILS.actdisc. Both queries FOLD on the reader rather than on a constant or a name, so the same two rails read t:creature at floor {4} for Agatha, t:artifact at floor {2} for MUTAGEN MAN LIVING OOZE and t:food at floor {2} for SAM LOYAL ATTENDANT — and the floor is a FUNCTION of the discount, which is v7.83's own hand-off (c) complaint about flat noise floors applied at the point the pool is defined. Closed census: the reader fires on exactly THREE commander-legal creatures out of 3,581. CAST_FACE_Q REUSED BY NAME, not re-derived: an ability printed on a transform BACK face is an ability you cannot elect to have, which is v7.83's rule one step over. It drops Agatha's pool 139 -> 123 and removes ETALI PRIMAL CONQUEROR, VORINCLEX and CLIVE IFRIT'S DOMINANT, while promoting SVELLA ICE SHAPER — on EDHREC's high-synergy column for her — into the visible top rank. A SECOND SHELF WAS WRITTEN, QA'd AND DELETED RATHER THAN SHIPPED, and the reason is recorded in the source: 'Stack the Discount' on o:\"less to activate\" returns 40 cards in Gruul and almost none of them do this — Boseiju, Sokenzan, Dragonfire Blade, Voldaren Estate and Mariposa Military Base all reduce their OWN ability, not yours — while the correctly-scoped broad form leaves FIVE, because Training Grounds is blue and Zirda is RW. A five-card shelf is not a shelf and a forty-card wrong one is worse, so the slot went to TAP_RESET_Q, reused by name: the binding constraint on nearly every ability worth discounting is not mana but the one activation its {T} allows. COUNTER-CASE MEASURED THROUGH THE REAL buildEngineModel, pre-edit backup vs new file: GHALTA PRIMAL HUNGER, KRENKO MOB BOSS, KOZILEK BUTCHER OF TRUTH, BRAULIOS and A-UURG all BYTE-IDENTICAL, and ASHLING THE PILGRIM, KARLOV OF THE GHOST COUNCIL and KRESH THE BLOODBRAIDED byte-identical too — proving the predicate-level census is an UPPER BOUND rather than the model-level answer. Where models do move they move correctly: ZURGO HELMSMASHER and GIMLI OF THE GLITTERING CAVES both correctly LOSE a +1/+1 Counters archetype they never deserved, because their only counter wording is self-referential and the strip that exists to catch exactly that had been silently failing on them for want of the short name. New STUDY_DB entry for Agatha (oracle_id f398d222) authored against BOTH her Gatherer rulings fetched verbatim this run: only activated abilities have a colon and triggered abilities are unaffected; only creatures ON THE BATTLEFIELD, so cycling and graveyard abilities are not reduced, and equip never was because equip belongs to the Equipment; the printed one-mana floor, which is why she is not a combo engine and why pumping past the most expensive ability in the deck pumps a stat that has stopped paying; reduction touches generic mana and never coloured pips, which is what makes the {7}{R} Invoker cycle her best pool; and she is a 1/1 whose removal turns a hand of Invokers back into a hand of seven-drops. node --check PASS 6/6; assertStudyKeys and assertStudyTrapCap both []. VERIFIED LIVE IN CHROME on the deployed page, which independently reproduced the transform leak this run gates — Etali led the un-gated pool. Staleness guard ran and PASSED for the sixth build running: local v7.83, live v7.81 at start, publisher caught up to v7.83 mid-run. INCIDENT RECORDED IN THE WORKLOG: the hourly publisher swept a MID-EDIT snapshot of index.html to the live site while this run was still working, so the deployed file briefly carried a half-finished state under an unchanged v7.83 tag — the build tag stopped identifying the content. Not caused by touching the clone (git untouched, clone never opened); the publisher copies on a timer and does not require a strictly-newer build tag. Backup index-backup-20260807-0610-preStudy.html (SHA1 bdf6a87800ae36c8dce22124f3f3ea77e9f0c994, byte-verified with cmp); ORACLE INDEX only; build tag bumped LAST." },
     { build: 'v7.83', date: '2026-08-07', focus: 'verify', commander: 'Ghalta, Primal Hunger', summary: "VERIFY Ghalta, Primal Hunger — HIS THREE PAYOFF RAILS AUDITED CLEAN AND THE DEFECT WAS IN THE ONE THE STUDY WAS PROUDEST OF. Read card-by-card against EDHREC, 'Turn the Board Into Cards' (18), 'Protect What Pays' (55) and 'Make the Size Count' (130) are correct top to bottom — Garruk's Uprising, Return of the Wildspeaker, Rishkar's Expertise; Swiftfoot Boots, Heroic Intervention, Mithril Coat; Craterhoof, Overwhelming Stampede, Rancor — which is EDHREC's own columns in order. The RATIO rail is not. THE DEFECT, AND IT HAD NOTHING TO DO WITH THE RATIO: Scryfall's stat and type operators match ANY FACE of a double-faced card, and this app has never once said which face it meant. For a rail about a TRIGGER or a KEYWORD that is harmless — either side will do. For a rail whose entire thesis is a PRINTED NUMBER THE DECK SPENDS it is a silent leak, because the number is read off a face the deck cannot elect to have. Front-face audit of every card in every affected pool this run: Ghalta's 'Cheap Bodies, Big Numbers' shelf carried 14 leaks of 171 — three of them MANA ROCKS (Mystic Skull, Jade Seedstones, Kaslem's Stonetree), one a BATTLE (Invasion of Ikoria), the rest werewolf day-sides printed at power 3 and 4 — every one of them contributing ZERO to a discount whose sub-header reads 'Every point is a mana off'. THE RULE, and it is a rules-level truth rather than a heuristic: a TRANSFORMING double-faced card is always cast as its FRONT face, and the back is a STATE reached only through a condition the deck does not control — a turn on which no spells were cast (every werewolf), a battle that must first be defeated, a creature that must first die, a land that must first be fed six creatures. A card whose advertised number lives on a face you cannot elect to have is not a card that supplies that number. MODAL double-faced cards are deliberately NOT excluded, and the distinction is the whole precision of the fix: both of their faces are castable, so either one is a face the deck can choose, and is:transform does not match them. SHIPPED AT THE LOGIC LEVEL: ONE module-scope constant, CAST_FACE_Q, referenced at exactly FOUR code sites — ATOM_SELFSCALE's q and oq, the selfscale family's ratio rail, and the two shelves that family supersedes, 'heavy' and 'tough'. Not a per-commander patch and not a per-query literal, so the next rail that spends a printed number adopts it by name. GENERALIZES, MEASURED RATHER THAN ASSERTED, AND THE OTHER TWO SHELVES CARRY THE IDENTICAL BUG: 'Heavy Hitters / One giant sets X' leaks 18 of 575 in RG, offering a Battle and werewolf day-sides at power 2, 3 and 4 to a shelf that promises a giant; 'High-Toughness Bodies' leaks 27 of 902 in UB, led by WESTVALE ABBEY — a LAND — on a shelf titled 'High-Toughness Bodies'. Named beneficiaries beyond the four self-discount commanders: ARAHBO ROAR OF THE WORLD, AGATHA OF THE VILE CAULDRON, ATOGATOG, BARU WURMSPEAKER, ALOY SAVIOR OF MERIDIAN, CORAM THE UNDERTAKER and DINA, plus PHENAX GOD OF DECEPTION, PANTLAZA SUN-FAVORED, GERALF VISIONARY STITCHER, CAPTAIN AMERICA WINGS OF FREEDOM and VENOM DEADLY DEVOURER. COUNTER-CASE — CLOSED, NOT SAMPLED, THROUGH THE APP'S OWN buildEngineModel OVER THE WHOLE CORPUS: all 3,266 unique commander-legal creature commanders modelled live, ZERO errors, and the set that renders any of the three affected shelves is exactly 37 — heavy 31, tough 6, no overlap, plus the four ratio-rail members. 3,229 commanders are byte-identical BY CONSTRUCTION rather than by inspection, because CAST_FACE_Q is referenced at four sites and no other query string in the file can move. Controls all byte-identical: KRENKO MOB BOSS, ZAXARA THE EXEMPLARY, DORAN THE SIEGE TOWER, ATRAXA PRAETORS' VOICE, KOZILEK BUTCHER OF TRUTH, TALRAND SKY SUMMONER, EDGAR MARKOV, YAROK THE DESECRATED. PRECISION MEASURED IN BOTH DIRECTIONS, AND THE COST STATED HONESTLY: on Ghalta the gate removes all 14 leaks and ZERO leaks survive it, at a cost of exactly THREE over-drops — Ojer Kaslem, Vorinclex and Burly Breaker, transform cards whose front face does qualify, all three at 6 power for 5 mana, which is the weakest tier the shelf admits. 14 dead cards for 3 marginal ones, and the three lost are lost only because Scryfall has no front-face operator. Pools: Ghalta 171 -> 154, The Lord of the Eagles 16 -> 14, The Pride of Hull Clade 315 -> 287. RENDERING SAFETY PROVED BY DIFF: script blocks 1-4 BYTE-IDENTICAL and block 0 differs only in the banner version string, so the mobile viewport/keyboard IIFE was provably never touched; non-script bytes 193,887 -> 193,887, so no CSS, markup or layout changed at all. node --check PASS 6/6; ATOMS/RAILS/ARCHETYPES/BLENDS/STUDY_DB all UNCHANGED — this run added no atom, rail, archetype, blend or study entry, only corrected which face four existing queries were reading. STALENESS GUARD RAN AND PASSED FOR THE FIFTH BUILD RUNNING: local v7.82, live (?cb= no-store) v7.81 — local AHEAD, no HALT. Backup index-backup-20260807-0540-preVerifyGhalta.html (SHA1 90418f241ecd488d2d52c3dfedfe188537e4a812, byte-verified with cmp); git untouched; ORACLE INDEX only; build tag bumped LAST." },
@@ -16169,9 +16385,18 @@ function SynergyOverlay({ onViewAll, commander, deck, deckList, onClose, onAdd, 
                         // Moonfolk, Ox, Astartes had ZERO members in the EDHREC top 12) the members
                         // are not in the first 30 at all, so reordering the cap would still deal a
                         // shelf of changelings. No-op for every rail that sets no `lead`.
-                        const raw = railLeadFirst((data && data.data) || [], sec.lead);
+                        // v7.87 — the post-fetch `gate` runs FIRST, before the lead ordering and
+                        // before the cap: it answers "is this card the shelf's subject at all?",
+                        // which must be settled before "which of the subjects leads". No-op for
+                        // every rail that sets no `gate` (railGate returns the input array).
+                        const fetched = (data && data.data) || [];
+                        const gated = railGate(fetched, sec.gate);
+                        const raw = railLeadFirst(gated, sec.lead);
                         pageOf[i] = raw;
-                        poolOf[i] = (data && typeof data.total_cards === 'number') ? data.total_cards : raw.length;
+                        // The pool total is corrected by EXACTLY the number the gate removed from
+                        // this page — a measured count, not an estimate — so the v7.42 scarcity
+                        // test still reads a pool the shelf could actually be built from.
+                        poolOf[i] = (data && typeof data.total_cards === 'number') ? Math.max(raw.length, data.total_cards - (fetched.length - gated.length)) : raw.length;
                         // v7.42 — a SCARCE shelf (pool <= cap, it can never fill itself) may
                         // reclaim a card from an ABUNDANT one (pool > cap, it has a deeper card
                         // of the same kind waiting). The donor is rebuilt immediately so it
