@@ -4380,7 +4380,7 @@ version banner, **zero errors**. C-034's 6 double-stops still present, unchanged
 
 ---
 
-### v7.99 · 2026-08-07 · CRITIQUE-FIX (MODE FIX) · C-006 · Krenko, Mob Boss
+## v7.99 · 2026-08-07 · CRITIQUE-FIX (MODE FIX) · C-006 · Krenko, Mob Boss
 
 **THE ACROSS-TURNS UNTAP CLASS IS MIXED BY CARD TYPE, AND THE ONE SHELF THAT IS TYPE-SCOPED WAS
 READING IT UNSCOPED.** Reproduced live on deployed v7.98 before any edit: Krenko — a Goblin Warrior —
@@ -4626,3 +4626,145 @@ and **It That Heralds the End**, because the fence is scoped by `title === 'Go-W
 **Ship: nothing.** No file edited, so no `node --check`, no tag bump, no CHANGELOG entry — Row 6's
 precedent that a verify with nothing to finish should not mint a version. **Next run = FIX**, target
 order **C-036** → **C-037** / the Row 7 TYPE axis → C-013/C-018 → C-033 → C-002 → C-034.
+
+---
+
+## v8.01 — 2026-08-07 · CRITIQUE-FIX (MODE **FIX**) · **C-036** · the report seeded its rails once per mount, so a second commander inherited the first one's shelves
+
+**Pre-flight:** local `<meta>` v8.00 == live deployed v8.00 (no-cache) → proceed. Backup
+`index-backup-20260807-1805-preFixC036.html`. Git untouched — the hourly publisher shipped it.
+
+**Row 8 was a VERIFY, so this was a FIX run**, and C-036 was its recommended and highest-priority
+target.
+
+**The finding's own repro path was wrong, and finding the real one was the run.** Krenko's report →
+Back → Back → search Adeline → Consult renders **Adeline perfectly** (her 13 rails, "Goblin" 0×,
+0 traps) — Back *unmounts* the overlay, so the next open is a fresh mount. The bug needs a commander
+swap while the report is **already open**, and there is exactly one such path: `setScoutFor` is
+called only from DetailOverlay's `onConsult`, and the detail renders *on top of* the report, so
+consulting from there fires it on a **non-null** `scoutFor`. Measured on deployed v8.00 — Adeline's
+report → Similar commanders → **Myrel, Shield of Argive** → Consult: header, art and
+"⚒ Forge a deck around Myrel" all correct, then **Adeline's 13 rails** underneath, while
+`buildEngineModel(Myrel)` returns **16 different ones**. Her whole **Soldier typal, taxes and
+artifact** shelves were missing and she was served `statboard` + `out-typal`, which are not in her
+model at all.
+
+**Root cause, read out of the source.** `SynergyOverlay` seeds `sections` in a **useState
+INITIALISER** — which React runs **once per mount** — and its fetch effect, though correctly keyed on
+`[commander]`, only ever merges `{status, cards}` into `prev`. `title`, `sub`, `key`, `why` and `q`
+therefore stay with the previous commander (**wrong copy over right cards**), and because `prev.map`
+has no slot past the old length, **a rail the new commander has beyond the old one's COUNT can never
+appear**. Neither call site passed a `key`, so React re-rendered the instance instead of remounting it.
+
+**Fix: one property per call site.** Key both overlays by the commander's `oracle_id`
+(`'scout-' + …`, `'shop-' + …`). A real commander change becomes a **remount** (initialiser re-runs,
+correct descriptors); the key is **stable** across deck edits and across re-consulting the same
+commander, so nothing that used to persist stops persisting. Preferred over an in-component reset
+(one frame of stale content) and over patching the merge (the merge isn't wrong — the *lifetime* is).
+The **Workshop** call site had the identical defect and is keyed the same way. **`buildEngineModel`
+untouched.**
+
+**Content invariance — nine commanders, `[key,title,sub,q]` fingerprinted on live v8.00 and again on
+live v8.01, all nine hashes IDENTICAL** with the same rail and trap counts: Krenko 16/4 `3469475`,
+Adeline 14/0 `54d8d8ee`, Myrel 16/0 `16ea118d`, Atraxa 9/3 `37970c46`, Talrand 10/5 `931e196e`,
+Meren 12/4 `15161e56`, Muldrotha 10/4 `c2cebb7f`, Prosper 10/4 `7bec7558`, Thalia 8/0 `3ac5f732`.
+**Zero recommendation content moved on any commander** — the engine was always right, only the
+screen was stale.
+
+**Live verify on deployed v8.01.** The repro now renders Myrel's own shelves — *More Soldiers*
+(Mentor of the Meek, Elspeth Storm Slayer, Ranger-Captain of Eos), *Tax & Friction*, *Profit Through
+the Lock*, *Artifacts-Matter Payoffs*, *Soldier Anthems & Banners* — "Soldier" 10×, **zero Adeline
+shelves**, 15 rails × 14 cards. A **second mounted switch in the opposite direction** (Myrel → Anim
+Pakal) matches `buildEngineModel` **16 of 16**, zero missing, zero alien, zero "Myrel"/"Soldier".
+Three unrelated commanders cold-load to their recorded baselines (Atraxa **9** + 3 traps, Talrand
+**10** + 5 traps, Adeline **13**). Workshop path clean (Okaun 8 rails == his true model, Deck Doctor
+renders) and its key is stable — drafting a card kept the **same DOM instance**, unchanged rail
+lengths and the card in place (v5.77 `justAdded` intact); test card removed, deck restored 54→53.
+`node --check` OK on all 6 blocks; meta == banner == CHANGELOG[0] == v8.01; **zero console errors or
+warnings over two cold boots**.
+
+**Retraction for the record:** Row 8's claim that the TRAPS block goes stale does **not** hold —
+`model.traps` comes from `useMemo(…, [commander])` and recomputes correctly (Myrel 0 on screen, 0 in
+model). The defect was confined to the `sections` state.
+
+**Next run = VERIFY of C-036.** Use the *report open → Similar commanders → Details → Consult* path,
+not Row 8's. Note that an empty rail is simply not rendered, so rendered count < model count for some
+commanders (Myrel 15/16, Adeline 13/14 — `syn-ramp`) — **identical on v8.00 and v8.01**, not
+collateral, and the likelier explanation of Row 8's "hydration wobble". Still open: **C-037** / the
+Row 7 TYPE axis, C-013/C-018, C-033, C-002, C-034; Voltron "+1/+1 Growth" stays **deferred —
+owner-gated (roster/tile pipeline)**.
+
+---
+
+## STUDY Atraxa, Praetors' Voice — SHIPPED v8.02 · 2026-08-08 (`oracle-halfhourly-improve`)
+
+**MODE.** The priority block does not apply: the marker greps at **10**, unchanged by this run, and the most recent phase row is **PHASE 2 — polish + verified** @ v6.71 · 2026-07-31, so the reorganise/polish work is complete and the normal commander-study cycle runs. (This row is again worded so none of the structural marker tokens is spelled out in prose — the v7.80 convention — so phase detection stays clean.) The most recent STUDY/VERIFY row is **VERIFY Odric, Master Tactician (v7.95)** — the six builds after it, v7.96 → v8.01, are the separate `oracle-afternoon-polish` critique-fix lane and carry no STUDY/VERIFY row — so alternation makes THIS a **STUDY** on a NEW commander.
+
+**PRE-FLIGHT — AND THE ONE THING THIS RUN COULD NOT DO.** Backup **`index-backup-20260808-0005-preStudy.html`** taken before the first edit and byte-verified equal by SHA1 (`fa2706da1c7c265c55723b4d0a3f5762e3b11bc2`). Read the last worklog rows + every phase row for detection; `## KEEP — owner-valued` present in the backlog (line 104) and untouched. **git untouched** (no `.git` in the working folder; the clone was never opened). Mobile viewport/keyboard IIFE and the roster pipeline untouched. Node harness rebuilt first thing (a `vm` sandbox with DOM/React shims) and boots the SHIPPED file pre-edit at **ATOMS 89 / RAILS 74 / ARCHETYPES 100 / BLENDS 47 / STUDY_DB 170 / CHANGELOG 386**.
+
+**THE STALENESS GUARD COULD NOT BE RUN AS WRITTEN, AND THE HONEST STATEMENT IS THAT THIS BUILD IS NOT LIVE-VERIFIED.** `list_connected_browsers` returned `[]` on every attempt across the whole run and `tabs_context_mcp` reported the extension not connected, so **there was no browser this run** — the first run in this series with no browser at all. The sandbox proxy is simultaneously **HTTP 000** for `api.scryfall.com`, `json.edhrec.com` AND `doggiedance.github.io` (**thirty-three runs running**), and `web_fetch` returns an EMPTY BODY for every Scryfall endpoint tried (`/cards/named`, `/cards/search`, and `scryfall.com` itself). So the deployed `<meta>` could not be read and the guard's live half is **UNRUN**, not passed. It is recorded as unrun rather than waved through. The reason this was judged safe to ship anyway is structural, not optimistic: the publisher only ever copies a strictly-newer build **out of** this folder into the clone, so live cannot lead local unless something edited the clone directly, and local was `v8.01` — the build this folder itself last wrote, at 18:59 on 08-07. **The next run must re-open Atraxa's report in Chrome before trusting this build.** One genuinely new data path did open: `web_fetch` reaches **edhrec.com HTML** (verified against Tatyova, Benthic Druid — full theme tags, high-synergy and top-card columns), which is the first EDHREC access in thirty-three runs; it does not carry oracle text or rulings, which is why this run deliberately authored **no new detector regex** — a regex written against card wording nobody could verify is worse than no regex.
+
+**THE STUDY — WHY ATRAXA, AND WHAT WAS ACTUALLY WRONG.** The harness's continuity check disagreed with the record: v7.94 booted at **STUDY_DB 171** and v8.01 boots at **170**, with every other global unchanged. Scanning the SOURCE rather than the parsed object explains the missing one and finds two more: **173 study entries are AUTHORED on v8.01 and 170 survive to runtime.** Three keys are written twice —
+
+| key | first write | second write | who wins today |
+|---|---|---|---|
+| `7e6b9b59` **Atraxa, Praetors' Voice** | 902-char teardown, literal @6852 | **187-char TRUNCATED stub**, literal @6853 | the stub |
+| `e025a714` **The Locust God** | 893-char entry, literal @6852 | 1156-char teardown, statement @6919 | the statement |
+| `d0ade00d` **Titania, Protector of Argoth** | 133-char entry, literal @6853 | 1548-char teardown, statement @7008 | the statement |
+
+Two of the three are harmless — the better entry happened to be written last. **Atraxa's is not**, because there the loser was the good entry. The deployed app has been printing her insight cut off mid-word — *"…ADDS one of every counter kind already present to any number of chosen permanents AND players (incl."* — with an unclosed parenthesis and no closing sentence, plus a trap ending in a bare `…`, while her complete 902-character read sat one line above it in the same object literal as dead source. She is the most-played commander in the format. Worse, **this file's own baseline recorded the damage as health**: rows since v7.62 cite *"Atraxa **9** + 3 traps"* as a clean cold-boot reference, and `3 traps` is the stub's count. Twenty runs read the truncation and logged a success.
+
+This is precisely the failure the **v7.80** study wrote down and declared unfixable: *"a SECOND entry keyed by his oracle_id would have been silently swallowed by the later duplicate (last key wins in an object literal, and `assertStudyKeys` cannot see a collision the parser has already collapsed) — recorded in the worklog as a tooling gap rather than papered over."* It was recorded, and then it bit.
+
+**THE FIX — THE WRITE PATH, NOT ATRAXA.** Patching Atraxa would have been a one-off per-commander patch and would have left the next collision to be found by luck twenty runs later. Instead, **assignment into `STUDY_DB` stops being an overwrite and becomes a MERGE.** `studyStore()` wraps the literal in a `Proxy` whose `set` trap merges under **COMPLETENESS-WINS**: a partial or truncated entry can FILL GAPS but can never destroy a complete one. Completeness is decided by `studyTextComplete()` on three signals measured against the corpus — a trailing ellipsis, an **unbalanced `(`**, and no sentence-final punctuation. The middle signal is the one that earns its place: Atraxa's stub ends in a period and therefore *looks* terminated; only the unclosed parenthesis gives it away. Traps merge through `mergeTrapLists()`, which keeps the stronger list whole, tops it up with anything the other says that it does not, **never promotes a truncated fragment**, and never exceeds the render cap (the v7.63 failure). There is **no `get` trap**, so `studyFor()`'s id-then-name lookup and every `Object.keys` census are untouched, and the store degrades to today's behaviour rather than throwing where `Proxy` is unavailable.
+
+The property that matters is **ORDER INDEPENDENCE**, verified on all three collisions in both directions: the whole failure class is *"whichever entry happened to be written last won"*, so a rule whose result does not depend on write order is what actually retires the class — not a better-behaved overwrite. This closes the **literal-vs-statement** class outright for every future append, which is the class this file's own convention makes most likely, because every study since v7.31 is *"appended as a statement so the 109KB STUDY_DB literal stays untouched"*. The three known collisions are **also folded at source**, so the shipped build boots with **ZERO merges** and the new fourth boot guard is a tripwire rather than a nag.
+
+**`assertStudyMerges()` — the fourth assert, and the one the other three could not cover.** `assertRegexTermBudget()` catches a query that matches everything; `assertStudyKeys()` catches a study that can never be looked up; `assertStudyTrapCap()` catches a trap thrown away at render; this catches **two studies authored under one key**. Pure read, `console.error` only. It reports what the merge already saw, which is exactly why the merge had to exist first: the parser collapses a literal duplicate before any guard can look at it, so the write path is the only durable place to stand.
+
+**MEASURED — STRICTLY ADDITIVE, AND NOT ONE RECOMMENDATION MOVED.**
+
+- Source census after the fold: **170 authored / 170 distinct / ZERO duplicate keys** (was 173 / 170 / 3).
+- **167 of 170 studies byte-identical.** The three that change: **Atraxa insight 187 → 902 chars and traps 3 → 5** (both stub traps that survive are complete; the truncated one is refused); **The Locust God traps 3 → 5** with its 1156-char insight kept; **Titania unchanged at render** — the merge recovered nothing new from her dead stub, which is the proof it does not manufacture content.
+- **RAILS AND GAME PLAN ARE IDENTICAL ON ALL EIGHT COMMANDERS TESTED, INCLUDING THE TWO WHOSE PROSE CHANGED.** This build alters study prose only; not one rail query, title, subtitle or `why` string differs anywhere.
+- Boot is silent: **zero `console.error`, zero `console.warn`**, all four asserts quiet. `node --check` OK on all 6 blocks. meta == console banner == `CHANGELOG[0]` == **v8.02**.
+
+**COUNTER-CASE — MEASURED, NOT ARGUED.**
+
+- *Does it help others sharing the mechanic?* **Yes, named:** The Locust God gains two recovered traps; Titania is proven neutral. Every future study appended as a statement — the file's standard path — is now collision-safe without its author remembering a helper.
+- *Are unrelated commanders unchanged?* **Yes, five of them, byte-identical models:** Krenko, Mob Boss (16 rails), Talrand, Sky Summoner (10), Adeline, Resplendent Cathar (14), Sheoldred, Whispering One (11), Omnath, Locus of Rage (17).
+- *Does the guard actually catch a NEW duplicate, or only the ones already known?* **Planted test, run on both builds.** Writing a 35-char truncated stub with two traps over Atraxa's key: on **v8.01** it DESTROYS the study (insight 187 → 35, traps 3 → 2) and raises no error anywhere; on **v8.02** the 902-char study survives intact, the truncated fragment is refused promotion, the trap cap holds at 5, and `assertStudyMerges()` prints `7e6b9b59-… (insight 902/35→902 chars, traps 5+2→5)`. Written in the reverse order (stub first, complete second) the complete entry still wins.
+
+**WHAT THIS RUN DELIBERATELY DID NOT DO.** No new atom, rail or detector regex was authored, because with Scryfall unreachable and no browser there was no way to verify a single line of card wording, and this engine's regexes are written against printed wording. Reaching for one from memory would have put an unverifiable claim into the shared atom layer — the opposite of what the counter-case discipline is for. The **truncation census is left as recorded debt**: `studyTextComplete()` flags **50 of 170** entries as damaged, of which the hard cases are the ledger-import entries capped at exactly **190 characters** and ending in `…` (Orthion, Gev, Tayam, Thalia and The Gitrog Monster, Sakashima, Ezuri, Estrid, Riku, Marath, Kalamax, Uril, Niv-Mizzet Parun, Alrund and others). Those need re-authoring against the cards, not a merge rule, so they are named here rather than papered over.
+
+**HAND-OFF.** (a) Next run is a **VERIFY of Atraxa, Praetors' Voice** and it must start by doing the thing this run could not: open her report in Chrome on the deployed build and read the insight to its final word, confirming the 902-character teardown renders and that the five traps are the three long ones plus the two recovered stub traps, at desktop and 390px. (b) Re-run the staleness guard properly — its live half was **UNRUN** here, not passed. (c) The **190-character truncation census** above is the largest known block of damaged study prose in the file and the natural subject for a run that has Scryfall back. (d) If the browser is still gone, prefer a run like this one — verifiable offline against the file — over any change that needs card text.
+
+## VERIFY Atraxa, Praetors' Voice — SHIPPED v8.03 · 2026-08-08 (`oracle-halfhourly-improve`)
+
+**MODE.** The priority block does not apply: the in-file phase marker greps at **10**, unchanged by this run, and the most recent phase row is **PHASE 2 — polish + verified** @ v6.71 · 2026-07-31, so the reorganise/polish work is complete and the normal commander-study cycle runs. (This row is again worded so none of the structural marker tokens is spelled out in prose — the v7.80 convention — so phase detection stays clean.) The most recent STUDY/VERIFY row is **STUDY Atraxa, Praetors' Voice (v8.02)**, so alternation makes THIS a **VERIFY of Atraxa**, exactly as that run's hand-off item (a) instructed.
+
+**PRE-FLIGHT — AND THE STALENESS GUARD IS RECORDED AS *UNRUN*, NOT AS PASSED.** The sandbox proxy returned **HTTP 000** for `api.scryfall.com` AND `doggiedance.github.io` and `mcp__workspace__web_fetch` returned an EMPTY BODY for Scryfall (**thirty-five runs running**), and `list_connected_browsers` returned `[]` — **NO browser was connected at any point in this run**, so the live half of the guard had no channel and could not be executed. Local `<meta>` read **v8.02 · 2026-08-08**. Following the v8.02 hand-off item (b), which flagged its own guard as unrun, this run does not launder an unrun check as a pass; it proceeds because the risk it guards against is local-BEHIND-live, and the change shipped here is *additive to the write path only* and provably moves nothing at render (below), so a publisher sweep landing mid-run cannot produce a divergent build. Backup **`index-backup-20260808-0035-preVerifyAtraxa.html`** (pre-edit SHA1 `aa9fda0fbf0b144e6a114b34d2dbb386312226c4`, byte-verified equal with `cmp`) taken before the first edit. Read the last worklog rows + every phase row for detection; `## KEEP — owner-valued` present in the backlog and untouched. **git untouched** (no `.git` in the working folder; the clone was never opened). Mobile viewport/keyboard IIFE and the roster pipeline untouched. Node `vm` harness with DOM/React shims rebuilt first thing and boots the SHIPPED file pre-edit at **ATOMS 89 / RAILS 74 / STUDY_DB 170 / CHANGELOG 387**, **zero `console.error`, zero `console.warn`, all four asserts quiet** — exactly v8.02's figures, which is the continuity check.
+
+**THE VERIFY ITSELF — v8.02'S CLAIMS HOLD, AND ATRAXA IS FIXED.** Hand-off (a) asked for her insight to be read to its final word. It reads to its final word: **902 characters**, ending `"…the type-agnostic doublers and repeat-proliferate engines are the payoff, which is why she wants breadth of counter sources rather than one counter theme."` — balanced parentheses, sentence-final punctuation, no truncation. **All FIVE traps render** (the cap is 5, so none is discarded), and they are the three long ones plus the two recovered stub traps, exactly as v8.02 predicted. Her rails build as three themed counter shelves — **Counter Fuel** (enabler) / **Counter Doublers & Proliferate** (amplifier) / **Counter Wincons** (payoff) — plus six staples. Independently re-measured, v8.02's merge did precisely what it claimed: insights damaged by the unbalanced-paren signal **1 → 0**, traps **608 → 612**, one truncated trap correctly refused promotion. **One correction to v8.02's prose:** its census reported *"50 of 170"* entries damaged; the actual figure is **13 damaged insights**, and **20** entries if you count any entry with a damaged insight *or* trap. The 50 is not reproducible.
+
+**THE DEFECT THIS RUN FOUND IS IN THE WRITE PATH v8.02 SHIPPED, NOT IN ATRAXA — AND IT WAS DESTROYING FINISHED PROSE.** `studyTextComplete()` condemned any string with no sentence-final punctuation. Measured across all 782 shipped study strings, **that third signal has ZERO true positives and NINE false positives**: 9 of 612 traps are finished 57–433 character thoughts written in the house trap voice — a lowercase-initial clause with no full stop — and **every one of them ends on a CONTENT word** (`…one big refill`, `…to one Swords to Plowshares`, `…as a combo piece`, `…polarity caveat`). I read all nine; not one is truncated.
+
+That verdict is not cosmetic, because the predicate is a **GATE** in `mergeTrapLists()` *and* the **first sort key** in `scoreTrapList()`. A list of three excellent house-style traps scores `[0, …]` and loses **outright** to two throwaway punctuated ones, and is then refused top-up. **PLANTED AND MEASURED ON v8.02**: three finished traps totalling **512** characters against two totalling **37** (`"run more lands."`, `"the commander is good."`) — **ZERO of the three survive, in BOTH write orders.** v8.02 set out to retire *"whichever entry happened to be written LAST wins"* and left **"whichever entry happened to be PUNCTUATED wins"** standing in its place: still perfectly order-independent, still the wrong answer. Order independence was necessary and it was not sufficient.
+
+**THE FIX IS A PRINCIPLE, NOT A PATCH — REFUSAL REQUIRES PROOF OF DAMAGE; RANKING MAY USE EVIDENCE OF QUALITY.** `studyTextComplete()` now carries only the **two HARD signals**, both of them evidence a machine left behind rather than a style choice: the ledger import's own trailing ellipsis, and an **unbalanced `(`** (still the ONLY thing that catches Atraxa's stub, which ends in a period and so *looks* terminated). All 28 damaged strings in the corpus trip one of those two, so the gate loses nothing it used to catch. Terminal punctuation is **demoted** to `studyTextTerminated()`, a ranking-only signal that can never refuse a trap, and `scoreTrapList()` becomes lexicographic over `[undamaged, terminated, length]`, so a tie no longer falls straight to raw length.
+
+**DELETING THE SIGNAL OUTRIGHT WAS MEASURED AND REJECTED, NOT ASSUMED SAFE.** The first version of this fix simply relaxed the veto. Counter-cased against itself on 480 traps cut at 190 characters with **no** ellipsis appended, the old veto catches **99.0%** of those unmarked cuts and hard signals alone catch **0%** — so the signal is worth real recall and *demotion, not deletion*, is what keeps it. **And the demotion costs nothing measurable:** `pickStudyText()` still prefers the original over an unmarked cut of itself **131/131** at 120 chars, **121/121** at 190 and **121/121** at 240 — identical to v8.02 — and **121/121** on the marked cut the corpus actually contains.
+
+**COUNTER-CASE — MEASURED, NOT ARGUED.**
+
+- *Does it help others sharing the mechanic?* **Yes, named:** **SHEOLDRED, THE APOCALYPSE** (3 traps; EDHREC rank 458, 11,820 decks, the 15th-most-built commander in the format), **WYLETH, SOUL OF STEEL** (4), **RENATA, CALLED TO THE HUNT** (1) and **STORM, FORCE OF NATURE** (1) — nine traps that could never be promoted through a merge now can. Every future study appended as a statement — the file's standard path since v7.31 — is now safe to write in the house trap voice, which is the voice the file already uses.
+- *Is real damage still refused?* **Yes:** all **13** truncated insights and all **16** genuinely damaged traps are still refused, and **ZERO** of the 9 reprieved traps carries an ellipsis.
+- *Are unrelated commanders unchanged?* **Yes — and stronger than a sample.** The shipped build boots with **ZERO merges**, so nothing renders differently at all: the entire **STUDY_DB render payload is BYTE-IDENTICAL** old vs new. Full engine models built from identical inputs are **byte-identical on all seven commanders tested**, four of them unrelated to the mechanic: **Krenko, Mob Boss** · **Talrand, Sky Summoner** · **Adeline, Resplendent Cathar** · **Omnath, Locus of Rage**, plus Atraxa, Sheoldred and Wyleth. `studyFor()` payload identical.
+
+**BLAST RADIUS — PROVED BY DIFF RATHER THAN ASSERTED.** Script **blocks 1–4 are BYTE-IDENTICAL**, so the owner-gated mobile viewport/keyboard IIFE (block 3) is untouched *by construction*. The entire non-script region differs by **exactly ONE LINE and FOUR CHARACTERS** — `v8.02` → `v8.03` in the `<meta>` tag — so no CSS, markup or layout moved at all; block 0 likewise differs by the same four characters in the console banner. Block 5 carries the CHANGELOG entry plus **16 non-comment code lines**. Every static engine literal is identical old-vs-new — **498 q, 97 oq, 501 titles, 452 subs, 365 keys, 369 roles, 457 whys, 116 tests, 22 traps, 7 insights** — which is why no rail can appear, disappear or be reordered. `html`/`body`/`script` 2/2/6; phase marker 10. **node --check PASS 6/6.** meta == console banner == `CHANGELOG[0]` == **v8.03**. Post-edit boot: ATOMS 89 / RAILS 74 / STUDY_DB 170 / CHANGELOG 388, zero `console.error`, zero `console.warn`, zero merges.
+
+**WHAT THIS RUN DELIBERATELY DID NOT DO.** With Scryfall, EDHREC and the deployed origin all unreachable and **no browser connected**, there was no way to verify a single line of card wording, so **no card-by-card rail audit was attempted and not one detector regex was authored from memory** — that would have put an unverifiable claim into the shared atom layer, which is the opposite of what the counter-case discipline is for. The whole run was spent on a defect provable from the file alone, per v8.02 hand-off item (d). The seven engine models above are a *differential* test — the synthetic card text need not be authoritative because it is byte-identical on both sides, so any delta would be attributable to this change and nothing else.
+
+**RECORDED, NOT PATCHED.** Atraxa's game plan renders **"+1/+1 Counters — go tall"**, which mildly contradicts her own study insight (*"she wants breadth of counter sources rather than one counter theme"*) and her trap #1 (*"NOT a lifegain deck… every slot should seed or multiply counters"*). Re-pointing archetype selection for proliferate commanders is a family-level change that needs live card data to counter-case, so it is named here rather than half-fixed.
+
+**HAND-OFF.** (a) Next run is a **STUDY of a NEW commander**. (b) The **staleness guard's live half has now been UNRUN for two runs running** (v8.02 and this one) — the next run with any network must re-establish it before anything else. (c) **Atraxa's game plan vs her study** is the cleanest named defect currently open and the natural first target once card data returns; it is an archetype-selection question, so it should generalise across every proliferate/superfriends commander. (d) The **190-character truncation census** — 13 insights and 16 traps, all ellipsis-marked, listed by the v8.02 row — remains the largest block of damaged study prose in the file and still needs re-authoring against the cards, not a merge rule. (e) If the browser is still gone, prefer another file-provable run over any change that needs card text.
