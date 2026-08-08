@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-08T03:15:44.375Z",
+  "updated": "2026-08-08T08:15:43.080Z",
   "deals": [
     {
       "t": "Secrets of Strixhaven Prismari Artistry $27 @ Best Buy (In Store)",
@@ -46,6 +46,13 @@
   ],
   "wire": [
     {
+      "t": "What is a card with art you love that is bad by modern day standards",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vim5p6/what_is_a_card_with_art_you_love_that_is_bad_by/",
+      "s": 0,
+      "c": 1786162713,
+      "f": ""
+    },
+    {
       "t": "Some proxies I made for my friend’s Tom, Bert, and William deck",
       "u": "https://www.reddit.com/r/magicTCG/comments/1vi9puc/some_proxies_i_made_for_my_friends_tom_bert_and/",
       "s": 0,
@@ -53,10 +60,10 @@
       "f": ""
     },
     {
-      "t": "Just some neat lil' artifacts",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vi0clv/just_some_neat_lil_artifacts/",
+      "t": "Bonus card for Secret Lair x Stardew Valley",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vimkry/bonus_card_for_secret_lair_x_stardew_valley/",
       "s": 0,
-      "c": 1786108514,
+      "c": 1786164031,
       "f": ""
     },
     {
@@ -67,24 +74,17 @@
       "f": ""
     },
     {
-      "t": "Is he still considered a colourless commander?",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vi28j0/is_he_still_considered_a_colourless_commander/",
+      "t": "Through the Omenpaths; The Complete Set (including custom Showcase cards and Lands)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vilj1j/through_the_omenpaths_the_complete_set_including/",
       "s": 0,
-      "c": 1786113051,
+      "c": 1786160804,
       "f": ""
     },
     {
-      "t": "Hand-painted Farseek after Asher Brown Durand's 'The Beeches'.",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vidizv/handpainted_farseek_after_asher_brown_durands_the/",
+      "t": "Just some neat lil' artifacts",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vi0clv/just_some_neat_lil_artifacts/",
       "s": 0,
-      "c": 1786138516,
-      "f": ""
-    },
-    {
-      "t": "Booster packs are not double what they were just 5 years ago, they actually underperformed inflation.",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vi99fe/booster_packs_are_not_double_what_they_were_just/",
-      "s": 0,
-      "c": 1786128660,
+      "c": 1786108514,
       "f": ""
     }
   ]
