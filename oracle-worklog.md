@@ -6031,3 +6031,71 @@ run**; with C-001/C-036/C-034 closed the top of the queue is the rail-content cl
 (Idol of Oblivion / Horn of Gondor in Krenko's producer rail) needs live Scryfall; C-037 and
 C-005/C-021 are the compounding copy fixes. **Open lead carried forward, not fixed:** Zirda, the
 Dawnwaker still gets **zero `actdisc` rails** (flat-reduction half of the class) — commander-study lane.
+
+**Publisher note (v8.24):** the hourly publisher swept the clone at ~14:11, while this run was still
+appending logs. Checked read-only rather than assumed: the clone's `index.html` is **byte-identical**
+to the working folder's, tags **v8.24**, and passes `node --check` **6/6** with meta == banner ==
+`CHANGELOG[0]` — so it took a **complete** build, not a mid-edit snapshot (unlike the v7.84 incident).
+This lane did not touch the clone or git at any point.
+
+---
+
+## v8.25 — 2026-08-08 — CRITIQUE-FIX (MODE **FIX**) — **C-037: the colour fence was attached to a rail's TITLE, so it reached one shelf out of six**
+
+**Ships v8.25.** Pre-flight: local v8.24, clone byte-identical at `af22b8f Publish: build v8.24`,
+local >= live → no HALT. Backup `index-backup-20260808-1435-preFixC013.html`. Git untouched.
+Chrome unreachable for the **fifth** consecutive run, so the pass is the jsdom harness booting the
+shipped file unmodified.
+
+**Target chosen, and the handed-off one deferred with a reason.** The last run handed off C-013/C-018
+(Idol of Oblivion in Krenko's producer rail). That is a rail-**CONTENTS** finding and this sandbox
+cannot count contents: `api.scryfall.com` is unreachable by `curl` (HTTP 000) *and* by `web_fetch`
+(empty body), and the harness stubs `/cards/search`. **Deferred — unmeasurable this run**, rather
+than "fixed" blind. C-037 is the same priority-2 class and is decidable by query algebra, which is
+how its own parent finding C-019 was verified.
+
+**Reproduced, and wider than the log.** On booted v8.24, **five** shelves carrying a team-pump clause
+are unfenced across **six** commanders: Krenko's *Goblin Anthems & Banners* (the named casualty),
+Anim Pakal's *Gnome*, Reaper King's *Scarecrow*, a mono-black probe's *Zombie*, plus **Talrand's
+*Payoffs for a Wide, Flying Board*** and **Reaper King's *More Anthems & Mass Pump*** — the last two
+not in C-037. Root cause is structural, not careless: the tribal block **pushes `tribe-anthem` later
+in `buildEngineModel` than the v8.00 fence runs**, so no widening at that call site could ever have
+reached it.
+
+**Fix.** The v8.00 fence string is lifted **verbatim** into `anthemColourFence(ci, o, typeLine)` — so
+the v8.00 call site is byte-identical by construction — and a **sweep before `return`** applies it to
+every rail whose query matches `/creatures? (?:tokens )?you control get/` and is not already fenced.
+Title-blind and family-blind, so future shelves inherit it. All 9 fence occurrences verified as
+trailing top-level AND terms with byte-identical suffixes: strict narrowing, a rail can only lose
+cards.
+
+**The regression this run caught on itself.** v8.00 declined the `colorless` push by reading the
+commander's oracle TEXT. **Reaper King** (read verbatim from mtg.wtf/card/shm/260 this run) is
+`Legendary Artifact Creature — Scarecrow`, WUBRG, and prints neither `artifact` nor `colorless` in
+his rules text — so the naive sweep would have stripped the colorless anthems his **colorless** board
+is built on, re-creating C-019 on a different commander. One arm added, and it only ever **weakens**
+the fence: the `colorless` push is also declined when the **type line** says artifact. Reaper King
+now takes **zero** fence on both shelves and is byte-identical; v8.00's four measured commanders
+(Krenko, Adeline, Rhys, Sai) are unmoved.
+
+**Counter-case, measured.** 14 commanders / **166 sections**: **0** structural changes, **0** rails
+added or removed (the 9-rail budget never moves), **0** gamePlan or trap changes, and **exactly 4**
+query changes — every one a pure fence append. **Go-Wide Payoffs byte-identical on all 4 commanders
+carrying it.** 10 unrelated controls untouched. Rendered DOM: **scoutDOM and shopDOM IDENTICAL for
+12/12 commanders**; 274 rendered whys → **0 double-stops, 0 unterminated** (C-034 holds), C-028's
+`”.` **32 → 32**. C-036's suite still keyed 7/7 and 4/4 with the unkeyed control still reproducing
+(62 alien rails, 22 name leaks); 7 cold mounts EXACT; settled remount 16 → 16 with 0 extra fetches.
+
+**Ship.** `node --check` **6/6 PASS**; four boot assertions `[]`; console errors **0 / 0**; fetch
+parity **4 / 4** (re-measured one-build-per-process — `boot.js`'s `fetchLog` is module-level and
+shared, so earlier rows' in-process fetch comparisons were accumulator artefacts). Script blocks
+**1–4 byte-identical** (block 3 IS the mobile IIFE — untouched by proof); **non-script content
+195,241 → 195,241 chars, one line differing** (the build tag). meta == console banner ==
+`CHANGELOG[0]` == **v8.25**. Roster/tile pipeline, mobile IIFE and git untouched.
+
+**Named residuals:** card contents unverified (no Scryfall) — a VERIFY run should count Krenko's
+shelf before/after; the regex-written scoped branch of *More Anthems & Mass Pump* stays unfenced;
+C-037's **type-axis** half (Chief of the Foundry class) untouched and stays OPEN. `mtg.wtf` went
+rate-limited (HTTP 429) mid-run, so the mono-black tribal case is a labelled synthetic probe.
+Harness gained `c037.js`, `diff037.js`, `algebra.js`, `netcount.js`, `tribal.js`; `chk.js` is broken
+(hard-coded `/tmp/vc034`, EACCES).
