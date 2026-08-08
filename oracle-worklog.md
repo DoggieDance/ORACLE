@@ -6191,3 +6191,105 @@ a clause-level rewrite, so **C-005/C-021 stay OPEN on that half**. Backup
 `index-backup-20260808-1535-preFixC005.html`; roster/tile pipeline, mobile IIFE and git untouched.
 
 **NEXT FOCUS:** critique-fix lane — next run is a **VERIFY** run for C-005/C-021.
+
+---
+
+**v8.28 · 2026-08-08 · critique-fix VERIFY (C-005 / C-021) — the fix holds, and the one stray comma it
+shipped is repaired here rather than logged for later.**
+Re-reproduced from the pre-fix backup with `vfy005.js`, written from a different angle than v8.27's own
+census: v8.27's `c005.js` draws its name list **from `EXEMPLAR_CI` itself**, so passing it is close to
+tautological. The new verifier reads the **rendered DOM** on both overlay paths, extracts candidate names
+by a Title-Case heuristic with **no table at all**, and *proves* each rewrite is a deletion. Pre-fix v8.26
+→ shipped: leak census **18 blurbs / 54 uncastable names → 14 / 45**; table-free candidate census
+**103 / 207 → 102 / 202** — the prose only ever shrank. **The VERIFY found a regression, which is the
+point of the run:** fence rule 3 allows a SINGLE survivor when the list continues with a non-card item,
+but the `listOn` branch joins with commas only, so mono-W Myrel shipped *"…artifact count — Nettlecyst,
+and metalcraft rewards cash the board in."* — a serial comma with one item in front of the *and*. That
+sentence was **correct before v8.27 and wrong after it**, so it is this lane's regression. Repaired in
+**one line inside the branch that caused it**: one survivor + `listOn` absorbs the trailing comma —
+deletes a single comma, can never add text, inert otherwise. Whole-domain re-proof: 308 whys × 32
+identities is still **13 distinct pairs**, pair 11 fixed, **pairs 1–10 and 12–13 byte-unchanged**.
+Blast radius v8.27→v8.28: **1 blurb changed**, **0 structural**, **0 query**, **16 of 17 commanders
+byte-identical** in model + scout + workshop DOM — including Anim Pakal, Talrand and Dwynen, the other
+three the fence moved. Independent proof of the fence's central claim, which v8.27 asserted but never
+measured: all **4** changed whys are strict subsequences of the old once and/or connectors are normalised
+out (**4/4, 0 violations**), and **net connector words added = 0** — the fence cannot author prose.
+New permanent guard: `vfy005.js` counts single-item serial commas (pre-fix **20**, v8.27 **22**,
+v8.28 **20**); all 20 residuals read and all are correct clause commas. Guards: node --check 6/6,
+meta == banner == CHANGELOG[0] == v8.28, 0 console errors, C-028 50→50, C-034 404 whys / 0 double-stops
+/ 0 unterminated, C-036 keyed 7/7 + 4/4 with the unkeyed control still reproducing (62 alien rails,
+22 leaks), C-037 OK, algebra 15 fences / 0 mismatches / all four boot assertions [], 7 cold mounts EXACT,
+settled remount 16→16 with 0 extra fetches, perf 0.438 → 0.447 ms/call.
+**Named residuals:** **C-005/C-021 stay OPEN** on the ≤1-survivor half (**14 blurbs / 45 names** — mono-B
+still shown Craterhoof Behemoth and Overrun, Dwynen still given eight black drain finishers); that needs a
+clause-level rewrite, a different and unproven risk. Card CONTENTS still unverified — **Chrome down an 8th
+run**, no Scryfall. Of v8.27's 11 unasserted `EXEMPLAR_CI` entries, **3 are now asserted exactly**
+(Bident of Thassa, Coastal Piracy, Reconnaissance Mission = exactly U) behind a live negative control;
+**the other 8 hit HTTP 429**, and a query with a comma inside a quoted name redirects to the site root and
+would have "proved" anything — recorded as unasserted, not as passed. Harness gained `vfy005.js`;
+**`chk.js` fixed for a third path trap** (it assumed its scratch dir existed). Carried lead for the study
+lane: **Zirda** still gets zero `actdisc` rails. Backup `index-backup-20260808-1635-preVerifyC005.html`;
+roster/tile pipeline, mobile IIFE and git untouched.
+
+**NEXT FOCUS:** critique-fix lane — next run is a **FIX** run (the ≤1-survivor half of C-005/C-021 needs
+a clause-level rewrite, not another fence).
+
+---
+
+### v8.29 · 2026-08-08 · critique-fix (MODE **FIX**) · **C-027 STUDY_DB half** — the study ledger stopped showing players the engine's variable names
+
+**What shipped.** `model.insight` renders verbatim into the Scouting Report under *"From the study
+ledger:"*, and **20 of 180 STUDY_DB entries were shipping internal engine identifiers to the reader**
+— Krenko named `P.tapActivated`, Winota `P.libDeploy`, Yuriko `P.revealMV`, Isshin `P.trigAmpScope`,
+Feather `P.castTargetsOwn`, Animar `P.counterFuel + P.costDownType` and `FAM.cast`, Ur-Dragon
+`P.tribeCostDown`, Jhoira `ARCHETYPES.massdeploy` / `plan.name` / `plan.base`, plus
+`RAILS.enchantments` and `RAILS.landfall`: **27 occurrences**, measured **off the booted app** (new
+`boot3.js` exposes `STUDY_DB`) rather than grepped, so CHANGELOG prose and comments could not inflate
+the count. Fixed by **authored copy, in place** — the one approach v7.97 had not already rejected,
+since that run built and threw away a render-time sentence strip for leaving dangling antecedents.
+**23 exact-anchor substitutions, every anchor asserted unique before writing.** No Magic fact was
+deleted: every card name, percentage, rail title, ruling and trap survives.
+
+**Blast radius, proved not argued.** 17 commanders / 202 sections: **0 structural changes** (0 key,
+0 title, 0 sub, 0 role, **0 query**, 0 why) and the model **byte-identical outside `.insight` 17/17**.
+`v034.js` over 12 commanders / 137 sections: 0 structural, 0 whys changed, model + scoutDOM + shopDOM
+**identical 12/12**. Script blocks **0,1,2,3,4 BYTE-IDENTICAL** (block 3 *is* the mobile IIFE → mobile
+untouched by proof), non-script bytes **195,420 → 195,420 identical**. Page weight
+**3,357,447 → 3,357,076 (−371 B)** — the first negative delta since C-024 was filed.
+
+**Exercised, and the suite is not vacuous.** A probe mounts each edited entry through the real
+`SynergyOverlay` and reads `.synergy-intro` out of the rendered DOM — **20/20** resolve, render under
+the ledger heading, and carry no identifier. Pointed at the pre-fix backup the same probe **fails all
+20 with the identifier visible in the DOM**. Guards: `node --check` 6/6; meta == banner ==
+CHANGELOG[0]; 0 console errors; C-005 census **14/45 unchanged**; C-028 32→32; C-034 274 whys /
+0 double-stops / 0 unterminated; C-036 keyed 7/7 + 4/4 with the unkeyed control still reproducing;
+C-037 OK; algebra 15 fences / 0 mismatches; perf **0.441 → 0.429 ms/call**.
+
+**The handed-off target was declined with a measurement, not a shrug.** Row 17 handed off C-005's
+≤1-survivor half. New `residtext.js` prints the FULL sentence around each declined run, and they show
+the obvious fix — dropping the trailing em-dash appositive — must be guarded by "no surviving name in
+the appositive", and **with that guard it fires on nothing** (a colourless survivor like Caged Sun or
+Aetherflux Reservoir is present in every case). **Without** the guard it deletes Talrand's
+mono-U-legal Bident of Thassa / Reconnaissance Mission / Coastal Piracy. It needs re-authored source
+sentences, not a transform. **C-005/C-021 stay OPEN, unchanged at 14 blurbs / 45 names.**
+
+**Named residual — C-027 stays OPEN.** Widening the detector from dotted namespaces to **bare
+camelCase** finds **21 further entries / 27 occurrences** (`sacProtect`, `reanimateCap`,
+`deployTypes`/`deployOnAttack`, `detectTribe`, `pTest`, `copyDuration`/`targetType`/`copySource`,
+`countedSet`, `castType`, `werewolfPack`, `spellToken`, `vehicleReanimate`, `libCheat`, …). Those need
+**whole-sentence rewrites**, which re-opens the dangling-antecedent risk — a different and unproven
+risk. `camelctx.js` ships the sentences so the next FIX run starts fully specified.
+
+**C-024 finding recorded while measuring:** externalizing the CHANGELOG **is not shippable by this
+lane** — `auto-push.bat` copies exactly two files into the clone (`index.html`, `oracle-worklog.md`),
+so a new `changelog.json` would **404 in production while looking correct locally**. Any C-024 fix
+must live inside index.html, or the owner must extend the publisher.
+
+**Carried lead for the study lane:** **Zirda, the Dawnwaker** still gets **zero `actdisc` rails**
+(re-confirmed on v8.29). Chrome unreachable a **9th** run, `api.scryfall.com` unreachable; this
+finding needed neither — defect and absence are both visible in the rendered DOM. Backup
+`index-backup-20260808-1705-preFixC005residual.html`; roster/tile pipeline, mobile IIFE and git untouched.
+
+**NEXT FOCUS:** critique-fix lane — next run is a **VERIFY** of C-027, with a verifier written from a
+different angle than `c027b.js` (read the DOM, no identifier table), plus collateral checks on
+commanders that have **no** STUDY_DB entry (the fallback paragraph must still render).
