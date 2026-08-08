@@ -5883,3 +5883,151 @@ Both builds' **`ATOMS`, `RAILS`, `ARCHETYPES`, `BLENDS` and `STUDY_DB` were seri
 **(e) STANDING DEBTS — ONE RETIRED, THE REST CARRIED.** **RETIRED: `copytoken` has a family** (v8.21 hand-off item 7, half of it). Still open: (1) the `o:<bareword>` census — `o:add` (7 sites), `o:less` (3 sites), `o:gain`, and now `o:scry` above. (2) The land-subtype family still has no `ARCHETYPES` entry. (3) The once-per-turn trigger cap is still invisible to the engine, and Rionya's displaced 'Spellcast Payoffs' above is a second commander it would have helped decide. (4) **STUDY_DB entries for Raffine, Kenrith, Kelsien, Grimgrin, Lonis, Anje MoD, Sefris, Hazezon, The Valeyard and now MIIRYM are NAME-KEYED** and want re-keying to `oracle_id`; **the list is now TEN long** and is the single largest piece of accumulated debt in the file. (5) The `discard` atom's `sup` array should gain `'connive'` and `'blood'`. (6) `lander` is still missing from `ARTIFACT_TOKEN_NOUN_SRC`. (7) v8.20's budget-ordering defect is untouched and still costs real shelves on the seven members it named — and this run adds three more names to the same ledger (Rionya, Feldon, Osgir).
 
 **(f) TOOLING NOTES.** **`edhrec.com` answered in FULL through `web_fetch`** and returned the complete commander page — inclusion and synergy percentages for every section — which is the richest single source any recent run has had; it is worth spending the first fetch of the budget there. **`web_fetch` rate-limits to HTTP 429 after roughly TWO large fetches**, not five: the jsdelivr guard fetch alone (96,754 characters) spent most of the budget, so a future run should read the live `<meta>` with a cheaper path if one exists. **`WebSearch` is a working fallback for verbatim oracle text** and supplied Miirym's this run. `api.scryfall.com` remains **EMPTY-BODY through web_fetch** (fourteenth build running) and sandbox `curl` is **HTTP 000 with no DNS** for every host (forty-five runs running). **`mtg.wtf` was never reached this run** — not a failure of the host, a failure of the fetch budget. **HARNESS NOTE WORTH CARRYING:** `const` declarations do NOT land on the vm sandbox's global object, so the export epilogue must name every constant it wants to inspect explicitly — reading `ETB_ENTER_TRIGGER_RE` off `globalThis` returns `undefined` and silently looks like a non-match.
+
+---
+
+## 2026-08-08 13:05 · critique-fix lane · MODE **VERIFY** · **C-036 CLOSED** · build **v8.22 (no change shipped)**
+
+Alternation put this run on VERIFY for **C-036** (second commander in an open Scouting Report
+inherited the first commander's rail titles/subs), fixed in v8.01 and never live-verified since.
+
+**Claude-in-Chrome was unreachable for the entire run** (5 attempts, `list_connected_browsers` → `[]`)
+— the second consecutive lane blocked this way after the 08-08 site-critic's static-only pass. Every
+route to a real renderer inside the sandbox is closed too: puppeteer's Chrome download 403s,
+`@puppeteer/browsers` can't resolve `googlechromelabs.github.io`, `apt-get chromium` has no
+candidate, `playwright install chromium` fails, and `api.scryfall.com` is unreachable.
+
+Rather than defer a MAJOR a third time, built **`harness/`** (new folder, this working folder): jsdom
+boots the **shipped `index.html` unmodified**, stubs Scryfall, and re-exports the app's top-level
+bindings through a probe `<script>` appended before `</body>`. App boots headless with **0 console
+errors**, self-reporting `ORACLE v8.22 · 2026-08-08`.
+
+**Verdict — C-036 CLOSED.** Every case was run twice on the same file: once with the shipped `key`
+on `SynergyOverlay`, once with it removed (the pre-v8.01 shape), so the test proves it can *see* the
+bug rather than merely failing to find it.
+
+- **Keyed (shipped): 11/11 commander switches render EXACTLY `buildEngineModel(B)`** — 0 alien rails,
+  0 leaks of the previous commander's name. Includes the original **Adeline → Myrel** repro (16/16,
+  "Adeline" ×0) and the growing case **Thalia → Krenko (8 → 16/16)** that the old code could not reach.
+- **Unkeyed control: 0/11**, 62 alien rails, 22 name leaks — reproducing *both* Row 9 signatures,
+  wrong-copy-over-right-cards **and** the count ceiling (Krenko → Atraxa renders 16 where the model
+  has 9). Root cause confirmed mechanically.
+- **Collateral, all clean:** deck edits do **not** remount the Workshop overlay (same DOM instance,
+  16 rails, identical `14×16` card counts, **0 extra network calls**) so v5.77 `justAdded` survives;
+  re-consulting the same commander with a new object does not remount (key is stable); seven
+  unrelated commanders cold-mount EXACT (Atraxa 9/9, Talrand 10/10, Muldrotha 10/10, Thalia 8/8,
+  Meren 12/12, Okaun 7/7, Anim Pakal 16/16).
+- `node --check` 6/6 blocks OK. `<meta>` == banner == `CHANGELOG[0]` == v8.22.
+
+**No build shipped** — nothing to finish, so the tag was not churned (same call as Rows 6 and 8).
+`index.html` untouched; backup `index-backup-20260808-1305-preVerifyC036.html`; git untouched.
+
+**Scope honesty:** this verifies *reconciliation and lifetime*, which is what C-036 is. It does not
+verify layout, paint, or rail card **contents** (search results are synthetic; commander JSON in
+`harness/cmdrs.js` is authored locally, so absolute rail counts are self-consistent but should not
+be compared to live numbers without checking the card text). Caveats live in `harness/README.md`.
+**Worth five minutes on the deployed page next time Chrome is up.**
+
+Next run is a **FIX** run; top OPEN item is **C-038** (9-rail budget truncates by family emission
+order — Alela loses her whole tokens family). The harness can run that 94-commander differential
+offline *if* real commander JSON can be seeded — `tile-rosters.json` or a Chrome dump.
+
+---
+
+## v8.23 — 2026-08-08 · CRITIQUE-FIX (C-034) · afternoon-polish lane
+
+**Mode FIX** (Row 10 was a VERIFY). Pre-flight clean: local v8.22 byte-identical to the publisher's
+clone at `f8eac8a`, so local == live. Backup `index-backup-20260808-1400-preFixRun.html`. Git untouched.
+
+**Chrome unreachable for the third consecutive run**, so Row 10's jsdom harness was reused — but
+**`mtg.wtf` IS reachable via web_fetch** (unlike `api.scryfall.com`), so every card fact this run is
+verbatim real text rather than authored from memory. Worth remembering for any future blocked run.
+
+**Two findings corrected before any code was touched.** **C-038** (9-rail budget) is written from
+stale evidence: the flat-prefix trim was replaced by a breadth-first family fill in **v7.51**, and
+the Alela/Gandalf casualties come from a *rejected draft* of v8.19's flash rails, never shipped. The
+real defect is narrower — breadth-first runs in family EMISSION order, so a commander matching **>9
+families** drops the last ones (Tivit, Davros, Damocles Base). **Deferred**: fixing it needs a
+family-weight ranking plus the 94-commander differential, which needs live Scryfall. **C-002** was
+re-scoped: **Uril, the Miststalker is HEXPROOF**, and you may target your own hexproof creature, so
+the population is *shroud* / *protection from everything* only, not "untargetable commanders" broadly.
+
+**Shipped — C-034, the double full stop.** The critique's census of "57 of 370" was counting the
+wrong population (source-text `why:` literals, including STUDY_DB and CHANGELOG prose that never
+reach a composer). Enumerated off the **booted** app: **213 rail whys, 92 atom whys, 2 gate whys —
+exactly 2** terminate, both in `RAILS.actdisc`. Repro real and confirmed in the **rendered DOM**:
+**Agatha of the Vile Cauldron** shipped `…can never cost less..` and `…a whole extra ability..`.
+
+Fix is one helper on the **composer**, not on the two strings, because the defect is a class:
+`function endStop(s) { return /[.!?…]\s*$/.test(s) ? s : s + '.'; }`, wired into the two rail-`why`
+arms and the gate composer. Non-subtractive by construction — for any string not already ending in
+a terminator it returns exactly `s + '.'`, byte-for-byte the old expression, old edge cases
+(`undefined` → `'undefined.'`, `''` → `'.'`) preserved. The snippet arm's `”.` was measured (1
+occurrence, Meren) and deliberately left alone — that terminator is v7.97/C-028's and is correct.
+
+**Counter-case — true old-vs-new differential, 12 commanders in sibling jsdom contexts: 137 sections
+compared, ZERO structural changes (key/title/sub/role/QUERY byte-identical), exactly 2 whys changed,
+double-stops 2 → 0.** Zero query changes is the load-bearing line: recommendation content is
+provably unchanged. 11 unrelated commanders byte-identical including every why (Adeline, Myrel, Anim
+Pakal, Krenko, Atraxa, Talrand, Meren, Muldrotha, Thalia, Okaun, Zirda). C-036's suite re-run and
+still holds (keyed 7/7 and 4/4 exact; unkeyed control still reproduces 62 alien rails / 22 leaks, so
+the test is not vacuous); key stability, settled remount and 7 cold mounts unchanged; 0 extra fetches.
+
+`node --check` 6/6; blocks 0–4 byte-untouched (block 3 is the mobile IIFE → mobile safe by
+construction); meta == banner == CHANGELOG[0] == v8.23; 0 console errors everywhere.
+
+**New lead, logged not fixed:** **Zirda, the Dawnwaker** ("Abilities you activate that aren't mana
+abilities cost {2} less to activate") receives **ZERO `actdisc` rails** — the family gate reads
+Agatha's power-based X and misses the flat-reduction half of the class. Next run is a **VERIFY** for
+C-034.
+
+---
+
+### v8.24 · 2026-08-08 · critique-fix lane · **VERIFY C-034** — CLOSED
+
+**Mode alternation held:** last row was a FIX (C-034, v8.23), so this was its VERIFY.
+
+**Pre-flight.** Local `<meta>` v8.23 vs live deployed **v8.22** — local AHEAD, no HALT. Backup
+`index-backup-20260808-1400-preVerifyC034.html`. **Chrome unreachable for the 4th consecutive run**,
+so verification is the jsdom harness booting the shipped file unmodified. Git untouched, clone never
+written, working folder only.
+
+**Re-reproduced rather than re-read.** Booted the **pre-fix backup (v8.22)** and the shipped build in
+sibling jsdom contexts and read the **rendered DOM** (`.ws-why`). Agatha of the Vile Cauldron's oracle
+text re-read **verbatim from mtg.wtf/card/woe/199 this run**. OLD: 10 rails, **2 double stops**
+(`…can never cost less..`, `…a whole extra ability..`). NEW: 10 rails, **0**. Reproduces before,
+does not reproduce after.
+
+**The subtractive direction — what a VERIFY actually owes.** Census over 12 commanders × both overlay
+paths on the shipped build: **274 rendered whys, 0 double-stops, 0 UNTERMINATED, 0 empty.** v8.23
+proved the guard adds nothing wrong; this proves it **removed** nothing — no blurb lost its full stop.
+
+**Two things v8.23 could not show, now shown.** (1) `RAILS.actdisc`'s whys are **constants shared by
+the whole family**, so the fix had to clear all three members, not just Agatha — the artifact-subject
+and Food-subject members both carried the **same 2 double stops on the old build and are clean on the
+new**, structure identical (**3/3 fixed**). mtg.wtf went **rate-limited (429)** mid-run, so those two
+are clearly-labelled **synthetic parameter probes**, stated plainly. (2) v8.23's declared honest gap —
+`endStop` wired into the **gate composer** but 0 `gate:` sections in the corpus — is closed: reading
+the GATES tests *and the two deferral rules at the push site* produced three probes that DO emit
+(`gate:tapgate` ×2, `gate:untapgate` ×1), and the gate `why` is **byte-identical old-vs-new** on all
+three. Proven by data, not by construction.
+
+**Counter-case.** 137 sections over 12 commanders: **0 structural changes** (key/title/sub/role/**query**
+byte-identical — recommendation content unchanged), exactly **2 whys changed**, both Agatha's.
+**11 unrelated commanders identical in the model AND in both rendered overlays.** C-028's `”.`
+terminator **32 → 32, preserved**. 0 console errors old/new; **0 extra network calls** (279/279).
+
+**No collateral in adjacent views.** C-036 suite: scout keyed **7/7** exact, workshop **4/4**, unkeyed
+control **still reproduces** (62 alien rails / 22 name leaks — not vacuous). Key stability, same-commander
+re-render, settled remount, 7 cold mounts all unchanged.
+
+**Blast radius by diff, not assertion.** v8.22→v8.23 is **6 hunks**. Script blocks **1–4 byte-identical**
+(block 3 IS the mobile viewport/keyboard IIFE → mobile untouched by proof), block 0 differs only in the
+version digit, and **non-script content differs by exactly one line** (the `<meta>` tag) — no CSS,
+markup or layout change at all. `node --check` **6/6**; meta == banner == `CHANGELOG[0]` == **v8.24**.
+
+**C-034 is CLOSED** in ORACLE-CRITIQUE.md and oracle-critique-fixes.md (Row 13). **Next run is a FIX
+run**; with C-001/C-036/C-034 closed the top of the queue is the rail-content class — C-013/C-018
+(Idol of Oblivion / Horn of Gondor in Krenko's producer rail) needs live Scryfall; C-037 and
+C-005/C-021 are the compounding copy fixes. **Open lead carried forward, not fixed:** Zirda, the
+Dawnwaker still gets **zero `actdisc` rails** (flat-reduction half of the class) — commander-study lane.
