@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v8.26 · 2026-08-08">
+<meta name="oracle-build" content="v8.27 · 2026-08-08">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1775,7 +1775,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v8.26 \u00B7 2026-08-08', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v8.27 \u00B7 2026-08-08', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -2798,6 +2798,113 @@ function capWord(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 // whys take the unchanged branch. The snippet arm (`…”.`) is deliberately NOT routed through
 // this — that terminator is v7.97/C-028's, closing a truncated oracle quote, and it is correct.
 function endStop(s) { return /[.!?\u2026]\s*$/.test(s) ? s : s + '.'; }
+// ---------------------------------------------------------------------------------------------
+// v8.27 (C-005 / C-021) \u2014 THE EXEMPLAR COLOUR FENCE.
+// Every rail query is built from `base`, which opens with `id<=<commander identity>` (see
+// buildEngineModel), so a rail's CARD CONTENTS have always been colour-legal. The BLURB that sits
+// above those cards was not: the exemplar names in a `why` are authored prose, shared by every
+// commander the rail is dealt to, and nothing ever compared them against the deck's identity.
+// MEASURED on the shipped v8.26 over the 17-commander corpus: 24 blurbs named 67 cards the deck
+// cannot cast \u2014 mono-W Myrel told to play Cranial Plating and Marionette Master, mono-B commanders
+// pointed at Craterhoof Behemoth, and mono-G Dwynen handed EIGHT black drain finishers in one
+// sentence. Same lesson the file already learned for COSTDOWN_COLOR_WORD in v7.14/v7.15: a card
+// that is gated on a property the deck does not have is a dead card, however famous it is.
+//
+// THE TRANSFORM IS PURE DELETION FROM A LIST, and it is fenced four ways so it can only ever make
+// a sentence shorter and never make one wrong:
+//   1. ONLY NAMES IN THE TABLE are candidates. An unknown name is not even a hit, so a `why` this
+//      table has never heard of is returned byte-identical. The table is DATA \u2014 extending it needs
+//      no code change, and omitting a card is inert rather than wrong.
+//   2. ONLY INSIDE A RUN of two or more table names joined by list separators (", ", ", and ",
+//      " and ", ", or ", " or "). A name standing alone is never touched, which is what protects
+//      the "(Impact Tremors class)" / "Skullclamp-class" / "Mayhem Devil triggers on the Treasure"
+//      phrasings \u2014 those are class labels doing grammatical work, not shopping lists.
+//   3. AT LEAST TWO SURVIVORS or the run is left exactly as it stands. This is a GRAMMAR fence,
+//      not a taste one: these runs are usually the plural subject of a plural verb ("\u2026 flood the
+//      field", "\u2026 all pile onto the team"), so collapsing one to a single name would ship
+//      "Bitterblossom flood the field". ONE survivor is allowed in exactly one case \u2014 when the
+//      sentence continues the list with a NON-card item ("\u2026, Nettlecyst, and metalcraft rewards
+//      cash the board in"), because that item keeps the subject compound and the verb plural.
+//      Every other short-survivor case is left alone and logged as C-005's named residual.
+//   4. NEVER THE COMMANDER'S OWN NAME or the quoted oracle snippet \u2014 the fence is applied to the
+//      authored `a.why` / `r.why` / `g.why` only, never to the composed sentence, so `firstName`
+//      and the C-028 snippet are outside its reach by construction.
+// Colour identities below were each read from mtg.wtf this run; a colourless entry is '' and is
+// therefore legal everywhere, which is what lets a run keep a survivor (Nettlecyst, Caged Sun).
+const EXEMPLAR_CI = {
+    'Adeline': 'W', 'Intangible Virtue': 'W', 'Ojer Taq': 'W', 'Felidar Sovereign': 'W',
+    'Murmuring Mystic': 'U', 'Docent of Perfection': 'U', 'Favorable Winds': 'U',
+    'Bident of Thassa': 'U', 'Reconnaissance Mission': 'U', 'Coastal Piracy': 'U',
+    'Cranial Plating': 'B', 'Marionette Master': 'B', 'Bitterblossom': 'B', 'Sanguine Bond': 'B',
+    'Exquisite Blood': 'B', 'Vito': 'B', 'Bloodthirsty Conqueror': 'B',
+    'Marauding Blight-Priest': 'B', 'Gray Merchant': 'B', 'Exsanguinate': 'B',
+    'Young Pyromancer': 'R', 'Reckless Fireweaver': 'R',
+    // HYBRID, and the verification pass caught this one: {1}{U/R}{U/R} is identity UR, not R.
+    // The error was in the safe direction (it would have RETAINED her in a mono-R blurb rather
+    // than removed her from one), but a wrong entry is a wrong entry — read from mtg.wtf/card/war/234.
+    'Saheeli, Sublime Artificer': 'UR',
+    'Craterhoof Behemoth': 'G', 'Overwhelming Stampede': 'G', 'Overrun': 'G',
+    'Doubling Season': 'G', 'Parallel Lives': 'G', 'Primal Vigor': 'G', 'Scute Swarm': 'G',
+    'Avenger of Zendikar': 'G', 'Seedborn Muse': 'G', 'Wilderness Reclamation': 'G',
+    'Mirari\u2019s Wake': 'GW', 'Warleader\u2019s Call': 'RW', 'Empyrean Eagle': 'WU',
+    'Nettlecyst': '', 'Caged Sun': '', 'Aetherflux Reservoir': '', 'Thousand-Year Elixir': '',
+    'Unwinding Clock': '', 'Sol Ring': '', 'Skullclamp': ''
+};
+// Longest-first so a name that CONTAINS a comma ('Saheeli, Sublime Artificer') is claimed whole
+// before the list splitter can ever see its comma as a separator. Sorting once at module scope.
+const EXEMPLAR_NAMES = Object.keys(EXEMPLAR_CI).sort(function (a, b) { return b.length - a.length; });
+const EXEMPLAR_SEP_RE = /^(?:,\s+(?:and|or)\s+|,\s+|\s+(?:and|or)\s+)$/;
+const EXEMPLAR_WORD_RE = /[A-Za-z\u2019'\-]/;
+function ciCovers(have, need) {
+    for (let i = 0; i < need.length; i++) if (have.indexOf(need[i]) === -1) return false;
+    return true;
+}
+function exemplarFence(text, ci) {
+    if (!text || typeof text !== 'string') return text;
+    const hits = [];
+    for (let n = 0; n < EXEMPLAR_NAMES.length; n++) {
+        const name = EXEMPLAR_NAMES[n];
+        let i = text.indexOf(name);
+        while (i !== -1) {
+            // Word-boundary both sides, so 'Overrun' never matches "overruns" and 'Skullclamp'
+            // never matches "Skullclamp-class" (the hyphen counts as a word character here).
+            const b = i === 0 ? ' ' : text.charAt(i - 1);
+            const a = text.charAt(i + name.length) || ' ';
+            if (!EXEMPLAR_WORD_RE.test(b) && !EXEMPLAR_WORD_RE.test(a)) {
+                let clash = false;
+                for (let h = 0; h < hits.length; h++) { if (i < hits[h].e && i + name.length > hits[h].s) { clash = true; break; } }
+                if (!clash) hits.push({ s: i, e: i + name.length, n: name });
+            }
+            i = text.indexOf(name, i + 1);
+        }
+    }
+    if (hits.length < 2) return text;
+    hits.sort(function (x, y) { return x.s - y.s; });
+    const runs = []; let cur = [hits[0]];
+    for (let k = 1; k < hits.length; k++) {
+        if (EXEMPLAR_SEP_RE.test(text.slice(hits[k - 1].e, hits[k].s))) cur.push(hits[k]);
+        else { runs.push(cur); cur = [hits[k]]; }
+    }
+    runs.push(cur);
+    let out = text;
+    // Right-to-left so an earlier run's indices are still valid after a later one is rewritten.
+    for (let r = runs.length - 1; r >= 0; r--) {
+        const run = runs[r];
+        if (run.length < 2) continue;
+        const keep = run.filter(function (h) { return ciCovers(ci, EXEMPLAR_CI[h.n]); });
+        if (keep.length === run.length) continue;
+        // If the sentence continues the list with a NON-name item ("\u2026, Nettlecyst, and metalcraft
+        // rewards\u2026"), join with commas only so the survivors don't collide with that trailing 'and'
+        // \u2014 and that trailing item is also what makes a SINGLE survivor grammatical here.
+        const listOn = /^,?\s+(?:and|or)\s/.test(out.slice(run[run.length - 1].e, run[run.length - 1].e + 8));
+        if (keep.length < (listOn ? 1 : 2)) continue;
+        const names = keep.map(function (h) { return h.n; });
+        const joined = listOn ? names.join(', ')
+            : names.slice(0, -1).join(', ') + (names.length === 2 ? ' and ' : ', and ') + names[names.length - 1];
+        out = out.slice(0, run[0].s) + joined + out.slice(run[run.length - 1].e);
+    }
+    return out;
+}
 // English-correct pluralizer for card-type labels: "Sorcery" -> "Sorceries" (consonant + y),
 // while "Creature"/"Land"/"Artifact" etc. still take a plain "s". n===1 leaves the word singular.
 function pluralType(word, n) { if (n === 1) return word; if (/[^aeiou]y$/i.test(word)) return word.slice(0, -1) + 'ies'; return word + 's'; }
@@ -15549,6 +15656,20 @@ function buildEngineModel(commander) {
             out[i].q = aq + anthFence;
         }
     }
+    // v8.27 (C-005/C-021) — THE EXEMPLAR SWEEP, and it is deliberately the SAME SHAPE as v8.25's
+    // anthem sweep directly above, for the same reason and after the same mistake. The first cut of
+    // this fix wired `exemplarFence` into the three ATOM/RAIL composer sites, which looked complete
+    // and was not: the parameter layer pushes ~150 rails with their own inline `why`, so Talrand's
+    // 'More Spell→Token Engines' (Young Pyromancer, Saheeli — both RED, on a mono-BLUE deck) never
+    // saw the fence. Measured by the residual census, not noticed by eye. One sweep at the return
+    // is both SMALLER (one call site, not 150+) and total: every present and future rail is covered
+    // without anyone remembering to wire it up.
+    // SAFE ON THE COMPOSED STRING: `firstName` is the commander's own name, which is by definition
+    // inside its own identity and so can never be stripped, and the C-028 oracle snippet is
+    // lowercased, so a Title-Case table name cannot match inside it.
+    for (let i = 0; i < out.length; i++) {
+        if (typeof out[i].why === 'string') out[i].why = exemplarFence(out[i].why, ci);
+    }
     return {
         sections: out,
         traps: traps, // already capped at TRAP_RENDER_MAX by mergeTraps()
@@ -15825,6 +15946,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v8.27', date: '2026-08-08', focus: 'critique-fix', commander: '—', summary: "CRITIQUE-FIX C-005 / C-021 — THE BLURB NOW NAMES ONLY CARDS THE DECK CAN ACTUALLY CAST. Every rail query is built from `base`, which opens with `id<=<identity>`, so rail CONTENTS have always been colour-legal; the exemplar names in the blurb ABOVE those cards are authored prose shared by every commander the rail is dealt to, and nothing ever compared them against the deck. MEASURED ON THE PRE-FIX BUILD over 17 commanders / 202 sections: 18 blurbs naming 54 cards the deck cannot cast — mono-W Myrel told to play Cranial Plating and Marionette Master, mono-B commanders pointed at Craterhoof Behemoth and Overrun, mono-U Talrand handed Young Pyromancer, and mono-G Dwynen given EIGHT black drain finishers in a single sentence. Same lesson this file already learned as COSTDOWN_COLOR_WORD in v7.14/v7.15: a card gated on a property the deck does not have is a dead card, however famous it is. THE FIX IS ONE FUNCTION AND ONE SWEEP. `exemplarFence(text, ci)` deletes off-identity names from a comma/and list and repairs the punctuation; the sweep runs immediately after v8.25's anthem sweep, just before the return. FOUR FENCES MAKE IT SUBTRACTIVE AND SAFE: (1) only names in the EXEMPLAR_CI table are candidates, so an unknown blurb is returned byte-identical and a missing card is INERT rather than wrong; (2) only inside a RUN of two or more table names joined by list separators, which is what protects the class-label phrasings ('(Impact Tremors class)', 'Skullclamp-class', 'Mayhem Devil triggers on the Treasure') that are doing grammatical work; (3) at least TWO survivors, or ONE when the sentence continues the list with a non-card item — a GRAMMAR fence, not a taste one, because these runs are usually the plural subject of a plural verb and collapsing one would ship 'Bitterblossom flood the field'; (4) the commander's own name can never be stripped (it is by definition inside its own identity) and the C-028 oracle snippet is lowercased, so a Title-Case table name cannot match inside it. THE FIRST CUT WAS WRONG AND THE HARNESS CAUGHT IT, WHICH IS THE MOST USEFUL THING IN THIS ENTRY: the fence was originally wired into the three ATOM/RAIL composer sites, which looked complete and was not — the parameter layer pushes ~150 rails carrying their own inline `why`, so Talrand's 'More Spell→Token Engines' never saw it. A residual census, not the eye, found it. Moving to ONE sweep at the return is both SMALLER (one call site instead of 150+) and total: every present and future rail inherits it without anyone remembering to wire it up. VERIFICATION CAUGHT A DATA ERROR TOO: Saheeli, Sublime Artificer is {1}{U/R}{U/R} — hybrid, identity UR, not R as first written (mtg.wtf/card/war/234). The error was in the safe direction (it would have RETAINED her in a mono-R blurb, never removed her from a legal one) but it is corrected. AN EARLIER ROUND OF ASSERTIONS WAS THROWN OUT AS VACUOUS: mtg.wtf treats everything after `!` as part of the card name, so `!\"Bitterblossom\" -ci<=w` silently returns nothing and 'proves' whatever you like. Re-run with `name=` plus a POSITIVE CONTROL (`(name=\"Nettlecyst\" or name=\"Bitterblossom\") ci>=1` must return exactly Bitterblossom) before any entry was trusted. TRANSFORM PROVED OVER ITS WHOLE DOMAIN, not a sample: all 308 authored whys x all 32 colour identities = 13 distinct before/after pairs, every one read by hand and grammatical. COUNTER-CASE old-vs-new over 137 sections: 0 STRUCTURAL changes (0 key, 0 title, 0 sub, 0 role, 0 QUERY — this fix cannot move a card), exactly 3 why strings changed (Myrel, Anim Pakal, Talrand), and 9 of 12 commanders BYTE-IDENTICAL in model, scout DOM and workshop DOM. Leak census 18 blurbs/54 names -> 14/45. GUARDS ALL HELD: node --check 6/6; C-028 '”.' 32 -> 32; C-034 census 274 rendered whys, 0 double-stops, 0 unterminated; C-036 keyed 7/7 scout and 4/4 workshop with the unkeyed control STILL reproducing (62 alien rails, 22 name leaks) so the test is not passing vacuously; C-037 verifier 17/17 OK; algebra 15 fences 0 mismatches and all four boot assertions []; 7 cold mounts EXACT; settled remount 16 -> 16 with 0 extra fetches; 0 console errors on both builds. PERF: +0.03 ms per buildEngineModel call (0.409 -> 0.438), on a function called once per report open. One scare ruled out honestly: the differential reported 279/558 network calls old/new, and an IDENTICAL-BUILD control returned 93/192 — the 2x is a harness artefact, not this change. RESIDUAL NAMED, NOT PAPERED OVER: the fence declines 0-survivor runs (mono-B's 'Craterhoof Behemoth, Overwhelming Stampede, or Overrun', 'Doubling Season, Parallel Lives, and Primal Vigor' on W/R/B decks, Dwynen's two all-black drain runs) and 1-survivor runs with no trailing list item (the 'Scute Swarm... Adeline flood the field' and 'Intangible Virtue... Warleader's Call all pile onto the team' anthem sentences); those need a clause-level rewrite, which is a different and unproven risk, so C-005/C-021 stay OPEN on that half. Card CONTENTS still unverified — api.scryfall.com unreachable and the Chrome extension down for a SEVENTH consecutive run, so this is a headless proof. Backup index-backup-20260808-1535-preFixC005.html; roster/tile pipeline, mobile IIFE and git untouched." },
     { build: 'v8.26', date: '2026-08-08', focus: 'critique-fix', commander: '—', summary: "VERIFY C-037 — THE COLOUR HALF IS CONFIRMED FIXED, AND THE ONE RESIDUAL v8.25 NAMED TURNED OUT TO BE A LIVE CARRIER, SO IT IS NOW CLOSED TOO. Re-reproduced the original defect FROM SCRATCH on the pre-fix backup with a verifier written independently of v8.25's own detector (it re-derives the expected dead-colour list from each commander's identity, oracle text and type line, so a fix that merely satisfies its own predicate cannot pass): pre-fix v8.24 showed 11 team-pump shelves, 4 UNFENCED-LEAK — Krenko's Goblin, Anim Pakal's Gnome and a mono-B probe's Zombie Anthems & Banners plus Talrand's Payoffs for a Wide, Flying Board. On shipped v8.25 all 4 are fenced, every fence's dead-colour list matches the independently computed one EXACTLY, and REAPER KING'S TWO SHELVES REMAIN UNFENCED — the regression guard v8.25 built, holding. NOTE ONE CORRECTION TO v8.25's OWN COUNT: it recorded 'five unfenced shelves' including Reaper King's pair; those two are not leaks but correct behaviour (WUBRG identity, artifact type line), so the true defect count was 4. THE RESIDUAL WAS REAL AND IS NOW FIXED. v8.25 deliberately left the REGEX-written arm of `More Anthems & Mass Pump` unmatched, calling it a residual rather than fencing it blind. This run measured it on real cards and it carries the identical defect: ASCENDANT EVINCAR (text and type line read VERBATIM from mtg.wtf/card/10e/127) is mono-BLACK and prints 'Other black creatures get +1/+1' — the pre-modern colour-lord wording omits 'you control', so ANTHEM_BARE_RE fails, `scopedAnthem` is true, and he is dealt the regex branch the v8.25 sweep could not see. His shelf was still taking white, blue, red and green anthems. ONE ALTERNATION ADDED to ANTHEM_PUMP_Q_RE matching the scoped branch's own source literal, which occurs at EXACTLY ONE query site in this file (verified by grep), so the widening cannot reach any other rail. THE FENCE ITSELF IS UNCHANGED — this only extends WHICH rails receive the already-shipped v8.00 string, which is a trailing top-level AND and can therefore only ever REMOVE cards, never add one. TWO CANDIDATES WERE READ VERBATIM AND REJECTED BEFORE THE RIGHT ONE WAS FOUND, recorded so nobody re-derives it: DWYNEN, GILT-LEAF DAEN (mtg.wtf/card/fdn/217) prints 'Other Elf creatures you control get +1/+1', which CONTAINS the bare phrase, so she takes the unscoped branch and was already fenced by v8.25; and EDGAR MARKOV (mtg.wtf/card/inr/234) prints no anthem at all — his Vampire pump is a +1/+1 COUNTER on attack — so he is not an anthem commander. COUNTER-CASE: old-vs-new over 17 commanders / 202 sections — 0 structural changes (key/title/sub/role/why), 0 rails added, 0 removed, 0 gamePlan or trap changes, and EXACTLY 3 query changes, every one a pure fence append (Evincar, Sliver Legion, the Zombie probe). SLIVER LEGION IS THE MULTICOLOUR CONTROL and proves the fence stays honest on the new branch: WUBRG has no dead colours, so he receives a colorless-only fence — correct, since a five-colour Sliver board wants no colorless anthem — and Reaper King, who is also WUBRG but whose ARTIFACT type line declines even that push, still takes ZERO fence and is byte-identical. VERIFY: node --check 6/6 PASS; all four boot assertions []; 0 console errors on both builds; fetch parity 8/8 measured one build per process; rendered scout and workshop DOM IDENTICAL 12/12; C-036's suite still keyed 7/7 and 4/4 exact with the unkeyed control still reproducing (62 alien rails, 22 name leaks), so the test still sees bugs rather than passing vacuously; 7 cold mounts EXACT, key stability and settled remount both stable with 0 extra fetches. HONEST RESIDUALS, NAMED NOT PAPERED OVER: card CONTENTS remain unverified — api.scryfall.com is unreachable from this sandbox and the Chrome extension has now been down SIX consecutive runs, so this is a query-algebra proof, not a card count; the fence STRING only matches the 'you control' wording, so a Crusade-style 'All white creatures get +1/+1' is not excluded on any shelf (a pre-existing narrowness of v8.00, deliberately NOT widened here); and C-037's TYPE-AXIS half (Chief of the Foundry class) is untouched and stays OPEN. Backup index-backup-20260808-1505-preVerifyC037.html; roster/tile pipeline, mobile IIFE and git untouched." },
     { build: 'v8.25', date: '2026-08-08', focus: 'critique-fix', commander: '—', summary: "FIX C-037 — THE COLOUR FENCE WAS ATTACHED TO A RAIL'S TITLE, SO IT REACHED ONE SHELF OUT OF SIX. v8.00 closed C-019 by appending a colour fence to the rail it found by TITLE (out.findIndex(r => r.title === 'Go-Wide Payoffs'), so every OTHER shelf built on the same bare o:\"creatures you control get\" clause kept dealing colour-scoped anthems to boards that provably cannot be that colour. MEASURED, NOT ASSUMED, on shipped v8.24 over a 14-commander corpus: FIVE unfenced shelves on SIX commanders — Goblin Anthems & Banners (KRENKO, the casualty C-037 names), Gnome (Anim Pakal), Zombie (probe), Scarecrow (Reaper King), plus TALRAND's 'Payoffs for a Wide, Flying Board' and Reaper King's 'More Anthems & Mass Pump', neither of which C-037 knew about. THE TRIBAL SHELF WAS UNREACHABLE FOR A STRUCTURAL REASON: the tribal block pushes it LATER in buildEngineModel than the v8.00 fence runs, so no widening at that call site could ever have caught it — which is why the new sweep runs LAST, after every family block, transform and splice. It is title-blind and family-blind on purpose, asking only whether a rail's query wants a team pump, so a shelf added by a future study inherits the fence with nobody wiring it up. THE FENCE STRING IS LIFTED VERBATIM AND UNCHANGED, so the v8.00 call site is BYTE-IDENTICAL and its safety properties are inherited by construction, not re-argued: boundary-anchored (nonblack/multicolored cannot be substring-matched), re-admitting (any non<colour> team pump survives — Battle Frenzy), and ANDed, so a rail may only LOSE cards and never gain one — all 9 fence occurrences verified as trailing top-level AND terms with suffixes byte-identical to the Go-Wide one. ONE ARM ADDED, AND IT ONLY WEAKENS THE FENCE: the colorless push is now also declined when the commander's TYPE LINE says artifact. REAPER KING (read verbatim from mtg.wtf/card/shm/260 this run) is the proof it was needed — Legendary ARTIFACT Creature — Scarecrow, identity WUBRG, printing neither 'artifact' nor 'colorless' in his rules text, so the text-only carve-out misses him and the fence would have stripped the colorless anthems his colorless board is built on. He takes ZERO fence and is byte-identical: the regression this change could have introduced, caught and closed before shipping. COUNTER-CASE: old-vs-new over 14 commanders / 166 sections — 0 structural changes (key/title/sub/role/why), 0 rails added, 0 removed (the 9-rail budget never moves), 0 gamePlan or trap changes, and EXACTLY 4 query changes, every one a pure fence append. Go-Wide Payoffs is byte-identical on all 4 commanders carrying it, so C-019's shipped fix is provably unmoved. 10 unrelated controls untouched: Adeline, Myrel, Atraxa, Meren, Muldrotha, Thalia, Okaun, Agatha, Zirda, Reaper King. VERIFY: node --check 6/6 PASS; all four boot assertions [] ; 0 console errors on both builds; fetch calls 8/8; longest rail query 501 chars against the ~1008 ceiling; C-036's suite still keyed 7/7 and 4/4 exact with the unkeyed control still reproducing (62 alien rails, 22 name leaks), so the test still sees bugs. BLAST RADIUS BY DIFF: script blocks 0-4 BYTE-IDENTICAL (block 3 IS the mobile viewport/keyboard IIFE — mobile untouched by proof) and NON-SCRIPT BYTES 195,241 -> 195,241 IDENTICAL apart from the build tag, so not one byte of CSS, markup or layout moved. HONEST RESIDUALS, NOT FIXED: card CONTENTS are unverified — Scryfall is unreachable from this sandbox and Chrome has been down five runs, so this is a query-algebra proof, not a card count; the REGEX-written scoped branch of 'More Anthems & Mass Pump' is deliberately left unfenced; and C-037's type-axis half (Chief of the Foundry class) is untouched and stays OPEN. Backup index-backup-20260808-1435-preFixC013.html; roster/tile pipeline, mobile IIFE and git untouched." },
     { build: 'v8.24', date: '2026-08-08', focus: 'critique-fix', commander: '—', summary: "VERIFY C-034 — THE DOUBLE FULL STOP IS GONE, THE FIX REACHES THE WHOLE FAMILY, AND THE ONE GAP v8.23 DECLARED HONESTLY IS NOW CLOSED BY DATA. C-034 is CLOSED. This run did not re-read v8.23's own report; it re-reproduced the ORIGINAL defect from scratch by booting the PRE-FIX BACKUP (index-backup-20260808-1400-preFixRun.html, v8.22) and the shipped build in SIBLING jsdom contexts and reading the RENDERED DOM (`.ws-why`), not the model. OLD build, AGATHA OF THE VILE CAULDRON, Scouting Report: 10 rails, 10 whys, TWO DOUBLE STOPS — '…an ability that already cost one mana can never cost less..' and '…a whole extra ability..'. NEW build, same commander, same path: 10 rails, 10 whys, ZERO. The defect reproduced before the fix and does not reproduce after it. HER ORACLE TEXT WAS RE-READ VERBATIM FROM mtg.wtf/card/woe/199 THIS RUN rather than carried from the previous log. CENSUS ON THE SHIPPED BUILD, 12 commanders × both overlay paths: 274 RENDERED WHYS, 0 DOUBLE-STOPS, 0 UNTERMINATED, 0 EMPTY. The zero-unterminated column is the one that matters for a VERIFY — it is the SUBTRACTIVE direction, and it proves the guard removed no terminator anywhere while removing the two duplicates. THE FIX GENERALISES TO THE WHOLE AFFECTED FAMILY, WHICH v8.23 DID NOT SHOW: RAILS.actdisc's two `why` strings are CONSTANTS shared by every member, and v7.84's closed census puts exactly three commander-legal creatures in the family (Agatha t:creature floor {4}, Mutagen Man Living Ooze t:artifact {2}, Sam Loyal Attendant t:food {2}). mtg.wtf was rate-limited (HTTP 429) for the other two, so they were exercised as clearly-labelled SYNTHETIC PARAMETER PROBES tripping ACT_DISCOUNT_RE on the artifact and Food subjects: BOTH carried the SAME two double stops on the old build and BOTH are clean on the new one, with section structure IDENTICAL old-vs-new. 3 of 3 family members fixed, not 1. THE 'HONEST GAP' FROM v8.23 IS NOW CLOSED BY DATA, NOT BY CONSTRUCTION: v8.23 shipped `endStop` into the GATE composer too but measured 0 `gate:` sections across its corpus, so that arm was unproven. Three gate probes were built against the shipped GATES tests and the two deferral rules at the push site (tapgate defers to `seen['selftap']`, untapgate to `P.tapActivated`), and they DO emit — gate:tapgate ×2, gate:untapgate ×1 — and the gate `why` is BYTE-IDENTICAL old-vs-new on all three ('…tappers open the gate.', '…make each one cheaper.'). The second site the fix touched is now proven inert-and-correct by measurement. STRUCTURAL DIFFERENTIAL RE-RUN INDEPENDENTLY: 137 sections over 12 commanders, ZERO changes to key / title / sub / role / QUERY, exactly 2 `why` strings changed (both Agatha's, each losing exactly one '.'). RECOMMENDATION CONTENT IS UNCHANGED. 11 unrelated commanders identical in the MODEL and in BOTH rendered overlays (scout and workshop): Adeline, Myrel, Anim Pakal, Krenko, Atraxa, Talrand, Meren, Muldrotha, Thalia, Okaun, Zirda. C-028 REGRESSION GUARD: the closing-quote terminator '”.' counted 32 on the old build and 32 on the new — v7.97's deliberate terminator survived the guard exactly as v8.23 intended. NO COLLATERAL IN ADJACENT VIEWS: C-036's suite re-run on the shipped build — scout keyed 7/7 exact-match-model, workshop keyed 4/4, and the unkeyed control STILL REPRODUCES the defect (36 + 26 = 62 alien rails, 22 name leaks), so the test is not passing vacuously; key stability across deck edits (same DOM instance, 0 extra network calls), same-commander re-render, settled-state remount and 7 cold mounts all unchanged. BLAST RADIUS PROVED BY DIFF RATHER THAN ASSERTED: v8.22 → v8.23 is SIX hunks total — meta, console banner, the endStop helper, the two rail-`why` arms, the gate composer, the changelog entry. Script blocks 1, 2, 3 and 4 are BYTE-IDENTICAL, block 0 differs only in the version digit, and BLOCK 3 IS THE MOBILE VIEWPORT/KEYBOARD IIFE — mobile is untouched by proof, not by claim. NON-SCRIPT CONTENT DIFFERS BY EXACTLY ONE LINE, the `<meta>` build tag, so no CSS, markup or layout changed at all. node --check 6/6 PASS; meta == console banner == CHANGELOG[0] == v8.24; 0 console errors on the old build, the new build and every test script. STILL NOT VERIFIED IN CHROME — `list_connected_browsers` returns [] for the FOURTH consecutive run; everything above is the jsdom harness booting the shipped file UNMODIFIED, which cannot see layout or paint and stubs Scryfall, so rail CARD CONTENTS remain unverified here. That limitation does not touch C-034, which is a pure copy-composition defect in a string the harness reads out of the real rendered DOM. OPEN LEAD CARRIED FORWARD, NOT FIXED: ZIRDA, THE DAWNWAKER still receives ZERO actdisc rails (flat-reduction half of the class). Backup index-backup-20260808-1400-preVerifyC034.html; ORACLE INDEX only; roster pipeline, mobile IIFE and git untouched." },

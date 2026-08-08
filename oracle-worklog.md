@@ -6099,3 +6099,95 @@ C-037's **type-axis** half (Chief of the Foundry class) untouched and stays OPEN
 rate-limited (HTTP 429) mid-run, so the mono-black tribal case is a labelled synthetic probe.
 Harness gained `c037.js`, `diff037.js`, `algebra.js`, `netcount.js`, `tribal.js`; `chk.js` is broken
 (hard-coded `/tmp/vc034`, EACCES).
+
+---
+
+## 2026-08-08 · v8.26 · CRITIQUE-FIX lane (VERIFY) — C-037 colour half CLOSED, and its named residual finished
+
+**Mode VERIFY** for C-037 (last critique-fix row was the v8.25 FIX). Local v8.25 vs deployed v8.24 —
+local ahead, staleness guard passes. Backup `index-backup-20260808-1505-preVerifyC037.html`. Git untouched.
+
+**Chrome unreachable for the SIXTH consecutive run** and `api.scryfall.com` still dead to both `curl`
+and `web_fetch`, so this is a **headless jsdom verification, not a live one**. `mtg.wtf` **came back**
+this run, which is what made the real-card work possible.
+
+**The fix verified — with a verifier built not to trust it.** `vfy037.js` re-derives each commander's
+expected dead-colour list from identity + oracle text + type line rather than reusing v8.25's own
+predicate. Pre-fix v8.24: **11 pump shelves, 4 UNFENCED-LEAK** (Krenko's Goblin, Anim Pakal's Gnome,
+the mono-B probe's Zombie, Talrand's *Payoffs for a Wide, Flying Board*). Shipped v8.25: **0 leaks,
+every fence's colour list matching exactly**, and **Reaper King's two shelves still unfenced** — v8.25's
+regression guard holding. *Correction to v8.25's own count:* it said "five" leaks by counting Reaper
+King's pair, which are correct behaviour; the true count was **4**.
+
+**The residual was real, so it was finished rather than logged forward.** v8.25 deliberately left the
+**regex-written** arm of *More Anthems & Mass Pump* unswept. **Ascendant Evincar** (verbatim,
+mtg.wtf/card/10e/127) is mono-**BLACK** and prints *"Other black creatures get +1/+1"* — the pre-modern
+colour-lord wording **omits "you control"**, so `ANTHEM_BARE_RE` fails, `scopedAnthem` is true, and he
+gets the branch the v8.25 sweep could not see: **his shelf was still taking white/blue/red/green
+anthems**, on a commander v7.19 had already studied card-by-card. Fixed by **one alternation** in
+`ANTHEM_PUMP_Q_RE` matching the scoped branch's own literal, which occurs at **exactly one query site**
+(grep-verified). **The fence string is unchanged** — this only extends *which* rails receive an append
+that is a trailing top-level AND and can only ever REMOVE cards.
+
+**Three candidates read verbatim and REJECTED before the right one was found** (recorded in
+`harness/scopedcmdrs.js`): **Dwynen, Gilt-Leaf Daen** (fdn/217) — *"Other Elf creatures you control
+get +1/+1"* contains the bare phrase, already fenced by v8.25; **Edgar Markov** (inr/234) — prints no
+anthem at all, his Vampire pump is a **+1/+1 counter**; **Reaper King** (shm/260) — also contains the
+bare phrase. Edgar in particular is the obvious guess and is wrong.
+
+**Counter-case.** 17 commanders / **202 sections: 0 structural changes, 0 rails added or removed,
+0 gamePlan/trap changes, exactly 3 query changes — all pure fence appends.** Rendered scout+shop DOM
+**identical 12/12** and model identical 12/12 for the standing corpus. **Sliver Legion** (WUBRG,
+verbatim fut/158) is the control: he takes a **colorless-only** fence — correct, a five-colour Sliver
+board wants no colorless anthem — while **Reaper King**, also WUBRG but with an **artifact type line**,
+takes **zero**. The two WUBRG commanders diverging exactly as the carve-out predicts is the strongest
+evidence in the run. Final independent verdict: **17/17 pump shelves OK, 0 problems.**
+
+**No collateral.** C-036 suite keyed **7/7** and **4/4** exact with the unkeyed control **still
+reproducing** (62 alien rails, 22 name leaks) — the test still sees bugs. 7 cold mounts EXACT; settled
+remount 16 → 16 with **0 extra fetches**. C-034/C-028 guards hold (274 whys → 0 double-stops,
+0 unterminated; `”.` 32 → 32).
+
+**Ship.** `node --check` **6/6 PASS**; four boot assertions `[]`; console errors **0/0**; fetch parity
+**4/4** one-build-per-process; 15 fence occurrences all suffix-identical and trailing top-level AND;
+longest query **516** chars vs the ~1008 ceiling. Script blocks **1–4 byte-identical** (block 3 IS the
+mobile IIFE — untouched by proof); **non-script content 195,223 → 195,223, one line differing** (the
+build tag). meta == console banner == `CHANGELOG[0]` == **v8.26**. Roster/tile pipeline, mobile IIFE
+and git untouched.
+
+**Named residuals:** card CONTENTS still unverified (no Scryfall) — first live run should count Krenko's
+and **Evincar's** shelves before/after and confirm Reaper King's Scarecrow shelf is unchanged; the fence
+string only matches the *"you control"* wording, so a Crusade-style *"All white creatures get +1/+1"* is
+excluded nowhere (pre-existing v8.00 narrowness, **deliberately not widened** — that changes what the
+fence removes, a different risk); **C-037's type-axis half stays OPEN**. Harness gained `vfy037.js`,
+`scoped.js`, `scopedcmdrs.js`; **`chk.js` is FIXED** (hard-coded `/tmp/vc034` parameterised).
+Carried lead for the study lane: **Zirda** still gets zero `actdisc` rails.
+
+**NEXT FOCUS:** critique-fix lane — next run is a **FIX** run.
+
+---
+
+**v8.27 · 2026-08-08 · critique-fix (C-005 / C-021) — the blurb now names only cards the deck can cast.**
+Rail *contents* have always been colour-legal (`base` opens `id<=<identity>`); the exemplar names in
+the blurb above them were authored prose shared across every commander the rail is dealt to.
+Pre-fix measurement, 17 commanders / 202 sections: **18 blurbs naming 54 uncastable cards** — mono-W
+Myrel sold Cranial Plating and Marionette Master, mono-B commanders sold Craterhoof Behemoth and
+Overrun, mono-G Dwynen sold eight black drain finishers in one sentence. Fixed with `exemplarFence()`
+plus **one sweep before the return**, next to v8.25's anthem sweep. Pure deletion from a list, fenced
+four ways: table-only names (unknown = inert), runs of ≥2 only (protects "(Impact Tremors class)"),
+≥2 survivors or 1 when the list continues with a non-card item (a GRAMMAR fence — otherwise it ships
+"Bitterblossom flood the field"), and the commander's own name/oracle snippet unreachable.
+**The first cut was wired to the three ATOM/RAIL composer sites and was wrong** — the parameter layer
+pushes ~150 rails with their own inline `why`, so Talrand's shelf never saw it; the residual census
+caught that, and the single sweep is both smaller and total. Verification also caught a data error:
+**Saheeli, Sublime Artificer is {1}{U/R}{U/R} — identity UR, not R**; and an earlier round of mtg.wtf
+assertions was **thrown out as vacuous** (`!` swallows the rest of the query) and re-run behind a
+positive control. Counter-case: 137 sections, **0 structural changes, 0 query changes**, exactly
+3 whys changed, 9/12 commanders byte-identical in model + scout + workshop DOM; whole-domain proof
+over 308 whys × 32 identities = 13 distinct changes, all read. Guards: node --check 6/6, C-028 32→32,
+C-034 274 whys/0 double-stops, C-036 7/7 + 4/4 with the control still reproducing, C-037 17/17,
+7 cold mounts EXACT, 0 console errors, perf +0.03 ms/call. Residual named: the ≤1-survivor runs need
+a clause-level rewrite, so **C-005/C-021 stay OPEN on that half**. Backup
+`index-backup-20260808-1535-preFixC005.html`; roster/tile pipeline, mobile IIFE and git untouched.
+
+**NEXT FOCUS:** critique-fix lane — next run is a **VERIFY** run for C-005/C-021.
