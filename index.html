@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v8.05 · 2026-08-08">
+<meta name="oracle-build" content="v8.07 · 2026-08-08">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1775,7 +1775,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v8.05 \u00B7 2026-08-08', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v8.07 \u00B7 2026-08-08', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -4661,6 +4661,160 @@ const tapEngineSuperseded = o => isMadnessEngine(o) || isPowerManaEngine(o) || i
 // The atom itself is pushed CARD-LEVEL from extractAtoms (see ATOM_TAPENGINE's push site), not
 // from the ATOMS loop, precisely so it can ride the two gates above — a `test` regex cannot ask
 // whether another family already owns the commander.
+// v8.06 (Kenrith, the Returned King STUDY 2026-08-08) — THE OTHER HALF OF "ACTIVATED ABILITY".
+// Everything above reads activations through ONE aperture: the {T} symbol. `tapActivations`,
+// `tapEngineActivations`, `TAP_ENGINE_RE`, the `tapability` atom and the whole Untappers / Haste /
+// Ability-Copiers suite in the parameter layer all begin by matching `\{t\}`. Magic's other
+// activation shape — a cost that is PURE MANA and never taps — was therefore invisible to the
+// engine end to end, and the cost of that is measured on the 19th-most-built commander in the
+// format. KENRITH, THE RETURNED KING (EDHREC rank #19, 31,091 decks) prints FIVE separately-costed
+// activated abilities and not one {T}; he boots today with `reanimate` w6 and `counters` w3, so
+// his report opens "Worth Returning" / "Stock the Graveyard" and then deals three +1/+1-counter
+// shelves — an archetype EDHREC does not list for him at all (his tags are Group Hug 625, Combo
+// 593, Politics 444, Birthing Pod 381, fetched live this run). His FOUR highest-synergy cards are
+// TRAINING GROUNDS 36%/+32%, BIOMANCER'S FAMILIAR 32%/+30%, ZIRDA, THE DAWNWAKER 29%/+27% and
+// AGATHA OF THE VILE CAULDRON 27%/+25% — a clean sweep of the top four by one card class — and
+// NONE of them can appear on any shelf the app deals him, because every reader that could reach
+// them starts at a {T} he does not print.
+// THE RULE, NOT THE CARD, AND IT IS A RULES FACT TWICE OVER. (1) The payoff class is defined by
+// COST REDUCTION, and cost reduction eats GENERIC mana only — a fact this file already states in
+// its own words elsewhere ("COST REDUCTION TOUCHES GENERIC MANA, NOT COLOURED PIPS"). So
+// membership is not "has an activated ability", it is "has an activation with a generic or {X}
+// component", which is the only shape a discount can bite on. That single test does all the
+// fencing for free: CHAINER, DEMENTIA MASTER activates "{B}{B}{B}, Pay 3 life:" and is correctly
+// NOT admitted, because no reducer in Magic can shrink three black pips. (2) RINGS OF BRIGHTHEARTH
+// and ILLUSIONIST'S BRACERS copy "an ability that isn't a mana ability" — they say nothing about
+// tapping — so the copy half of the package was always legal for this family and was withheld
+// only because the gate that guards it happens to be spelled `{T}`.
+// AND THE FAMILY'S PACKAGE IS DISJOINT FROM THE TAP FAMILY'S, WHICH IS WHY IT NEEDS ITS OWN RAILS
+// RATHER THAN ADMISSION TO `tapability`. Untapping a mana-sink commander buys NOTHING (there is no
+// {T} in the cost to refresh), so the tap family's headline shelf is dead cardboard here; what
+// this family wants instead is the class the tap family deliberately FENCED OUT — the LAND
+// untappers and mana doublers, which the v7.46 comment excluded by name (Wilderness Reclamation,
+// Sword of Feast and Famine) precisely because they "can never untap a creature commander". They
+// can, however, pay for one more activation, and EDHREC agrees on exactly that inversion: Seedborn
+// Muse 27%/+23% and Wilderness Reclamation 20%/+18% sit in Kenrith's high-synergy column while
+// creature-untap and blink effects are absent from it.
+// THE READER IS A SIBLING OF `tapActivations`, deliberately written in the same shape so the two
+// halves of the mechanic can never drift into disagreeing about what an activation IS: strip
+// reminder text and granted-ability quotes, match one activation at a time, split cost from
+// effect. It differs in exactly two places, both forced: it REFUSES a cost containing {T} or {Q}
+// (that half belongs to the tap reader, and a commander must never be dealt both packages), and
+// it lowercases defensively because unlike its sibling it is reachable from call sites that have
+// not already lowered their oracle text.
+function manaActivations(o) {
+    return (String(o || '').toLowerCase().replace(/\([^)]*\)/g, ' ').replace(/"[^"]*"/g, ' ').match(/\{[wubrgcxphs0-9\/]+\}[^:.\n]{0,60}:\s*[^.;\n]*/g) || [])
+        .map(a => ({ cost: a.slice(0, a.indexOf(':')), fx: a.slice(a.indexOf(':') + 1).trim() }))
+        .filter(a => !/\{t\}|\{q\}/.test(a.cost));
+}
+// THE PRINTED FLOOR IS PART OF THE RULE, and reading it is what keeps this family honest. Every
+// reducer in the class carries the same clause — "this effect can't reduce the mana in that cost
+// to less than one mana" — so an activation whose whole mana cost IS one mana gains EXACTLY
+// NOTHING from a discount, however many of them you draw. Membership is therefore not "has a
+// generic pip" but "has a generic pip AND costs more than one mana", or carries {X}, which is the
+// definitional mana sink and always worth discounting. The difference is not academic: GHAVE, GURU
+// OF SPORES activates "{1}, Remove a +1/+1 counter:" and "{1}, Sacrifice a creature:" and is
+// correctly REFUSED by the floor, keeping his counters/tokens/sacrifice reading untouched — while
+// EZURI, RENEGADE LEADER's "{2}{G}{G}{G}: Elf creatures you control get +3/+3" is admitted,
+// because a reducer really does take that overrun to {G}{G}{G}. Costs are read symbol by symbol
+// rather than by regex because "more than one mana" is arithmetic, not a pattern.
+function actCostShape(cost) {
+    let mv = 0, generic = false, hasX = false;
+    (String(cost).match(/\{[^}]+\}/g) || []).forEach(function (sym) {
+        const t = sym.slice(1, -1);
+        if (t === 'x') { hasX = true; mv += 1; }
+        else if (/^\d+$/.test(t)) { if (Number(t) > 0) generic = true; mv += Number(t); }
+        else if (/^\d+\/[wubrg]$/.test(t)) { generic = true; mv += Number(t.split('/')[0]); }
+        else if (t !== 't' && t !== 'q') { mv += 1; }
+    });
+    return { mv: mv, generic: generic, hasX: hasX };
+}
+function actDiscountable(cost) {
+    const c = actCostShape(cost);
+    return c.hasX || (c.generic && c.mv >= 2);
+}
+// `add` and `transform` are excluded for the identical reasons the tap reader excludes them (a
+// mana ability is not an engine; a DFC's back-face transform cost is not an ability the deck
+// activates). The third exclusion is new and is about REPEATABILITY rather than kind: monstrosity,
+// adapt and level up read like mana-costed activations but each stops paying after it resolves, so
+// a discount and a copier are worth a fraction of what they are worth on a repeatable ability.
+const ACT_ONCE_ONLY_RE = /^(?:monstrosity|adapt|level up)\b/;
+function manaSinkActivations(o) {
+    return manaActivations(o).filter(a => actDiscountable(a.cost)
+        && !/^add\b/.test(a.fx) && !/^transform\b/.test(a.fx) && !ACT_ONCE_ONLY_RE.test(a.fx));
+}
+// v8.07 (Kenrith VERIFY 2026-08-08) — ONE OPINION ABOUT WHAT A MANA-SINK ENGINE IS, shared by the
+// atom push and the parameter layer. v7.40 is the standing lesson about hoisting only half of a
+// reader: v7.39 gave the tap ATOM the shared predicate and left the RAIL gate raw, and 56
+// commanders were dealt Untap/Haste shelves with no atom behind them until v7.40 measured it.
+const manaSinkEngine = o => !tapNonManaEngine(o) && !tapEngineSuperseded(o) && manaSinkActivations(o).length > 0;
+// v8.07 — COPYABILITY IS A RULES FACT ABOUT THE ABILITY, NOT A FACT ABOUT ITS COST, and that is
+// the one thing v8.06 got wrong. RINGS OF BRIGHTHEARTH reads "whenever you activate an ability, if
+// it isn't a mana ability"; ILLUSIONIST'S BRACERS reads "activates an ability that isn't a mana
+// ability"; LITHOFORM ENGINE copies "target activated ability". NOT ONE OF THEM ASKS WHAT THE COST
+// LOOKS LIKE. v8.06 bolted the copiers and the discounters into a single query (ACT_LEVERAGE_Q)
+// and then gated that query on the DISCOUNT test — so the copy half silently inherited a
+// membership rule that belongs only to the discount half. THE TWO REFUSALS THAT ROW PUBLISHED AS
+// PROOF THE DESIGN WAS RIGHT ARE THE PROOF IT WAS HALF WRONG: CHAINER, DEMENTIA MASTER
+// ("{B}{B}{B}, Pay 3 life:" reanimate) and GHAVE, GURU OF SPORES ("{1}, Remove a +1/+1 counter:")
+// are correctly refused a DISCOUNT — no reducer in Magic shrinks three black pips, and every
+// reducer prints "can't reduce the mana in that cost to less than one mana" — but Rings of
+// Brighthearth copies both activations without caring, and until this build NO GATE IN THE APP
+// could deal either commander an Ability Copiers shelf. The COPY rail is therefore re-gated on the
+// rules test; the DISCOUNT rail is left exactly where v8.06 put it, so both refusals stand where
+// they were right and are reversed only where they were wrong.
+function copyableActivations(o) {
+    // The tap half is the EXACT membership `tapNonManaEngine` tests, character for character, so
+    // this reader and the tap ATOM can never form two opinions about a {T} card — which also makes
+    // "every commander that had the copy rail keeps it" true BY CONSTRUCTION rather than by sample.
+    const tapFx = tapActivations(o).filter(fx => !/^add\b/.test(fx) && !/^transform\b/.test(fx));
+    // The mana half additionally drops the once-only pseudo-activations. Every one of those
+    // templates (monstrosity / adapt / level up) is mana-costed, so applying the exclusion here
+    // rather than to both halves is a no-op in substance and the only placement that cannot drift.
+    const manaFx = manaActivations(o).filter(a => !/^add\b/.test(a.fx) && !/^transform\b/.test(a.fx) && !ACT_ONCE_ONLY_RE.test(a.fx)).map(a => a.fx);
+    return tapFx.concat(manaFx);
+}
+// THE PACKAGE. Two card classes, ONE query, and the merge is not tidiness — it is this repo's own
+// remedy for this repo's own measured problem. An earlier run wrote the discount shelf, QA'd it
+// live and DELETED it rather than ship it, recording why: scoped correctly it "leaves FIVE cards
+// in Gruul, because Training Grounds is blue and Zirda is RW", and "a five-card shelf is not a
+// shelf". That verdict was measured in ONE colour identity and is wrong in others — Kenrith is
+// WUBRG and every reducer in the format is legal for him — so the fix is neither to ship it
+// everywhere nor to bin it, but to do what v7.39 did when self-flicker measured "W 22 / U 13 but
+// B 2 / R 2 / G 2 / C 2": OR it together with a class that is healthy everywhere. The copiers are
+// COLOURLESS ARTIFACTS (Rings of Brighthearth, Illusionist's Bracers, Lithoform Engine), so they
+// are legal in all 32 identities, and the two classes answer the identical question — "how do I
+// get more out of each activation?" — which is the same argument TAP_RESET_Q makes for merging
+// untap with blink. Scryfall is asked in EDHREC order, so the right half surfaces by itself:
+// Kenrith's front becomes Training Grounds / Biomancer's Familiar / Zirda / Agatha, while a Gruul
+// mana-sink commander leads with Rings of Brighthearth and Illusionist's Bracers.
+// EVERY ARM IS A PLAIN SUBSTRING TERM AND NOT A REGEX, ON PURPOSE: no browser and no Scryfall
+// endpoint was reachable this run (see the worklog row), so the query could not be cut live, and a
+// substring `o:` term is the one form whose behaviour can be reasoned about exactly from the card
+// text without running it. The reducer arms are scoped to "abilities of <subject> cost" rather
+// than the bare "less to activate" for the reason the deleted shelf's own comment names: the bare
+// phrase returns cards that reduce their OWN ability (Boseiju, Sokenzan, Dragonfire Blade,
+// Voldaren Estate, Mariposa Military Base), which is not a deck-building effect. `abilities of
+// creatures cost` (no "you control") is a separate arm because HEARTSTONE — the one reducer that
+// is colourless and therefore the family's most broadly useful card — templates it that way.
+const ACT_DISCOUNT_SRC_Q = '(o:"less to activate" (o:"abilities of creatures you control cost" OR o:"abilities of creatures cost" OR o:"abilities of artifacts cost" OR o:"abilities of permanents you control cost" OR o:"abilities you activate"))';
+// Hoisted from the `tap-copy` push in the parameter layer, which had it as an inline literal. Same
+// string, so that rail's output is unchanged; naming it means the tap family and this family can
+// never end up with two different opinions about what copies an activation — the exact drift the
+// untap literals suffered before v7.46 named them.
+const ACT_COPY_Q = '(o:"copy that ability" OR o:"copy target activated")';
+const ACT_LEVERAGE_Q = '(' + ACT_DISCOUNT_SRC_Q + ' OR ' + ACT_COPY_Q + ')';
+// WEIGHT IS A FUNCTION OF HOW MUCH OF THE CARD IS ACTIVATED ABILITIES, which is what lets one atom
+// serve a wide family without relabelling anybody. At ONE or TWO sink activations the ability is a
+// rider on a card that is about something else, so the atom rides at w3 and — being pushed last —
+// loses every w3 tie as well as every w4+ one: it can only ever ADD a chip and its two shelves
+// BEHIND whatever already led. At THREE or more there is no "something else" left; the card IS its
+// activated abilities and reading any single one of them as the deck's theme is a category error,
+// which is precisely how Kenrith's one {4}{B} line came to headline his report as a reanimator
+// deck. That tier takes w7 and leads. The threshold is a COUNT, not a keyword — it cannot be
+// fooled by what an ability happens to do.
+const MANASINK_TOOLBOX_MIN = 3;
+const ATOM_MANASINK = { key: 'manasink', w: 3, chip: 'Mana sink', title: 'Activated-Ability Toolbox', sub: 'Pay mana, pick a mode', q: ACT_LEVERAGE_Q, oq: '(o:"less to activate" OR o:"copy that ability")', why: 'its abilities cost MANA rather than a tap, so the deck is limited by mana per turn instead of activations per turn — untapping it buys nothing, but every generic pip you shave off and every activation you copy is another mode used' };
 const ATOM_TAPENGINE = { key: 'tapability', w: 4, chip: 'Tap ability', title: 'Tap-Activated Engine', sub: 'Untap it, use it again', q: TAP_RESET_Q, oq: '(o:"{t}:" -o:"{t}: add")', why: 'has a printed {T} ability, so its deck is measured in ACTIVATIONS PER TURN — untap it, blink it, and copy the activation' };
 // v7.49 (Sheoldred, the Apocalypse study) — THE DRAW FAMILY IS ONE MECHANIC SPLIT BY SUBJECT,
 // and until this run the engine treated the two halves as mutually exclusive rather than
@@ -6800,6 +6954,24 @@ function extractAtoms(card) {
         // previous commander's render — the bug shape a per-commander `q` invites.
         found.push({ atom: Object.assign({}, ATOM_TAPENGINE, { q: tapResetQ(hasSelfEnterTrigger(o, selfRefNames(card.name))) }), snippet: '' });
     }
+    // v8.06 (Kenrith study 2026-08-08) — MANA-COSTED ACTIVATION ENGINE, the sibling push to the
+    // one directly above and deliberately written as its MUTUAL EXCLUSIVE. `!tapNonManaEngine(o)`
+    // is the whole guard: a commander whose activation taps is served by the tap family's untap /
+    // haste / copy suite and must not also be told its abilities are a mana sink, and a commander
+    // whose activation does not tap can never be served by an untap shelf. The two reads therefore
+    // PARTITION the activated-ability space rather than overlapping it, and no card can receive
+    // both packages. It rides the same `tapEngineSuperseded` veto for the same three commanders
+    // (Anje's madness loot, Selvala's power-mana ability, Chulane's cast-draw-ramp bounce), so a
+    // ruling an earlier study made about one half of the mechanic cannot be undone by the other.
+    // Pushed LAST and card-level for the reason ATOM_VOLTRON, ATOM_BIGBOMB and ATOM_TAPENGINE are:
+    // a `test` regex in the ATOMS array cannot COUNT activations, and counting is the whole idea.
+    // v8.07 — the three conjuncts are now the shared `manaSinkEngine`, byte-for-byte the same
+    // test, so the parameter layer cannot come to a different conclusion about this family than
+    // the atom layer does (v7.40's lesson, applied before it can cost anything).
+    if (manaSinkEngine(o)) {
+        const sinkActs = manaSinkActivations(o).length;
+        found.push({ atom: sinkActs >= MANASINK_TOOLBOX_MIN ? Object.assign({}, ATOM_MANASINK, { w: 7 }) : ATOM_MANASINK, snippet: '' });
+    }
     // v7.86 (Tom Bombadil STUDY 2026-08-07) — A SAGA IS AN ENCHANTMENT. This is a RULES FACT
     // (CR 205.2a: Saga is an enchantment subtype), not a synergy opinion, and the engine was not
     // reading it: `sagas` and `enchantments` are two independent entries in the ATOMS array whose
@@ -7007,6 +7179,22 @@ const STUDY_DB = studyStore({
     // `studyFor` reads `STUDY_DB['name:' + name.toLowerCase()] ` as its third lookup, so this is a
     // supported key and not a workaround; a later run with Scryfall should re-key it to the
     // oracle_id and delete this note.
+    // v8.06 (Kenrith, the Returned King STUDY 2026-08-08) — authored against the PRINTED text of
+    // Kenrith and of every card named below, each fetched from a card database this run rather
+    // than recalled; the percentages are EDHREC, fetched the same run (31,091 decks, rank #19,
+    // tags Group Hug 625 / Combo 593 / Politics 444 / Birthing Pod 381). KEYED BY NAME for the
+    // same reason as the entry below and with the same instruction: Scryfall was unreachable from
+    // every path this run, `studyFor` supports the `name:` key as its third lookup, and a later
+    // run with Scryfall should re-key this to the oracle_id and delete the note.
+    "name:kenrith, the returned king": {
+        insight: "Kenrith is not a reanimator deck, a counters deck, or really a deck about any one of the five things he does \u2014 he is a five-mana WHITE creature whose four coloured activations are the only reason his identity is WUBRG, and the deck is built to AFFORD him rather than to support any single mode. Read the costs rather than the effects and the archetype falls out: {1}{G}, {2}{W}, {3}{U}, {4}{B} are all GENERIC-HEAVY, and generic mana is the only mana a cost reduction can touch \u2014 which is why EDHREC\u2019s four highest-synergy cards for him are, in order, TRAINING GROUNDS (36% inclusion, +32% synergy), BIOMANCER\u2019S FAMILIAR (32%, +30%), ZIRDA, THE DAWNWAKER (29%, +27%) and AGATHA OF THE VILE CAULDRON (27%, +25%). A clean sweep of the top four by one card class is about as unambiguous as this format gets. With one reducer down the draw ability costs {U} and the reanimation costs {1}{B}; with two, he is drawing the table a card for a single blue pip and everything else is politics.",
+        traps: [
+            "reading the {4}{B} line as a reanimator theme \u2014 it is ONE MODE of five, it returns the creature under ITS OWNER\u2019S control (so it is as often a bribe or a political favour as a haymaker for you), and reanimator\u2019s support package is wrong here: Entomb and Buried Alive fill a graveyard you are not trying to fill, and the fatties they find are cards you would rather have spent on mana. EDHREC lists NO reanimator tag for Kenrith at all.",
+            "building around +1/+1 counters because of the {1}{G} line \u2014 counter SUPPLY is one counter per two mana, which is the worst rate in the format, and counter PAYOFFS (proliferate, remove-a-counter engines, Hardened Scales) see almost nothing, because nothing else in the deck makes counters. The ability is a mana sink for spare mana, not a theme.",
+            "untappers that untap CREATURES. This is the trap most likely to be inherited from a superficially similar commander, and it is a rules error: Kenrith has no {T} in any cost, so Thousand-Year Elixir, Freed from the Real and a blink do NOTHING for him \u2014 he can already activate as many times per turn as you can pay for. What multiplies his activations is untapped LANDS, which is why Seedborn Muse (27%, +23%) and Wilderness Reclamation (20%, +18%) are in his lists and creature-untappers are not.",
+            "treating the life and draw modes as generosity you can skip. They are why the deck survives: Kenrith is a five-mana 5/5 in a five-colour manabase, so he is archenemy the moment he lands, and handing a card or five life to the player who is not attacking you is how the deck buys the turns it needs. Group Hug is his single largest tag (625 decks) for a reason \u2014 but pair it with a real win condition, because the modes alone will not close a game."
+        ]
+    },
     "name:kelsien, the plague": {
         insight: "Kelsien, the Plague is a three-mana Mardu commander whose entire deck is bought for one line: “{T}: Kelsien deals 1 damage to target creature you don’t control. When that creature dies this turn, you get an experience counter.” Read literally that is a Prodigal Sorcerer, and the reason it is instead one of the format’s best repeatable removal engines is a card that is not Kelsien at all — DEATHTOUCH is a multiplier on this ability, and the moment a granter is attached the ability stops reading “deals 1 damage” and starts reading “destroy target creature,” free, at instant speed, every turn. EDHREC agrees to a degree that is rare: BASILISK COLLAR is his single most-played card at 89% inclusion and 85% synergy, and Rune of Mortality (73%), Vorpal Sword (69%), Gorgon’s Head (65%), Gorgon Flail (48%), Quietus Spike (44%) and Hunter’s Blowgun (29%) follow it into the same slot, which is why his Equipment tag (383 decks) is larger than his Deathtouch tag (297) even though the deathtouch is the point — the Equipment is only the delivery mechanism. Two printed keywords make him unusually easy to run and both are routinely under-read. VIGILANCE means attacking never costs him the shot: he swings, stays untapped and still holds the ability up on the crack-back. HASTE means he shoots the turn he lands, so unlike almost every other {T}-ability commander he does NOT need to buy a haste enabler — Swiftfoot Boots at 61% is in the list for the hexproof, not the haste, and reading it the other way leads builders to over-buy Thousand-Year Elixir effects they do not need. The experience counters are a RESULT of the engine rather than the plan: the counter only arrives if the damaged creature dies THAT TURN, so before deathtouch is online it almost never triggers, and afterwards it is a Voltron rider that grows him while the removal does the actual work.",
         traps: [
@@ -9177,6 +9365,20 @@ const RAILS = {
         { role: 'enabler', title: 'Make Every Point Lethal', sub: 'Deathtouch on the source', q: DEATHTOUCH_GRANT_Q, why: 'deathtouch is a MULTIPLIER on this ability, not a creature type — hang it on the source and "deals 1 damage" reads "destroy target creature", so the printed number never matters again. This is the shelf the engine could not previously reach, because a pinger never prints the word itself: Basilisk Collar is Kelsien’s single most-played card at 89% inclusion and 85% synergy, and Rune of Mortality, Vorpal Sword, Gorgon’s Head, Gorgon Flail, Quietus Spike and Hunter’s Blowgun follow it into the same slot' },
         { role: 'enabler', title: 'Permission to Target', sub: 'Turn off hexproof', q: TARGET_PERMISSION_Q, why: 'the ability TARGETS, so hexproof and shroud switch it off against exactly the permanents worth shooting — the commander that answers everything on an empty board answers nothing across from a protected threat, and the fix is four cards long: Arcane Lighthouse and Shadowspear strip hexproof outright, Detection Tower and Glaring Spotlight let you target through it, and Kelsien decks buy them at 35%, 40%, 24% and 17% because the deck simply stops working without one' }
     ] },
+    // v8.06 (Kenrith study 2026-08-08) — the mana-costed half of the activated-ability mechanic.
+    // Unlike `tapability` directly above, this family's shelves live HERE rather than in the
+    // parameter layer, and that is on purpose: the tap suite is parameterised because its content
+    // depends on WHAT TAPS (creature face, artifact face, enter trigger, haste), whereas every
+    // member of this family asks the same two questions in the same order, so there is nothing for
+    // a parameter to decide and a RAILS entry keeps the whole family readable in one place.
+    // NO UNTAP SHELF, and that is the family's defining negative: there is no {T} in the cost, so
+    // an untapper refreshes nothing. The mana doublers and LAND untappers on the second rail are
+    // the cards the tap family fenced OUT by name for being unable to untap a creature — they are
+    // the right answer here for the same reason they were the wrong one there.
+    manasink: { rails: [
+        { role: 'amplifier', title: 'More Out of Each Activation', sub: 'Make it cheaper, or make it twice', q: ACT_LEVERAGE_Q, why: 'the ability is repeatable and the only thing rationing it is mana, so a permanent that shaves generic mana off every activation is worth more than any single card the ability could find. This is the shelf the app could not previously reach for a commander with no {T}: Training Grounds, Biomancer’s Familiar, Zirda and Agatha of the Vile Cauldron are Kenrith’s four highest-synergy cards in the format (36%, 32%, 29%, 27% inclusion) and every one of them was on no shelf the engine dealt. Note what a discount CANNOT do — it eats generic mana only, never coloured pips, so an activation written {4}{B} is the one worth discounting and one written {B}{B}{B} is not. The copiers ride the same shelf because Rings of Brighthearth and Illusionist’s Bracers copy any ability that is not a mana ability, tap or no tap, and being colourless they are legal whatever this commander’s identity turns out to be' },
+        { role: 'enabler', title: 'Mana to Burn', sub: 'The ability IS the mana sink', q: '(' + ACROSS_TURNS_UNTAP_Q + ' OR o:"untap all lands you control" OR o:"tap a land for mana" OR o:"twice as much" OR o:"three times as much")', why: 'a mana-costed ability converts spare mana into board state at instant speed, which turns every unspent point into value and makes untapped LANDS the real currency — not untapped creatures. Seedborn Muse and Wilderness Reclamation are 27% and 20% of Kenrith lists at +23% and +18% synergy for exactly this reason: they let you activate on other players’ turns, and an across-turns untapper multiplies your activations by the number of opponents. Doublers (Mirari’s Wake, Mana Flare, Nyxbloom Ancient) do the same arithmetic from the other side. Be honest about the ceiling, though: this is a mana sink, not a mana engine, so it rewards a deck that already ramps and does nothing for one that does not' }
+    ] },
     tapability: { pTest: TAP_ENGINE_RE, rails: [] },
     xspells: {
         eTest: /add \{c\}\{c\}|add (two|three|x) mana|twice that much mana/,
@@ -9916,6 +10118,10 @@ const ARCHETYPES = {
     // lesson arriving one layer up, on PLANS rather than atoms. Closing the whole class costs 15
     // rows and can never regress a commander that already has a plan, because these are read only
     // when the lead atom has no entry.
+    // v8.06 (Kenrith study) — the plan row for the mana-costed activation family. Written for the
+    // same reason the v7.34 audit above added fifteen: an atom without a row here renders a
+    // PLAN-LESS report, and this one leads the 19th-most-built commander in the format.
+    manasink: { name: 'Activated-Ability Toolbox', win: 'win on MODES, not on one theme — the commander is a repeatable answer to whatever the table presents, so the deck is built to afford it rather than to support it. Ramp past the printed cost, then buy activations two ways: shave generic mana off each one (Training Grounds, Zirda, Heartstone) and hold mana up on other players’ turns (Seedborn Muse, Wilderness Reclamation). Because the abilities cost mana rather than a tap, nothing stops you activating twice in a turn except the mana — which makes untappers of CREATURES dead cardboard and untappers of LANDS the real engine. Keep the rest of the deck cheap and interactive: the commander is the top of your curve and the mana sink, so a second expensive theme competes with the one card you are guaranteed to draw' },
     copyperm: { name: 'Clones & Copy Value', win: 'copy the best body on the battlefield — usually one of theirs — and keep re-pointing the effect as the table develops; in-place copies do NOT re-trigger "enters", so prize permanents whose value is a static ability, an attack trigger or simply a huge body, and hold the copy until the target is worth stealing the shape of' },
     discard: { name: 'Looting & Madness', win: 'turn every draw into a filtered draw, pitch the expensive half of your hand on purpose, and cash the discards twice — madness and flashback cast them from the bin while the graveyard payoffs count them where they land' },
     handsize: { name: 'Hand Size Matters', win: 'refill to a full grip every turn and stop discarding to cleanup — with no maximum hand size the cards ARE the resource, so scale your threats off the count and keep interaction up behind them' },
@@ -11652,6 +11858,14 @@ function buildEngineModel(commander) {
         // which was reading its own LAND back face's "{4}{W}{W}, {T}: Transform" as an engine
         // and being dealt Ability Copiers for it. See tapNonManaEngine.
         tapNonMana: tapNonManaEngine(o),
+        // v8.07 — see copyableActivations. The COPY rail's gate is a RULES test about the
+        // ability ("is it an activated ability that isn't a mana ability?"), not the cost-shape
+        // test the DISCOUNT rail needs; conflating the two is what v8.06 did.
+        copyableAct: copyableActivations(o).length > 0,
+        // v8.07 — the manasink family's own rails already carry ACT_COPY_Q inside ACT_LEVERAGE_Q,
+        // so this flag exists purely to STOP the copy rail shipping a second copy of a shelf that
+        // family already deals — the duplication defect v6.94 removed from the exalted family.
+        manaSink: manaSinkEngine(o),
         tapCreature: tapFaceTypes.some(t => /creature/.test(t)),
         tapArtifact: tapFaceTypes.some(t => /artifact/.test(t)),
         // MADNESS ENGINE (Anje Falkenrath study): a commander whose {T}-discard loot is a
@@ -13179,8 +13393,21 @@ function buildEngineModel(commander) {
         // summoning sickness gates {T} on CREATURES only — a noncreature tap source
         // (an artifact face) activates the turn it lands, so haste is dead cardboard.
         if (!P.deployOnAttack && P.tapCreature && !P.hasHaste) out.push({ key: 'tap-haste', role: 'enabler', title: 'Haste Enablers', sub: 'Activate the turn it lands', q: base + ' ((o:haste -keyword:haste) OR o:"creatures you control have haste")', why: 'summoning sickness gates {T} abilities — haste (or an as-though-haste activator) lets ' + firstName + ' tap the turn it lands, before removal can answer.' });
-        if (P.tapNonMana) out.push({ key: 'tap-copy', role: 'amplifier', title: 'Ability Copiers', sub: 'Activate once, resolve twice', q: base + ' (o:"copy that ability" OR o:"copy target activated")', why: 'Rings of Brighthearth and Illusionist’s Bracers copy the activation — legal here because the ability isn’t a mana ability, the one thing those copiers can’t touch.' });
     }
+    // v8.07 (Kenrith VERIFY 2026-08-08) — ABILITY COPIERS, HOISTED OUT OF THE TAP BLOCK. The shelf
+    // spent four builds gated on `P.tapNonMana` — on the commander PRINTING A {T} — while the cards
+    // it deals do not read {T} anywhere. The three conjunct vetoes are carried over verbatim from
+    // the block this push left, so the supersede rulings (Anje's madness loot, Selvala's power-mana
+    // ability, Chulane's cast-draw-ramp bounce) still hold. THE GATE IS A STRICT SUPERSET AND THE
+    // PROOF IS STRUCTURAL, NOT SAMPLED: `copyableActivations`' tap half is character-identical to
+    // `tapNonManaEngine`, so `P.tapNonMana` IMPLIES `P.copyableAct`, and `manaSinkEngine` begins
+    // with `!tapNonManaEngine(o)`, so no {T} commander can be excluded by the new `!P.manaSink`
+    // conjunct either — every commander that had this shelf still has it, and the ONLY movement
+    // possible is commanders GAINING it. Those gained are exactly the third partition v8.06 left
+    // with nothing: a non-mana activated ability that neither taps nor is discountable, i.e. an
+    // all-coloured-pip cost (CHAINER, DEMENTIA MASTER) or a one-mana cost the printed floor
+    // protects (GHAVE, GURU OF SPORES) — both of which Rings of Brighthearth copies happily.
+    if (P.copyableAct && !P.manaSink && !P.madness && !P.powerMana && !P.castDrawRamp) out.push({ key: 'tap-copy', role: 'amplifier', title: 'Ability Copiers', sub: 'Activate once, resolve twice', q: base + ' ' + ACT_COPY_Q, why: 'Rings of Brighthearth and Illusionist’s Bracers copy the activation — legal here because the ability isn’t a mana ability, the one thing those copiers can’t touch.' });
     // LIBRARY CHEAT (Kinnan study): the activation digs and PUTS a type-locked creature
     // onto the battlefield — never cast, so on-cast riders (the Eldrazi titans’ extra-turn /
     // exile / draw clauses) stay silent, and the unpicked cards bottom in a RANDOM order,
@@ -14222,6 +14449,8 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v8.07', date: '2026-08-08', focus: 'verify', commander: 'Kenrith, the Returned King', summary: "VERIFY Kenrith, the Returned King — COPYABILITY IS A RULES FACT ABOUT THE ABILITY, NOT A FACT ABOUT ITS COST, and v8.06 gated it on the cost. That study bolted two card classes into ONE query (ACT_LEVERAGE_Q = discounters OR copiers) and then gated the whole query on the DISCOUNT test (actDiscountable: a generic pip AND mana value >= 2, or {X}), so the COPY half silently inherited a membership rule that belongs only to the discount half. THE TWO REFUSALS v8.06 PUBLISHED AS PROOF THE DESIGN WAS RIGHT ARE THE PROOF IT WAS HALF WRONG: Chainer, Dementia Master ('{B}{B}{B}, Pay 3 life:' reanimate) and Ghave, Guru of Spores ('{1}, Remove a +1/+1 counter:') are correctly refused a DISCOUNT — no reducer in Magic shrinks three black pips, and every reducer prints 'can't reduce the mana in that cost to less than one mana' — but Rings of Brighthearth reads 'whenever you activate an ability, if it isn't a mana ability', Illusionist's Bracers reads 'activates an ability that isn't a mana ability' and Lithoform Engine copies 'target activated ability', and NOT ONE OF THEM ASKS WHAT THE COST LOOKS LIKE. Compounding it, the Ability Copiers rail had spent four builds gated on P.tapNonMana — on the commander PRINTING A {T} — while the cards it deals never read {T} at all. Between the two gates a whole partition of the format could not be dealt a copier shelf by ANY code path in the app: a non-mana activated ability that neither taps nor is discountable, i.e. an all-coloured-pip cost or a one-mana cost the printed floor protects. THE FIX IS AT THE LOGIC LAYER, TWO SHARED PREDICATES AND NO NEW QUERY: new copyableActivations(o) states the rules test once (tap half ∪ mana half, minus mana abilities, minus DFC transform costs, minus the once-only pseudo-activations monstrosity/adapt/level up, where a copy is worth a fraction of what it is worth on a repeatable ability), and new manaSinkEngine(o) gives the atom layer and the parameter layer ONE opinion about this family instead of two — v7.40's lesson (v7.39 hoisted the tap ATOM's reader and left the RAIL gate raw, and 56 commanders carried shelves with no atom behind them until it was measured) applied before it could cost anything. The copy rail is re-gated on the rules test and hoisted OUT of the tap block, carrying the three supersede vetoes verbatim; the DISCOUNT rail is left exactly where v8.06 put it, so both refusals STAND where they were right and are reversed only where they were wrong. STRICT SUPERSET BY CONSTRUCTION, NOT BY SAMPLE: copyableActivations' tap half is character-identical to tapNonManaEngine's filter, so P.tapNonMana IMPLIES P.copyableAct; and manaSinkEngine begins with !tapNonManaEngine(o), so the new !P.manaSink conjunct cannot exclude a {T} commander either — no commander that had this shelf can lose it, and the only movement possible is commanders GAINING it. The !P.manaSink conjunct exists solely to stop a DUPLICATE shelf: that family's own rails already carry ACT_COPY_Q inside ACT_LEVERAGE_Q. COUNTER-CASE, old-vs-new differential over a 21-commander corpus in the Node VM harness (both builds' own buildEngineModel + extractAtoms, the new block re-extracted from the saved file): 6 CHANGED, 15 IDENTICAL, ZERO commanders lose the rail, ZERO families zeroed. The six that change all GAIN Ability Copiers and are exactly the partition v8.06 left with nothing — CHAINER, DEMENTIA MASTER, GHAVE, GURU OF SPORES, SYDRI, GALVANIC GENIUS ({W}{U}{B} and two {1} lines), SISAY, WEATHERLIGHT CAPTAIN ({W}{U}{B}{R}{G} legendary tutor-to-battlefield, the sharpest Rings target in the set), ADUN OAKENSHIELD and TETSUO UMEZAWA. ONE DISPLACEMENT, REPORTED RATHER THAN HIDDEN: Ghave sits exactly at the 9-core-rail budget, so his counters family gives back its THIRD shelf (counters:payoff2) to seat the new family's first — which is precisely what v7.51's breadth-first fill is for; his counters family keeps two rails and no family of his is zeroed. Partition-1 controls byte-identical (Krenko Mob Boss, Loran of the Third Path, Arcanis the Omnipotent — all keep the shelf); partition-2 controls byte-identical (Kenrith himself, Thrasios Triton Hero, Grenzo Dungeon Warden, Purphoros God of the Forge — none gains a duplicate); the supersede veto holds (Anje Falkenrath byte-identical); unrelated controls byte-identical (Atraxa, Talrand, Sheoldred, Edgar Markov, Titania, Meren, Delney). ATOM LAYER PROVABLY UNMOVED: all ATOMS test/eTest/pTest/gate expressions identical as a set, ATOMS 90 and RAILS 76 and STUDY_DB 172 unchanged, ACT_COPY_Q and ACT_DISCOUNT_SRC_Q byte-identical old-vs-new. node --check PASS 6/6; boots with ZERO errors; all four boot assertions return []. HONEST LIMIT, UNCHANGED FROM v8.06 AND NOW SIX BUILDS OLD: api.scryfall.com returned an EMPTY BODY for every endpoint this run and the Chrome extension was not connected, so NOTHING was seen rendered, no screenshot was taken, no query was cut live, and the corpus oracle text was hand-transcribed rather than fetched — the staleness guard's live half was resolved structurally (local SHA1 matches the v8.06 row's recorded post-edit hash, and the publisher only ever copies a strictly-newer build OUT of the working folder, so live cannot lead local)." },
+    { build: 'v8.06', date: '2026-08-08', focus: 'logic', commander: 'Kenrith, the Returned King', summary: "STUDY Kenrith, the Returned King — THE OTHER HALF OF \"ACTIVATED ABILITY\". Every activation reader in the engine began by matching {T}, so Magic's other activation shape — a cost that is pure MANA and never taps — was invisible end to end, and the bill came due on the 19th-most-built commander in the format. Kenrith prints FIVE separately-costed abilities and no {T}; he booted as `reanimate` w6 + `counters` w3, opening with Worth Returning / Stock the Graveyard and three +1/+1-counter shelves, an archetype EDHREC does not list for him at all (his tags are Group Hug 625 / Combo 593 / Politics 444). His four highest-synergy cards — Training Grounds 36%, Biomancer's Familiar 32%, Zirda 29%, Agatha of the Vile Cauldron 27% — are a clean sweep by ONE card class, and none could appear on any shelf the app dealt him. New shared reader manaActivations()/manaSinkActivations(), written as a sibling of tapActivations and its MUTUAL EXCLUSIVE, admits a commander on two rules facts rather than a keyword: a discount eats GENERIC mana only, and it cannot reduce a cost below one mana — so membership is 'has an activation with a generic pip costing more than one mana, or {X}'. That single arithmetic test does all the fencing: Chainer, Dementia Master ({B}{B}{B}) and Ghave, Guru of Spores ({1}) are both correctly refused. Weight is a COUNT, not a keyword: one or two such abilities ride at w3 behind whatever already led (Thrasios, Grenzo, Emiel, Sliver Overlord, Ezuri all keep their lead and simply gain the package), three or more means the card IS its abilities and takes w7, which is what stops one {4}{B} line headlining Kenrith as a reanimator. The family's package is DISJOINT from the tap family's and that is why it needs its own rails: untapping a mana-sink commander buys nothing, so it gets the class the tap suite fenced out by name — land untappers and mana doublers (Seedborn Muse 27%/+23%, Wilderness Reclamation 20%/+18%) — plus a discount-or-copy shelf, the two merged into one query for the reason v7.39 merged untap with blink, since the copiers are colourless and keep the shelf healthy in all 32 identities. STRICTLY ADDITIVE BY CONSTRUCTION: all 223 test/eTest/pTest/gate expressions byte-identical as a set, no atom lists the new key in a `sup`, script blocks 0-4 and the entire non-script region byte-identical apart from the build tag." },
     { build: 'v8.05', date: '2026-08-08', focus: 'verify', commander: 'Kelsien, the Plague', summary: "VERIFY Kelsien, the Plague — THE STUDY HAND-WROTE A PHRASE LIST A THOUSAND LINES BELOW THE COMMENT EXPLAINING WHY PHRASE LISTS ARE WRONG, AND HIS #2 CARD WAS THE PRICE. Re-read v8.04's two new `pingcreature` shelves card-by-card against his live EDHREC page (6,079 decks, rank #454; Equipment 383 / Deathtouch 297 / Voltron 162 / Experience 150). 'Permission to Target' AUDITS CLEAN and is untouched — Arcane Lighthouse 35%, Detection Tower 24%, Glaring Spotlight 17%, Shadowspear 40% are all on his page and all reachable. 'Make Every Point Lethal' shipped as `(o:\"has deathtouch\" OR o:\"have deathtouch\" OR o:\"gains deathtouch\")`, three LITERAL ADJACENT PHRASES, so deathtouch was readable ONLY in the FIRST slot of a granted keyword list — and Magic routinely prints it SECOND. FALTHIS, SHADOWCAT FAMILIAR is his #2 Top Card at 61% inclusion / 60% synergy and reads 'Commanders you control have menace and deathtouch': the literal string 'have deathtouch' NEVER OCCURS ON THE CARD, the words between the verb and the keyword are 'menace and'. CORRUPTED KEY and CULTIST OF THE ABSOLUTE fail identically. THE FILE HAD ALREADY DIAGNOSED, MEASURED AND FIXED THIS — IN 2025, AT v7.25, IN A COMMENT THE STUDY DID NOT READ: `grantQ` exists precisely because a phrase list 'was blind to COMPOUND grants, because the keyword had to sit immediately after the verb — \"Equipped creature has haste and shroud\" never matched o:\"has shroud\", so LIGHTNING GREAVES was missing from the Voltron protection rail.' The shared grant atom was sitting unused 1,047 lines above the new shelf. FIXED AT THE LOGIC LEVEL, THREE PARTS. (A) `DEATHTOUCH_GRANT_Q` is rebuilt ON the shared atom as a UNION with its old arms rather than a swap — and the union is a MEASUREMENT, not caution: grantQ's subject list has no `enchanted permanent`, so a straight swap would have DROPPED RUNE OF MORTALITY ('As long as enchanted permanent is a creature, it has deathtouch'), his 73%-inclusion #2 high-synergy card. (B) NEW SHARED SUBJECT ATOM `GRANT_SUBJ_CMD_SRC` / `grantCmdQ` / `grantAnyQ`, carrying the two subjects measured missing from GRANT_SUBJ_SRC, both load-bearing in a COMMANDER app specifically: `commander(?:s| creatures)? you (?:control|own)` (Falthis; Cultist of the Absolute prints the 'you OWN' spelling) and `enchanted permanent` (Rune of Mortality — a subject comment (6) already names as one a REJECTED factoring 'would have bought for free'). IT IS A SECOND TERM RATHER THAN A WIDER ONE, AND THAT IS FORCED BY MEASUREMENT: appending these to the existing subject pushes the composed bodies to 215/232/231/219 characters, PAST THE 214 PER-TERM CEILING OF LIMIT (5), whose failure mode is SILENT — the term is dropped and the rail returns the entire colour identity, looking 'generic' rather than broken. Split out, the bodies are 140/144, half the ceiling. (C) TWO ARMS FOUND BY READING THE SHELF AGAINST EDHREC RATHER THAN REASONED ABOUT: `gain deathtouch`, the PLURAL one-shot team grant the singular arm cannot match (Binding the Old Gods, Entropic Cloud, Age of Ultron, Gilt-Leaf Ambush), and `deathtouch counter`, a grant that USES NO GRANT VERB AT ALL — measured at 15 cards on mtg.wtf, of which VOID BECKONER (33%), CALL OF THE DEATH-DWELLER (19%) and QARSI REVENANT (8.9%) are on Kelsien's own page and GIFT OF THE VIPER is the card THE v8.04 WORKLOG ITSELF NAMED for Halana while shipping a query that could never return it. DELIBERATE NAMED COST: 3 of those 15 (Boot Nipper, Evolved Sleeper, Kappa Tech-Wrecker) put the counter on THEMSELVES and are bodies, not granters. GENERALIZES BEYOND THE FAMILY: `grantAnyQ` is also wired into `ENRAGE_SURVIVE_Q`, so the enrage family's 'Survive the Blast' shelf (Indoraptor, Raphael the Nightwatcher, Zegana and every enrage commander) now also reaches indestructible grants scoped to a commander or written on an Aura's `enchanted permanent`. SHIELDS_UP_Q IS DELIBERATELY NOT CONVERTED AND THE REASON IS RECORDED IN THE FILE so no future run retries it blind: it composes TWO grantQ calls, so grantAnyQ takes it 532 -> 819 chars, and the ~1008-char WHOLE-QUERY ceiling already broke real consumers the last time this string grew (at 924: Halvar 1004, Dorothea 1012, Katilda). COUNTER-CASE — STRUCTURAL, NOT SAMPLED, WHICH IS STRONGER: the entire file diff is FIVE CODE LINES (three added, two rewritten); everything else added is comment. EVERY `test:` / `eTest:` / `pTest:` / `gate:` EXPRESSION IN THE FILE IS BYTE-IDENTICAL, so no commander can join or leave any family and NO REPORT CAN GAIN OR LOSE A RAIL, PLAN, TRAP OR INSIGHT; the RAILS object is byte-identical; ATOMS 90 / ARCHETYPES 101 / BLENDS 47 / STUDY_DB 171 all unchanged. Both edited queries PRESERVE THEIR OLD EXPRESSION VERBATIM inside a union, so they are STRICTLY ADDITIVE — no card either shelf deals today can be removed. SHIELDS_UP_Q and TARGET_PERMISSION_Q are byte-identical, so Voltron 'Shields Up', Voltron 'Protect the Threat', Ring 'Protect the Bearer', Flash 'Hold Up Protection' and 'Permission to Target' are untouched BY CONSTRUCTION. A 16-case regex probe against oracle text fetched VERBATIM this run passes 16/16: six required matches through the new arms (Falthis, Corrupted Key, Cultist of the Absolute, Binding the Old Gods, Gift of the Viper, Call of the Death-Dweller), five preserved (Basilisk Collar, Rune of Mortality, Gorgon's Head, Archetype of Finality, Bladebrand) and five required NON-matches (Sting the Glinting Dagger — an untapper, not a granter; Vhati il-Dal; SHEOLDRED and Swiftfoot Boots, the pointed controls, since a body that merely HAS deathtouch stays `deathtouchkw`'s shelf; Krenko). VERIFICATION AND ITS HONEST LIMIT: NO BROWSER WAS CONNECTED (`list_connected_browsers` returns []), so NOTHING WAS SEEN RENDERED IN CHROME, no screenshot was taken, and the two queries were NOT run against api.scryfall.com — the sandbox proxy is HTTP 000 for Scryfall for the 35th run running. In their place this run found TWO REAL DATA PATHS and every card fact above came through them: `web_fetch` reaches EDHREC.COM and returns the full card list with inclusion and synergy percentages, and MTG.WTF answers Scryfall-syntax phrase queries. mtg.wtf does NOT parse `o:/regex/` or parenthesised `or`, so the regex halves were verified in Node against verbatim fetched oracle text instead. node --check PASS 6/6; all four boot assertions return [] (assertRegexTermBudget, assertStudyKeys, assertStudyTrapCap, assertSelfSubjectExcl) and the budget assert scans ENRAGE_SURVIVE_Q by name; boots with ZERO errors and ZERO warnings. RENDERING SAFETY PROVED BY DIFF: script blocks 0-4 BYTE-IDENTICAL, so the mobile viewport/keyboard IIFE was provably never touched, and NON-SCRIPT BYTES 195,325 -> 195,325 IDENTICAL, so not one byte of CSS, markup or layout changed and 390px mobile is untouched BY CONSTRUCTION. html/body/script 2/2/6; all four structural marker counts held. Build identity SYNCED: meta == console banner == CHANGELOG[0].build == v8.05. Backup index-backup-20260808-0205-preVerifyKelsien.html (SHA1 a2116b8bdeb4ed2af1e9baefcf4380515961939d, byte-verified); roster pipeline untouched; git untouched; ORACLE INDEX only; build tag bumped LAST." },
     { build: 'v8.04', date: '2026-08-08', focus: 'study', commander: 'Kelsien, the Plague', summary: "STUDY Kelsien, the Plague — DAMAGE AIMED AT A CREATURE IS NOT BURN, IT IS REMOVAL ON AN ENGINE, AND THE ENGINE COULD NOT SEE ITS OWN BEST CARD. The `burn` atom's alternation list accepts only player-facing or untargeted damage (`any target`, `each opponent`, `target player`, `a permanent or player`); creature-targeted damage is deliberately excluded and nothing was ever written to read the excluded half. Measured on the shipped build: KELSIEN, THE PLAGUE (EDHREC rank #453, 6,079 decks) boots with exactly two atoms — `tapability` w4 and `experience` w3 — and his whole report is three shelves plus five staples, while his most-played card is BASILISK COLLAR at 89% inclusion / 85% synergy and six more deathtouch granters sit in his top fifteen. None could appear anywhere, because the only deathtouch read in the file fires on cards that PRINT the word and a pinger never does. New atom `pingcreature` (w6, placed AFTER `burn` so it loses the w6 tie and can never move a burn-led commander) reads a REPEATABLE source plus a CREATURE-TARGETED damage clause, and its rail family deals the two shelves the archetype's rules imply: MAKE EVERY POINT LETHAL (deathtouch granters — deathtouch is a multiplier on the ability, so 'deals 1 damage' becomes 'destroy target creature') and PERMISSION TO TARGET (Shadowspear 40%, Arcane Lighthouse 35%, Detection Tower 24%, Glaring Spotlight 17%). Generalises on arrival to HALANA, KESSIG RANGER through the bite template, whose list is the same shelf again (Saryth 31%, Ohran Frostfang 25%, Basilisk Collar 13%). COUNTER-CASED BY MEASUREMENT: ten other commanders render BYTE-IDENTICAL — Kogla (ETB fight, not repeatable, and EDHREC shows zero granters in his list), Ghyrson Starn (keeps its burn lead), Indoraptor (keeps all three enrage shelves), Neyith, Vhati, Fynn, Sheoldred, Krenko, Talrand, Adeline. Regex probe 22/22 on the near-miss templates. New ARCHETYPES row written on arrival so the new lead atom cannot render plan-less, and a five-trap STUDY_DB entry for Kelsien authored against printed card text." },
     { build: 'v8.03', date: '2026-08-08', focus: 'study', commander: "Atraxa, Praetors' Voice", summary: "VERIFY Atraxa, Praetors' Voice — THE COMPLETENESS TEST v8.02 BUILT ITS MERGE ON WAS A STYLE RULE WEARING A DAMAGE RULE'S CLOTHES, AND IT WAS DESTROYING FINISHED PROSE. VERIFIED FIRST, AND v8.02'S OWN CLAIMS HOLD: booting the shipped file in a node vm harness reproduces ATOMS 89 / RAILS 74 / STUDY_DB 170 / CHANGELOG 387 with zero console.error, zero console.warn and all four asserts quiet; ATRAXA'S REPORT IS FIXED — her insight is the full 902 characters ending on its real last word ('...rather than one counter theme.'), all FIVE traps render (the cap is 5, so none is thrown away), and her rails are the three themed counter shelves COUNTER FUEL / COUNTER DOUBLERS & PROLIFERATE / COUNTER WINCONS plus six staples. Measured independently, v8.02's merge did exactly what it claimed: damaged insights by the unbalanced-paren signal 1 -> 0, traps 608 -> 612, and one truncated trap correctly refused promotion. THE DEFECT THIS RUN FOUND IS IN THE WRITE PATH v8.02 SHIPPED, NOT IN ATRAXA. studyTextComplete() condemned any string with no sentence-final punctuation. On the shipped corpus that third signal has ZERO true positives and NINE false positives: 9 of 612 traps are finished 57-433 character thoughts written in the house trap voice — a lowercase-initial clause with no full stop — and every one of them ends on a CONTENT word ('...one big refill', '...to one Swords to Plowshares', '...as a combo piece', '...polarity caveat'). The verdict is not cosmetic, because the predicate is a GATE in mergeTrapLists() and the FIRST key in scoreTrapList(): a list of three excellent house-style traps scores [0, ...] and loses OUTRIGHT to two throwaway punctuated ones, then is refused top-up. PLANTED AND MEASURED ON v8.02: three finished traps totalling 512 characters versus two totalling 37 ('run more lands.', 'the commander is good.') — ZERO of the three survive, IN BOTH WRITE ORDERS. v8.02 set out to retire 'whichever entry happened to be written LAST wins' and left 'whichever entry happened to be PUNCTUATED wins' standing in its place: still perfectly order-independent, still the wrong answer. THE FIX IS A PRINCIPLE, NOT A PATCH — REFUSAL REQUIRES PROOF OF DAMAGE; RANKING MAY USE EVIDENCE OF QUALITY. studyTextComplete() now carries only the two HARD signals, both of which are evidence a machine left behind rather than a style choice: the ledger import's own trailing ellipsis, and an unbalanced '(' (still the ONLY thing that catches Atraxa's stub, which ends in a period and so looks terminated). All 28 damaged strings in the corpus trip one of those two, so the gate loses nothing it used to catch. Terminal punctuation is DEMOTED to studyTextTerminated(), a ranking-only signal that can never refuse a trap, and scoreTrapList() becomes lexicographic over [undamaged, terminated, length] so a tie no longer falls straight to raw length. DELETING THE SIGNAL OUTRIGHT WAS MEASURED AND REJECTED RATHER THAN ASSUMED SAFE: on 480 traps cut at 190 characters with NO ellipsis appended, the old veto catches 99.0% and the hard signals alone catch 0%, so the signal is worth real recall and demotion — not deletion — is what keeps it. AND THE DEMOTION COSTS NOTHING MEASURABLE: pickStudyText() still prefers the original over an unmarked cut of itself 131/131 at 120 chars, 121/121 at 190 and 121/121 at 240 — identical to v8.02 — and 121/121 on the marked cut the corpus actually contains. COUNTER-CASED. HELPED, NAMED: SHEOLDRED, THE APOCALYPSE (3 traps, EDHREC rank 458, 11,820 decks), WYLETH, SOUL OF STEEL (4), RENATA, CALLED TO THE HUNT (1) and STORM, FORCE OF NATURE (1) — nine traps that could never be promoted through a merge now can. NOT REPRIEVED: all 13 truncated insights and all 16 genuinely damaged traps are still refused, and ZERO of the 9 reprieved traps carries an ellipsis. UNCHANGED, PROVED BY DIFF NOT ARGUED: the shipped build boots with ZERO merges, so nothing renders differently — the entire STUDY_DB render payload is BYTE-IDENTICAL old vs new, script blocks 0-4 are BYTE-IDENTICAL (so the owner-gated mobile viewport/keyboard IIFE in block 3 is untouched by construction), the whole non-script region is byte-identical at 195,277 characters (no CSS, markup or layout moved at all), and every static engine literal is identical — 498 q, 97 oq, 501 titles, 452 subs, 365 keys, 369 roles, 457 whys, 116 tests, 22 traps, 7 insights. Full engine models built on identical inputs are BYTE-IDENTICAL on all seven commanders tested, four of them unrelated to the mechanic: Krenko Mob Boss, Talrand Sky Summoner, Adeline Resplendent Cathar and Omnath Locus of Rage, plus Atraxa, Sheoldred and Wyleth. node --check PASS 6/6. NOT DONE ON PURPOSE: Scryfall, EDHREC and the deployed origin were all unreachable from the sandbox for the 35th run running and NO browser was connected, so no card-by-card rail audit was possible and not one detector regex was authored from memory — the whole run was spent on a defect provable from the file alone. RECORDED, NOT PATCHED: Atraxa's game plan still reads '+1/+1 Counters — go tall', which mildly contradicts her own study ('breadth of counter sources rather than one counter theme'); re-pointing archetype selection for proliferate commanders needs live card data to counter-case, so it is left named rather than half-fixed. Backup index-backup-20260808-0035-preVerifyAtraxa.html; ORACLE INDEX only; git untouched; shipped by bumping the tag for the hourly publisher." },
