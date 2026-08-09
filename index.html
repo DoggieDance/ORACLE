@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v8.40 · 2026-08-09">
+<meta name="oracle-build" content="v8.42 · 2026-08-09">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1775,7 +1775,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v8.40 \u00B7 2026-08-09', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v8.42 \u00B7 2026-08-09', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -3798,6 +3798,64 @@ function readTeamKeyword(o) {
     const m = String(o || '').match(TEAM_GRANT_RE);
     return m ? m[1] : null;
 }
+// v8.42 (Tinybones, Trinket Thief STUDY 2026-08-09) — FORCED ACTION: THE SHARED SCOPE
+// VOCABULARY, AND THE ATOM/QUERY CONTRADICTION IT CLOSES.
+//
+// THE RULE, NOT THE CARD. Magic writes a forced action as <PLAYER SCOPE> + <VERB>, and the scope
+// half is a small CLOSED vocabulary: `each opponent`, `each other player`, `each player`,
+// `target opponent`, `target player`, `that player`, `its controller`. Every rail in this file
+// that asks "who is being MADE to discard / sacrifice / mill" hand-listed some subset of that
+// cross-product inline, a different and incomplete subset at each site — and `each other
+// player`, the scope Magic uses for the ENTIRE Grave Pact / Dictate of Erebos / Syphon Mind
+// class, appeared in NOT ONE of them. (The phrase is not unknown to the file: `manasink`'s
+// "Mana to Burn" shelf carries `o:"during each other player"`. It was simply never asked for
+// where it decides whether a card is dealt.)
+//
+// THE FILE ALREADY CONTRADICTED ITSELF ABOUT THIS, exactly as v7.34 (two strip sites), v7.74
+// (atom vs eTest) and v8.39 (readers vs queries) each found one layer up. `ATOMS.oppdiscard`'s
+// own `test` — the READER that decides whether the discard family is consulted at all — has
+// always known `that player discards` and `each player discards`. The QUERY behind it,
+// 'Forced Discard', knew neither. So the engine correctly identifies a discard commander and
+// then hands them a shelf with their archetype's spine cut out of it.
+//
+// MEASURED ON THE SHIPPED REPORT, NOT ON A HYPOTHETICAL. TINYBONES, TRINKET THIEF (EDHREC #555,
+// 4,875 decks, fetched live this run) leads with 'Forced Discard', and the five-literal query
+// evicts his #2, #3, #4 and #5 highest-synergy cards OF ANY KIND: BOTTOMLESS PIT (82% / +76,
+// "that player discards"), NECROGEN MISTS (77% / +73, same), OPPRESSION (77% / +70, same) and
+// SYPHON MIND (74% / +62, "each other player discards"), plus RAIDERS' WAKE (38% / +35). The
+// same missing scopes cost the EDICT shelf GRAVE PACT, DICTATE OF EREBOS and BUTCHER OF MALAKIR
+// ("each other player sacrifices") and SHEOLDRED'S EDICT / DIABOLIC EDICT / SUDDEN EDICT
+// ("target opponent/player sacrifices" — a scope the edict list never had at all).
+//
+// THE SECOND SHAPE IS THE SERIAL VERB, and it is the same rule read one clause further along.
+// Magic hangs several forced actions off ONE scope: "Each player loses 1 life, DISCARDS a card,
+// SACRIFICES a creature, then sacrifices a land" (SMALLPOX, Tergrid's #1 synergy card at 72% /
+// +66; POX; DEATH CLOUD; VICIOUS RUMORS at 67% / +61 on Tinybones). Only the first verb is ever
+// contiguous with its subject, so no literal phrase can reach the rest. The regex arm below
+// carries the scope across the intervening clause but NOT across a full stop, so it can never
+// pair a scope in one sentence with a verb in the next.
+//
+// ADDITIVE BY CONSTRUCTION, WHICH IS WHY THIS NEEDS NO EVICTION ARGUMENT. `forcedQ` emits the
+// literal arms AND the regex arm as one OR-group, so every card any call site admits today it
+// still admits: a shelf can only grow. That also makes the change robust to the one thing this
+// run cannot do — there is no Scryfall egress, so the regex arm could not be cut live; if it
+// returned nothing at all, every repointed shelf would still be exactly today's shelf.
+// DECLARED HIGH, DELIBERATELY. `ATOMS.oppdiscard` (a top-level array literal, evaluated the
+// moment the block runs) is the FIRST call site, so the constant has to be initialised before
+// the atom table is built — a hoisted `function` is not enough on its own, because its body
+// reads a `const` and would hit the temporal dead zone. Measured, not assumed: declaring it
+// beside the mill queries threw `Cannot access 'FORCED_SCOPES' before initialization` at boot.
+const FORCED_SCOPES = ['each opponent', 'each other player', 'each player', 'target opponent', 'target player', 'that player', 'its controller'];
+const FORCED_SCOPE_ALT = FORCED_SCOPES.join('|');
+// verb: the third-person form as Magic prints it ("discards", "sacrifices", "mills").
+// extra: optional already-live literal arms a call site must keep (bare-subject idioms like
+//        "opponents mill" that carry no scope word and so cannot come out of the cross-product).
+function forcedQ(verb, extra) {
+    const lits = FORCED_SCOPES.map(s => 'o:"' + s + ' ' + verb + '"');
+    // same-sentence arm: the scope, then anything that is not a sentence end, then the verb.
+    lits.push('o:/(?:' + FORCED_SCOPE_ALT + ') [^.]{0,40}' + verb + '/');
+    return '(' + lits.concat(extra || []).join(' OR ') + ')';
+}
 // v7.88 (Xenagos, God of Revels STUDY 2026-08-07) — THE HASTE READER: THE TEMPO SIBLING v7.74
 // DELIBERATELY LEFT UNBUILT, AND THE DOOR IT LEFT SHUT. TEAM_GRANT_SRC above ends with a note in
 // its own comment — "haste / vigilance / first strike / double strike are TEMPO, not evasion …
@@ -4635,6 +4693,29 @@ const POWER_LOW_RE = /(?:creatures?|permanents?)[^.]{0,26}?you control[^.]{0,26}
 // The `dies` alternative is the modern templating of the identical event and is preventive, not
 // corrective: mtg.io's text search returns ZERO legendary creatures for "or less dies" today.
 const POWER_LOW_GATE_RE = /creatures? with power (\d+) or less (?:is put into your graveyard from the battlefield|dies)/;
+// v8.41 (Tetsuko VERIFY) — THE DISJUNCTIVE ARM, AND WHY IT IS A THIRD SEPARATE CONSTANT.
+// Magic prints a band on a team in two shapes and the engine could read only one of them. The
+// CONJUNCTION-FREE shape is "creatures you control with power N or less" (POWER_LOW_RE, 8
+// commanders). The DISJUNCTIVE shape is "creatures you control with power OR TOUGHNESS N or
+// less" — TETSUKO UMEZAWA, FUGITIVE's entire card — and no arm above can reach it, because every
+// one of them demands the literal `power (\d+) or less` with nothing between the noun and the
+// number. So `railCtx.powLow` was null for her and `capFold` was inert on a commander whose ONE
+// printed sentence is a band. v8.40 measured the consequence and deliberately deferred it (its
+// hand-off (c)); this run resolves it, and resolves it in the SEPARATE-CONSTANT shape v7.64
+// established for exactly this reason. It is NOT folded into POWER_LOW_RE, because POWER_LOW_RE
+// is also `ARCHETYPES.smallpower.test` (w5) and Tetsuko is NOT a Power-Capped Board deck: like
+// SHIREI, the cap is the ENTRY CONDITION of the thing she does, not the thing she does. Her plan
+// is evasion — EDHREC's tag census on 1,917 decks reads Infect 167 / Wheels 111 / Aggro 61 /
+// Unblockable 57 and does not contain a small-creatures theme at all. Folding this arm into
+// POWER_LOW_RE would let smallpower (w5) outrank her attack read and flip her chip onto a plan
+// she does not have — the identical error v7.64 refused, one templating over. So this arm lives
+// HERE and is read ONLY by readPowerBand, whose single call site is railCtx.powLow.
+// SCOPED `you control` ON PURPOSE, exactly as arm 1 is: a band printed on a TARGET or on an
+// OPPONENT's creatures is not a deck-wide invariant, so QUESTING BEAST ("can't be blocked by
+// creatures with power 2 or less") and SUBIRA's activated grant must keep reading null and do.
+// BOTH NOUN ORDERS, because Magic prints both and a reader that knows only one is a reader that
+// will be wrong half the time — the v7.34/v7.74 lesson.
+const POWER_LOW_ANY_RE = /(?:creatures?|permanents?)[^.]{0,26}?you control[^.]{0,26}?with (?:power or toughness|toughness or power) (\d+) or less/;
 // v7.33 (Delney VERIFY 2026-08-05) — SUPPLY IS NOT A THEME.
 // The `attack` atom's test is a UNION of two different things: the five templates that make a
 // commander an ATTACK-TRIGGER deck ("whenever ~ attacks", "deals combat damage to a player",
@@ -4758,7 +4839,18 @@ function readPowerBand(o) {
     // v7.64 — the gate arm runs ONLY if the you-scoped arms found nothing, so a commander that
     // prints both keeps the number POWER_LOW_RE read and this can never change an existing band.
     if (!n) { const g = t.match(POWER_LOW_GATE_RE); n = g ? +g[1] : 0; }
-    return { text: t, low: (n >= 1 && n <= 8) ? n : null };
+    // v8.41 — the DISJUNCTIVE arm runs LAST, only if both arms above found nothing, so it is
+    // incapable of changing a band any existing commander already has. `any` records the SHAPE of
+    // the band, not just its number: a disjunctive band is satisfied by EITHER stat, so a 2/1 and
+    // a 1/3 are both inside Tetsuko's scope and a bare `pow<=1` would throw away the first of
+    // them. The shape travels with the number for the same reason v7.35 made `tokenSubject`
+    // travel with the token count — a fold that knows the number and not the shape is a fold that
+    // is confidently wrong. Kept as a boolean rather than an operator string because there are
+    // exactly two shapes in the corpus and a third would want its own measurement, not a slot.
+    let any = false;
+    if (!n) { const d = t.match(POWER_LOW_ANY_RE); if (d) { n = +d[1]; any = true; } }
+    const low = (n >= 1 && n <= 8) ? n : null;
+    return { text: t, low: low, any: low ? any : false };
 }
 // v7.35 (Zinnia VERIFY) - A TOKEN DECK IS NOT A TOKEN DECK; IT IS A CREATURE-TOKEN DECK OR A
 // TREASURE DECK, AND THE COMMANDER'S OWN TEXT SAYS WHICH. RAILS.tokens' enabler arm asked only
@@ -6322,7 +6414,7 @@ const ATOMS = [
     // land-reveal, Nylea's look-at-top — does NOT read as a self-mill deck. Strict ADD to the
     // existing alternation: no commander loses the mill atom.
     { key: 'mill', w: 5, chip: 'Mill', title: 'Mill & Self-Mill', sub: 'Feed the yard', test: /\bmills?\b|surveil|put into your graveyard from your library|from your library into your graveyard|put (?:all|the rest|the remaining|those|them|the others)[^.]{0,70}(?:into|in) your graveyard/, q: '(o:mill OR o:surveil)', oq: 'o:mill', why: 'mills cards' },
-    { key: 'oppdiscard', w: 5, chip: 'Discard (them)', title: 'Opponent Discard', sub: 'Empty their hands', test: /each opponent discards|opponents? discards?|target (player|opponent) discards|that player discards|each player discards|(whenever|when) an opponent [^.]{0,60}discards/, q: '(o:"each opponent discards" OR o:"target player discards" OR o:"whenever an opponent discards")', oq: '(o:"each opponent discards" OR o:"opponent discards")', why: 'attacks opposing hands' },
+    { key: 'oppdiscard', w: 5, chip: 'Discard (them)', title: 'Opponent Discard', sub: 'Empty their hands', test: /each opponent discards|opponents? discards?|target (player|opponent) discards|that player discards|each player discards|(whenever|when) an opponent [^.]{0,60}discards/, q: forcedQ('discards', ['o:"whenever an opponent discards"']), oq: '(o:"each opponent discards" OR o:"opponent discards")', why: 'attacks opposing hands' },
     // discard sup:['...','draw2'] (The Locust God study 2026-08-01): an incidental LOOT line
     // ("draw a card, then discard a card") on a draw-matters commander (The Locust God, Niv-Mizzet)
     // used to fire this w5 atom and MISLABEL the deck "Looting & Madness". When the true draw-matters
@@ -8305,6 +8397,23 @@ function studyStore(seed) {
     });
 }
 const STUDY_DB = studyStore({
+    // v8.42 (Tinybones, Trinket Thief STUDY 2026-08-09) — NAME-KEYED, the THIRTEENTH entry carrying
+    // the standing Scryfall debt: `api.scryfall.com` returns an empty body through web_fetch and
+    // the sandbox has no DNS at all, so his oracle_id could not be fetched and studyFor()'s `name:`
+    // arm carries him. Only the KEY is second-hand. Every PERCENTAGE below was read off his LIVE
+    // EDHREC page this run (edhrec.com/commanders/tinybones-trinket-thief, rank #555 · 4,875 decks,
+    // tags Discard 1.4K / Control 107 / Stax 60 / Combo 55) — that host IS reachable — and no
+    // number here is remembered.
+    "name:tinybones, trinket thief": {
+        insight: "Tinybones is not a discard deck's engine — he is its INTEREST PAYMENT, and reading him the other way round is what makes most first builds of him bad. His page proves it in one number: his single highest-synergy card is WASTE NOT (92% of decks, +81% synergy), which does not need him on the battlefield at all, and his protection suite runs at NEGATIVE synergy (Lightning Greaves 27% / −6%, Swiftfoot Boots 15% / −16%) because the deck does not actually mind him dying. What the deck is MADE of is a standing, symmetric tax on every hand at the table — BOTTOMLESS PIT (82%/+76), NECROGEN MISTS (77%/+73), OPPRESSION (77%/+70), CUNNING LETHEMANCER (54%/+51), RAIDERS' WAKE (38%/+35), WORDS OF WASTE (25%/+24) — and a stack of punishers that get paid on the same trigger he does: GETH'S GRIMOIRE (81%/+74), LILIANA'S CARESS (71%/+66), PAINFUL QUANDARY (73%/+63), MEGRIM (67%/+62). He is the best of those punishers, not the reason for them. Build the lock first and he is a two-mana card that draws three or four a turn; build him first and he is a 1/1 that dies to a stiff breeze.",
+        traps: [
+            "READING THE {4}{B}{B} ABILITY AS A MANA SINK. It is not a value activation and it is not repeatable in any meaningful sense — it costs SIX, and it pays only for opponents who are at EXACTLY zero cards, so one land held in one hand costs you ten damage from that seat. It is the button you press after the lock has already done its work, which is why the deck's real recurring damage is standing enchantments (Painful Quandary 73%, Liliana's Caress 71%, Megrim 67%, Quest for the Nihil Stone 46%/+44, Shrieking Affliction 35%/+33) rather than a mana pile. Treat the ability as a finisher with a prerequisite, not as a reason to run rocks.",
+            "FILLING THE DECK WITH YOUR OWN CARD DRAW. His page is unusually blunt about this: Phyrexian Arena sits at −8% synergy, Sign in Blood at −10%, Night's Whisper at −9%, Read the Bones at −3%. The reason is that almost every lock piece in the deck is SYMMETRIC — Bottomless Pit, Necrogen Mists, Oppression and Anvil of Bogardan (31%/+29) tax you exactly as hard as they tax the table — so a card you draw is usually a card you are about to throw away. Your draw is supposed to arrive through HIS trigger, off their discards. If you want to break the symmetry, the deck's own answer is LIBRARY OF LENG (16%/+15) and BAG OF HOLDING (15%/+14), not another Divination.",
+            "PLAYING ONE-SHOT TARGETED DISCARD AS IF IT WERE THE PLAN. Duress (37%/+30), Thoughtseize (29%/+25), Divest and Pilfer are real cards here, but they are cantrips that strip one card once; the table refills on its draw step and the deck has done nothing. Everything with genuinely high synergy is a PER-UPKEEP or PER-SPELL tax that keeps hands at zero turn after turn. A Tinybones list is measured by how many standing taxes it has in play, not by how many hand-strip spells it drew.",
+            "FORGETTING THAT YOU DISCARD TOO, AND NOT GETTING PAID FOR IT. Smallpox (35%/+30), Pox, Delirium Skeins (50%/+46), Dark Deal (65%/+54) and Awaken the Erstwhile empty YOUR hand as well, and the well-built lists lean into that rather than dodging it: NECROGOYF (66%/+62), BONE MISER (23%/+21), ASYLUM VISITOR (37%/+35), ACLAZOTZ (56%/+50), SANGROMANCER (59%/+48) and the retrace/flashback discard outlets (Raven's Crime 14%/+13, Tasigur's Cruelty 13%/+12) all turn your own emptied hand into value. A deck that plays the symmetric sweepers with no cards that WANT to be discarded is paying full price for both sides.",
+            "EXPECTING THE DISCARD TO FUNCTION AS REMOVAL. It never touches the board. This is why Toxic Deluge (48%), Damnation (34%), Feed the Swarm (55%) and the point removal suite are in half his decks at low synergy — they are not synergy cards, they are the reason the deck survives to turn eight. Hand denial answers what has not been cast yet and nothing that already resolved, so a list that spends its whole curve on taxes and none of it on sweepers loses to the first player who empties their hand onto the battlefield on purpose."
+        ]
+    },
     // v8.40 (Tetsuko Umezawa, Fugitive STUDY 2026-08-09) — NAME-KEYED, the TWELFTH entry carrying
     // the standing Scryfall debt: `api.scryfall.com` is still unreachable from this runner, so her
     // oracle_id could not be fetched and studyFor()'s `name:` arm carries her. Only the KEY is
@@ -9197,7 +9306,12 @@ const SELF_MILL_Q = '(' + YARD_FILL_Q + ' OR o:"each player mills" OR o:"target 
 // and 41 payoffs (Bruvac the Grandiloquent, Undead Alchemist, Guiltfeeder, Jace's Phantasm,
 // Soaring Thought-Thief, Psychic Spiral, Into the Story) — the doublers and the their-yard
 // payoffs that only a mill-THEM deck wants, a class no rail in the app reached before.
-const OPP_MILL_Q = '(o:"each opponent mills" OR o:"target player mills" OR o:"target opponent mills" OR o:"each player mills" OR o:"that player mills" OR o:"opponents mill" OR o:"players mill" OR o:"opponent mills")';
+// v8.42 — CALL SITE 1 OF 5. Repointed at the shared cross-product; the three bare-subject
+// idioms that carry no scope word ("opponents mill", "players mill", "opponent mills") are
+// passed through as `extra` because no scope×verb pair can produce them. Strict superset of
+// the eight literals it replaces — it ADDS `each other player mills`, `its controller mills`
+// and the same-sentence arm, and drops nothing.
+const OPP_MILL_Q = forcedQ('mills', ['o:"opponents mill"', 'o:"players mill"', 'o:"opponent mills"']);
 const OPP_MILL_PAYOFF_Q = '((o:"would mill" o:instead) OR o:"mills that many" OR o:"in their graveyard" OR o:"in each opponent\'s graveyard" OR o:"library contains no cards" OR o:"has no cards in their library")';
 // v7.00 — REANIMATION, the class the whole graveyard half of the app could not reach. Every
 // existing yard rail keys off o:"from YOUR graveyard", but Magic's reanimation spells are
@@ -10267,7 +10381,14 @@ const RAILS = {
         eTest: /(each|target) (player|opponent) discards|discards? (their|his or her) hand|unless they [^.]{0,60}discard/,
         pTest: /(whenever|when) (an opponent|a player) [^.]{0,60}discards/,
         rails: [
-            { role: 'enabler', title: 'Forced Discard', sub: 'Rip the hands apart', q: '(o:"each opponent discards" OR o:"each player discards" OR o:"target player discards" OR o:"target opponent discards" OR o:"discards their hand")', why: 'edict-style discard density keeps the trigger firing — every hand at the table is fuel' },
+            // v8.42 — CALL SITE 2 OF 5, AND THE ONE THE DEFECT WAS MEASURED ON. This shelf LEADS
+            // every opponent-discard report in the app, and its five literals evicted the spine of
+            // the archetype: Bottomless Pit, Necrogen Mists, Oppression and Raiders' Wake all
+            // template `that player discards`, Syphon Mind templates `each other player discards`,
+            // and Smallpox / Pox / Death Cloud / Vicious Rumors hang the verb off a serial clause.
+            // `o:"discards their hand"` is passed through as `extra`: it is a bare-subject idiom
+            // (Dark Deal, Awaken the Erstwhile) with no scope word for the cross-product to pair.
+            { role: 'enabler', title: 'Forced Discard', sub: 'Rip the hands apart', q: forcedQ('discards', ['o:"discards their hand"']), why: 'edict-style discard density keeps the trigger firing — every hand at the table is fuel' },
             { role: 'payoff', title: 'Discard Payoffs', sub: 'Profit per card', q: '(o:"whenever an opponent discards" OR o:"whenever a player discards")', why: 'Waste Not and Megrim-class punishers pay again on every forced discard' }
         ]
     },
@@ -13029,6 +13150,12 @@ function buildEngineModel(commander) {
     // build every query from the band the card names instead of from a constant. Null for every
     // commander that prints no cap, which is all but eight of them, so no other rail can move.
     railCtx.powLow = readPowerBand(o).low;
+    // v8.41 — `powLowAny`: the SHAPE of the band whose number `powLow` already carries, added to
+    // the context exactly as `powLow` (v7.32), `tokenSubject` (v7.35) and `teamKw` (v7.74) were.
+    // False for every commander that prints the conjunction-free band and for the ~4,240 that
+    // print none, so the field is inert unless a rail asks for it and no existing report can move
+    // because of it. Its one consumer is `capFold` below.
+    railCtx.powLowAny = readPowerBand(o).any;
     // v7.35 - `tokenSubject`: WHICH KIND of token this deck actually cashes in, read off the
     // commander's own text and offered to every rail through the generic `subjFold` opt-in below.
     // Null for the 2,906 commanders that name no subject, so the field is inert unless asked for.
@@ -13179,7 +13306,39 @@ function buildEngineModel(commander) {
                 // The fold WRAPS rather than appends — `(<q> pow<=N)` — because these queries are
                 // OR-chains and a bare trailing term would bind to the last alternative only.
                 let rq = (typeof r.q === 'function' ? r.q(railCtx) : r.q);
-                if (r.capFold && typeof railCtx.powLow === 'number' && railCtx.powLow > 0) rq = '(' + rq + ' pow<=' + railCtx.powLow + ')';
+                // v8.41 (Tetsuko VERIFY) — A POWER CAP IS A FACT ABOUT CREATURES, AND FOR EIGHT
+                // BUILDS IT HAS BEEN APPLIED TO EVERY CARD ON THE SHELF. `pow<=N` is not a filter
+                // Scryfall applies loosely: a card with no printed power does not match it, so a
+                // bare `pow<=N` does not NARROW a mixed shelf, it DELETES every non-creature on
+                // it. Measured on the two shipped commanders whose shelves are mixed:
+                //   DELNEY  'Payoffs for Connecting'  (o:"combat damage to a player" pow<=2)
+                //   RIGO    'Combat Triggers'         (… OR o:"combat damage to a player" pow<=2)
+                // Those two shelves are where Bident of Thassa, Coastal Piracy, Reconnaissance
+                // Mission and every connect Sword live — the artifacts and enchantments that ARE
+                // the archetype — and the cap was silently evicting all of them, on the exact
+                // shelf v7.33 wrote the fold to REPAIR. The same bare term evicts Rogue's Passage,
+                // Whispersilk Cloak and Slip Through Space from both commanders' evasion shelves.
+                // The cap was never about those cards: a printed band constrains the BODIES this
+                // commander can enable and says nothing whatever about a permanent that has no
+                // power to compare. So the fold is now TYPE-AWARE — `((t:creature <band>) OR
+                // -t:creature)` — which is a strict WIDENING of every shelf it already touched
+                // and cannot remove a single card from any of them. It is a no-op by construction
+                // on the three shelves that already print `t:creature` themselves (Delney ta-etb,
+                // Arabella etb:payoff1, Shirei rea-capgate), because the outer conjunction pins
+                // the type there already.
+                // AND THE BAND IS SPELLED THE WAY THE CARD PRINTS IT (v8.41's second half). When
+                // `powLowAny` says the commander printed a DISJUNCTION, the fold emits
+                // `(pow<=N OR tou<=N)`: Tetsuko's own rulings make this the whole card — the check
+                // is EITHER stat, so a 2/1 Neurok Commando (her #1 card at 64%/+63 synergy) and a
+                // 1/3 Scroll Thief (59%/+58) are both unblockable and a bare `pow<=1` would have
+                // thrown the first one away. It is also why the shelf keeps her non-creatures:
+                // Bident of Thassa is her single highest-inclusion card at 70% and has no stats to
+                // read. WRAPS rather than appends, for the v7.33 reason, unchanged.
+                if (r.capFold && typeof railCtx.powLow === 'number' && railCtx.powLow > 0) {
+                    const capN = railCtx.powLow;
+                    const capBand = railCtx.powLowAny ? '(pow<=' + capN + ' OR tou<=' + capN + ')' : 'pow<=' + capN;
+                    rq = '(' + rq + ' ((t:creature ' + capBand + ') OR -t:creature))';
+                }
                 // v7.35 - SUBJECT FOLD, the same opt-in shape as v7.33's `capFold` one line up:
                 // any rail in any family may declare `subjFold`, and it is honoured only when the
                 // commander actually named a token subject, so the flag is inert for the 35
@@ -14606,7 +14765,9 @@ function buildEngineModel(commander) {
         const oppRead = readInterveningIf(o, found);
         const oppIf = oppRead.cond, ifOwner = oppRead.owner;
         if (!ifOwner) {
-            out.push({ key: 'opp-die', role: 'enabler', title: 'Make Them Die', sub: 'Their losses, your gain', q: base + ' (o:"destroy target creature" OR o:"each opponent sacrifices" OR (o:fight -t:land))', why: firstName + " triggers on opponents' creatures dying \u2014 removal, edicts, and fights pull the trigger." + (oppIf ? ' Read the trigger closely, though: it only pays \u201Cif ' + oppIf + '\u201D, so removal that kills some OTHER way is removal only.' : '') });
+            // v8.42 \u2014 CALL SITE 5 OF 5. This shelf's own `why` sells "edicts" and the query had
+            // exactly ONE edict arm; the cross-product gives it the whole class it advertises.
+            out.push({ key: 'opp-die', role: 'enabler', title: 'Make Them Die', sub: 'Their losses, your gain', q: base + ' (o:"destroy target creature" OR ' + forcedQ('sacrifices') + ' OR (o:fight -t:land))', why: firstName + " triggers on opponents' creatures dying \u2014 removal, edicts, and fights pull the trigger." + (oppIf ? ' Read the trigger closely, though: it only pays \u201Cif ' + oppIf + '\u201D, so removal that kills some OTHER way is removal only.' : '') });
         }
     }
     // v7.30 (Koll, the Forgemaster STUDY) — THE REFUND LOOP.
@@ -14701,7 +14862,12 @@ function buildEngineModel(commander) {
     if (P.edict && !P.oppDeath) {
         // Tergrid study: "each player sacrifices" is the Plaguecrafter / Fleshbag /
         // Innocent Blood class — the headline edict cluster the query was missing.
-        out.push({ key: 'edicts', role: 'enabler', title: 'Edicts & Forced Sacrifice', sub: 'They choose, they lose', q: base + ' (o:"each opponent sacrifices" OR o:"each player sacrifices" OR o:"its controller sacrifices" OR o:"that player sacrifices")', why: 'forced sacrifice ignores hexproof and indestructible entirely.' });
+        // v8.42 — CALL SITE 3 OF 5. The four literals had no TARGET-scoped arm at all, so the
+        // single-target edicts (Sheoldred's Edict, Diabolic Edict, Sudden Edict, Geth's Verdict,
+        // Chainer's Edict) were unreachable on the shelf named after them, and no `each other
+        // player` arm, so GRAVE PACT, DICTATE OF EREBOS and BUTCHER OF MALAKIR — the three cards
+        // this archetype is most identified with — were evicted from it too.
+        out.push({ key: 'edicts', role: 'enabler', title: 'Edicts & Forced Sacrifice', sub: 'They choose, they lose', q: base + ' ' + forcedQ('sacrifices'), why: 'forced sacrifice ignores hexproof and indestructible entirely.' });
     }
     // PERMANENT-SACRIFICE VALUE (Korvold study): re-scope the generic creature-only
     // sac/death family to the real package — the commander eats ANY permanent and
@@ -14813,7 +14979,10 @@ function buildEngineModel(commander) {
     if (P.theirYard) {
         for (let i = out.length - 1; i >= 0; i--) if (/^graveyard/.test(out[i].key || '')) out.splice(i, 1);
         foundForPlans = foundForPlans.filter(f => f.atom.key !== 'graveyard');
-        out.push({ key: 'fill-yards', role: 'enabler', title: 'Fill Their Yards', sub: 'Stock the pantry', q: base + ' (o:"opponent mills" OR o:"each player mills" OR o:"target player mills")', why: firstName + ' feeds on opponents\' graveyards \u2014 mill them, not yourself.' });
+        // v8.42 \u2014 CALL SITE 4 OF 5. Three literals for the same question OPP_MILL_Q asks with
+        // eight; naming the vocabulary once means the graveyard-eater and the mill-them deck can
+        // never again hold two different opinions about who is being milled.
+        out.push({ key: 'fill-yards', role: 'enabler', title: 'Fill Their Yards', sub: 'Stock the pantry', q: base + ' ' + forcedQ('mills', ['o:"opponent mills"']), why: firstName + ' feeds on opponents\' graveyards \u2014 mill them, not yourself.' });
     } else {
         const oYard = o.replace(/from (a|all|each) graveyards?|from graveyards/g, ' ');
         if (!/graveyard/.test(oYard)) {
@@ -16663,6 +16832,8 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v8.42', date: '2026-08-09', focus: 'study', commander: 'Tinybones, Trinket Thief', summary: "STUDY Tinybones, Trinket Thief — MAGIC NAMES WHO IS FORCED TO ACT FROM A SMALL CLOSED VOCABULARY, AND EVERY SHELF THAT ASKS THE QUESTION HAD HAND-LISTED A DIFFERENT, INCOMPLETE HALF OF IT. A forced action is <PLAYER SCOPE> + <VERB>, and the scope half is seven phrases: `each opponent`, `each other player`, `each player`, `target opponent`, `target player`, `that player`, `its controller`. Five query sites in four families each spelled out their own subset inline — and NOT ONE of them contained `each other player`, the scope Magic uses for the entire Grave Pact / Dictate of Erebos / Syphon Mind class. The file already contradicted itself about it exactly as v7.34, v7.74 and v8.39 each found one layer up: `ATOMS.oppdiscard`'s own `test` — the READER deciding whether the discard family is consulted — has always known `that player discards`, while the QUERY behind it, 'Forced Discard', knew neither that nor `each other player`. MEASURED ON A SHIPPED REPORT, NOT A HYPOTHETICAL: Tinybones (EDHREC #555, 4,875 decks, read live this run) LEADS with that shelf, and its five literals evicted his #2, #3, #4 and #5 highest-synergy cards of any kind — BOTTOMLESS PIT 82%/+76, NECROGEN MISTS 77%/+73, OPPRESSION 77%/+70 (all `that player discards`) and SYPHON MIND 74%/+62 (`each other player discards`) — plus Raiders' Wake 38%/+35. The same gap cost the EDICT shelf Grave Pact, Dictate of Erebos and Butcher of Malakir, and gave it no TARGET-scoped arm at all, so Sheoldred's Edict, Diabolic Edict and Sudden Edict were unreachable on the shelf named after them. THE SECOND SHAPE IS THE SERIAL VERB — \"Each player loses 1 life, discards a card, sacrifices a creature…\" (Smallpox, Pox, Death Cloud, Vicious Rumors 67%/+61) — where only the first verb is contiguous with its subject; the new same-sentence arm carries the scope across the intervening clause but never across a full stop. FIX: one shared `FORCED_SCOPES` vocabulary plus `forcedQ(verb, extra)`, repointing all five sites (oppdiscard 'Forced Discard' and its atom query, `edicts`, `OPP_MILL_Q`, `fill-yards`, `opp-die`). ADDITIVE BY CONSTRUCTION — the literal arms are kept alongside the regex arm, so a shelf can only grow and eviction is impossible; if Scryfall rejected the regex outright every shelf would still be exactly today's shelf. MEASURED: 121-commander full-model differential, 1,309 rails compared, ZERO structural drift (not one rail set, order, title, sub, role, why or trap moved anywhere), 13 query strings changed across 9 commanders, and STRICT SUPERSET proven by set containment — 0 OR-arms lost anywhere. 18/18 adversarial regex strings correct including both sentence-boundary and over-reach cases. New name-keyed STUDY_DB entry for Tinybones (5 traps) written off his live EDHREC page. node --check 6/6, all six boot asserts [], 0 console errors at boot and after render, ATOMS 93 / RAIL FAMILIES 84 unchanged, script blocks 1–4 byte-identical and non-script bytes unchanged." },
+    { build: 'v8.41', date: '2026-08-09', focus: 'verify', commander: 'Tetsuko Umezawa, Fugitive', summary: "VERIFY Tetsuko Umezawa, Fugitive — v8.40'S TWO NEW SHELVES AUDIT CLEAN AGAINST HER LIVE EDHREC LIST, AND THE DEFECT IS THE ONE v8.40 MEASURED, NAMED AND LEFT ON THE TABLE: A PRINTED POWER CAP IS A FACT ABOUT CREATURES, AND FOR EIGHT BUILDS `capFold` HAS BEEN APPLYING IT TO EVERY CARD ON THE SHELF. `pow<=N` is not a loose filter — a card with no printed power does not match it — so a bare `pow<=N` does not NARROW a mixed shelf, it DELETES every non-creature on it. Measured on the two SHIPPED commanders whose capFold shelves are mixed: DELNEY's 'Payoffs for Connecting' read `(o:\"combat damage to a player\" pow<=2)` and RIGO's 'Combat Triggers' the same, which is exactly where Bident of Thassa, Coastal Piracy, Reconnaissance Mission and every connect Sword live — the artifacts and enchantments that ARE the archetype — silently evicted on the very shelf v7.33 wrote the fold to repair; the same term evicted Rogue's Passage, Whispersilk Cloak and Slip Through Space from both evasion shelves. FIX 1 makes the fold TYPE-AWARE — `((t:creature <band>) OR -t:creature)` — a strict WIDENING that cannot remove a card from any shelf it already touched, and a no-op BY CONSTRUCTION on the three shelves that already print `t:creature` (Delney ta-etb, Arabella etb:payoff1, Shirei rea-capgate), all three byte-identical. FIX 2/3 close v8.40's own hand-off (c): new `POWER_LOW_ANY_RE` + `railCtx.powLowAny` teach the engine the DISJUNCTIVE band — \"power OR toughness N or less\", Tetsuko's entire card — as a THIRD separate constant read only by `readPowerBand`, never by `ARCHETYPES.smallpower`, because like Shirei her cap is the ENTRY CONDITION and not the plan (EDHREC 1,917 decks: Infect 167 / Wheels 111 / Aggro 61 / Unblockable 57, no small-creatures theme). The fold now spells the band the way the card prints it, `(pow<=1 OR tou<=1)`, which is why her 2/1 Neurok Commando (64%/+63, her #1 synergy card) and her 1/3 Scroll Thief (59%/+58) both survive and her 70%-inclusion Bident of Thassa survives as a non-creature — while the 2/2 Malcolm and 2/2 Surrakar Spellblade she genuinely cannot make unblockable are correctly evicted. MEASURED: 85-commander full-model differential, 81 byte-identical, exactly the 4 predicted movers (Tetsuko, Delney, Rigo, a reversed-noun fixture); 15/15 adversarial regex strings correct with ZERO overlap against the two existing arms, so arm order can never matter; Subira, Sidar Kondo and Questing Beast still read null. node --check 6/6, all six boot asserts [], 0 console errors, ATOMS 93 / RAIL FAMILIES 84 unchanged." },
     { build: 'v8.40', date: '2026-08-09', focus: 'study', commander: 'Tetsuko Umezawa, Fugitive', summary: "STUDY Tetsuko Umezawa, Fugitive — `can't be blocked` IS NOT A TRIGGER, AND IT HAD BEEN SITTING INSIDE THE CONSTANT WHOSE ONLY JOB IS TO ANSWER \"IS THIS A TRIGGER?\" SINCE THE MOMENT THAT CONSTANT WAS NAMED. The file already knew: v7.33 measured the idiom over all 3,348 commander-legal commanders and wrote it down thirty lines above COMBAT_PAYOFF_RE — \"the bare idiom `can't be blocked` … is EVASION, a property the commander SUPPLIES, not a trigger it pays off … the atom fires on 829, and on 50 of those the ONLY evidence is the evasion idiom\" — and spent the finding on the WEIGHT (a demotion) and on the COPY (the \"incidental read\" blurb) while leaving the arm in the union. v7.75 is where that became a defect: it lifted the six alternatives into ATTACK_TRIGGER_SRC deliberately character for character, so the atom's language could not move, and in doing so carried a STATIC GRANT into the TRIGGER reader — whose one consumer is the negated half of `railCtx.staticGrant`. Every commander whose evasion is templated `can't be blocked` rather than `have <keyword>` therefore answered \"yes, I print a trigger\", and `grantSwap` — v7.75's own fix for exactly these decks — was UNREACHABLE BY CONSTRUCTION for the half of the family templated the other way. THE COST, read off Tetsuko's live EDHREC page this run (#1,116, 1,900 decks): her report LED with 'Combat Triggers · Reward the hit', a shelf that unions `whenever ~ attacks` declare triggers in, while her NINE highest-synergy cards are NINE connect triggers (Neurok Commando 64%/+63% synergy, Tandem Lookout 61%/+60, Scroll Thief 59%/+58, Bident of Thassa 70%/+58, Mistblade Shinobi 55%/+54, Reconnaissance Mission 59%/+53, Coastal Piracy 57%/+52, Mist-Syndicate Naga 51%/+50, Library Larcenist 49%/+49) and not one is a declare-step trigger; and her SECOND shelf sold her `o:\"can't be blocked\"` — the exact ability her commander hands the whole deck for free. The report said the right thing in prose while doing the wrong thing in logic, because the `why` v7.33 authored reads \"grants evasion rather than printing an attack trigger\". THREE FIXES, ALL AT THE LOGIC LEVEL. (1) The arm MOVES into its own `EVASION_SUPPLY_SRC`/`EVASION_SUPPLY_RE` and ATTACK_ATOM_RE recomposes from `A|B|C|D|E|F|TEAM` to `A|B|C|D|F|E|TEAM` — the same alternatives re-grouped, so the atom's LANGUAGE is unchanged: identical alternative multiset, identical source length, and ZERO behavioural differences over 106 strings (91 corpus oracle texts plus 15 adversarial forms), of which the atom fires on 50. (2) `railCtx.evasionSupply`, a deck-wide fact in the same shape as `declareOnly` (v8.38), `teamKw` (v7.74) and `powLow` (v7.32). Its negated half reads the WIDE `ATTACK_PAYOFF_RE` rather than the narrow trigger reader, deliberately, because KAMIZ, OBSCURA OCULUS templates his damage clause \"deal combat damage to one or more PLAYERS\" and also prints \"can't be blocked this turn\" inside it — the narrow read would have called the file's canonical connect commander a supply-only deck. A first draft made the flag the UNION of the keyword and clause templates and was REJECTED ON ITS MEASUREMENT: the union moved IROAS, NYLEA and SUN QUAN, v7.75's entire census, whose shelves are correct as shipped, so the two halves are kept DISJOINT and their reports are byte-identical by construction rather than by promise. (3) `supplySwap`, the SEVENTH reusable rail opt-in and the third that REPLACES a shelf (v7.75 `grantSwap`, v8.38 `declSwap`), applied at the same site and last of the three so grant-then-declare-then-supply can never double-swap. It is the exact MIRROR of v8.38: that run wrote the swap for the deck paid at DECLARATION, to which evasion is worthless; this is the swap for the deck that owns the evasion and is paid at neither, so the payoff shelf drops the declare half and keeps the connect arm VERBATIM — a provable strict subset, no new syntax. The enabler is fixed by widening v7.74's `kwFold` to the phrase template: `-o:\"can't be blocked\"` annihilates exactly the arm the commander supplies and leaves menace/shadow/fear standing, which is the identical mechanism Iroas's `-keyword:menace` already uses, and the shelf is retitled with it so query and copy cannot contradict. COUNTER-CASE, FULL-MODEL DIFFERENTIAL over 91 corpus commanders with both builds' real buildEngineModel booted off their own files: 84 BYTE-IDENTICAL, 7 CHANGED, ZERO console errors on either side. The 7 are exactly the census — TETSUKO UMEZAWA, SIDAR KONDO OF JAMURAA, KASETO OROCHI ARCHMAGE and CHROMIUM THE MUTABLE (two of them present twice as independent fixtures) — and GENERALIZES beyond them to every member of v7.33's measured 50. THIRTEEN POINTED CONTROLS BYTE-IDENTICAL, checked one at a time: v7.75's whole census IROAS, NYLEA and SUN QUAN; the supply-AND-trigger set the conjunction must keep as trigger decks, KAMIZ, TOSKI, HIGURE, TYMNA, EDRIC, ADMIRAL BECKETT BRASS and YURIKO; and KRENKO, TALRAND and ATRAXA. RENDERED-DOM VERIFIED through the real SynergyOverlay: Tetsuko's DOM contains 'Payoffs for Connecting' and no longer contains 'Combat Triggers', Iroas's still contains 'Anthems & Alpha Strikes', Yuriko's contains neither, and her new study entry renders under 'From the study ledger:'. STUDY_DB 183 -> 184 with 4 traps, the first two written off the card's own rulings (the cap is a DISJUNCTION, so +2/+0 keeps a 1/1 unblockable and +1/+1 does not; the check is made once at declare blockers and cannot be undone). Layer counts otherwise identical — ATOMS 93, RAIL FAMILIES 84 — because this build moves one regex arm, adds one context flag and one swap, and adds no atom and no family. node --check 6/6; all four boot asserts return []; 0 console errors at boot. RENDERING SAFETY PROVED BY DIFF: script blocks 1-4 BYTE-IDENTICAL and block 0 differing at exactly two character positions (the build tag inside the console banner, same length), so block 3 — the one holding the mobile viewport/keyboard IIFE — was provably never touched; non-script bytes 195,223 -> 195,223 with two differing positions, the same build tag inside <meta>, so not one byte of CSS or layout changed and 390px mobile is untouched BY CONSTRUCTION. HONEST LIMIT: NO BROWSER AND NO SCRYFALL. Claude in Chrome is not connected in this runner (retried four times) and api.scryfall.com is unreachable, so nothing was seen painted, no screenshot was taken and not one query was cut live — the substitutes are the node differential and the jsdom render above. Tetsuko's oracle text and rulings were WebSearch-verified verbatim this run and every percentage came from her live EDHREC JSON fetched this run." },
     { build: 'v8.39', date: '2026-08-09', focus: 'verify', commander: 'Grand Warlord Radha', summary: "VERIFY Grand Warlord Radha — v8.38 UNIFIED THE READERS THAT DECIDE WHETHER A COMMANDER PRINTS A COMBAT TRIGGER, AND NEVER LOOKED AT THE FOUR QUERIES THAT FILL THE SHELVES THOSE READERS OPEN. Her four rails were re-read card-by-card and the shelves themselves hold: the declare-vs-connect diagnosis is right, Extra Combats is correctly her largest theme (Hellkite Charger 51% at 47% synergy, Aggravated Assault 50%, re-read off her live EDHREC page this run), and `burstMana` deals the sink shelf her list is actually made of. The defect is one layer over. The same question v8.38 found asked by four READERS is also asked by four QUERIES — the `attack` atom's own `q`/`oq`, both RAILS.attack payoff shelves, and `ta-pay` — and every one of them held a DIFFERENT subset of the three templates the canonical reader knows: the atom's had ONE, the other three had TWO, and NOT ONE of the four could match the PLURAL BATCH template. So the engine could DETECT Radha's trigger and then deal her a shelf that could not contain a card templated the way she is. Fixed with `ATTACK_TRIGGER_Q`, one shared module-scope query constant whose three arms are the same three the attack half of COMBAT_PAYOFF_RE reads, transliterated into Scryfall rather than re-invented — the batch arm written as the invariant subject phrase `o:\"you control attack\"` ANDed with `o:whenever`, because the template varies its noun and only its noun (Radha's CREATURES, Alibou's ARTIFACT CREATURES, a Warrior deck's WARRIORS). SECOND FINDING, AND THE FILE CONTRADICTED ITSELF ABOUT IT IN TWO ADJACENT STRINGS: the declare-step payoff shelf excluded `-o:\"tapped and attacking\"` while its own `why` sold HANWEIR GARRISON as an exemplar of the shelf — and Hanweir Garrison's oracle text is \"create two 1/1 red Human creature tokens that are TAPPED AND ATTACKING\". The exclusion answers the ENABLER's question (does this body raise the number of creatures I DECLARE?), where it is right and stays; on the PAYOFF rail the question is \"is this card PAID the moment I swing?\", and for a token-maker whose own trigger reads \"whenever this attacks\" the answer is yes — only the tokens it makes were never declared, which v7.95 already derives as a TRAP in the same report, so the engine states the caveat once instead of paying for it twice by deleting the card. HERO OF BLADEHOLD, ADELINE and BRIMAZ were excluded the same way. THIRD, v8.38's HAND-OFF (c) CLOSED EXACTLY AS IT ASKED — as a UNION and never as a repoint: `RAILS.attack.pTest` is now COMBAT_PAYOFF_RE OR COMBAT_CONNECT_RE, two constants that already existed, so no new matching rule enters the app and KAMIZ, OBSCURA OCULUS keeps the object-free damage arm (\"deal combat damage to one or more PLAYERS\") that a plain repoint would have cost him. Copy #3 had never learned v7.75's `whenever you attack` template, so a commander whose only trigger uses it read as payoff-less and `hasE && !hasP` sorted its PAYOFF shelf first — the exact inversion `grantSwap` exists to repair. DIFFERENTIAL over 54 commanders, both builds' real buildEngineModel booted off their own files: 18 CHANGED, 36 BYTE-IDENTICAL, ZERO console errors on either side, and every one of the 18 is the same widening — not one rail moved, not one title, sub, why, role or ORDER changed, and no report gained or lost a section (every commander is N -> N). PURE WIDENING PROVED BY MEASUREMENT, not asserted: 61 oracle texts including four adversarial damage-clause forms run through old and new pTest — ZERO regressions, 7 gains (Adeline, Tymna, Neyali and the `dealt`/`dealing` forms). Layer counts identical on both sides — ATOMS 93, RAIL FAMILIES 84, TOTAL RAILS 216, ARCHETYPES 106, STUDY_DB 183 — because this build adds two shared constants and repoints four call sites and adds no data. All six boot asserts return []; node --check 6/6; meta == console banner == CHANGELOG[0] == v8.39. HONEST LIMIT: NO BROWSER AND NO SCRYFALL. Claude in Chrome is not connected in this runner (retried six times) and api.scryfall.com returns an empty body through web_fetch, so nothing was seen rendered, no screenshot was taken and NOT ONE QUERY WAS CUT LIVE — the substitute is the full-model node differential above, which is stronger on regression coverage and weaker on rendering and on card contents. The one new query arm is composed entirely of plain `o:` words and a quoted phrase, the construct this file already ships in `o:\"whenever you attack\"`, and introduces no `o:/regex/` term, so assertRegexTermBudget is untouched. Radha's oracle text and Hanweir Garrison's were verified verbatim via WebSearch this run." },
     { build: 'v8.38', date: '2026-08-09', focus: 'study', commander: 'Grand Warlord Radha', summary: "STUDY Grand Warlord Radha — MAGIC PAYS A COMBAT TRIGGER AT TWO DIFFERENT MOMENTS AND THIS ENGINE ONLY EVER READ ONE OF THEM. A trigger that reads “whenever <bodies> attack” is paid in the DECLARE ATTACKERS step and does not care whether damage is ever dealt; a trigger that reads “deals combat damage to a player” is paid only on CONNECTION. RAILS.attack sold EVASION to both, and it LEADS the report. Radha — whose mana arrives before blockers are even declared — opened with “Evasion Enablers / unblockable attackers keep the trigger landing” and “Combat Triggers / more rewards for connecting”, two shelves that are not merely generic but WRONG, and EDHREC agrees in numbers: her Rogue's Passage sits at −9% synergy while Rhythm of the Wild (57%), Fires of Yavimaya (24%) and Rising of the Day (17%) — haste, the thing that lets a body be DECLARED — run far above baseline. Fixed at the logic level with `declSwap`, the SIXTH reusable rail opt-in and the second that replaces a shelf rather than narrowing one (v7.75 `grantSwap` is the first), driven by a new `railCtx.declareOnly` composed from two readers that already existed: v7.94's DECLARED_ATTACKERS_RE and a new COMBAT_CONNECT_RE. SECOND FINDING, THE SAME ATOM: “does this commander print a combat trigger?” is asked in FOUR places and only COMBAT_PAYOFF_RE (v7.33, censused over all 3,348 commander-legal commanders) was ever kept current; the three hand-rolled copies never learned v7.94's PLURAL BATCH template, so the v8.11 `atk-extracombat` shelf could not see it — and EXTRA COMBATS is Radha's single largest EDHREC theme (71 of 930 decks; Hellkite Charger 51%, Aggravated Assault 50%). Two of the three copies are now aliases of the canonical reader, a PURE WIDENING (each old arm is a strict subset of the new one, so no commander that matched can stop matching). THIRD: `burstMana`, the attack-triggered sibling of v5.69's `combatMana` — Neheb's family was written around “for each 1 life lost”, so Radha's “add THAT MUCH mana”, Klauth's power count and Savage Ventmaw's flat burst fired nothing and the one card class a ritual deck is built from (the sink big enough to eat the pile before it empties) appeared in no report. DIFFERENTIAL over 77 commanders: SIX move, all correct — RADHA (2 wrong shelves → 4 right ones, plus a Combat Ritual plan and four authored traps), ALIBOU ANCIENT WITNESS, NEYALI SUNS' VANGUARD and LINDEN THE STEADFAST QUEEN through `declSwap`, KLAUTH UNRIVALED ANCIENT and RADHA HEIR TO KELD through `burstMana`. 71 unchanged, including every CONNECT-class commander (Yuriko, Edgar Markov, Raffine, Kamiz), every extra-combat SOURCE (Najeela, Moraug, Aurelia, Godo), NEHEB himself, and the whole recent control list. STUDY_DB entry authored for Radha (4 traps + insight, every percentage read off her live EDHREC page this run). node --check 6/6; all six boot asserts return []; 0 console errors." },
