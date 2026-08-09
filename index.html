@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v8.43 · 2026-08-09">
+<meta name="oracle-build" content="v8.44 · 2026-08-09">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1775,7 +1775,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v8.43 \u00B7 2026-08-09', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v8.44 \u00B7 2026-08-09', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -4998,6 +4998,87 @@ const MV_SUBJ_RE = /(creature|artifact|enchantment|instant|sorcery|noncreature|n
 // enters", so collapsing him into `creature` deals him a shelf of MV-4-plus bodies two thirds of
 // which can never trigger him. One row here and one in MV_SUBJECT_Q is the whole cost.
 const MV_SUBJECT_TABLE = { creature: 'creature', legendary: 'legendary', artifact: 'artifact', enchantment: 'artifact', instant: 'spell', sorcery: 'spell', noncreature: 'spell' };
+// v8.44 (Hazoret the Fervent STUDY 2026-08-09) — THE HAND-SIZE BAND, THE THIRD COUNTABLE RESOURCE,
+// AND A READER THAT COULD NOT MATCH ONE CARD IN THE HISTORY OF MAGIC FOR THREE INDEPENDENT REASONS.
+// `readPowerBand` (v7.32) and `readManaBand` (v7.36) both exist because a band a commander prints on
+// itself is the SHAPE OF THE DECK. The third band — how many cards you hold — had a reader too, one
+// alternative inside ATOMS.handsize.test, and every one of its three clauses is wrong:
+//   (1) THE POSSESSIVE. It demands `cards in YOUR hand`. Censused live on mtg.wtf this run:
+//       `o:"or fewer cards in your hand"` = 0 cards, `o:"no cards in your hand"` = 0 cards, EVER.
+//       The idiom drops the possessive because `you have` already owns it — `o:"or fewer cards in
+//       hand"` = 20 and `o:"no cards in hand"` = 53. (`or more cards in your hand` = 2, both recent
+//       supplemental drift, neither legendary, so unreachable from a commander either way.)
+//   (2) THE FRAME. It demands `as long as`. Magic introduces the identical condition with at least
+//       three conjunctions, measured over legendary creatures: `as long as you have` (3 — Djeru and
+//       Hazoret, Kiyomaro, Neheb the Worthy), `unless you have` (2 — HAZORET THE FERVENT and KEFNET
+//       THE MINDFUL, i.e. both Gods built on the mechanic), `if you have` (10).
+//   (3) THE NUMBER. It hard-lists `seven|one|eight`, so KIYOMARO's printed `four or more` misses.
+// Any ONE of the three is fatal, so the branch is decoration: it has never fired and could not.
+// THE ANCHOR IS THE SUBJECT, NOT THE FRAME — the v7.36 mvSubject / v7.74 readTeamKeyword / v8.43
+// FORCED_UNLESS_SUBJECTS rule on a third mechanic. Requiring the literal `you have` is what makes
+// every opponent-side hand clause unreachable BY CONSTRUCTION rather than by a strip, verified
+// against verbatim oracle text this run: TINYBONES, TRINKET THIEF ("each opponent WITH no cards in
+// hand"), ADAMARO ("the number of cards in THE HAND OF THE OPPONENT"), BEZA ("if AN OPPONENT has
+// more cards in hand than you") and AKUTA ("if you have MORE cards in hand than each opponent",
+// excluded on the number instead) all read null and must — Tinybones is the pointed control, since
+// he is the commander this lane studied last run and his hand clause points the other way.
+// DIRECTION IS THE WHOLE POINT, and it is the v7.00 mill lesson one family over: a LOW band and a
+// HIGH band are OPPOSITE DECKS that print the same sentence. `handsize`'s one shelf and its one game
+// plan ("refill to a full grip every turn") are the HIGH reading, and they were being handed to the
+// hellbent commanders unchanged — a deck whose commander cannot legally attack while holding cards.
+// DELIBERATELY NOT READ, AND MEASURED RATHER THAN ASSUMED: the REFILL template `you have FEWER THAN
+// n cards in hand` (DAMIA, KOZILEK THE GREAT DISTORTION, IYMRITH, KRANG, DOCTOR OCTOPUS). It names a
+// state the card is CORRECTING, not one the deck wants to sit in, so reading it as a low band would
+// deal Damia a hellbent package — exactly backwards. `fewer` is simply absent from the word table,
+// so those five are excluded by construction and are the sharpest controls in this run's diff.
+const HAND_NUM_WORDS = { no: 0, zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
+// ONE SOURCE STRING, read by the reader AND by the atom's test, so the gate that decides whether the
+// family is consulted and the reader that says which DIRECTION it is can never again hold opposite
+// opinions of the same sentence — the v7.34 two-strip-sites / v7.74 atom-vs-eTest / v8.43
+// reader-vs-query defect, refused up front this time instead of found five runs later.
+const HAND_BAND_SRC = 'you have (no|zero|one|two|three|four|five|six|seven|eight|nine|ten)(?: or (fewer|more))? cards? in (?:your )?hand';
+const HAND_BAND_RE = new RegExp(HAND_BAND_SRC);
+function readHandBand(o) {
+    const m = String(o || '').match(HAND_BAND_RE);
+    if (!m) return null;
+    const n = HAND_NUM_WORDS[m[1]];
+    if (n === undefined) return null;
+    // A BARE COUNT IS NOT A BAND. "you have one card in hand" names a number without naming a
+    // direction, so it is not a deckbuilding instruction and returns null; only `no cards`
+    // (which is a floor of zero by definition) and an explicit `or fewer` / `or more` qualify.
+    const dir = m[2] ? (m[2] === 'more' ? 'high' : 'low') : (n === 0 ? 'low' : null);
+    return dir ? { n: n, dir: dir } : null;
+}
+// v8.45 (Hazoret the Fervent VERIFY 2026-08-09) \u2014 EMPTY_GRIP_Q, THE ONE VOCABULARY FOR "THIS CARD
+// PAYS OFF AN EMPTY HAND", kept beside readHandBand for the same reason HAND_BAND_SRC is: the
+// reader that decides a commander is hellbent and the query that fills its payoff shelf must never
+// be able to hold different opinions of the same sentence.
+// WHAT v8.44 MISSED, FOUND BY READING HER RENDERED SHELF CARD-BY-CARD AGAINST HER LIVE EDHREC PAGE:
+// the payoff arm was second-person ONLY \u2014 o:"you have no cards in hand" \u2014 and Magic also templates
+// the empty grip SYMMETRICALLY, on "each player", with the condition then referring back to it as
+// "that player". GHIRAPUR ORRERY is the proof and it is HAZORET'S #6 HIGHEST-SYNERGY CARD
+// (44% inclusion / 43% synergy, read live this run): "At the beginning of each player's upkeep, if
+// THAT PLAYER has no cards in hand, that player draws three cards." No shelf in the app reached it.
+// This is the v7.00 MILL-DIRECTION LESSON ONE FAMILY OVER, and it is the same sentence of reasoning:
+// a SYMMETRIC effect is YOUR effect too, because you are a player \u2014 "each player mills" fills your
+// own yard just as hard, and "if that player has no cards in hand" pays YOU on the turn you are the
+// one running on empty, which in this deck is every turn.
+// SAFETY IS IN THE SUBJECT, NOT IN A STRIP (the v7.19 anthemWide / v7.36 mvSubject / v7.74
+// readTeamKeyword rule): the new arm requires the SYMMETRIC antecedent o:"each player" alongside the
+// "that player" condition, which is what keeps the OPPONENT-SIDE PUNISHERS out \u2014 exactly the leak
+// v8.44 named when it cut the bare o:"one or fewer cards in hand" arm for returning SHRIEKING
+// AFFLICTION and friends. CENSUSED LIVE THIS RUN over every printing of the idiom via mtg.wtf
+// (o:"that player has no cards in hand" \u2192 5 cards, all five read verbatim, nothing from memory):
+//   ASYLUM VISITOR      "each player's upkeep ... you draw a card"      -> IN  (symmetric, true payoff)
+//   GHIRAPUR ORRERY     "each player's upkeep ... draws three cards"    -> IN  (symmetric, true payoff)
+//   HOLLOWBORN BARGHEST "each OPPONENT's upkeep"                        -> out (and already IN via
+//                                                                        the second-person arm, which
+//                                                                        it also prints, so nothing
+//                                                                        is lost by fencing it here)
+//   NEZUMI SHORTFANG    "TARGET OPPONENT discards a card"               -> out (a stax card)
+//   QUEST FOR THE NIHIL STONE "each OPPONENT's upkeep"                  -> out (a stax card)
+// 2/2 true positives kept, 3/3 stax cards refused, and ZERO strips were needed to do it.
+const EMPTY_GRIP_Q = '(keyword:hellbent OR o:"you have no cards in hand" OR (o:"each player" o:"that player has no cards in hand"))';
 function readManaBand(o) {
     const t = String(o || '');
     const m = t.match(MV_HIGH_RE);
@@ -6461,7 +6542,28 @@ const ATOMS = [
     // is still dealt and the shelf simply stops being blind to the class. It compounds off the
     // cycling family and onto every NON-madness discard commander the atom serves (Satoru
     // Umezawa, Brallin, Nath, Tergrid, Chainer), none of whom is a cycling deck.
-    { key: 'discard', w: 5, chip: 'Loot & Madness', title: 'Looting & Madness', sub: 'Your yard is a resource', sup: ['oppdiscard', 'wheels', 'draw2'], test: /you (may )?discard|discard your hand|madness|discards? [^.]{0,24}, then draw|draw [^.]{0,24}, then discard/, q: '(o:madness OR o:"draw a card, then discard" OR o:"discard a card:" OR ' + CYCLE_OR_DISCARD_Q + ')', oq: '(o:madness OR o:"you may discard" OR ' + CYCLE_OR_DISCARD_Q + ')', why: 'profits from your own discards' },
+    // v8.44 (Hazoret STUDY) — THE IMPERATIVE COST, AND THE ATOM'S OWN QUERY HAS SHIPPED IT SINCE THE
+    // DAY IT WAS WRITTEN. Every alternative in this test demands a grammatical SUBJECT — `you
+    // discard`, `discards ... then draw`. Magic prints the same verb a third way, in the COST of an
+    // activated ability, where by CR 602.1 it is an IMPERATIVE with no subject at all and the payer
+    // is the controller, i.e. you: `{2}{R}, Discard a card: ...`. So the whole discard-as-a-cost
+    // class was unreachable — and `q` two fields to the right ALREADY reads `o:"discard a card:"`,
+    // so the shelf could deal these cards to everyone except the commanders who print them. That is
+    // the sixth consecutive run to find a reader and a query holding opposite opinions of one idiom
+    // (v7.34 two strip sites, v7.74 atom vs eTest, v8.39, v8.42, v8.43) and the fix is the same
+    // shape: teach the READER what the QUERY already knew, in one place, for every call site.
+    // THE COLON IS THE DEFINITION, NOT A HEURISTIC: an activated ability's cost is exactly what sits
+    // left of the colon, and `[^.\n:]` cannot cross a sentence boundary or a second colon, so the
+    // arm can only ever match inside one cost clause. `this` is excluded from the determiner list on
+    // purpose — `Discard THIS card:` is cycling's and channel's own reminder idiom, a card
+    // discarding ITSELF, which is a cycler rather than an outlet for the rest of the hand.
+    // CENSUSED LIVE: 24 legendary creatures print `discard a card:`, 21 of them print nothing else
+    // this atom could already read — CHAINER NIGHTMARE ADEPT, CHROMIUM THE MUTABLE, FALDORN, HAZORET
+    // THE FERVENT, HISOKA, JADZI, JAXIS, JAYA BALLARD, PLARGG, VIKYA, WITCH-KING OF ANGMAR, YAWGMOTH
+    // THRAN PHYSICIAN and the rest. MEASURED AND DEFERRED, so a later run need not re-derive it: the
+    // ADDITIONAL-cost sibling (`discard a card in addition to paying its other costs`) is a second
+    // subject-free idiom this arm deliberately does not reach, because it carries no colon.
+    { key: 'discard', w: 5, chip: 'Loot & Madness', title: 'Looting & Madness', sub: 'Your yard is a resource', sup: ['oppdiscard', 'wheels', 'draw2'], test: /you (may )?discard|discard your hand|madness|discards? [^.]{0,24}, then draw|draw [^.]{0,24}, then discard|discard (?:a|an|another|two|three|four|x|that)[^.\n:]{0,24}:/, q: '(o:madness OR o:"draw a card, then discard" OR o:"discard a card:" OR ' + CYCLE_OR_DISCARD_Q + ')', oq: '(o:madness OR o:"you may discard" OR ' + CYCLE_OR_DISCARD_Q + ')', why: 'profits from your own discards' },
     // CASCADE (Maelstrom Wanderer study 2026-07-30): a defining, popular mechanic that had
     // NO atom, so every cascade commander rendered with ZERO synergy rails — Maelstrom
     // Wanderer (top-tier), Averna, Imoti, Yidris, Apex Devastator, The First Sliver,
@@ -6709,7 +6811,14 @@ const ATOMS = [
     // "your opponents can't cast spells during your turn" is a real lock, keeps her Stax lead on
     // the w5 tie. Enrage is then the second read on all four, which is exactly right.
     { key: 'enrage', w: 5, chip: 'Enrage', title: 'Enrage & Self-Damage', sub: 'Get hit on purpose', test: ENRAGE_TRIGGER_RE, q: ENRAGE_PAYOFF_Q, oq: ENRAGE_PAYOFF_Q, why: 'turns damage dealt to your OWN creatures into an upside — the deck supplies the damage on purpose' },
-    { key: 'handsize', w: 4, chip: 'Hand size', title: 'Hand Size Matters', sub: 'A full grip is power', test: /for each card in (your|their|each player's) hand|number of cards in (your|their|each player's) hand|no maximum hand size|hellbent|as long as you have (no cards|(seven|one|eight) or (more|fewer) cards) in your hand/, q: '(o:"no maximum hand size" OR o:"for each card in your hand")', oq: 'o:"card in your hand"', why: 'scales with cards in hand' },
+    // v8.44 — the LAST alternative was `as long as you have (no cards|(seven|one|eight) or
+    // (more|fewer) cards) in your hand` and it is now HAND_BAND_SRC. See readHandBand above for the
+    // live census proving the replaced clause matched ZERO cards on all three of its conditions.
+    // The other four alternatives are byte-identical, so this is a STRICT SUPERSET: no commander
+    // that fired this atom before can stop firing it, which is why the diff below needs no eviction
+    // argument. The two Gods built on the mechanic — HAZORET THE FERVENT and KEFNET THE MINDFUL —
+    // reach their own atom here for the first time.
+    { key: 'handsize', w: 4, chip: 'Hand size', title: 'Hand Size Matters', sub: 'A full grip is power', test: new RegExp("for each card in (your|their|each player's) hand|number of cards in (your|their|each player's) hand|no maximum hand size|hellbent|" + HAND_BAND_SRC), q: '(o:"no maximum hand size" OR o:"for each card in your hand")', oq: 'o:"card in your hand"', why: 'scales with cards in hand' },
     { key: 'sac', w: 4, chip: 'Sacrifice', title: 'Sacrifice Outlets & Fodder', sub: 'Grist for the mill', sup: ['death'], test: /sacrifices? (a|an|another|this|two|three|four|x|that|each)/, q: '(o:"sacrifice a creature" OR o:"sacrifice another")', oq: 'o:"sacrifice a"', why: 'wants things sacrificed' },
     // v7.61 — the last arm was the literal `is put into a graveyard from the battlefield`; it is
     // now DIES_ALT_SRC, the same clause in every inflection Magic prints. Strict SUPERSET of the
@@ -8430,6 +8539,23 @@ function studyStore(seed) {
     });
 }
 const STUDY_DB = studyStore({
+    // v8.44 (Hazoret the Fervent STUDY 2026-08-09) — NAME-KEYED, the FOURTEENTH entry carrying the
+    // standing Scryfall debt: api.scryfall.com still returns an empty body through web_fetch and the
+    // sandbox has no DNS, so her oracle_id could not be fetched and studyFor()'s `name:` arm carries
+    // her. Only the KEY is second-hand. Her ORACLE TEXT and BOTH official rulings were fetched
+    // VERBATIM this run from api.magicthegathering.io, and every percentage below was read off her
+    // LIVE EDHREC page (edhrec.com/commanders/hazoret-the-fervent, rank #2,140 · 473 decks, tags
+    // Discard 53 / Burn 45 / Aggro 17 / Voltron 11). No number here is remembered.
+    "name:hazoret the fervent": {
+        insight: "Hazoret is two cards stapled together that want OPPOSITE hand sizes, and almost every bad build of her is a build that noticed only one of them. The gate — she can't attack or block unless you have one or fewer cards in hand — is the half everyone sees, and it is why she looks like a hellbent aggro commander. The half that decides the deck is the OTHER line: {2}{R}, Discard a card: 2 damage to each opponent. That ability costs a CARD, so a genuinely empty hand switches her damage engine OFF at the same moment it switches her combat ON. The deck's actual job is to live at the boundary — spend down to exactly one card, swing, and reload from somewhere that is not your hand. EDHREC says so in its tag list before it says so anywhere else: her decks are tagged Discard 53 and Burn 45, with Aggro at 17 and Voltron at 11, and her entire high-synergy column is discard infrastructure rather than beatdown — GLINT-HORN BUCCANEER 53%/49%, AVARICIOUS DRAGON 48%/48%, INTI SENESCHAL OF THE SUN 50%/46%, ANJE'S RAVAGER 46%/45%, CASE OF THE CRIMSON PULSE 44%/43%, GHIRAPUR ORRERY 44%/43%, CONTAINMENT CONSTRUCT 44%/41%, MONUMENT TO ENDURANCE 45%/40%, OX OF AGONAS 38%/37%, CONSPIRACY THEORIST 39%/37%. Six of those ten exist to make a DISCARD profitable rather than to make a creature bigger. She is a red discard deck wearing an aggro commander.",
+        traps: [
+            "BUILDING HER AS VOLTRON. She is a 5/4 with haste and indestructible for four, which reads like a commander-damage threat, and Voltron is the SMALLEST tag on her page — 11 decks of 473, against Discard's 53. The reason is mechanical rather than a matter of taste: equipment and auras do nothing about the only thing stopping her from attacking, which is the card count in your hand, and most of them COST you the mana you needed to empty it. A Colossus Hammer on a commander who is not legally an attacker is a blank. Every slot spent making her bigger is a slot not spent making her legal.",
+            "EMPTYING YOUR HAND ALL THE WAY AND CALLING IT DONE. This is the trap nobody guesses, and it is the whole card: hellbent turns her COMBAT on and turns her ABILITY off, because {2}{R}, Discard a card needs a card. At literally zero cards she is a vanilla 5/4 haste. The correct resting state is ONE card — she can attack, and you are still holding the fuel for two damage to every opponent. Sequence toward one, not toward zero, and treat the last card in hand as ammunition rather than as a liability.",
+            "MISSING THE RULING THAT BUYS YOU A WHOLE EXTRA CARD EVERY TURN. Gatherer, 2017-04-18, quoted in full: “Once Hazoret has attacked or blocked, it will remain in combat even if the number of cards in your hand becomes two or greater.” The gate is checked ONLY as she is declared. So the order is: empty to one, declare her as an attacker, and THEN cast your draw spell, crack Ghirapur Orrery, or let Avaricious Dragon's end-step trigger sit — she stays in combat and connects anyway. Playing your refuel in your first main phase instead costs you the attack for no reason at all.",
+            "FILLING THE DECK WITH ORDINARY CARD DRAW. Every card you draw is a card sitting in your hand switching your commander off, which makes conventional card advantage an ANTI-SYNERGY here rather than merely a low priority. Her page routes around it instead: CASE OF THE CRIMSON PULSE 44%/43%, CONTAINMENT CONSTRUCT 44%/41%, CONSPIRACY THEORIST 39%/37% and OX OF AGONAS 38%/37% all turn a discard into a card you PLAY from the graveyard or from exile, and the impulse shell (Abbot of Keral Keep, Act on Impulse, Bonehoard Dracosaur) hands you the card without ever putting it in the counted zone. Gas that arrives in your hand is gas that taxes your attack.",
+            "READING BLASPHEMOUS ACT AS A CONTRADICTION. It is her single most-played card at 68% of decks, which looks absurd in a deck the tags call Aggro — and it is correct, because she is INDESTRUCTIBLE and hasty. A sweeper is completely asymmetric from her seat: it removes every blocker standing in front of a 5/4 that survives it and can attack the turn it resolves. The trap is the corollary, not the card: do NOT build the wide token board that would make your own sweepers cost you something. Her damage comes from one indestructible body plus a repeatable {2}{R} ability, so the deck can afford to keep the battlefield empty and still win."
+        ]
+    },
     // v8.42 (Tinybones, Trinket Thief STUDY 2026-08-09) — NAME-KEYED, the THIRTEENTH entry carrying
     // the standing Scryfall debt: `api.scryfall.com` returns an empty body through web_fetch and
     // the sandbox has no DNS at all, so his oracle_id could not be fetched and studyFor()'s `name:`
@@ -9411,6 +9537,35 @@ const YARD_SIZE_PAYOFF_Q = '(keyword:delve OR keyword:escape OR keyword:threshol
 // DUNGEON_DONE_ARMS above is: the impulse shelf and the graveyard shelf are asking the same
 // question and must never be able to answer it differently.
 const MAY_PLAY_Q = 'o:"may play"';
+// v8.45 (Hazoret the Fervent VERIFY 2026-08-09) \u2014 DISCARD_IMPULSE_Q, THE OTHER SOURCE ZONE FOR
+// IMPULSE, and the second thing v8.44 missed. Both impulse shelves in the app \u2014 RAILS.exileplay's
+// 'Impulse Draw' and the hellbent block's 'Refuel Without Refilling' \u2014 opened on `o:"exile the top"`,
+// so the app knew impulse ONLY out of the TOP OF YOUR LIBRARY. Magic prints the identical mechanic
+// with the card you JUST DISCARDED as the source: it leaves your hand and stays castable from exile.
+// That is the same sentence Refuel's own `why` already argues \u2014 "they hand you the card and never
+// put it in the zone that is being counted" \u2014 and for a hellbent deck it is strictly better than
+// the library version, because the card is leaving the counted zone AND coming back playable.
+// CENSUSED LIVE THIS RUN via mtg.wtf, all four read VERBATIM, nothing typed from memory:
+//   CONTAINMENT CONSTRUCT   "Whenever you discard a card, you may exile that card from your
+//                            graveyard. If you do, you may play that card this turn."
+//                            -> HAZORET'S #7 HIGHEST-SYNERGY CARD, 44% inclusion / 41% synergy,
+//                               and it was on NO shelf the app dealt.
+//   INTI, SENESCHAL OF THE SUN  "...exile the top card of your library. You may play that card..."
+//                            -> her #3 at 50%/46%; already reached by the top-of-library arm, so it
+//                               is NOT counted as a gain \u2014 it is the control that proves the two
+//                               arms overlap correctly instead of double-dealing.
+//   MOONSTONE, HARSH MISTRESS   the Containment Construct template in black.
+//   PYRE OF THE WORLD TREE      the back face of INVASION OF KALDHEIM, which is itself on Hazoret's
+//                               EDHREC list (8.9% / +8% synergy).
+// 4 cards found, 4 TRUE POSITIVES, ZERO false positives \u2014 the query needs no strip at all, because
+// `whenever you discard` is already the subject anchor.
+// SHARED, NOT PATCHED IN TWICE, for the reason the file states beside MAY_PLAY_Q itself: "the impulse
+// shelf and the graveyard shelf are asking the same question and must never be able to answer it
+// differently." Read by RAILS.exileplay AND by the hellbent refuel rail, so PROSPER, TOME-BOUND and
+// every other cast-from-exile commander gains the same class on the same day Hazoret does \u2014 and
+// they genuinely want it: a card played out of exile off a discard triggers "whenever you play a
+// land or cast a spell from exile" exactly like one impulsed off the top does.
+const DISCARD_IMPULSE_Q = '(o:"whenever you discard" ' + MAY_PLAY_Q + ')';
 // Spells-out-of-the-yard rebuy, for a commander whose stat counts INSTANTS/SORCERIES in the
 // graveyard (Melek, Reforged Researcher). 149 in UR: Faithless Looting, Mizzix's Mastery,
 // Past in Flames, Deep Analysis, Think Twice, Echo of Eons.
@@ -11867,7 +12022,7 @@ const RAILS = {
             // whose only exile-and-play clause names an OPPONENT'S zone it is a dead shelf dealt
             // above five generic ones. See impulseSelfRail: withheld ONLY from a commander that
             // steals and never touches its own library, so every pure impulser keeps it.
-            { role: 'enabler', title: 'Impulse Draw', sub: 'Exile now, play later', test: impulseSelfRail, q: '((o:"exile the top" (' + MAY_PLAY_Q + ' OR o:cast)) OR keyword:foretell OR keyword:plot)', why: 'exile-and-play density is the trigger fuel — every card played from exile pays again' },
+            { role: 'enabler', title: 'Impulse Draw', sub: 'Exile now, play later', test: impulseSelfRail, q: '((o:"exile the top" (' + MAY_PLAY_Q + ' OR o:cast)) OR ' + DISCARD_IMPULSE_Q + ' OR keyword:foretell OR keyword:plot)', why: 'exile-and-play density is the trigger fuel — every card played from exile pays again' },
             // v7.71 (Prosper VERIFY) — SELF-SUBJECT EXCLUSION. Verified card-by-card against the
             // live pool this run: of the NINE cards this query dealt in Prosper's identity, THREE
             // were dead — ETERNAL SCOURGE ("You may cast this card from exile"), LUCIUS THE
@@ -13601,6 +13756,12 @@ function buildEngineModel(commander) {
             return /^(?:plain|island|swamp|mountain|forest|land)$/.test(m[1]) ? 'land' : m[1];
         })(),
         statHand: /(?:power|toughness)[^.]{0,90}equal to (?:twice )?the number of cards in your hand/.test(o),
+        // v8.44 — the hand-size band this commander printed on ITSELF, added to the parameter layer
+        // exactly as statHand/statBoard (v7.03) and selfPow were, so the direction is read ONCE here
+        // and any present or future transform can gate on it without re-deriving the sentence. Null
+        // for every commander that prints no band — which is all but a handful — so the field is
+        // inert unless something asks for it and no existing report can move because of it.
+        handBand: readHandBand(o),
         // XENAGOS COMBAT POWER-DOUBLER (Xenagos study): the commander's own combat/attack
         // trigger gives ONE creature +X/+X where X is that creature's power — doubling its
         // power for a one-shot swing. A Gruul haymaker engine, NOT a devotion deck (the
@@ -15896,6 +16057,55 @@ function buildEngineModel(commander) {
         // "one giant sets X" was offering a BATTLE plus werewolf day-sides printed at 2, 3 and 4.
         out.push({ key: 'heavy', role: 'enabler', title: 'Heavy Hitters', sub: 'One giant sets X', q: base + ' (t:creature pow>=6 ' + CAST_FACE_Q + ')', why: 'X reads the greatest power in the attack \u2014 one huge body carries the count.' });
     }
+    // v8.44 (Hazoret the Fervent STUDY 2026-08-09) \u2014 THE LOW HAND BAND, i.e. HELLBENT, WHICH THE APP
+    // HAD NO VOCABULARY FOR AT ALL. See readHandBand for why the old reader could not fire and why
+    // the direction is the whole point. ADDITIVE BY CONSTRUCTION: the block is gated on dir==='low',
+    // which is null for every commander that prints no band and 'high' for the full-grip half, so
+    // KRUPHIX, NEZAHAL, KEFNET, KIYOMARO, JIN-GITAXIAS and the ~41 no-maximum-hand-size commanders
+    // cannot be reached by it and their reports are unchanged by inspection, not by hope. Fully
+    // enumerated blast radius, censused live over every legendary creature this run: FIVE \u2014 HAZORET
+    // THE FERVENT, DJERU AND HAZORET, NEHEB THE WORTHY (the three `one or fewer` printings) and
+    // CAPTAIN JAMES T. KIRK, FLUBS THE FOOL (the two self-anchored `no cards in hand` printings).
+    // Pushed through pushUniqueRail so a commander who ALSO fires a family owning one of these
+    // pools collapses to one shelf instead of rendering the same cards twice (the v7.00 rule).
+    if (P.handBand && P.handBand.dir === 'low') {
+        // 0. DROP THE SHELF THAT SELLS THE OPPOSITE DECK. `handsize` is ONE atom serving two
+        // opposite readings, so its single static `q` — `(o:"no maximum hand size" OR o:"for each
+        // card in your hand")` — is the FULL-GRIP pool, and handing it to a hellbent commander
+        // recommends the cards that switch that commander off. Measured on the rendered report
+        // before this line existed: HAZORET THE FERVENT was dealt "Hand Size Matters · A full grip
+        // is power" directly above "Empty Your Hand". The atom itself is NOT suppressed — it still
+        // supplies the chip and the (now repointed) game plan, which is the v7.33 demote-never-drop
+        // rule; only the one shelf whose pool is backwards is removed, and the three rails below
+        // replace it with more than it carried. Guarded on the section KEY rather than the title so
+        // a future retitling cannot silently turn this back into a no-op.
+        for (let i = out.length - 1; i >= 0; i--) if (out[i].key === 'handsize') out.splice(i, 1);
+        // 1. THE OUTLET. A hellbent deck does not empty its hand by casting \u2014 a land-light red deck
+        // floods out long before it runs dry \u2014 it empties on purpose, for free, at instant speed.
+        // Composed from the SAME literals ATOMS.discard.q already ships so the app holds ONE
+        // vocabulary for "this card gets a card out of your hand", not two that can drift apart.
+        // EDHREC ground truth, read live this run (rank #2,140 \u00b7 473 decks, tags Discard 53 / Burn
+        // 45 / Aggro 17 / Voltron 11): her single highest-synergy card is GLINT-HORN BUCCANEER
+        // (53%/49) \u2014 a `Discard a card:` outlet \u2014 and AVARICIOUS DRAGON (48%/48) and ANJE'S RAVAGER
+        // (46%/45) both print `discard your hand`. 119 cards in mono-red, measured.
+        pushUniqueRail(out, { key: 'hellbent', role: 'enabler', title: 'Empty Your Hand', sub: 'Discarding is the cost of admission', q: base + ' (o:"discard a card:" OR o:"discard your hand" OR keyword:madness OR o:"you may discard")', why: firstName + ' is switched OFF by a full grip, so the cards that dump it are not filler \u2014 they are the enablers, and the best of them ask nothing but the discard itself: a repeatable "Discard a card:" outlet turns every dead land at the top of the curve into damage, a wheel that discards your hand empties it in one shot, and madness pays you for the discard instead of charging you, which is the only way this deck spends a card and keeps it.' });
+        // 2. THE PAYOFF, AND THE LEAK THAT PROVES THE SUBJECT RULE ONE LAYER DOWN. The obvious arm
+        // `o:"one or fewer cards in hand"` was CUT LIVE AND REJECTED: it carries no subject, so it
+        // returns the OPPONENT-side punishers \u2014 SHRIEKING AFFLICTION, BANDIT'S TALENT, DAVRIEL,
+        // HEADLESS SPECTER, HOLLOWBORN BARGHEST, TEMPLE OF THE DEAD \u2014 which are a stax deck's cards
+        // and do nothing for a hellbent deck. Both shipped arms are subject-anchored and measured:
+        // `o:"you have no cards in hand"` = 13 in mono-red and is a STRICT SUPERSET of
+        // `keyword:hellbent` = 7, because Scryfall reads the keyword's reminder text; the keyword
+        // arm is kept anyway so the shelf survives if that ever stops being true.
+        pushUniqueRail(out, { key: 'hellbent', role: 'payoff', title: 'Hellbent Payoffs', sub: 'Cash the empty grip', q: base + ' ' + EMPTY_GRIP_Q, why: 'an empty hand is a RESOURCE here rather than a warning light, and these are the cards that read it \u2014 they cost nothing extra, they simply get better at the exact moment ' + firstName + ' comes online, so the turn you dump your hand you are not spending your board, you are switching several cards on at once.' });
+        // 3. THE REFUEL, AND WHY ORDINARY CARD ADVANTAGE IS AN ANTI-SYNERGY. This is the tension the
+        // archetype is built on and the reason a generic "Card Advantage" shelf actively misleads:
+        // every card a hellbent deck DRAWS turns the payoff off, so its gas has to arrive somewhere
+        // other than the hand. Impulse draw and top-of-library play give you the card without ever
+        // putting it there. 150 cards in mono-red, led by Abbot of Keral Keep, Act on Impulse,
+        // Bonehoard Dracosaur and Chandra \u2014 precisely the shell EDHREC's list for her is built from.
+        pushUniqueRail(out, { key: 'hellbent', role: 'amplifier', title: 'Refuel Without Refilling', sub: 'Gas that never reaches your hand', q: base + ' (o:"top card of your library revealed" OR (o:"exile the top" o:"you may play") OR ' + DISCARD_IMPULSE_Q + ')', why: 'ordinary draw is an ANTI-SYNERGY in this deck and that is the trap worth naming out loud \u2014 every card you draw is a card sitting in your hand switching ' + firstName + ' back off. Impulse draw and playing off the top of your library solve the same problem from the other side: they hand you the card and never put it in the zone that is being counted, so you can run on empty all game and still make land drops and cast threats.' });
+    }
     // v7.84 (Agatha study) \u2014 ACTIVATED-ABILITY DISCOUNT. A spell discount and an ability discount
     // look identical in the oracle text and are opposite decks. A spell discount is a ONE-SHOT
     // saving on a card you were going to cast anyway, so its rails point at expensive SPELLS. An
@@ -16508,6 +16718,22 @@ function buildEngineModel(commander) {
         const seenPlan = {};
         gamePlans.plans = gamePlans.plans.filter(p => (seenPlan[p.name] ? false : (seenPlan[p.name] = true)));
     }
+    // v8.44 — THE HAND-SIZE PLAN HAS A DIRECTION, and until this run it only had one. ARCHETYPES
+    // .handsize reads "refill to a full grip every turn and stop discarding to cleanup" — a true
+    // and useful sentence for KRUPHIX and NEZAHAL, and the exact opposite of the deck for a
+    // commander who cannot legally attack while holding a second card. Repointed with the v7.59
+    // CAST_PLAN idiom rather than a new mechanism: same site, same shape, one condition. Gated on
+    // dir==='low', so the high-band half of the family keeps the plan it has always had, byte for
+    // byte. `base` is deliberately left untouched for the reason v7.59 documented — BLENDS is keyed
+    // on `base`, so renaming only `name`/`win` cannot perturb a single blend verdict.
+    if (P.handBand && P.handBand.dir === 'low') {
+        gamePlans.plans.forEach(p => {
+            if (p.name === 'Hand Size Matters') {
+                p.name = 'Hellbent';
+                p.win = 'dump the hand on purpose and keep it empty — the discard is the cost of switching your commander on, so the deck refuels off the top of the library rather than into its hand and every card that rewards an empty grip is live at the same moment';
+            }
+        });
+    }
     // v7.59 (Jhoira study) — THE THIRD CONSUMER OF THE DEPLOY POOL: THE GAME-PLAN CHIP.
     // Matched on p.base, NOT p.name. `buildGamePlans` writes {name, win, base} and BLENDS is
     // keyed on `base`, so renaming `name` while leaving `base` untouched cannot perturb a single
@@ -16589,6 +16815,31 @@ function buildEngineModel(commander) {
     for (let i = 0; i < out.length; i++) {
         if (typeof out[i].why === 'string') out[i].why = exemplarFence(out[i].why, ci);
     }
+    // v8.44 — RE-SYNC THE BLEND LABELS, AND THE DEFECT IS OLDER THAN THIS RUN. `buildGamePlans`
+    // pushes `{a: top[i].name, b: top[j].name}` — it COPIES the plan's display name into the blend
+    // row at construction time. Every later transform that REPOINTS a plan therefore leaves the
+    // blend list quoting a plan that is no longer on the report: the reader is shown "Game Plans:
+    // Cheat Sagas · Sagas & Chapters · Voltron" and then, three lines below, "Cheat Big Creatures +
+    // Voltron". MEASURED OVER THE 137-COMMANDER CORPUS ON THE PRE-EDIT BUILD: 3 commanders already
+    // ship a stale label — TOM BOMBADIL twice (v7.86's `Cheat Sagas` repoint) and SYTHIS, HARVEST'S
+    // HAND once (the Enchantress block's Spellslinger strip) — so this is v7.59's bug, found by
+    // v8.44's repoint rather than caused by it, and fixed for both at the same place.
+    // THE LOOP IS THE SAME DOUBLE LOOP `buildGamePlans` USED, so index k maps to pair (i,j) exactly;
+    // labels are re-read from the CURRENT names and nothing else about a blend is touched — the
+    // `verdict` and `why` came from BLENDS keyed on `base`, which no repoint may alter (v7.60), so
+    // not one blend VERDICT can move. The trailing truncation covers the other shape: when a plan is
+    // FILTERED OUT after the blends are built, the pairs that referenced it can no longer be formed,
+    // and a blend row pairing a plan the reader cannot see is worse than no row. Placed after every
+    // repoint in this function so it is the single point where the two lists are reconciled.
+    (function () {
+        const top = (gamePlans && gamePlans.plans) || [], bl = (gamePlans && gamePlans.blends) || [];
+        let k = 0;
+        for (let i = 0; i < top.length; i++) for (let j = i + 1; j < top.length; j++) {
+            if (bl[k]) { bl[k].a = top[i].name; bl[k].b = top[j].name; }
+            k++;
+        }
+        if (bl.length > k) bl.length = k;
+    }());
     return {
         sections: out,
         traps: traps, // already capped at TRAP_RENDER_MAX by mergeTraps()
@@ -16865,6 +17116,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v8.44', date: '2026-08-09', focus: 'study', commander: 'Hazoret the Fervent', summary: "STUDY Hazoret the Fervent — MAGIC PRINTS A CONDITION ON YOUR OWN HAND SIZE, AND THE READER THAT EXISTED FOR IT COULD NOT HAVE MATCHED A SINGLE CARD EVER PRINTED. `readPowerBand` (v7.32) and `readManaBand` (v7.36) exist because a band a commander prints on itself is the SHAPE OF THE DECK. The third band — how many cards you hold — had a reader too, one alternative inside ATOMS.handsize.test reading `as long as you have (no cards|(seven|one|eight) or (more|fewer) cards) in your hand`, and ALL THREE of its clauses are wrong. THE POSSESSIVE: censused live on mtg.wtf this run, `o:\"or fewer cards in your hand\"` = 0 cards and `o:\"no cards in your hand\"` = 0 cards, EVER — the idiom drops the possessive because `you have` already owns it (`or fewer cards in hand` = 20, `no cards in hand` = 53). THE FRAME: it demands `as long as`, and over legendary creatures Magic also prints `unless you have` (2 — HAZORET THE FERVENT and KEFNET THE MINDFUL, i.e. BOTH Gods built on the mechanic) and `if you have` (10). THE NUMBER: it hard-lists seven|one|eight, so KIYOMARO's printed `four or more` misses. Any one of the three is fatal, so the branch was decoration and the two commanders whose entire card is this sentence could not reach their own atom. NEW `readHandBand` + HAND_BAND_SRC, ONE SOURCE STRING read by the reader AND by the atom's test so the gate and the reader can never hold opposite opinions — the v7.34/v7.74/v8.43 defect refused up front instead of found five runs later. THE ANCHOR IS THE SUBJECT, NOT THE FRAME (the v7.36/v7.74/v8.43 rule on a third mechanic): requiring the literal `you have` makes every opponent-side hand clause unreachable BY CONSTRUCTION, verified against verbatim text — TINYBONES, TRINKET THIEF ('each opponent WITH no cards in hand'), ADAMARO ('the number of cards in THE HAND OF THE OPPONENT'), BEZA ('if AN OPPONENT has more cards in hand than you') and AKUTA all read null and must. DIRECTION IS THE WHOLE POINT — the v7.00 mill lesson one family over: a LOW band and a HIGH band are OPPOSITE DECKS printing the same sentence, and `handsize`'s single shelf and single game plan ('refill to a full grip every turn') are the HIGH reading, which was being handed unchanged to commanders who cannot legally attack while holding a card. Low-band commanders now DROP that one backwards shelf (the atom is kept, so the chip and plan survive — v7.33 demote-never-drop), gain the repointed 'Hellbent' plan, and gain three rails: EMPTY YOUR HAND (the outlet — 119 cards in mono-red, and her single highest-synergy card GLINT-HORN BUCCANEER 53%/49% is a `Discard a card:` outlet), HELLBENT PAYOFFS (subject-anchored: the obvious arm `o:\"one or fewer cards in hand\"` was CUT LIVE AND REJECTED because it carries no subject and returns the OPPONENT-side punishers Shrieking Affliction, Bandit's Talent, Davriel, Headless Specter — the same rule, two layers down), and REFUEL WITHOUT REFILLING (ordinary card draw is an ANTI-SYNERGY here: every card drawn switches the commander back off, so the gas has to arrive from exile or the top of the library — 150 cards, led by Abbot of Keral Keep and Bonehoard Dracosaur). SECOND FIX, THE SAME RULE ONE FAMILY OVER: `ATOMS.discard.test` demanded a grammatical SUBJECT (`you discard`), and Magic prints the same verb in the COST of an activated ability where by CR 602.1 it is an IMPERATIVE with NO SUBJECT AT ALL — `{2}{R}, Discard a card:`. The atom's own `q`, two fields to the right, HAS SHIPPED `o:\"discard a card:\"` SINCE THE DAY IT WAS WRITTEN, so the shelf could deal these cards to everyone except the commanders who print them. 24 legendary creatures print the cost, 21 of them print nothing else this atom could already read — CHAINER, CHROMIUM, FALDORN, HISOKA, JADZI, JAXIS, JAYA BALLARD, PLARGG, VIKYA, WITCH-KING OF ANGMAR, YAWGMOTH THRAN PHYSICIAN and the rest. THIRD FIX, OLDER THAN THIS RUN AND FOUND BY IT: `buildGamePlans` COPIES each plan's display name into the blend row, so every later transform that REPOINTS a plan leaves the blend list quoting a plan that is no longer on the report. Measured on the PRE-EDIT build over 137 commanders: 3 already shipped a stale label — TOM BOMBADIL twice and SYTHIS, HARVEST'S HAND once — i.e. v7.59's bug, not v8.44's. One re-sync at the end of the pipeline: OLD 3 stale -> NEW 0. RESULT, HAZORET: EDHREC (rank #2,140, 473 decks) tags her Discard 53 / Burn 45 / Aggro 17 / Voltron 11, and the app dealt her Pingers, BOARD SWEEPERS and Damage Doublers with nothing about her hand at all; she now renders 'Looting & Madness · Empty Your Hand · Hellbent Payoffs · Refuel Without Refilling' behind the burn shelves, with plans Burn & Pingers / Looting & Madness / Hellbent. COUNTER-CASE, MEASURED NOT ARGUED: both builds' REAL buildEngineModel over a 137-commander corpus — 127 BYTE-IDENTICAL, 10 CHANGED, ZERO ERRORS, and ZERO RETARGETED QUERIES ANYWHERE (not one existing shelf's query string was altered; the change is purely additive). The 10 are exactly the census: 5 low-band (Hazoret, Djeru and Hazoret, Neheb the Worthy, Flubs, Captain James T. Kirk — the complete list of legendary creatures that print a self-anchored low band), 1 high-band (KEFNET gains his own atom and the correct lead plan for the first time), 2 discard-cost (SUBIRA and CHROMIUM, both confirmed against verbatim oracle text), 2 blend re-sync. POINTED CONTROLS BYTE-IDENTICAL: TINYBONES (last run's study, opponent-side hand clause), DAMIA / DOCTOR OCTOPUS / KOZILEK (the `fewer than N` REFILL template, deliberately not read — it names a state the card is CORRECTING), KIYOMARO (already fired via another branch, which is what proves the superset property), KRUPHIX, ADAMARO, LORD XANDER, plus KRENKO, TALRAND, ATRAXA, IROAS and the other 119. No commander loses sections on net. node --check 6/6; all six boot asserts return [] on BOTH builds; 0 console errors at boot and after render; RENDERED-DOM verified through the real SynergyOverlay 16/16. ATOMS 93 and RAIL FAMILIES 84 UNCHANGED (one reader, one parameter, one atom arm, three rails pushed from the parameter layer — no atom and no family added); STUDY_DB 185 -> 186. NO BROWSER WAS CONNECTED THIS RUN, so nothing was seen rendered in Chrome and the live check the brief asks for did NOT happen — stated plainly rather than implied." },
     { build: 'v8.43', date: '2026-08-09', focus: 'verify', commander: 'Tinybones, Trinket Thief', summary: "VERIFY Tinybones, Trinket Thief — THE PRIOR RUN UNIFIED WHO IS FORCED TO ACT AND LEFT THE VERB IN ONE GRAMMATICAL MOOD; MAGIC PRINTS A FORCED ACTION IN TWO. His shelves audit clean and the four named cards are back, confirmed against a live cut this run: BOTTOMLESS PIT, NECROGEN MISTS and OPPRESSION all sit in 'that player discards' (173 cards) and SYPHON MIND is the single card in the corpus templating 'each other player discards', so the scope vocabulary earns its keep. One claim is corrected honestly: Raiders' Wake was logged as a 'that player discards' eviction and does not use that phrase at all — it prints 'target opponent discards a card', so it is on the shelf via a different arm than the row said. THE DEFECT IS ONE STEP UNDER THE FIX. A forced action is <SCOPE> + <VERB>, and the verb half has two moods: the INDICATIVE ('each opponent discards a card', scope is the subject, verb takes -s) and the SUBJUNCTIVE ('...unless they discard a card', where the subject collapses to a PRONOUN, the verb drops its -s, and no scope word survives at all). forcedQ built only the indicative, so the entire 'or else' tax class was unreachable from all five call sites. The file already contradicted itself about it exactly as v7.34, v7.74, v8.39 and v8.42 each found one layer up: ATOMS.oppdiscard's own eTest — the READER deciding whether the discard family is consulted — has always carried 'unless they [^.]{0,60}discard'; the QUERY behind it never did. MEASURED ON THE SHIPPED REPORT, live: the class is 9 Commander-legal cards, and Tinybones (EDHREC #570, 4,910 decks, read live this run) was missing PAINFUL QUANDARY 73%/+63 — his #8 highest-synergy card of any kind — and COURT OF AMBITION 32%/+28, neither reachable by any arm in the app. THE SUBJECT ANCHOR IS THE WHOLE FIX AND IT WAS MEASURED, NOT ASSUMED: the naive arm 'unless [^.]{0,25}discards?' returns 48 cards of which ~84% are the MASTICORE class ('unless YOU discard' — a self-payment cost belonging to nobody's opponent shelf), and the sacrifice twin (61) additionally drags in pure restriction clauses (Exalted Dragon, Flooded Woodlands). Pinning the pronoun collapses those to 11 and 24 with ZERO false positives in either. A forced action and a self-payment cost are the same words in the same order; only the subject tells them apart. 'he or she' and 'those players' were measured at ZERO cards each and deliberately left out rather than added as decoration. THE FIX IS ONE SHARED CONSTANT AND ONE ARM INSIDE THE EXISTING BUILDER — FORCED_UNLESS_SUBJECTS plus a stem-derived subjunctive arm in forcedQ — so all five call sites inherit it at once with no per-commander patching: 'Forced Discard' and its atom query, edicts, OPP_MILL_Q, fill-yards, opp-die. GENERALIZES, NAMED: the sacrifice half hands TERGRID her own namesake TERGRID'S LANTERN plus TORMENT OF HAILFIRE, MOGIS GOD OF SLAUGHTER, THORNPLATE INTIMIDATOR, TORMENT OF SCARABS and TORMENT OF VENOM on the shelf named after them, and NATH OF THE GILT-LEAF gains the discard half. The mill sites gain exactly nothing — 'unless they mill' is 0 cards — which is the measured, honest answer rather than an assumed one. ADDITIVE BY CONSTRUCTION: every literal and regex arm above it is kept, so a shelf can only grow and eviction is impossible. COUNTER-CASE — full-model differential over 120 commanders and 1,309 rails, both builds booted off their own files: ZERO structural drift (not one rail set, order, key, title, sub, role, why or trap moved anywhere), 13 query strings changed on 9 commanders, and STRICT SUPERSET proven by set containment — 0 OR-arms lost anywhere. 26/26 adversarial strings correct, including the Masticore self-cost class, the restriction-clause class, a sentence-boundary case and an over-reach case; 8 real cards are reachable ONLY via the new arm. Controls byte-identical: KRENKO, TALRAND, ATRAXA, IROAS and the other 109. node --check 6/6, all six boot asserts [], 0 console errors at boot and after render, ATOMS 93 / RAIL FAMILIES 84 / STUDY_DB 185 all UNCHANGED — no atom, no family, no rail and no study entry was added." },
     { build: 'v8.42', date: '2026-08-09', focus: 'study', commander: 'Tinybones, Trinket Thief', summary: "STUDY Tinybones, Trinket Thief — MAGIC NAMES WHO IS FORCED TO ACT FROM A SMALL CLOSED VOCABULARY, AND EVERY SHELF THAT ASKS THE QUESTION HAD HAND-LISTED A DIFFERENT, INCOMPLETE HALF OF IT. A forced action is <PLAYER SCOPE> + <VERB>, and the scope half is seven phrases: `each opponent`, `each other player`, `each player`, `target opponent`, `target player`, `that player`, `its controller`. Five query sites in four families each spelled out their own subset inline — and NOT ONE of them contained `each other player`, the scope Magic uses for the entire Grave Pact / Dictate of Erebos / Syphon Mind class. The file already contradicted itself about it exactly as v7.34, v7.74 and v8.39 each found one layer up: `ATOMS.oppdiscard`'s own `test` — the READER deciding whether the discard family is consulted — has always known `that player discards`, while the QUERY behind it, 'Forced Discard', knew neither that nor `each other player`. MEASURED ON A SHIPPED REPORT, NOT A HYPOTHETICAL: Tinybones (EDHREC #555, 4,875 decks, read live this run) LEADS with that shelf, and its five literals evicted his #2, #3, #4 and #5 highest-synergy cards of any kind — BOTTOMLESS PIT 82%/+76, NECROGEN MISTS 77%/+73, OPPRESSION 77%/+70 (all `that player discards`) and SYPHON MIND 74%/+62 (`each other player discards`) — plus Raiders' Wake 38%/+35. The same gap cost the EDICT shelf Grave Pact, Dictate of Erebos and Butcher of Malakir, and gave it no TARGET-scoped arm at all, so Sheoldred's Edict, Diabolic Edict and Sudden Edict were unreachable on the shelf named after them. THE SECOND SHAPE IS THE SERIAL VERB — \"Each player loses 1 life, discards a card, sacrifices a creature…\" (Smallpox, Pox, Death Cloud, Vicious Rumors 67%/+61) — where only the first verb is contiguous with its subject; the new same-sentence arm carries the scope across the intervening clause but never across a full stop. FIX: one shared `FORCED_SCOPES` vocabulary plus `forcedQ(verb, extra)`, repointing all five sites (oppdiscard 'Forced Discard' and its atom query, `edicts`, `OPP_MILL_Q`, `fill-yards`, `opp-die`). ADDITIVE BY CONSTRUCTION — the literal arms are kept alongside the regex arm, so a shelf can only grow and eviction is impossible; if Scryfall rejected the regex outright every shelf would still be exactly today's shelf. MEASURED: 121-commander full-model differential, 1,309 rails compared, ZERO structural drift (not one rail set, order, title, sub, role, why or trap moved anywhere), 13 query strings changed across 9 commanders, and STRICT SUPERSET proven by set containment — 0 OR-arms lost anywhere. 18/18 adversarial regex strings correct including both sentence-boundary and over-reach cases. New name-keyed STUDY_DB entry for Tinybones (5 traps) written off his live EDHREC page. node --check 6/6, all six boot asserts [], 0 console errors at boot and after render, ATOMS 93 / RAIL FAMILIES 84 unchanged, script blocks 1–4 byte-identical and non-script bytes unchanged." },
     { build: 'v8.41', date: '2026-08-09', focus: 'verify', commander: 'Tetsuko Umezawa, Fugitive', summary: "VERIFY Tetsuko Umezawa, Fugitive — v8.40'S TWO NEW SHELVES AUDIT CLEAN AGAINST HER LIVE EDHREC LIST, AND THE DEFECT IS THE ONE v8.40 MEASURED, NAMED AND LEFT ON THE TABLE: A PRINTED POWER CAP IS A FACT ABOUT CREATURES, AND FOR EIGHT BUILDS `capFold` HAS BEEN APPLYING IT TO EVERY CARD ON THE SHELF. `pow<=N` is not a loose filter — a card with no printed power does not match it — so a bare `pow<=N` does not NARROW a mixed shelf, it DELETES every non-creature on it. Measured on the two SHIPPED commanders whose capFold shelves are mixed: DELNEY's 'Payoffs for Connecting' read `(o:\"combat damage to a player\" pow<=2)` and RIGO's 'Combat Triggers' the same, which is exactly where Bident of Thassa, Coastal Piracy, Reconnaissance Mission and every connect Sword live — the artifacts and enchantments that ARE the archetype — silently evicted on the very shelf v7.33 wrote the fold to repair; the same term evicted Rogue's Passage, Whispersilk Cloak and Slip Through Space from both evasion shelves. FIX 1 makes the fold TYPE-AWARE — `((t:creature <band>) OR -t:creature)` — a strict WIDENING that cannot remove a card from any shelf it already touched, and a no-op BY CONSTRUCTION on the three shelves that already print `t:creature` (Delney ta-etb, Arabella etb:payoff1, Shirei rea-capgate), all three byte-identical. FIX 2/3 close v8.40's own hand-off (c): new `POWER_LOW_ANY_RE` + `railCtx.powLowAny` teach the engine the DISJUNCTIVE band — \"power OR toughness N or less\", Tetsuko's entire card — as a THIRD separate constant read only by `readPowerBand`, never by `ARCHETYPES.smallpower`, because like Shirei her cap is the ENTRY CONDITION and not the plan (EDHREC 1,917 decks: Infect 167 / Wheels 111 / Aggro 61 / Unblockable 57, no small-creatures theme). The fold now spells the band the way the card prints it, `(pow<=1 OR tou<=1)`, which is why her 2/1 Neurok Commando (64%/+63, her #1 synergy card) and her 1/3 Scroll Thief (59%/+58) both survive and her 70%-inclusion Bident of Thassa survives as a non-creature — while the 2/2 Malcolm and 2/2 Surrakar Spellblade she genuinely cannot make unblockable are correctly evicted. MEASURED: 85-commander full-model differential, 81 byte-identical, exactly the 4 predicted movers (Tetsuko, Delney, Rigo, a reversed-noun fixture); 15/15 adversarial regex strings correct with ZERO overlap against the two existing arms, so arm order can never matter; Subira, Sidar Kondo and Questing Beast still read null. node --check 6/6, all six boot asserts [], 0 console errors, ATOMS 93 / RAIL FAMILIES 84 unchanged." },
