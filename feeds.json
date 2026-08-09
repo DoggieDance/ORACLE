@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-09T04:15:43.504Z",
+  "updated": "2026-08-09T10:15:25.469Z",
   "deals": [
     {
       "t": "Amazon: LOTR Commander Deck Bundle $251.10",
@@ -46,10 +46,24 @@
   ],
   "wire": [
     {
+      "t": "B&R HYPE THREAD AUGUST 10: 60 CARD IS THRIVING EDITION",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vjiinh/br_hype_thread_august_10_60_card_is_thriving/",
+      "s": 0,
+      "c": 1786257385,
+      "f": ""
+    },
+    {
       "t": "Mark Rosewater: We spread Humans across all five colors because currently, according to our market research, 100% of the players are Human.",
       "u": "https://www.reddit.com/r/magicTCG/comments/1vj0pkb/mark_rosewater_we_spread_humans_across_all_five/",
       "s": 0,
       "c": 1786207420,
+      "f": ""
+    },
+    {
+      "t": "SLD x Stardew Valley Bonus Cards",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vjdl8e/sld_x_stardew_valley_bonus_cards/",
+      "s": 0,
+      "c": 1786241428,
       "f": ""
     },
     {
@@ -67,24 +81,10 @@
       "f": ""
     },
     {
-      "t": "My Hobbit limited experience so far",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vj3y7h/my_hobbit_limited_experience_so_far/",
+      "t": "Hobbit cards print quality is shocking",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vjiadn/hobbit_cards_print_quality_is_shocking/",
       "s": 0,
-      "c": 1786215229,
-      "f": ""
-    },
-    {
-      "t": "Bravo to the artist and art director",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1viyo6y/bravo_to_the_artist_and_art_director/",
-      "s": 0,
-      "c": 1786202399,
-      "f": ""
-    },
-    {
-      "t": "What is a card with art you love that is bad by modern day standards",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vim5p6/what_is_a_card_with_art_you_love_that_is_bad_by/",
-      "s": 0,
-      "c": 1786162713,
+      "c": 1786256583,
       "f": ""
     }
   ]
