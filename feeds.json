@@ -1,6 +1,13 @@
 {
-  "updated": "2026-08-13T23:15:44.736Z",
+  "updated": "2026-08-14T00:15:44.577Z",
   "deals": [
+    {
+      "t": "Best Buy Hobbit Collector $41.99",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vnrdt7/best_buy_hobbit_collector_4199/",
+      "s": 0,
+      "c": 1786665132,
+      "f": ""
+    },
     {
       "t": "[Costco] Marvel Super Heroes Commander Kits - $67.99 (Members Only)",
       "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vnivcp/costco_marvel_super_heroes_commander_kits_6799/",
@@ -34,13 +41,6 @@
       "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vmt20k/45_hobbit_collector_booster_check_your_local/",
       "s": 0,
       "c": 1786574488,
-      "f": ""
-    },
-    {
-      "t": "Microcenter Hobbit",
-      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vmay9b/microcenter_hobbit/",
-      "s": 0,
-      "c": 1786532522,
       "f": ""
     }
   ],
