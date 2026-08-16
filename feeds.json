@@ -1,6 +1,20 @@
 {
-  "updated": "2026-08-15T06:15:46.491Z",
+  "updated": "2026-08-16T01:15:13.827Z",
   "deals": [
+    {
+      "t": "The Hobbit - Play Booster Display 162 FS and no tax.",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vp8w2t/the_hobbit_play_booster_display_162_fs_and_no_tax/",
+      "s": 0,
+      "c": 1786815264,
+      "f": ""
+    },
+    {
+      "t": "Teenage Mutant Ninja Turtles - Turtle Team-Up - $29.99 @ Amazon",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vp47dh/teenage_mutant_ninja_turtles_turtle_teamup_2999/",
+      "s": 0,
+      "c": 1786803884,
+      "f": ""
+    },
     {
       "t": "Aetherdrift Collector Booster Omega -28.99, FS@$60, 5% back with free rewards account - Barnes and Noble",
       "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vooby4/aetherdrift_collector_booster_omega_2899_fs60_5/",
@@ -28,20 +42,6 @@
       "s": 0,
       "c": 1786713932,
       "f": ""
-    },
-    {
-      "t": "[Best Buy] 50% select MTG products at Best Buy - Quandrix and Prismari for 24.99",
-      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vnzm0t/best_buy_50_select_mtg_products_at_best_buy/",
-      "s": 0,
-      "c": 1786689472,
-      "f": ""
-    },
-    {
-      "t": "[Amazon] Marvel Super Heroes Commander Deck Bundle - $184.95",
-      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vns2i0/amazon_marvel_super_heroes_commander_deck_bundle/",
-      "s": 0,
-      "c": 1786666913,
-      "f": ""
     }
   ],
   "wire": [
@@ -60,13 +60,6 @@
       "f": ""
     },
     {
-      "t": "[SLD] Secret Lair x The Hobbit: He Who Walks Unseen",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vobc3n/sld_secret_lair_x_the_hobbit_he_who_walks_unseen/",
-      "s": 0,
-      "c": 1786723393,
-      "f": ""
-    },
-    {
       "t": "Weekend Free Discussion Thread",
       "u": "https://www.reddit.com/r/magicTCG/comments/1vo3a6u/weekend_free_discussion_thread/",
       "s": 0,
@@ -74,17 +67,24 @@
       "f": ""
     },
     {
-      "t": "Maro admits Standard power level is through the roof ;)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vo4s9m/maro_admits_standard_power_level_is_through_the/",
+      "t": "Trying to find a card from 15 years ago by memory",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vpeo1n/trying_to_find_a_card_from_15_years_ago_by_memory/",
       "s": 0,
-      "c": 1786707364,
+      "c": 1786829319,
       "f": ""
     },
     {
-      "t": "Fun Fact: A simple 1/1 Green Elf Token has never existed until now.",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1voc3r0/fun_fact_a_simple_11_green_elf_token_has_never/",
+      "t": "All will be one.",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vphb6h/all_will_be_one/",
       "s": 0,
-      "c": 1786725048,
+      "c": 1786836449,
+      "f": ""
+    },
+    {
+      "t": "What’s the ruling?",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vp9tbn/whats_the_ruling/",
+      "s": 0,
+      "c": 1786817429,
       "f": ""
     }
   ]
