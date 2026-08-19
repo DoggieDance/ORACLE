@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-19T09:15:42.567Z",
+  "updated": "2026-08-19T10:15:06.430Z",
   "deals": [
     {
       "t": "Vegas Singles small CBB sale (SPM, ECL, TMT)",
@@ -46,13 +46,6 @@
   ],
   "wire": [
     {
-      "t": "OPINION: Unlike Sophie Cunningham, The Trans Women I'm Afraid Of Are Real And Playing Meta Decks",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vrsq6q/opinion_unlike_sophie_cunningham_the_trans_women/",
-      "s": 0,
-      "c": 1787067647,
-      "f": ""
-    },
-    {
       "t": "What are your favorite soft stax pieces?",
       "u": "https://www.reddit.com/r/magicTCG/comments/1vs8cd9/what_are_your_favorite_soft_stax_pieces/",
       "s": 0,
@@ -60,10 +53,24 @@
       "f": ""
     },
     {
+      "t": "OPINION: Unlike Sophie Cunningham, The Trans Women I'm Afraid Of Are Real And Playing Meta Decks",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vrsq6q/opinion_unlike_sophie_cunningham_the_trans_women/",
+      "s": 0,
+      "c": 1787067647,
+      "f": ""
+    },
+    {
       "t": "One in a million Ad Placement",
       "u": "https://www.reddit.com/r/magicTCG/comments/1vs7z2x/one_in_a_million_ad_placement/",
       "s": 0,
       "c": 1787101931,
+      "f": ""
+    },
+    {
+      "t": "I could very well be wrong, but the desperate ritual by frank frazetta is suspiciously similar to this piece by serverino baraldi?",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vs1set/i_could_very_well_be_wrong_but_the_desperate/",
+      "s": 0,
+      "c": 1787086647,
       "f": ""
     },
     {
@@ -78,13 +85,6 @@
       "u": "https://www.reddit.com/r/magicTCG/comments/1vroygr/earnest_thank_you_to_the_redditor_who_found_this/",
       "s": 0,
       "c": 1787059118,
-      "f": ""
-    },
-    {
-      "t": "I could very well be wrong, but the desperate ritual by frank frazetta is suspiciously similar to this piece by serverino baraldi?",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vs1set/i_could_very_well_be_wrong_but_the_desperate/",
-      "s": 0,
-      "c": 1787086647,
       "f": ""
     }
   ]
