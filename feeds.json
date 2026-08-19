@@ -1,6 +1,13 @@
 {
-  "updated": "2026-08-19T14:15:43.613Z",
+  "updated": "2026-08-19T17:15:43.180Z",
   "deals": [
+    {
+      "t": "CardVault by Tom Brady - Hobbit PBB - $159.99",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vsrekq/cardvault_by_tom_brady_hobbit_pbb_15999/",
+      "s": 0,
+      "c": 1787156974,
+      "f": ""
+    },
     {
       "t": "Hot Topic - Secrets of Strixhaven Play - $119.94",
       "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vsnjkl/hot_topic_secrets_of_strixhaven_play_11994/",
@@ -34,13 +41,6 @@
       "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vrq1vz/costco_tmnt_tin_booster_collection_now_4997/",
       "s": 0,
       "c": 1787061695,
-      "f": ""
-    },
-    {
-      "t": "Best Buy - Wilds of Eldraine Set Booster Box $174.99",
-      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vrp1fs/best_buy_wilds_of_eldraine_set_booster_box_17499/",
-      "s": 0,
-      "c": 1787059318,
       "f": ""
     }
   ],
