@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-20T01:15:14.039Z",
+  "updated": "2026-08-20T03:15:14.826Z",
   "deals": [
     {
       "t": "CardVault by Tom Brady - Hobbit PBB - $159.99",
@@ -53,13 +53,6 @@
       "f": ""
     },
     {
-      "t": "Hypothetically, if I accidentally dropped my card on the road and came back 12 hours later to find out its been run over a billion times, how would one go about fixing this damage?",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vsys70/hypothetically_if_i_accidentally_dropped_my_card/",
-      "s": 0,
-      "c": 1787172724,
-      "f": ""
-    },
-    {
       "t": "Goodwill selling cards 🤣",
       "u": "https://www.reddit.com/r/magicTCG/comments/1vt35a3/goodwill_selling_cards/",
       "s": 0,
@@ -67,10 +60,17 @@
       "f": ""
     },
     {
-      "t": "Magic in the New York Times as an example of...a cheap hobby lol",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vssckz/magic_in_the_new_york_times_as_an_example_ofa/",
+      "t": "Hypothetically, if I accidentally dropped my card on the road and came back 12 hours later to find out its been run over a billion times, how would one go about fixing this damage?",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vsys70/hypothetically_if_i_accidentally_dropped_my_card/",
       "s": 0,
-      "c": 1787158962,
+      "c": 1787172724,
+      "f": ""
+    },
+    {
+      "t": "All LotR foil posters, showcase Nazgul foil and foil/surge foil Sauron",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vt3fgu/all_lotr_foil_posters_showcase_nazgul_foil_and/",
+      "s": 0,
+      "c": 1787183818,
       "f": ""
     },
     {
@@ -81,10 +81,10 @@
       "f": ""
     },
     {
-      "t": "All LotR foil posters, showcase Nazgul foil and foil/surge foil Sauron",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vt3fgu/all_lotr_foil_posters_showcase_nazgul_foil_and/",
+      "t": "Magic in the New York Times as an example of...a cheap hobby lol",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vssckz/magic_in_the_new_york_times_as_an_example_ofa/",
       "s": 0,
-      "c": 1787183818,
+      "c": 1787158962,
       "f": ""
     }
   ]
