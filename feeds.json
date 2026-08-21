@@ -1,6 +1,27 @@
 {
-  "updated": "2026-08-20T04:15:27.613Z",
+  "updated": "2026-08-21T03:15:44.244Z",
   "deals": [
+    {
+      "t": "Check Your Local Target!!",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vtxwjk/check_your_local_target/",
+      "s": 0,
+      "c": 1787264275,
+      "f": ""
+    },
+    {
+      "t": "The Hobbit MTG Play Booster - $164.99 / Free Shipping - BakersGoodThings",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vtltbd/the_hobbit_mtg_play_booster_16499_free_shipping/",
+      "s": 0,
+      "c": 1787237831,
+      "f": ""
+    },
+    {
+      "t": "Reality Fracture/Stomping Grounds Pre-order",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vtjxdk/reality_fracturestomping_grounds_preorder/",
+      "s": 0,
+      "c": 1787233467,
+      "f": ""
+    },
     {
       "t": "Hobbit draft boosters Best Buy",
       "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vt92q9/hobbit_draft_boosters_best_buy/",
@@ -21,70 +42,49 @@
       "s": 0,
       "c": 1787148618,
       "f": ""
-    },
-    {
-      "t": "Vegas Singles small CBB sale (SPM, ECL, TMT)",
-      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vsgf1p/vegas_singles_small_cbb_sale_spm_ecl_tmt/",
-      "s": 0,
-      "c": 1787127988,
-      "f": ""
-    },
-    {
-      "t": "Best Buy Star Trek Collector Commander Precons @ 164.99 Preorder",
-      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vru1hv/best_buy_star_trek_collector_commander_precons/",
-      "s": 0,
-      "c": 1787070235,
-      "f": ""
-    },
-    {
-      "t": "Best Buy - LTR Tales of Middle Earth Draft Packs (3 Draft Boosters) Available - $15.99 - Limit 5 per order",
-      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vrqcc0/best_buy_ltr_tales_of_middle_earth_draft_packs_3/",
-      "s": 0,
-      "c": 1787062349,
-      "f": ""
     }
   ],
   "wire": [
     {
-      "t": "I can’t stop laughing at how the NYT used Magic to depict frugality",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vsov0g/i_cant_stop_laughing_at_how_the_nyt_used_magic_to/",
+      "t": "Somebody’s getting fired 💀",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vtvr9t/somebodys_getting_fired/",
       "s": 0,
-      "c": 1787151545,
+      "c": 1787259253,
       "f": ""
     },
     {
-      "t": "Goodwill selling cards 🤣",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vt35a3/goodwill_selling_cards/",
+      "t": "Who would lose first, Me or My opponent with this combo?",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vtr7sr/who_would_lose_first_me_or_my_opponent_with_this/",
       "s": 0,
-      "c": 1787183085,
+      "c": 1787249561,
       "f": ""
     },
     {
-      "t": "Hypothetically, if I accidentally dropped my card on the road and came back 12 hours later to find out its been run over a billion times, how would one go about fixing this damage?",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vsys70/hypothetically_if_i_accidentally_dropped_my_card/",
+      "t": "Any other cards have the rawest art possible on an otherwise lame body?",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vthkpj/any_other_cards_have_the_rawest_art_possible_on/",
       "s": 0,
-      "c": 1787172724,
+      "c": 1787227415,
       "f": ""
     },
     {
-      "t": "All LotR foil posters, showcase Nazgul foil and foil/surge foil Sauron",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vt3fgu/all_lotr_foil_posters_showcase_nazgul_foil_and/",
+      "t": "[Metagame Mentor] The First Standard Results After the Bans",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vtmnad/metagame_mentor_the_first_standard_results_after/",
       "s": 0,
-      "c": 1787183818,
+      "c": 1787239673,
       "f": ""
     },
     {
-      "t": "Just framed the complete set of TMNT video game surge foil and Marvel comics!",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vt1xtg/just_framed_the_complete_set_of_tmnt_video_game/",
+      "t": "My Car Got Forest’d - Help",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vtmwth/my_car_got_forestd_help/",
       "s": 0,
-      "c": 1787180094,
+      "c": 1787240251,
       "f": ""
     },
     {
-      "t": "Magic in the New York Times as an example of...a cheap hobby lol",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vssckz/magic_in_the_new_york_times_as_an_example_ofa/",
+      "t": "I used this instant when I was about to get 21 damage",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vt9yom/i_used_this_instant_when_i_was_about_to_get_21/",
       "s": 0,
-      "c": 1787158962,
+      "c": 1787202078,
       "f": ""
     }
   ]
