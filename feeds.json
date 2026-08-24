@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-24T16:15:44.745Z",
+  "updated": "2026-08-24T19:15:11.862Z",
   "deals": [
     {
       "t": "JB hifi TMNT",
@@ -46,10 +46,17 @@
   ],
   "wire": [
     {
-      "t": "[SLD] Food Coma - Bonus card from Hobbit food tokens Secret Lair",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vwjqyo/sld_food_coma_bonus_card_from_hobbit_food_tokens/",
+      "t": "[SLD] Secret Lair x Masters of the Universe: She-Ra: Princess of Power",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vx7dlz/sld_secret_lair_x_masters_of_the_universe_shera/",
       "s": 0,
-      "c": 1787520962,
+      "c": 1787588279,
+      "f": ""
+    },
+    {
+      "t": "[SLD] Secret Lair x Masters of the Universe™: Nyah-ha-ha!",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vx7c8u/sld_secret_lair_x_masters_of_the_universe_nyahhaha/",
+      "s": 0,
+      "c": 1787588197,
       "f": ""
     },
     {
@@ -60,31 +67,24 @@
       "f": ""
     },
     {
-      "t": "Arzakon vs. Jared: Who is the better Pentacolor Planeswalker Commander?",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vwy36i/arzakon_vs_jared_who_is_the_better_pentacolor/",
+      "t": "[SLD] Secret Lair x Masters of the Universe: Allies and Enemies of Eternia",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vx7jg8/sld_secret_lair_x_masters_of_the_universe_allies/",
       "s": 0,
-      "c": 1787564473,
+      "c": 1787588611,
       "f": ""
     },
     {
-      "t": "From wich card in all of MtGs History would you like to see a reallty warped version in \"Reallity Fracture\"?",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vx55fh/from_wich_card_in_all_of_mtgs_history_would_you/",
+      "t": "[SLD] Food Coma - Bonus card from Hobbit food tokens Secret Lair",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vwjqyo/sld_food_coma_bonus_card_from_hobbit_food_tokens/",
       "s": 0,
-      "c": 1787583404,
+      "c": 1787520962,
       "f": ""
     },
     {
-      "t": "Found sealed booster packs",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vwitrw/found_sealed_booster_packs/",
+      "t": "So they did that",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vx86kj/so_they_did_that/",
       "s": 0,
-      "c": 1787518745,
-      "f": ""
-    },
-    {
-      "t": "[Making Magic] Big-Picture Questions, Part 2",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vx5dwk/making_magic_bigpicture_questions_part_2/",
-      "s": 0,
-      "c": 1787583912,
+      "c": 1787589994,
       "f": ""
     }
   ]
