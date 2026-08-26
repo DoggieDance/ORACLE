@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-26T03:15:15.579Z",
+  "updated": "2026-08-26T05:15:43.825Z",
   "deals": [
     {
       "t": "[The Hobbit] Play Booster Display $175 | Bundle $62 | Draft Night $125 | Scene Boxes $120 | Collector Booster Display $775",
@@ -53,6 +53,13 @@
       "f": ""
     },
     {
+      "t": "[SLZ] Generous Gift",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vylenf/slz_generous_gift/",
+      "s": 0,
+      "c": 1787714445,
+      "f": ""
+    },
+    {
       "t": "[SLZ] Chrome Mox",
       "u": "https://www.reddit.com/r/magicTCG/comments/1vy3o1o/slz_chrome_mox/",
       "s": 0,
@@ -78,13 +85,6 @@
       "u": "https://www.reddit.com/r/magicTCG/comments/1vyhjxk/slz_list_of_cards_revealed_so_far_and_info_on/",
       "s": 0,
       "c": 1787704053,
-      "f": ""
-    },
-    {
-      "t": "[SLZ] Quicksilver Elemental (and more)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vy56db/slz_quicksilver_elemental_and_more/",
-      "s": 0,
-      "c": 1787676344,
       "f": ""
     }
   ]
