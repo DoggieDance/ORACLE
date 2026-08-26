@@ -1,6 +1,27 @@
 {
-  "updated": "2026-08-25T00:15:42.131Z",
+  "updated": "2026-08-26T03:15:15.579Z",
   "deals": [
+    {
+      "t": "[The Hobbit] Play Booster Display $175 | Bundle $62 | Draft Night $125 | Scene Boxes $120 | Collector Booster Display $775",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vyerm7/the_hobbit_play_booster_display_175_bundle_62/",
+      "s": 0,
+      "c": 1787697056,
+      "f": ""
+    },
+    {
+      "t": "Hobbit scene boxes. $41.99 best buy (msrp)",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vy5m5p/hobbit_scene_boxes_4199_best_buy_msrp/",
+      "s": 0,
+      "c": 1787677265,
+      "f": ""
+    },
+    {
+      "t": "[CANADA] Hobbit Gift Bundles for $127 at Amazon!",
+      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vy4wdt/canada_hobbit_gift_bundles_for_127_at_amazon/",
+      "s": 0,
+      "c": 1787675744,
+      "f": ""
+    },
     {
       "t": "LORWYN ECLIPSED - PLAY BOOSTER 102.95 US Forge and fire",
       "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vxiwib/lorwyn_eclipsed_play_booster_10295_us_forge_and/",
@@ -21,70 +42,49 @@
       "s": 0,
       "c": 1787516072,
       "f": ""
-    },
-    {
-      "t": "Marvel Superheroes CBB $463 sold by amazon",
-      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vv7vwo/marvel_superheroes_cbb_463_sold_by_amazon/",
-      "s": 0,
-      "c": 1787391327,
-      "f": ""
-    },
-    {
-      "t": "Strixhaven Bundle $39.99 Best Buy",
-      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vv2xuo/strixhaven_bundle_3999_best_buy/",
-      "s": 0,
-      "c": 1787374447,
-      "f": ""
-    },
-    {
-      "t": "Shoreline WA",
-      "u": "https://www.reddit.com/r/sealedmtgdeals/comments/1vux1lm/shoreline_wa/",
-      "s": 0,
-      "c": 1787357276,
-      "f": ""
     }
   ],
   "wire": [
     {
-      "t": "[SLD] Secret Lair x Masters of the Universe: She-Ra: Princess of Power",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vx7dlz/sld_secret_lair_x_masters_of_the_universe_shera/",
+      "t": "[SLZ] Eternity Vessel",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vydhnz/slz_eternity_vessel/",
       "s": 0,
-      "c": 1787588279,
+      "c": 1787694036,
       "f": ""
     },
     {
-      "t": "[SLD] Secret Lair x Masters of the Universe™: Nyah-ha-ha!",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vx7c8u/sld_secret_lair_x_masters_of_the_universe_nyahhaha/",
+      "t": "[SLZ] Chrome Mox",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vy3o1o/slz_chrome_mox/",
       "s": 0,
-      "c": 1787588197,
+      "c": 1787673102,
       "f": ""
     },
     {
-      "t": "[SLD] Secret Lair x Masters of the Universe™: By the Power of Grayskull!",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vx78y6/sld_secret_lair_x_masters_of_the_universe_by_the/",
+      "t": "[SLZ] Sol Ring",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vy3mt6/slz_sol_ring/",
       "s": 0,
-      "c": 1787588005,
+      "c": 1787673022,
       "f": ""
     },
     {
-      "t": "[SLD] Secret Lair x Masters of the Universe: Allies and Enemies of Eternia",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vx7jg8/sld_secret_lair_x_masters_of_the_universe_allies/",
+      "t": "[SLZ] Mycosynth Golem",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vy4xh6/slz_mycosynth_golem/",
       "s": 0,
-      "c": 1787588611,
+      "c": 1787675807,
       "f": ""
     },
     {
-      "t": "[SLD] He That Walks Unseen - Bonus Card",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vxfvkp/sld_he_that_walks_unseen_bonus_card/",
+      "t": "[SLZ] List of cards revealed so far and info on rarities for Zeta",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vyhjxk/slz_list_of_cards_revealed_so_far_and_info_on/",
       "s": 0,
-      "c": 1787606364,
+      "c": 1787704053,
       "f": ""
     },
     {
-      "t": "[SLD] Desolation - Bonus Card",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1vxfs91/sld_desolation_bonus_card/",
+      "t": "[SLZ] Quicksilver Elemental (and more)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1vy56db/slz_quicksilver_elemental_and_more/",
       "s": 0,
-      "c": 1787606161,
+      "c": 1787676344,
       "f": ""
     }
   ]
