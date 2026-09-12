@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-12T03:15:08.302Z",
+  "updated": "2026-09-12T04:15:07.563Z",
   "deals": [
     {
       "t": "Hobbit Bundles $109 on Amazon right now!",
@@ -67,13 +67,6 @@
       "f": ""
     },
     {
-      "t": "[FRA] Surgical Precision (via Screen Hub)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1wdwlrl/fra_surgical_precision_via_screen_hub/",
-      "s": 0,
-      "c": 1789170221,
-      "f": ""
-    },
-    {
       "t": "[FRA] Wrath of the Bloodmane (iyingdi)",
       "u": "https://www.reddit.com/r/magicTCG/comments/1wdyust/fra_wrath_of_the_bloodmane_iyingdi/",
       "s": 0,
@@ -81,10 +74,17 @@
       "f": ""
     },
     {
-      "t": "[FRA] Silence the Echo (via Gamespot)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1wdnz97/fra_silence_the_echo_via_gamespot/",
+      "t": "[FRA] Surgical Precision (via Screen Hub)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1wdwlrl/fra_surgical_precision_via_screen_hub/",
       "s": 0,
-      "c": 1789150292,
+      "c": 1789170221,
+      "f": ""
+    },
+    {
+      "t": "[FRA] Shatterwing Pegasus (via ScreenHub)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1wdwlah/fra_shatterwing_pegasus_via_screenhub/",
+      "s": 0,
+      "c": 1789170186,
       "f": ""
     }
   ]
