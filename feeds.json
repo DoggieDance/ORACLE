@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-13T17:15:25.400Z",
+  "updated": "2026-09-13T21:15:26.015Z",
   "deals": [
     {
       "t": "Dragon Shield Outer Sleeves (not standard sleeves) $3.99 - TCG Stadium",
@@ -46,6 +46,13 @@
   ],
   "wire": [
     {
+      "t": "[ART] Kwia Vigorbloom by Ryan Pancoast",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1wfi1vj/art_kwia_vigorbloom_by_ryan_pancoast/",
+      "s": 0,
+      "c": 1789329686,
+      "f": ""
+    },
+    {
       "t": "[FRA] Break Under Pressure (via Uncle Mosquito)",
       "u": "https://www.reddit.com/r/magicTCG/comments/1wew4et/fra_break_under_pressure_via_uncle_mosquito/",
       "s": 0,
@@ -78,13 +85,6 @@
       "u": "https://www.reddit.com/r/magicTCG/comments/1wdc4x1/weekend_free_discussion_thread/",
       "s": 0,
       "c": 1789121713,
-      "f": ""
-    },
-    {
-      "t": "Wait, where would Echo-Mirrodin even overlay onto?",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1wfa0mp/wait_where_would_echomirrodin_even_overlay_onto/",
-      "s": 0,
-      "c": 1789311646,
       "f": ""
     }
   ]
