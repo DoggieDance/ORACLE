@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-12T18:15:42.505Z",
+  "updated": "2026-09-13T00:15:24.536Z",
   "deals": [
     {
       "t": "[ORB Trading Cards] Pre-Order Foundations Commander set of 5 $132.96 / Reality Fracture Play boxes $137.71 / Commander $37.96 with HiReddit",
@@ -46,10 +46,24 @@
   ],
   "wire": [
     {
-      "t": "[FRA] Vraska's Final Mercy (IGN preview)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1wdp0nm/fra_vraskas_final_mercy_ign_preview/",
+      "t": "[FRA] Flickering Hound",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1weg33t/fra_flickering_hound/",
       "s": 0,
-      "c": 1789152530,
+      "c": 1789228235,
+      "f": ""
+    },
+    {
+      "t": "[FRA] Rise of the Deathbringer",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1weg2je/fra_rise_of_the_deathbringer/",
+      "s": 0,
+      "c": 1789228199,
+      "f": ""
+    },
+    {
+      "t": "[FRA] Afterthought Sentry",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1werf2v/fra_afterthought_sentry/",
+      "s": 0,
+      "c": 1789255220,
       "f": ""
     },
     {
@@ -60,10 +74,10 @@
       "f": ""
     },
     {
-      "t": "[FRA] Galia, the Merrymaker; Gallia, Tragic Host (Brandon Sanderson)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1wdmezl/fra_galia_the_merrymaker_gallia_tragic_host/",
+      "t": "[FRA] Vraska's Final Mercy (IGN preview)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1wdp0nm/fra_vraskas_final_mercy_ign_preview/",
       "s": 0,
-      "c": 1789146914,
+      "c": 1789152530,
       "f": ""
     },
     {
@@ -71,20 +85,6 @@
       "u": "https://www.reddit.com/r/magicTCG/comments/1wdwlrl/fra_surgical_precision_via_screen_hub/",
       "s": 0,
       "c": 1789170221,
-      "f": ""
-    },
-    {
-      "t": "[FRA] - The Echoverse Fulcrum - (IGN)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1wdp18w/fra_the_echoverse_fulcrum_ign/",
-      "s": 0,
-      "c": 1789152552,
-      "f": ""
-    },
-    {
-      "t": "[FRA] Shatterwing Pegasus (via ScreenHub)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1wdwlah/fra_shatterwing_pegasus_via_screenhub/",
-      "s": 0,
-      "c": 1789170186,
       "f": ""
     }
   ]
