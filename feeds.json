@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-13T07:15:44.311Z",
+  "updated": "2026-09-13T16:15:44.142Z",
   "deals": [
     {
       "t": "Dragon Shield Outer Sleeves (not standard sleeves) $3.99 - TCG Stadium",
@@ -53,17 +53,17 @@
       "f": ""
     },
     {
-      "t": "[FRA] Flickering Hound",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1weg33t/fra_flickering_hound/",
-      "s": 0,
-      "c": 1789228235,
-      "f": ""
-    },
-    {
       "t": "[FRA] Afterthought Sentry",
       "u": "https://www.reddit.com/r/magicTCG/comments/1werf2v/fra_afterthought_sentry/",
       "s": 0,
       "c": 1789255220,
+      "f": ""
+    },
+    {
+      "t": "[FRA] Flickering Hound",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1weg33t/fra_flickering_hound/",
+      "s": 0,
+      "c": 1789228235,
       "f": ""
     },
     {
@@ -81,10 +81,10 @@
       "f": ""
     },
     {
-      "t": "[FRA] Vraska's Final Mercy (IGN preview)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1wdp0nm/fra_vraskas_final_mercy_ign_preview/",
+      "t": "Weekend Free Discussion Thread",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1wdc4x1/weekend_free_discussion_thread/",
       "s": 0,
-      "c": 1789152530,
+      "c": 1789121713,
       "f": ""
     }
   ]
