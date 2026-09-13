@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-13T01:15:43.249Z",
+  "updated": "2026-09-13T07:15:44.311Z",
   "deals": [
     {
       "t": "Dragon Shield Outer Sleeves (not standard sleeves) $3.99 - TCG Stadium",
@@ -46,6 +46,13 @@
   ],
   "wire": [
     {
+      "t": "[FRA] Break Under Pressure (via Uncle Mosquito)",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1wew4et/fra_break_under_pressure_via_uncle_mosquito/",
+      "s": 0,
+      "c": 1789268614,
+      "f": ""
+    },
+    {
       "t": "[FRA] Flickering Hound",
       "u": "https://www.reddit.com/r/magicTCG/comments/1weg33t/fra_flickering_hound/",
       "s": 0,
@@ -53,17 +60,17 @@
       "f": ""
     },
     {
-      "t": "[FRA] Rise of the Deathbringer",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1weg2je/fra_rise_of_the_deathbringer/",
-      "s": 0,
-      "c": 1789228199,
-      "f": ""
-    },
-    {
       "t": "[FRA] Afterthought Sentry",
       "u": "https://www.reddit.com/r/magicTCG/comments/1werf2v/fra_afterthought_sentry/",
       "s": 0,
       "c": 1789255220,
+      "f": ""
+    },
+    {
+      "t": "[FRA] Rise of the Deathbringer",
+      "u": "https://www.reddit.com/r/magicTCG/comments/1weg2je/fra_rise_of_the_deathbringer/",
+      "s": 0,
+      "c": 1789228199,
       "f": ""
     },
     {
@@ -78,13 +85,6 @@
       "u": "https://www.reddit.com/r/magicTCG/comments/1wdp0nm/fra_vraskas_final_mercy_ign_preview/",
       "s": 0,
       "c": 1789152530,
-      "f": ""
-    },
-    {
-      "t": "[FRA] Surgical Precision (via Screen Hub)",
-      "u": "https://www.reddit.com/r/magicTCG/comments/1wdwlrl/fra_surgical_precision_via_screen_hub/",
-      "s": 0,
-      "c": 1789170221,
       "f": ""
     }
   ]
