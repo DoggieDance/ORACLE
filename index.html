@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v8.62 · 2026-11-17">
+<meta name="oracle-build" content="v8.63 · 2026-11-17">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1873,12 +1873,118 @@
   .setpick-fix { background: rgba(224,96,76,.08); border: 1px solid rgba(224,96,76,.3); border-radius: 13px; padding: 11px 13px; font-size: 13.5px; color: var(--text-dim); display: flex; flex-direction: column; gap: 9px; }
   .setpick-fix-opts { display: flex; flex-direction: column; gap: 6px; }
   .setpick-fix-btn { display: flex; align-items: center; gap: 9px; padding: 9px 11px; border-radius: 10px; border: 1px solid rgba(224,196,106,.35); background: rgba(224,196,106,.08); color: var(--gold-bright); font-size: 14px; text-align: left; }
+
+  /* ============ v8.63 — front-page makeover: Market + News tabs, calmer landing ============ */
+  /* Results row: never wider than the screen. The lens chips wrap under Cards/Printings when they must. */
+  .result-mode-row { flex-wrap: wrap; row-gap: 8px; }
+  .art-lens { flex-wrap: wrap; justify-content: flex-end; min-width: 0; }
+  @media (max-width: 520px) {
+    .result-mode-note { display: none; }
+    .result-mode-row .ios-segment button { padding-left: 12px; padding-right: 12px; }
+    .lens-chip { padding: 6px 10px; font-size: 11.5px; }
+  }
+  @media (max-width: 359px) { .art-lens { margin-left: 0; justify-content: flex-start; } }
+  /* Five tabs on phones: shorter "Decks", tighter padding */
+  @media (max-width: 559px) {
+    .tab-long { display: none; }
+    .topbar .tab { padding: 7px 2px; font-size: 11.5px; min-width: 0; }
+    .topbar .tab .badge { margin-left: 3px; min-width: 16px; height: 16px; line-height: 14px; padding: 0 4px; font-size: 9.5px; }
+  }
+  /* Landing: slimmer hero on phones, the Forge as a two-row swipe rail */
+  @media (max-width: 639px) {
+    .mast { height: 236px; }
+    .mast-cmdr-plans { flex-wrap: nowrap !important; overflow: hidden; max-width: 100%; -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
+    .mast-cmdr-plans > * { flex: none; }
+    .mast-title::before { display: none; }
+    .arch-sec .col-head { flex-wrap: nowrap; gap: 8px; }
+    .arch-sec .col-title { white-space: nowrap; }
+    .arch-head-actions { flex-wrap: nowrap; gap: 6px; }
+    .arch-head-actions .arch-surprise { white-space: nowrap; padding: 5px 9px; font-size: 11px; }
+    .arch-tiles { grid-template-columns: none; grid-auto-flow: column; grid-template-rows: repeat(2, auto); grid-auto-columns: 62%; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin-left: -12px; margin-right: -12px; padding: 0 12px 4px; scroll-padding: 0 12px; }
+    .arch-tiles::-webkit-scrollbar { display: none; }
+    .arch-tile { scroll-snap-align: start; min-height: 72px; }
+    .arch-head-actions .arch-hint { display: none; }
+  }
+  /* "For <commander>" shortcuts: one swipe row on phones (it wrapped to two or three lines) */
+  @media (max-width: 639px) {
+    .ctx-row { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; margin-left: -12px; margin-right: -12px; padding: 2px 12px 4px; }
+    .ctx-row::-webkit-scrollbar { display: none; }
+    .ctx-row > * { flex: none; }
+    .ctx-for { display: none; }
+    .resume-bar { margin-top: 14px; }
+  }
+  /* Today card */
+  .today { margin-top: 30px; padding: 14px 14px 12px; border: 1px solid var(--hair2); border-radius: 18px; background: var(--glass); box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
+  .today-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--hair); }
+  .today-title { font-family: var(--display); font-size: 14px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--gold-bright); }
+  .today-title .cg { margin-right: 8px; }
+  .today-more { border: 0; background: none; color: var(--gold); font-size: 12.5px; font-weight: 650; padding: 4px 0; cursor: pointer; white-space: nowrap; }
+  .today-list { display: flex; flex-direction: column; }
+  .today-item { display: flex; flex-direction: column; gap: 3px; padding: 10px 2px; border-bottom: 1px solid var(--hair); color: var(--text); text-decoration: none; }
+  .today-item:last-child { border-bottom: 0; }
+  .today-meta { display: flex; gap: 8px; align-items: baseline; font-size: 10.5px; color: var(--muted); }
+  .today-item .hd-tag { font-size: 10px; }
+  .today-t { font-size: 14px; font-weight: 620; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .today-item:hover .today-t { color: var(--gold-bright); }
+  .today-market { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 8px; padding: 11px 12px; border: 1px solid rgba(224,196,106,.28); border-radius: 13px; background: rgba(224,196,106,.06); color: var(--text); text-align: left; cursor: pointer; }
+  .today-market:hover { border-color: rgba(224,196,106,.5); }
+  .today-m-ico { color: var(--gold); font-size: 16px; }
+  .today-m-copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .today-m-copy b { font-size: 13.5px; } .today-m-copy span { font-size: 12px; color: var(--text-dim); }
+  .today-m-go { color: var(--gold); font-size: 20px; }
+  @media (min-width: 900px) { .today { margin-top: 40px; padding: 18px 20px 14px; } .today-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 22px; } .today-item { border-bottom: 0; } }
+  /* Market / News pages */
+  .search-landing.page { padding-top: 18px; }
+  .page-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-bottom: 12px; border-bottom: 1px solid rgba(224,196,106,.34); }
+  .page-title { margin: 0; font-family: var(--display); font-size: 22px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--gold-bright); }
+  .page-sub { font-size: 12px; color: var(--muted); font-style: italic; }
+  .pw-sec.page { margin-top: 6px; }
+  .search-landing.page .landing-cols { margin-top: 18px; }
+  .search-landing.page .fs-band { margin-top: 18px; }
+
+  /* v8.63 — card lists + commander remove */
+  .cmdr-remove { border: 1px solid rgba(224,196,106,.35); background: rgba(0,0,0,.25); color: var(--gold-bright); font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 10px; cursor: pointer; }
+  .cmdr-remove:active { background: rgba(224,196,106,.15); }
+  .dda-btn.uncmdr { color: #f0b2a2; }
+  .dda-btn.list-save { width: 100%; flex: none; margin: -6px 0 16px; background: rgba(255,255,255,.045); color: var(--text-dim); min-height: 42px; }
+  .dda-btn.list-save.on { color: var(--gold-bright); border-color: rgba(224,196,106,.4); }
+  .ls-card { font-weight: 700; color: var(--gold-bright); margin: 0 0 10px; }
+  .sort-opt.ls-opt { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+  .ls-opt .ls-n { margin-left: 8px; font-size: 11.5px; color: var(--muted); font-weight: 600; }
+  .ls-empty { color: var(--muted); font-size: 13.5px; padding: 6px 2px 12px; line-height: 1.45; }
+  .ls-new { display: flex; gap: 8px; margin-top: 12px; }
+  .ls-input { flex: 1; min-width: 0; min-height: 42px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--hair); background: rgba(255,255,255,.05); color: var(--text); font-size: 16px; }
+  .ls-create { border: 1px solid #e5c66e; background: var(--grad-gold); color: var(--gold-ink); font-weight: 760; border-radius: 12px; padding: 0 14px; white-space: nowrap; }
+  .ls-create:disabled { opacity: .45; }
+  .decks-seg { margin-bottom: 14px; }
+  .seg-count { margin-left: 6px; font-size: 10.5px; opacity: .75; }
+  .lst-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+  .lst-card { display: flex; flex-direction: column; gap: 3px; text-align: left; padding: 8px 8px 11px; border: 1px solid var(--hair2); border-radius: 16px; background: var(--glass); color: var(--text); cursor: pointer; }
+  .lst-card:hover { border-color: rgba(224,196,106,.45); }
+  .lst-arts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; height: 54px; margin-bottom: 6px; border-radius: 10px; overflow: hidden; background: rgba(255,255,255,.04); }
+  .lst-art { background-size: cover; background-position: center; }
+  .lst-name { font-weight: 720; font-size: 14.5px; padding: 0 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lst-count { font-size: 11.5px; color: var(--muted); padding: 0 3px; }
+  .lst-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .lst-back { border: 0; background: none; color: var(--gold); font-weight: 700; font-size: 14px; padding: 6px 2px; cursor: pointer; white-space: nowrap; }
+  .lst-title { flex: 1; min-width: 0; font-family: var(--display); font-size: 18px; font-weight: 700; letter-spacing: .06em; color: var(--gold-bright); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lst-act { border: 1px solid var(--hair); background: none; color: var(--text-dim); font-size: 12px; font-weight: 650; border-radius: 10px; padding: 5px 9px; cursor: pointer; }
+  .lst-act.bad { color: #f0a080; }
+  .lst-sub { font-size: 12.5px; color: var(--muted); margin-bottom: 12px; }
+  .lst-sub b { color: var(--text-dim); }
+  .lst-filter { width: 100%; margin-bottom: 10px; }
+  .lst-row { display: flex; align-items: center; gap: 10px; min-height: 62px; padding: 8px 10px; border: 1px solid rgba(255,255,255,.07); border-radius: 14px; background: var(--glass); margin-bottom: 7px; }
+  .lst-info { flex: 1; min-width: 0; cursor: pointer; }
+  .lst-add { border: 1px solid #e5c66e; background: var(--grad-gold); color: var(--gold-ink); font-weight: 760; font-size: 12.5px; border-radius: 11px; padding: 8px 11px; white-space: nowrap; cursor: pointer; }
+  .lst-add.in, .lst-add:disabled { background: rgba(255,255,255,.06); color: var(--muted); border-color: var(--hair); cursor: default; }
+  .lst-add.in { color: #8fdcab; }
+  .lst-x { border: 0; background: none; color: var(--muted); font-size: 14px; padding: 6px; cursor: pointer; }
 </style>
 </head>
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v8.62 \u00B7 2026-11-17', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v8.63 \u00B7 2026-11-17', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -2558,6 +2664,7 @@ const haptic = () => { if (navigator.vibrate)
 const esc = s => (s == null ? '' : String(s));
 // ---- storage helpers (safe; webview storage can be unreliable) ----
 const STORE_KEY = 'oracle_decks_v1';
+const LISTS_KEY = 'oracle_lists_v1';
 function cardKey(card) {
     if (!card)
         return '';
@@ -18120,6 +18227,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v8.63', date: '2026-11-17', focus: 'ui', commander: '—', summary: "FRONT-PAGE MAKEOVER. The landing was a ~4,800px scroll on phones; it now keeps the brewing surfaces (Today's Commander, Continue brewing, the Forge) plus one small Today card with the three newest headlines and a Market nudge (~900px). Two new tabs: MARKET (Price Watch: your decks, reprints, the week's moves) and NEWS (Headlines — Dispatches, the Wire, community — or Spoilers). On phones the Forge is a two-row swipe rail, the 'For <commander>' shortcuts are one swipe row, the masthead no longer crowds, and the Cards/Printings + Special art/Secret Lair row only appears with results and wraps instead of running off the screen. CARD LISTS: save any card to named lists outside your decks ('Treasures', 'Token value'…) from its detail; My Decks → Card lists shows them, and + Deck adds a card to the deck you're building in one tap (also reachable from the deck's More menu). REMOVING A COMMANDER is now a clear '✕ Remove' on the deck screen and '✕ Remove Commander' in the card detail, both with Undo. FIX: card-name suggestions no longer pop back open over your results after pressing Enter." },
     { build: 'v8.62', date: '2026-11-17', focus: 'ui', commander: '—', summary: "Price Watch polish from live testing. A card in your deck whose printing isn't out yet (like a precon reprint) used to open with no price panel at all, so the 'Wait' had no explanation; it now shows a Price outlook card with the reprint date, what to expect, and what older copies cost today. Brand-new cards (under ~6 weeks on the market) no longer get Spiking/Dropping reads in your decks, the Shop, or Market movers — those compared against preorder prices — and get the New card note instead (prices usually settle 2–3 weeks after release)." },
     { build: 'v8.61', date: '2026-11-17', focus: 'ui', commander: '—', summary: "WHEN TO BUY. Price Watch on the landing now has three views. (1) YOUR DECKS: the unowned cards in your decks that need a decision — WAIT when a reprint is announced or just released (prices slide from the announcement and usually bottom 2–4 months after release) or when the price just spiked (spikes usually settle within weeks); BUY when a card is under its usual 1-year price or dropping. (2) REPRINTS: every $10+ card just reprinted or announced for an upcoming precon, set, Secret Lair or Special Guests, with the cheapest existing copy and the new copy's price, so you can see when an expensive card is coming out for less. Limited printings (Secret Lair, The List, Special Guests) are marked as barely moving older copies, and reprints of sub-$5 cards don't nag. (3) MARKET: the week's biggest TCGplayer moves, now labeled steady climb/slide (real demand) vs sudden spike/drop. The deck SHOP tab shows a Wait/Buy chip on each card still to buy plus a summary of what to hold off on and what's a good buy now. Card detail adds a reprint note above the price read, and first printings get a new-card note (prices usually settle 2–3 weeks after release). Price Watch's Market list also no longer counts a short spike falling back as a crash. All of it updates daily on GitHub." },
     { build: 'v8.60', date: '2026-11-17', focus: 'ui', commander: '—', summary: "SET SEARCH, PRICES, MOBILE. (1) SETS BY NAME: the Filters set box now takes a set code OR name, autocompletes with set icons, and when the text isn't a set it asks 'Did you mean…' instead of firing a dead search; set:/e: in the search bar accept names too (set:modern horizons 3 → set:mh3). (2) Card-name autocomplete now updates while you type (it only fired when the box lost focus). (3) Results get two quick lenses: ✦ Special art (borderless, showcase, extended & full art, etched, textless) and Secret Lair (every Secret Lair set). (4) PRICES WERE FROZEN: saved decks kept each card's price from the day it was added; they now re-price from Scryfall every 12 hours. (5) PRICE HISTORY on every card: TCGplayer market / lowest listing / direct low, a 1M–All chart reaching back to 2021, 7/30-day moves, all-time low and high, and a plain buy read (near all-time low, below usual, climbing fast, above usual). (6) PRICE WATCH on the landing: the week's biggest real TCGplayer drops and climbs, singles and sealed, glitch-filtered. (7) THE WIRE now comes from MTG news sites (EDHREC, MTGGoldfish, Card Kingdom, Draftsim…) via the oracle-data GitHub Action every 3 hours, since Reddit closed its feeds to servers; prices also update daily on GitHub, no PC needed. (8) PHONE: Fresh Spoilers become swipe rails and only the soonest set opens (≈5,400px → ≈2,200px); artless Dispatches use the full width; no sideways wiggle. (9) Filters freeze guard: the keyboard window-pin can no longer fight iOS in a loop (circuit breaker), the no-keyboard height is no longer captured mid-close, and the sheet's scroll guard tracks the finger's latest direction; ?kbdebug shows live counters." },
@@ -18575,9 +18683,13 @@ function App() {
     useEffect(() => {
         window.__oracleMounted = true;
     }, []);
-    const [tab, setTab] = useState('search'); // search | deck | decks
+    const [tab, setTab] = useState('search'); // search | deck | decks | market | news
     const [searchInject, setSearchInject] = useState(null);
     const [decks, setDecks] = useState(() => loadDecks() || []);
+    // v8.63 — CARD LISTS: named groups of cards outside any deck ("Treasures", "Token value"…),
+    // so a card you already know about is one tap from the deck you're building.
+    const [lists, setLists] = useState(() => { try { const r = localStorage.getItem(LISTS_KEY); const j = r ? JSON.parse(r) : []; return Array.isArray(j) ? j : []; } catch (e) { return []; } });
+    const [decksView, setDecksView] = useState(() => { try { return localStorage.getItem('oracle_decks_view') || 'decks'; } catch (e) { return 'decks'; } });
     const [activeDeckId, setActiveDeckId] = useState(() => { const d = loadDecks(); return d && d.length ? d[0].id : null; });
     const [toast, setToast] = useState('');
     const [detailCard, setDetailCard] = useState(null);
@@ -18842,6 +18954,34 @@ function App() {
         showToast('Commander set');
         haptic();
     }
+    useEffect(() => { try { localStorage.setItem(LISTS_KEY, JSON.stringify(lists)); } catch (e) { } }, [lists]);
+    useEffect(() => { try { localStorage.setItem('oracle_decks_view', decksView); } catch (e) { } }, [decksView]);
+    function createList(name, card) {
+        const id = 'l' + Date.now();
+        const nm = (name || '').trim() || 'New list';
+        setLists(p => [{ id, name: nm, created: Date.now(), cards: card ? { [cardKey(card)]: { card, added: Date.now() } } : {} }].concat(p));
+        haptic();
+        showToast(card ? 'Saved to \u201C' + nm + '\u201D' : 'List \u201C' + nm + '\u201D created');
+        return id;
+    }
+    function toggleInList(id, card) {
+        const k = cardKey(card), l = lists.find(x => x.id === id); if (!l) return;
+        const had = !!(l.cards || {})[k];
+        setLists(p => p.map(x => {
+            if (x.id !== id) return x;
+            const cards = Object.assign({}, x.cards);
+            if (had) delete cards[k]; else cards[k] = { card, added: Date.now() };
+            return Object.assign({}, x, { cards });
+        }));
+        haptic();
+        showToast(had ? 'Removed from \u201C' + l.name + '\u201D' : 'Saved to \u201C' + l.name + '\u201D');
+    }
+    function renameList(id, name) { const nm = (name || '').trim(); if (!nm) return; setLists(p => p.map(x => x.id === id ? Object.assign({}, x, { name: nm }) : x)); }
+    function deleteList(id) {
+        const idx = lists.findIndex(x => x.id === id), l = lists[idx]; if (!l) return;
+        setLists(p => p.filter(x => x.id !== id));
+        showToast('Deleted \u201C' + l.name + '\u201D', { label: 'Undo', fn: () => setLists(p => { const c = p.slice(); c.splice(Math.min(idx, c.length), 0, l); return c; }) });
+    }
     function clearCommander() {
         const deck = activeDeck;
         const cmdr = deck ? deck.commander : null;
@@ -19055,12 +19195,16 @@ function App() {
                     "Deck",
                     deckTotal > 0 && React.createElement("span", { className: "badge" }, deckTotal)),
                 React.createElement("div", { className: 'tab ' + (tab === 'decks' ? 'active' : ''), onClick: () => { setTab('decks'); haptic(); } },
-                    "My Decks",
-                    decks.length > 0 && React.createElement("span", { className: "badge" }, decks.length))),
+                    React.createElement("span", { className: "tab-long" }, "My\u00A0"), "Decks",
+                    decks.length > 0 && React.createElement("span", { className: "badge" }, decks.length)),
+                React.createElement("div", { className: 'tab ' + (tab === 'market' ? 'active' : ''), onClick: () => { setTab('market'); haptic(); } }, "Market"),
+                React.createElement("div", { className: 'tab ' + (tab === 'news' ? 'active' : ''), onClick: () => { setTab('news'); haptic(); } }, "News")),
             React.createElement("button", { className: "build-badge", "aria-label": "What's new in Oracle", onClick: () => { setWhatsNewOn(true); haptic(); } }, BUILD)),
-        tab === 'search' && (React.createElement(SearchScreen, { decks: decks, injectQuery: searchInject, onInjectConsumed: () => setSearchInject(null), forgeIntent: forgeIntent, onForgeIntentConsumed: () => setForgeIntent(null), activeDeck: activeDeck, onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onAdd: addCard, ciViolation: ciViolation, commanderCI: commanderCI, upgrades: upgrades, onOpenRandom: () => { setRandomOn(true); haptic(); }, onGoDeck: () => { setTab('deck'); haptic(); }, onOpenSynergy: () => { setSynergyOn(true); haptic(); } })),
-        tab === 'deck' && (React.createElement(DeckScreen, { deck: activeDeck, deckList: deckList, deckTotal: deckTotal, onChangeQty: changeQty, onRemove: removeCard, onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onClearCommander: clearCommander, onDrawHand: startPlaytest, onGoSearch: () => setTab('search'), onFillGap: (q) => { setSearchInject({ q: q, t: Date.now(), sort: 'edhrec' }); setTab('search'); haptic(); }, onOpenSynergy: () => { setSynergyOn(true); haptic(); }, onOpenSimilar: () => { if (activeDeck && activeDeck.commander) { setSimilarFor(activeDeck.commander); haptic(); } }, onOpenBasics: () => { setBasicsOn(true); haptic(); }, onOpenRandom: () => { setRandomOn(true); haptic(); }, onToggleOwned: toggleOwned, onSetOwnedAll: setOwnedAll, ciViolation: ciViolation, showToast: showToast, upgrades: upgrades, decksAll: decks, onCrossDeck: crossDeck })),
-        tab === 'decks' && (React.createElement(DecksScreen, { decks: decks, activeDeckId: activeDeckId, onSelect: (id) => { setActiveDeckId(id); setTab('deck'); haptic(); }, onCreate: createDeck, onDelete: deleteDeck, onImport: importDeckList, onRandom: () => { setRandomOn(true); haptic(); } })),
+        tab === 'search' && (React.createElement(SearchScreen, { decks: decks, onGoTab: (t) => setTab(t), injectQuery: searchInject, onInjectConsumed: () => setSearchInject(null), forgeIntent: forgeIntent, onForgeIntentConsumed: () => setForgeIntent(null), activeDeck: activeDeck, onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onAdd: addCard, ciViolation: ciViolation, commanderCI: commanderCI, upgrades: upgrades, onOpenRandom: () => { setRandomOn(true); haptic(); }, onGoDeck: () => { setTab('deck'); haptic(); }, onOpenSynergy: () => { setSynergyOn(true); haptic(); } })),
+        tab === 'deck' && (React.createElement(DeckScreen, { onOpenLists: () => { setDecksView('lists'); setTab('decks'); haptic(); }, deck: activeDeck, deckList: deckList, deckTotal: deckTotal, onChangeQty: changeQty, onRemove: removeCard, onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onClearCommander: clearCommander, onDrawHand: startPlaytest, onGoSearch: () => setTab('search'), onFillGap: (q) => { setSearchInject({ q: q, t: Date.now(), sort: 'edhrec' }); setTab('search'); haptic(); }, onOpenSynergy: () => { setSynergyOn(true); haptic(); }, onOpenSimilar: () => { if (activeDeck && activeDeck.commander) { setSimilarFor(activeDeck.commander); haptic(); } }, onOpenBasics: () => { setBasicsOn(true); haptic(); }, onOpenRandom: () => { setRandomOn(true); haptic(); }, onToggleOwned: toggleOwned, onSetOwnedAll: setOwnedAll, ciViolation: ciViolation, showToast: showToast, upgrades: upgrades, decksAll: decks, onCrossDeck: crossDeck })),
+        tab === 'market' && React.createElement(MarketScreen, { decks: decks, activeDeck: activeDeck, onOpenDetail: setDetailCard }),
+        tab === 'news' && React.createElement(NewsScreen, null),
+        tab === 'decks' && (React.createElement(DecksScreen, { view: decksView, onView: setDecksView, lists: lists, activeDeck: activeDeck, onAddToDeck: (c) => addCard(c, false), onOpenDetail: setDetailCard, onCreateList: createList, onRenameList: renameList, onDeleteList: deleteList, onToggleList: toggleInList, decks: decks, activeDeckId: activeDeckId, onSelect: (id) => { setActiveDeckId(id); setTab('deck'); haptic(); }, onCreate: createDeck, onDelete: deleteDeck, onImport: importDeckList, onRandom: () => { setRandomOn(true); haptic(); } })),
         // v8.01 — C-036: SynergyOverlay seeds its `sections` STATE from
         // buildEngineModel in a useState INITIALISER, which React runs once per MOUNT.
         // Both call sites below render the overlay without a key, so swapping the
@@ -19079,7 +19223,7 @@ function App() {
         scoutFor && React.createElement(SynergyOverlay, { key: 'scout-' + (scoutFor.oracle_id || scoutFor.id || scoutFor.name), scout: true, focusRail: scoutFocus, commander: scoutFor, deck: activeDeck, deckList: deckList, onViewAll: (q, sort) => { setSearchInject({ q: q, t: Date.now(), sort: sort }); setScoutFor(null); setScoutFocus(null); setTab('search'); haptic(); }, onClose: () => { setScoutFor(null); setScoutFocus(null); }, onAdd: (c) => addCard(c, false), onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onOpenSimilar: (c) => { setSimilarFor(c); haptic(); }, onOpenRandom: () => { setRandomOn(true); haptic(); }, onBuild: buildFromCommander }),
         similarFor && React.createElement(SimilarOverlay, { source: similarFor, onClose: () => setSimilarFor(null), onOpenDetail: setDetailCard, onBuild: buildFromCommander }),
         randomOn && React.createElement(RandomOverlay, { onClose: () => setRandomOn(false), commanderCI: commanderCI, onOpenDetail: setDetailCard, onBuild: buildFromCommander, onSetCommander: (c) => { setCommander(c); setRandomOn(false); } }),
-        detailCard && (React.createElement(DetailOverlay, { card: detailCard, onClose: () => setDetailCard(null), onAdd: (c) => addCard(c, false), onSetCommander: (c) => { setCommander(c); }, onBuild: buildFromCommander, onViewPrintings: (card) => setPrintingsCard(card), onSimilar: (c) => { setDetailCard(null); setSimilarFor(c); haptic(); }, onConsult: (c, railKey) => { setDetailCard(null); setScoutFor(c); setScoutFocus(railKey || null); haptic(); }, onOpenSchool: (id) => { setDetailCard(null); setForgeIntent({ id: id, t: Date.now() }); setTab('search'); haptic(); }, inDeck: activeDeck && activeDeck.cards[cardKey(detailCard)], isCommander: activeDeck && activeDeck.commander && cardKey(activeDeck.commander) === cardKey(detailCard), ciViolation: ciViolation, upgrade: detailCard && upgrades[detailCard.oracle_id] })),
+        detailCard && (React.createElement(DetailOverlay, { card: detailCard, onClose: () => setDetailCard(null), onAdd: (c) => addCard(c, false), onSetCommander: (c) => { setCommander(c); }, onClearCommander: clearCommander, lists: lists, onToggleList: toggleInList, onCreateList: createList, onBuild: buildFromCommander, onViewPrintings: (card) => setPrintingsCard(card), onSimilar: (c) => { setDetailCard(null); setSimilarFor(c); haptic(); }, onConsult: (c, railKey) => { setDetailCard(null); setScoutFor(c); setScoutFocus(railKey || null); haptic(); }, onOpenSchool: (id) => { setDetailCard(null); setForgeIntent({ id: id, t: Date.now() }); setTab('search'); haptic(); }, inDeck: activeDeck && activeDeck.cards[cardKey(detailCard)], isCommander: activeDeck && activeDeck.commander && cardKey(activeDeck.commander) === cardKey(detailCard), ciViolation: ciViolation, upgrade: detailCard && upgrades[detailCard.oracle_id] })),
         printingsCard && (React.createElement(PrintingsSheet, { card: printingsCard, deck: activeDeck, onClose: () => setPrintingsCard(null), onChoose: choosePrinting })),
         basicsOn && activeDeck && React.createElement(BasicsSheet, { deck: activeDeck, commanderCI: commanderCI, onAddQty: addCardQty, onClose: () => setBasicsOn(false), showToast: showToast }),
         playtesting && React.createElement(PlaytestBoard, { deck: activeDeck, deckList: deckList, onClose: () => setPlaytesting(false) }),
@@ -19482,6 +19626,99 @@ function CommunityChips() {
     return React.createElement('div', { className: 'community-row' },
         React.createElement('span', { className: 'community-label' }, 'Community'),
         SUBS.map(([label, url]) => React.createElement('a', { key: url, className: 'community-chip', href: url, target: '_blank', rel: 'noopener' }, label)));
+}
+// ============ v8.63 — NEWS and MARKET tabs, and the landing's Today card ============
+// The front page was a 4,800px scroll on phones (hero, Forge, Reading Room, Price Watch,
+// Fresh Spoilers, community). Brewing stays on the landing; reading and buying get tabs.
+function NewsScreen() {
+    const [view, setView] = useState(() => { try { return localStorage.getItem('oracle_news_view') || 'headlines'; } catch (e) { return 'headlines'; } });
+    const pick = (v) => { setView(v); haptic(); try { localStorage.setItem('oracle_news_view', v); } catch (e) { } };
+    return React.createElement("div", { className: "screen" },
+        React.createElement("div", { className: "results-pad" },
+            React.createElement("div", { className: "search-landing page" },
+                React.createElement("div", { className: "page-head" },
+                    React.createElement("h1", { className: "page-title" }, "News"),
+                    React.createElement("div", { className: "ios-segment compact", role: "group", "aria-label": "News view" },
+                        React.createElement("button", { className: view === 'headlines' ? 'active' : '', onClick: () => pick('headlines') }, "Headlines"),
+                        React.createElement("button", { className: view === 'spoilers' ? 'active' : '', onClick: () => pick('spoilers') }, "Spoilers"))),
+                view === 'spoilers' ? React.createElement(FreshSpoilers, null) : React.createElement(React.Fragment, null,
+                // v5.25 S4 (makeover): the news surfaces read as ONE grouped Reading Room
+                    // band beneath the brewing surfaces (hero / resume / Forge come first).
+                    React.createElement("div", { className: "landing-cols" },
+                        React.createElement("div", { className: "col" },
+                            React.createElement("div", { className: "col-head" },
+                                React.createElement("span", { className: "col-title" }, React.createElement("span", { className: "cg" }, "\u2726"), "Dispatches")),
+                            React.createElement("a", { className: "hd-lead", href: NEWS[0].url, target: "_blank", rel: "noopener" },
+                                // v7.38 (KEEP necessity audit): only reserve the hero art window when the
+                                // lead item actually has art — an artless lead previously rendered a large
+                                // empty 158px box at the top of Dispatches (attention cost, zero signal).
+                                NEWS[0].img ? React.createElement("span", { className: "hd-lead-imgwrap" }, React.createElement(CardImg, { src: NEWS[0].img, alt: "" })) : null,
+                                React.createElement("div", { className: "hd-meta" },
+                                    React.createElement("span", { className: "hd-tag" }, NEWS[0].tag),
+                                    React.createElement("span", null, NEWS[0].date)),
+                                React.createElement("div", { className: "hd-title lead" }, NEWS[0].title),
+                                React.createElement("div", { className: "hd-blurb" }, NEWS[0].blurb)),
+                            NEWS.slice(1).map((n, i) => React.createElement("a", { key: i, className: "hd-item", href: n.url, target: "_blank", rel: "noopener", style: { '--i': i + 1 } },
+                                // v8.59 (KEEP necessity audit): extend the v7.38 lead-item rule to the list —
+                                // artless dispatch rows rendered an empty grey .hd-thumb box (attention cost,
+                                // zero signal, four of five rows on 2026-09-11). No art → no placeholder.
+                                n.img ? React.createElement("span", { className: "hd-thumb-wrap" }, React.createElement(CardImg, { src: n.img, alt: "" })) : null,
+                                React.createElement("div", { className: "hd-copy" },
+                                    React.createElement("div", { className: "hd-meta" },
+                                        React.createElement("span", { className: "hd-tag" }, n.tag),
+                                        React.createElement("span", null, n.date)),
+                                    React.createElement("div", { className: "hd-title" }, n.title),
+                                    n.blurb && React.createElement("div", { className: "hd-blurb" }, n.blurb))))),
+                        React.createElement("div", { className: "col-stack" },
+                            React.createElement(WireCol, null))),
+                    React.createElement(CommunityChips, null)))));
+}
+function MarketScreen({ decks, activeDeck, onOpenDetail }) {
+    return React.createElement("div", { className: "screen" },
+        React.createElement("div", { className: "results-pad" },
+            React.createElement("div", { className: "search-landing page" },
+                React.createElement("div", { className: "page-head" },
+                    React.createElement("h1", { className: "page-title" }, "Market"),
+                    React.createElement("span", { className: "page-sub" }, "TCGplayer prices · updated daily")),
+                React.createElement(PriceWatch, { onOpenDetail, decks, activeDeck, page: true }))));
+}
+// Freshest three headlines: the live wire (oracle-data, every 3 h) when it has loaded, else the curated Dispatches.
+function todayItems() {
+    const live = (WIRE || []).filter(p => p.src && p.u && p.t).slice().sort((a, b) => (b.c || 0) - (a.c || 0)).slice(0, 3);
+    if (live.length === 3) return live.map(p => { const c = wireCat(p.f); return { url: p.u, title: p.t, tag: p.src || (c ? c.label : 'News'), age: p.c ? fmAge(p.c) + ' ago' : '' }; });
+    return NEWS.slice(0, 3).map(n => ({ url: n.url, title: n.title, tag: n.tag, age: n.date }));
+}
+function TodayCard({ decks, onGoTab }) {
+    const [rp, setRp] = useState(null);
+    useEffect(() => { let alive = true; loadReprints().then(j => { if (alive) setRp(j); }); return () => { alive = false; }; }, []);
+    // how many of your unowned cards have a reprint worth waiting for — a one-line nudge toward Market
+    let waits = 0;
+    if (rp) {
+        const seen = new Set();
+        (decks || []).forEach(d => {
+            const owned = d.owned || {};
+            (d.commander ? [{ card: d.commander }] : []).concat(Object.values(d.cards || {})).forEach(e => {
+                if (!e || !e.card || !e.card.oracle_id || owned[cardKey(e.card)] || seen.has(e.card.oracle_id)) return;
+                seen.add(e.card.oracle_id);
+                const r = reprintRead(rp.by.get(e.card.oracle_id));
+                if (r && r.tone === 'wait') waits++;
+            });
+        });
+    }
+    const go = (t) => { haptic(); onGoTab && onGoTab(t); };
+    return React.createElement("div", { className: "today" },
+        React.createElement("div", { className: "today-head" },
+            React.createElement("span", { className: "today-title" }, React.createElement("span", { className: "cg" }, "\u2726"), "Today"),
+            React.createElement("button", { className: "today-more", onClick: () => go('news') }, "All news & spoilers \u203A")),
+        React.createElement("div", { className: "today-list" }, todayItems().map((n, i) => React.createElement("a", { key: i, className: "today-item", href: n.url, target: "_blank", rel: "noopener" },
+            React.createElement("span", { className: "today-meta" }, React.createElement("span", { className: "hd-tag" }, n.tag), n.age ? React.createElement("span", null, n.age) : null),
+            React.createElement("span", { className: "today-t" }, n.title)))),
+        React.createElement("button", { className: "today-market", onClick: () => go('market') },
+            React.createElement("span", { className: "today-m-ico", "aria-hidden": true }, "\u25C8"),
+            React.createElement("span", { className: "today-m-copy" },
+                React.createElement("b", null, "Market"),
+                React.createElement("span", null, waits ? (waits === 1 ? '1 card in your decks has a reprint coming \u2014 worth waiting on' : waits + ' cards in your decks have reprints coming \u2014 worth waiting on') : 'When to buy: your decks, reprints and the week\u2019s big moves')),
+            React.createElement("span", { className: "today-m-go", "aria-hidden": true }, "\u203A")));
 }
 // ============ THE FORGE — archetype brewing tiles (v4.50) ============
 // Twelve schools of brewing; each tap deals 8 fresh commanders. Queries were
@@ -20409,7 +20646,7 @@ const NEWS = [
 ];
 // (v4.49 housekeeping: removed dead SEEKER_PATHS const — the v4.47 Herald landing
 // no longer renders the seeker tiles; restore from the 2026-07-22 backup if revived.)
-function SearchScreen({ decks, injectQuery, onInjectConsumed, forgeIntent, onForgeIntentConsumed, activeDeck, onOpenDetail, onOpenPrintings, onAdd, ciViolation, commanderCI, upgrades, onOpenRandom, onGoDeck, onOpenSynergy }) {
+function SearchScreen({ decks, onGoTab, injectQuery, onInjectConsumed, forgeIntent, onForgeIntentConsumed, activeDeck, onOpenDetail, onOpenPrintings, onAdd, ciViolation, commanderCI, upgrades, onOpenRandom, onGoDeck, onOpenSynergy }) {
     const [query, setQuery] = useState('');
     const [activeChip, setActiveChip] = useState('');
     const [cards, setCards] = useState([]);
@@ -20432,6 +20669,7 @@ function SearchScreen({ decks, injectQuery, onInjectConsumed, forgeIntent, onFor
     const [filters, setFilters] = useState({ colors: new Set(), colorMode: 'exact', types: new Set(), subtype: '', subtypeMode: 'any', oracle: '', oracleMode: 'any', cmc: [0, 16], pow: [0, 16], tou: [0, 16], rarities: new Set(), setCode: '', format: '', finish: '', treatment: '', maxPrice: '', ciOnly: false });
     const lastQ = useRef('');
     const acTimer = useRef(null);
+    const acSeq = useRef(0);
     const acCtrl = useRef(null);
     const searchCtrl = useRef(null);
     const chipRowRef = useRef(null);
@@ -20571,6 +20809,11 @@ function SearchScreen({ decks, injectQuery, onInjectConsumed, forgeIntent, onFor
         if (searchCtrl.current)
             searchCtrl.current.abort();
         searchCtrl.current = new AbortController();
+        // v8.63: a search cancels any pending autocomplete — before, a suggestion request already
+        // in flight (or still debouncing) landed after Enter and reopened the list over the results.
+        clearTimeout(acTimer.current);
+        if (acCtrl.current) acCtrl.current.abort();
+        acSeq.current++;
         setAc([]);
         lastQ.current = q;
         setStatus('loading');
@@ -20660,7 +20903,7 @@ function SearchScreen({ decks, injectQuery, onInjectConsumed, forgeIntent, onFor
         if (sm && (sm[3] != null ? sm[3] : sm[4]).length >= 1) {
             const val = sm[3] != null ? sm[3] : sm[4];
             const base = v.slice(0, v.length - sm[0].length) + sm[1] + sm[2].replace(/^(-?)(?:s|e|edition)([:=])$/i, '$1set$2');
-            loadSetIndex().then(() => setAc(searchSets(val, 8).map(st => ({ set: st, base })))).catch(() => setAc([]));
+            const sseq = ++acSeq.current; loadSetIndex().then(() => { if (sseq === acSeq.current) setAc(searchSets(val, 8).map(st => ({ set: st, base }))); }).catch(() => setAc([]));
             return;
         }
         if (v.trim().length < 2 || /[:<>=]/.test(v)) {
@@ -20668,12 +20911,13 @@ function SearchScreen({ decks, injectQuery, onInjectConsumed, forgeIntent, onFor
             return;
         }
         const requested = v.trim();
+        const seq = ++acSeq.current;
         acTimer.current = setTimeout(async () => {
             try {
                 acCtrl.current = new AbortController();
                 const res = await fetch(API + '/cards/autocomplete?q=' + encodeURIComponent(requested), { headers: HEADERS, signal: acCtrl.current.signal });
                 const data = await res.json();
-                if (res.ok)
+                if (res.ok && seq === acSeq.current)
                     setAc(data.data ? data.data.slice(0, 8) : []);
             }
             catch (e) {
@@ -20779,7 +21023,7 @@ function SearchScreen({ decks, injectQuery, onInjectConsumed, forgeIntent, onFor
                 commanderCI && React.createElement("button", { key: 'ci-only', className: 'chip ci-chip' + (filters.ciOnly ? ' on' : ''), "aria-pressed": !!filters.ciOnly, title: 'Show only cards legal in ' + ((activeDeck && activeDeck.commander && activeDeck.commander.name.split(',')[0]) || 'your commander') + "’s color identity", onClick: () => { const nf = Object.assign({}, filters, { ciOnly: !filters.ciOnly }); setFilters(nf); haptic(); doSearch({ filtersOverride: nf }); } },
                     React.createElement("span", { className: "ci-chip-pips", "aria-hidden": true }, (commanderCI.length ? commanderCI : ['C']).map(c => React.createElement("span", { key: c, className: 'pip ' + c }))),
                     "In my colors")),
-            React.createElement("div", { className: "result-mode-row", "aria-label": "Search result mode" },
+            status !== 'empty' && React.createElement("div", { className: "result-mode-row", "aria-label": "Search result mode" },
                 React.createElement("div", { className: "ios-segment", role: "group", "aria-label": "Cards or printings" },
                     React.createElement("button", { className: (artLens ? 'prints' : resultMode) === 'cards' ? 'active' : '', onClick: () => { if (resultMode !== 'cards') {
                             setResultMode('cards');
@@ -20892,45 +21136,10 @@ function SearchScreen({ decks, injectQuery, onInjectConsumed, forgeIntent, onFor
                         }));
                 })(),
                 React.createElement(ArchetypeShelf, { onOpenDetail: onOpenDetail, forgeIntent: forgeIntent, onForgeIntentConsumed: onForgeIntentConsumed, onSearchAll: (q) => { setQuery(q); setActiveChip(''); setAc([]); haptic(); doSearch({ queryOverride: q, chipOverride: '' }); } }),
-                // v5.25 S4 (makeover): the news surfaces read as ONE grouped Reading Room
-                // band beneath the brewing surfaces (hero / resume / Forge come first).
-                React.createElement("div", { className: "rr-head" },
-                    React.createElement("span", { className: "rr-title" },
-                        React.createElement("span", { className: "cg" }, "\u2726"),
-                        "The Reading Room"),
-                    React.createElement("span", { className: "rr-sub" }, "dispatches \u00B7 the wire")),
-                React.createElement("div", { className: "landing-cols" },
-                    React.createElement("div", { className: "col" },
-                        React.createElement("div", { className: "col-head" },
-                            React.createElement("span", { className: "col-title" }, React.createElement("span", { className: "cg" }, "\u2726"), "Dispatches")),
-                        React.createElement("a", { className: "hd-lead", href: NEWS[0].url, target: "_blank", rel: "noopener" },
-                            // v7.38 (KEEP necessity audit): only reserve the hero art window when the
-                            // lead item actually has art — an artless lead previously rendered a large
-                            // empty 158px box at the top of Dispatches (attention cost, zero signal).
-                            NEWS[0].img ? React.createElement("span", { className: "hd-lead-imgwrap" }, React.createElement(CardImg, { src: NEWS[0].img, alt: "" })) : null,
-                            React.createElement("div", { className: "hd-meta" },
-                                React.createElement("span", { className: "hd-tag" }, NEWS[0].tag),
-                                React.createElement("span", null, NEWS[0].date)),
-                            React.createElement("div", { className: "hd-title lead" }, NEWS[0].title),
-                            React.createElement("div", { className: "hd-blurb" }, NEWS[0].blurb)),
-                        NEWS.slice(1).map((n, i) => React.createElement("a", { key: i, className: "hd-item", href: n.url, target: "_blank", rel: "noopener", style: { '--i': i + 1 } },
-                            // v8.59 (KEEP necessity audit): extend the v7.38 lead-item rule to the list —
-                            // artless dispatch rows rendered an empty grey .hd-thumb box (attention cost,
-                            // zero signal, four of five rows on 2026-09-11). No art → no placeholder.
-                            n.img ? React.createElement("span", { className: "hd-thumb-wrap" }, React.createElement(CardImg, { src: n.img, alt: "" })) : null,
-                            React.createElement("div", { className: "hd-copy" },
-                                React.createElement("div", { className: "hd-meta" },
-                                    React.createElement("span", { className: "hd-tag" }, n.tag),
-                                    React.createElement("span", null, n.date)),
-                                React.createElement("div", { className: "hd-title" }, n.title),
-                                n.blurb && React.createElement("div", { className: "hd-blurb" }, n.blurb))))),
-                    React.createElement("div", { className: "col-stack" },
-                        React.createElement(WireCol, null))),
-                // FRESH_SPOILERS marker — Herald Phase 1: the live Scryfall spoiler feed +
-                // the community subreddit chip row, rendered beneath the Reading Room columns.
-                React.createElement(PriceWatch, { onOpenDetail: onOpenDetail, decks: decks, activeDeck: activeDeck }),
-                React.createElement(FreshSpoilers, null),
-                React.createElement(CommunityChips, null))),
+                // v8.63 (front-page makeover): news, the wire and spoilers moved to the News tab,
+                // Price Watch to the Market tab. The landing keeps brewing (hero, resume, Forge)
+                // plus one compact Today card that points at both.
+                React.createElement(TodayCard, { decks: decks, onGoTab: onGoTab }))),
             status === 'loading' && React.createElement(Skeletons, { n: 10, wrap: "card-grid", lines: 2 }),
             status === 'sethint' && setHint && React.createElement("div", { className: "state-msg sethint" },
                 React.createElement("div", null, setHint.kind === 'choices' ? "\u201C" + setHint.text + "\u201D matches several sets \u2014 which one?" : setHint.options.length ? "No set called \u201C" + setHint.text + "\u201D. Did you mean:" : "No set matches \u201C" + setHint.text + "\u201D. Try a set code like MH3."),
@@ -21062,7 +21271,7 @@ function DeckScreen(props) {
     }
     return React.createElement(DeckScreenContent, Object.assign({}, props));
 }
-function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, onOpenDetail, onOpenPrintings, onClearCommander, onDrawHand, onGoSearch, onFillGap, onOpenSynergy, onOpenSimilar, onOpenBasics, onOpenRandom, onToggleOwned, onSetOwnedAll, ciViolation, showToast, upgrades, decksAll, onCrossDeck }) {
+function DeckScreenContent({ onOpenLists, deck, deckList, deckTotal, onChangeQty, onRemove, onOpenDetail, onOpenPrintings, onClearCommander, onDrawHand, onGoSearch, onFillGap, onOpenSynergy, onOpenSimilar, onOpenBasics, onOpenRandom, onToggleOwned, onSetOwnedAll, ciViolation, showToast, upgrades, decksAll, onCrossDeck }) {
     const [showExport, setShowExport] = useState(false);
     const [showMore, setShowMore] = useState(false);
     const [mode, setMode] = useState('cards'); // cards | stats | shop
@@ -21359,7 +21568,7 @@ function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, o
                         React.createElement("div", { className: "cmdr-name" }, deck.commander.name),
                         React.createElement("div", { className: "cmdr-sub" },
                             React.createElement("span", { className: "ci-pips" }, ciColors.length ? ciColors.map(c => React.createElement("span", { key: c, className: 'pip ' + c }, c)) : React.createElement("span", { className: "pip C" }, "\u25C7")),
-                            React.createElement("span", { onClick: onClearCommander, style: { color: 'var(--gold-dim)', cursor: 'pointer' } }, "change")))) : (React.createElement("div", { className: "cmdr-name", style: { fontSize: '14px', color: 'var(--muted)', fontWeight: 400 } }, "Tap a legendary creature \u2192 Set as Commander")))),
+                            React.createElement("button", { className: "cmdr-remove", onClick: () => { onClearCommander(); haptic(); }, "aria-label": 'Remove ' + deck.commander.name + ' as commander' }, "\u2715 Remove")))) : (React.createElement("div", { className: "cmdr-name", style: { fontSize: '14px', color: 'var(--muted)', fontWeight: 400 } }, "Tap a legendary creature \u2192 Set as Commander")))),
             React.createElement("div", { className: "deck-count-hero" },
                 React.createElement("span", { className: 'deck-count-num ' + (deckTotal > 100 ? 'over' : (deckTotal === 100 ? 'complete' : '')) }, deckTotal),
                 React.createElement("span", { className: "deck-count-target" }, "/ 100")),
@@ -21547,15 +21756,18 @@ function DeckScreenContent({ deck, deckList, deckTotal, onChangeQty, onRemove, o
             }),
             (decksAll || []).filter(d => d.id !== deck.id).length === 0 && React.createElement("div", { className: "state-msg", style: { padding: "18px 8px" } }, "No other decks yet \u2014 create one in My Decks.")),
         showExport && React.createElement(ExportModal, { text: exportText(), onCopy: copyExport, onClose: () => setShowExport(false) }),
-        showMore && React.createElement(DeckMoreSheet, { deck: deck, onExport: () => setShowExport(true), onSimilar: onOpenSimilar, onRandom: onOpenRandom, onClose: () => setShowMore(false) })));
+        showMore && React.createElement(DeckMoreSheet, { deck: deck, onOpenLists: onOpenLists, onExport: () => setShowExport(true), onSimilar: onOpenSimilar, onRandom: onOpenRandom, onClose: () => setShowMore(false) })));
 }
 
-function DeckMoreSheet({ deck, onExport, onSimilar, onRandom, onClose }) {
+function DeckMoreSheet({ deck, onOpenLists, onExport, onSimilar, onRandom, onClose }) {
     useEscape(onClose);
     const cmd = deck.commander;
     const run = fn => () => { fn && fn(); onClose(); };
     return React.createElement("div", { className: "pt-menu-backdrop", onClick: onClose },
         React.createElement("div", { className: "pt-menu", onClick: e => e.stopPropagation(), role: "menu", "aria-label": "More deck actions" },
+            onOpenLists && React.createElement("button", { className: "pt-menu-opt", onClick: run(onOpenLists) },
+                React.createElement("span", { className: "ic" }, ListIcon()),
+                "Add from my lists"),
             React.createElement("button", { className: "pt-menu-opt", onClick: run(onExport) },
                 React.createElement("span", { className: "ic" }, React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" },
                     React.createElement("path", { d: "M12 3v12M8 11l4 4 4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" }))),
@@ -21610,7 +21822,17 @@ function edhrecSlug(name) {
     return name.toLowerCase().replace(/[',]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 // ============ DECKS LIST SCREEN ============
-function DecksScreen({ decks, activeDeckId, onSelect, onCreate, onDelete, onImport, onRandom }) {
+function DecksScreen(props) {
+    const { view, onView } = props;
+    const seg = React.createElement("div", { className: "decks-seg" },
+        React.createElement("div", { className: "ios-segment stretch", role: "group", "aria-label": "Decks or card lists" },
+            React.createElement("button", { className: view !== 'lists' ? 'active' : '', onClick: () => { onView && onView('decks'); haptic(); } }, "Decks"),
+            React.createElement("button", { className: view === 'lists' ? 'active' : '', onClick: () => { onView && onView('lists'); haptic(); } }, "Card lists", (props.lists || []).length ? React.createElement("span", { className: "seg-count" }, props.lists.length) : null)));
+    return view === 'lists'
+        ? React.createElement(ListsScreen, Object.assign({}, props, { seg }))
+        : React.createElement(DecksGrid, Object.assign({}, props, { seg }));
+}
+function DecksGrid({ seg, decks, activeDeckId, onSelect, onCreate, onDelete, onImport, onRandom }) {
     const [showNew, setShowNew] = useState(false);
     const [confirmDel, setConfirmDel] = useState(null);
     const [showImport, setShowImport] = useState(false);
@@ -21621,6 +21843,7 @@ function DecksScreen({ decks, activeDeckId, onSelect, onCreate, onDelete, onImpo
     }
     return (React.createElement("div", { className: "screen" },
         React.createElement("div", { className: "decks-screen" },
+            seg,
             React.createElement("div", { style: { display: 'flex', gap: '9px', marginBottom: '16px' } },
                 React.createElement("button", { className: "new-deck-btn", style: { marginBottom: 0, flex: 1 }, onClick: () => { setShowNew(true); haptic(); } },
                     React.createElement("svg", { viewBox: "0 0 24 24", width: "16", height: "16", fill: "none", stroke: "currentColor", strokeWidth: "2" },
@@ -21668,6 +21891,92 @@ function DecksScreen({ decks, activeDeckId, onSelect, onCreate, onDelete, onImpo
                 React.createElement("div", { className: "modal-btns" },
                     React.createElement("button", { className: "modal-btn secondary", onClick: () => setConfirmDel(null) }, "Cancel"),
                     React.createElement("button", { className: "modal-btn primary", style: { background: 'var(--red-bad)', borderColor: 'var(--red-bad)', color: '#fff' }, onClick: () => { onDelete(confirmDel.id); setConfirmDel(null); } }, "Delete")))))));
+}
+
+// ============ v8.63 — CARD LISTS ============
+function ListIcon() {
+    return React.createElement("svg", { viewBox: "0 0 24 24", width: 16, height: 16, fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round" },
+        React.createElement("path", { d: "M9 6h11M9 12h11M9 18h11" }), React.createElement("circle", { cx: 4.5, cy: 6, r: 1 }), React.createElement("circle", { cx: 4.5, cy: 12, r: 1 }), React.createElement("circle", { cx: 4.5, cy: 18, r: 1 }));
+}
+// Card detail: "Save to list" + the sheet that ticks lists on/off or starts a new one.
+function ListSaveButton({ card, lists, onToggle, onCreate }) {
+    const [open, setOpen] = useState(false);
+    const [name, setName] = useState('');
+    const k = cardKey(card);
+    const inN = lists.filter(l => (l.cards || {})[k]).length;
+    function create() { const nm = name.trim(); if (!nm) return; onCreate(nm, card); setName(''); }
+    return React.createElement(React.Fragment, null,
+        React.createElement("button", { className: 'dda-btn list-save' + (inN ? ' on' : ''), onClick: () => { setOpen(true); haptic(); } },
+            ListIcon(), inN ? (inN === 1 ? '✓ In 1 list' : '✓ In ' + inN + ' lists') : 'Save to a list'),
+        open && React.createElement(Sheet, { title: "Save to a list", onClose: () => setOpen(false), zClass: "z-top" },
+            React.createElement("div", { className: "ls-card" }, card.name),
+            lists.length ? lists.map(l => {
+                const on = !!(l.cards || {})[k], n = Object.keys(l.cards || {}).length;
+                return React.createElement("button", { key: l.id, className: 'sort-opt ls-opt' + (on ? ' sel' : ''), onClick: () => onToggle(l.id, card) },
+                    React.createElement("span", null, l.name, React.createElement("span", { className: "ls-n" }, n + (n === 1 ? ' card' : ' cards'))),
+                    React.createElement("span", { className: "check" }, on ? '✓' : '+'));
+            }) : React.createElement("div", { className: "ls-empty" }, "No lists yet. Name one below — “Treasures”, “Token value”, “Cheap removal”…"),
+            React.createElement("div", { className: "ls-new" },
+                React.createElement("input", { className: "ls-input", placeholder: "New list name", value: name, maxLength: 60, onInput: e => setName(e.target.value), onKeyDown: e => { if (e.key === 'Enter') { e.preventDefault(); create(); } } }),
+                React.createElement("button", { className: "ls-create", disabled: !name.trim(), onClick: create }, "Create & add"))));
+}
+// My Decks → Card lists
+function ListsScreen({ seg, lists, activeDeck, onAddToDeck, onOpenDetail, onCreateList, onRenameList, onDeleteList, onToggleList }) {
+    const [openId, setOpenId] = useState(null);
+    const [naming, setNaming] = useState(null); // 'new' | list id (rename)
+    const [q, setQ] = useState('');
+    const open = openId && lists.find(l => l.id === openId);
+    useEffect(() => { if (openId && !open) setOpenId(null); }, [openId, open]);
+    useEffect(() => { setQ(''); }, [openId]);
+    const modal = naming && React.createElement(NameModal, {
+        title: naming === 'new' ? 'Name your list' : 'Rename list', placeholder: 'e.g. Treasures',
+        onSave: (nm) => { if (naming === 'new') { const id = onCreateList(nm); setOpenId(id); } else onRenameList(naming, nm); setNaming(null); },
+        onClose: () => setNaming(null)
+    });
+    if (open) {
+        const ents = Object.values(open.cards || {}).filter(e => e && e.card).sort((a, b) => (b.added || 0) - (a.added || 0));
+        const shown = q.trim() ? ents.filter(e => (e.card.name || '').toLowerCase().includes(q.trim().toLowerCase())) : ents;
+        const deckCards = (activeDeck && activeDeck.cards) || {};
+        const cmdrKey = activeDeck && activeDeck.commander ? cardKey(activeDeck.commander) : null;
+        return React.createElement("div", { className: "screen" },
+            React.createElement("div", { className: "decks-screen" },
+                React.createElement("div", { className: "lst-head" },
+                    React.createElement("button", { className: "lst-back", onClick: () => { setOpenId(null); haptic(); }, "aria-label": "Back to lists" }, "‹ Lists"),
+                    React.createElement("div", { className: "lst-title" }, open.name),
+                    React.createElement("button", { className: "lst-act", onClick: () => setNaming(open.id) }, "Rename"),
+                    React.createElement("button", { className: "lst-act bad", onClick: () => { onDeleteList(open.id); setOpenId(null); } }, "Delete")),
+                React.createElement("div", { className: "lst-sub" }, activeDeck ? React.createElement(React.Fragment, null, "Tap ", React.createElement("b", null, "+ Deck"), " to add to ", React.createElement("b", null, activeDeck.name || 'your deck'), ".") : "Pick a deck in My Decks to add cards from here."),
+                ents.length > 6 && React.createElement("input", { className: "ls-input lst-filter", placeholder: "Filter this list", value: q, onInput: e => setQ(e.target.value) }),
+                ents.length === 0 ? React.createElement("div", { className: "state-msg" }, React.createElement("div", null, "Nothing here yet. Open any card and tap “Save to a list”.")) :
+                    shown.map(e => {
+                        const c = e.card, k = cardKey(c), inDeck = !!deckCards[k] || k === cmdrKey, img = cardImage(c, 'small'), pv = priceValue(c);
+                        return React.createElement("div", { key: k, className: "lst-row" },
+                            img ? React.createElement("img", { className: "shop-thumb", src: img, alt: "", loading: "lazy", onClick: () => onOpenDetail(c) }) : React.createElement("div", { className: "shop-thumb" }),
+                            React.createElement("div", { className: "lst-info", onClick: () => onOpenDetail(c) },
+                                React.createElement("div", { className: "shop-name" }, c.name),
+                                React.createElement("div", { className: "shop-meta" }, ((c.type_line || (c.card_faces && c.card_faces[0].type_line) || '').split(' — ')[0]) + (Number.isFinite(pv) ? ' · $' + pv.toFixed(2) : ''))),
+                            React.createElement("button", { className: 'lst-add' + (inDeck ? ' in' : ''), disabled: !activeDeck || inDeck, onClick: () => onAddToDeck(c) }, inDeck ? '✓ In deck' : '+ Deck'),
+                            React.createElement("button", { className: "lst-x", "aria-label": 'Remove ' + c.name + ' from ' + open.name, onClick: () => onToggleList(open.id, c) }, "✕"));
+                    })),
+            modal);
+    }
+    return React.createElement("div", { className: "screen" },
+        React.createElement("div", { className: "decks-screen" },
+            seg,
+            React.createElement("button", { className: "new-deck-btn", onClick: () => { setNaming('new'); haptic(); } },
+                React.createElement("svg", { viewBox: "0 0 24 24", width: "16", height: "16", fill: "none", stroke: "currentColor", strokeWidth: "2" }, React.createElement("path", { d: "M12 5v14M5 12h14" })),
+                "New List"),
+            lists.length === 0 ? React.createElement("div", { className: "state-msg" },
+                React.createElement("div", { className: "symbol" }, "☰"),
+                React.createElement("div", null, "Group cards you like outside of decks — “Treasures”, “Token value”, “Cheap removal”. Then add them to any deck in one tap.")) :
+                React.createElement("div", { className: "lst-grid" }, lists.map(l => {
+                    const ents = Object.values(l.cards || {}).filter(e => e && e.card).sort((a, b) => (b.added || 0) - (a.added || 0));
+                    return React.createElement("button", { key: l.id, className: "lst-card", onClick: () => { setOpenId(l.id); haptic(); } },
+                        React.createElement("span", { className: "lst-arts", "aria-hidden": true }, ents.slice(0, 4).map(e => React.createElement("span", { key: cardKey(e.card), className: "lst-art", style: { backgroundImage: 'url(' + (cardImage(e.card, 'art_crop') || '') + ')' } }))),
+                        React.createElement("span", { className: "lst-name" }, l.name),
+                        React.createElement("span", { className: "lst-count" }, ents.length + (ents.length === 1 ? ' card' : ' cards')));
+                }))),
+        modal);
 }
 // ============ WORKSHOP (SYNERGY v3) ============
 // Sections come from the commander's own rules text via the atom
@@ -22391,7 +22700,7 @@ function signalChip(s) {
 //              a dip below the usual price (buy), or a spike (wait)
 //   Reprints — expensive cards ($10+) just reprinted or announced: the cheaper copies coming
 //   Market   — the week's biggest TCGplayer moves (steady trend vs one-week spike)
-function PriceWatch({ onOpenDetail, decks, activeDeck }) {
+function PriceWatch({ onOpenDetail, decks, activeDeck, page }) {
     const [m, setM] = useState(null);
     const [rp, setRp] = useState(null);
     const [view, setView] = useState(null);
@@ -22440,7 +22749,7 @@ function PriceWatch({ onOpenDetail, decks, activeDeck }) {
             .catch(() => setBusy(null));
     }
     if (!m && !rp) return null;
-    const cap = more ? 30 : 6;
+    const cap = more ? 40 : page ? 10 : 6;
     let body, foot;
     if (v === 'you') {
         const rank = x => { const s = sigs[cardKey(x.card)] || {}; const r = s.reprint, t = s.trend;
@@ -22490,8 +22799,8 @@ function PriceWatch({ onOpenDetail, decks, activeDeck }) {
         foot = m ? "Prices through " + fmtDay(m.d) + ". This week vs the three weeks before. Sudden spikes usually settle; steady climbs are real demand." : '';
     }
     const total = v === 'you' ? null : v === 'reprints' ? (rp ? rp.cards.filter(c => c.lo >= 1000).length : 0) : (m ? ((m[dir] || {})[kind] || []).length : 0);
-    return React.createElement("div", { className: "pw-sec" },
-        React.createElement("div", { className: "rr-head" },
+    return React.createElement("div", { className: "pw-sec" + (page ? ' page' : '') },
+        !page && React.createElement("div", { className: "rr-head" },
             React.createElement("span", { className: "rr-title" }, React.createElement("span", { className: "cg" }, "◈"), "Price Watch"),
             React.createElement("span", { className: "rr-sub" }, "TCGplayer · when to buy")),
         React.createElement("div", { className: "pw-controls" },
@@ -22506,10 +22815,10 @@ function PriceWatch({ onOpenDetail, decks, activeDeck }) {
                 React.createElement("button", { className: kind === 'single' ? 'active' : '', onClick: () => { setKind('single'); haptic(); } }, "Singles"),
                 React.createElement("button", { className: kind === 'sealed' ? 'active' : '', onClick: () => { setKind('sealed'); haptic(); } }, "Sealed"))),
         body,
-        (total == null ? false : total > 6) || (v === 'you' && mine.filter(x => sigs[cardKey(x.card)]).length > 6) ? React.createElement("button", { className: "pw-more", onClick: () => { setMore(!more); haptic(); } }, more ? 'Show less' : 'Show more') : null,
+        (total == null ? false : total > (page ? 10 : 6)) || (v === 'you' && mine.filter(x => sigs[cardKey(x.card)]).length > (page ? 10 : 6)) ? React.createElement("button", { className: "pw-more", onClick: () => { setMore(!more); haptic(); } }, more ? 'Show less' : 'Show more') : null,
         foot && React.createElement("div", { className: "pw-foot" }, foot));
 }
-function DetailOverlay({ card, onClose, onAdd, onSetCommander, onBuild, onViewPrintings, onSimilar, onConsult, onOpenSchool, inDeck, isCommander, ciViolation, upgrade }) {
+function DetailOverlay({ card, onClose, onAdd, onSetCommander, onClearCommander, lists, onToggleList, onCreateList, onBuild, onViewPrintings, onSimilar, onConsult, onOpenSchool, inDeck, isCommander, ciViolation, upgrade }) {
     useEscape(onClose);
     const [faceIdx, setFaceIdx] = useState(0);
     // v5.45: roster-driven Forge Schools row (silent when absent/not loaded).
@@ -22594,7 +22903,8 @@ function DetailOverlay({ card, onClose, onAdd, onSetCommander, onBuild, onViewPr
                 React.createElement(ManaPips, { cost: mana })),
             React.createElement("div", { className: "detail-deck-actions" },
                 React.createElement("button", { className: 'dda-btn ' + (inDeck ? 'secondary' : 'primary'), onClick: () => onAdd(card) }, inDeck ? '✓ In Deck' : '+ Add to Deck'),
-                canBeCommander && (React.createElement("button", { className: 'dda-btn ' + (isCommander ? 'secondary' : 'cmdr'), onClick: () => onSetCommander(card) }, isCommander ? '✓ Commander' : '\u2694 Set Commander'))),
+                canBeCommander && (React.createElement("button", { className: 'dda-btn ' + (isCommander ? 'secondary uncmdr' : 'cmdr'), onClick: () => { if (isCommander && onClearCommander) { onClearCommander(); haptic(); } else onSetCommander(card); }, title: isCommander ? 'Remove as this deck\u2019s commander' : 'Make this the commander of your current deck' }, isCommander ? '\u2715 Remove Commander' : '\u2694 Set Commander'))),
+            onToggleList && React.createElement(ListSaveButton, { card, lists: lists || [], onToggle: onToggleList, onCreate: onCreateList }),
             violation && React.createElement("div", { style: { textAlign: 'center', color: 'var(--red-bad)', fontSize: '13px', marginTop: '-8px', marginBottom: '14px', fontStyle: 'italic' } }, "\u26A0 Outside your commander's color identity"),
             oracleRead && React.createElement("div", { className: "oracle-read" },
                 React.createElement("div", { className: "or-head" },
