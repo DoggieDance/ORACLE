@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v8.63 · 2026-11-17">
+<meta name="oracle-build" content="v8.64 · 2026-11-17">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1979,12 +1979,68 @@
   .lst-add.in, .lst-add:disabled { background: rgba(255,255,255,.06); color: var(--muted); border-color: var(--hair); cursor: default; }
   .lst-add.in { color: #8fdcab; }
   .lst-x { border: 0; background: none; color: var(--muted); font-size: 14px; padding: 6px; cursor: pointer; }
+
+  /* ============ v8.64 — the Market ============ */
+  .mk-page .page-head { margin-bottom: 14px; }
+  .mk-pulse { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .mk-tile { display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 12px 14px; border: 1px solid var(--hair2); border-radius: 16px; background: var(--glass); color: var(--text); text-align: left; cursor: pointer; min-width: 0; }
+  button.mk-tile:hover { border-color: rgba(224,196,106,.45); }
+  .mk-tile.wide { grid-column: 1 / -1; cursor: default; padding-bottom: 10px; }
+  .mk-tile-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .mk-tile-lab { font-size: 12px; color: var(--text-dim); font-weight: 620; }
+  .mk-tile.wide .mk-tile-lab { font-family: var(--display); font-size: 12.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--gold-bright); }
+  .mk-tile-val { font-size: 22px; font-weight: 760; font-variant-numeric: tabular-nums; color: var(--text); }
+  .mk-tile-val i { font-style: normal; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+  .mk-tile-num { font-size: 26px; font-weight: 760; font-variant-numeric: tabular-nums; color: var(--gold-bright); line-height: 1.1; }
+  .mk-tile-foot { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .mk-chart { position: relative; margin: 6px 0 2px; }
+  .mk-chart svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; cursor: crosshair; }
+  .mk-dot { position: absolute; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: var(--gold-bright); box-shadow: 0 0 0 2px var(--ink, #0a0b12); pointer-events: none; }
+  .mk-readout { font-size: 11.5px; color: var(--text-dim); font-variant-numeric: tabular-nums; min-height: 15px; margin-top: 3px; }
+  .mk-axis { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+  .mk-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -12px 12px; padding: 2px 12px 6px; border-bottom: 1px solid var(--hair); }
+  .mk-tabs::-webkit-scrollbar { display: none; }
+  .mk-tab { flex: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--hair); background: rgba(255,255,255,.04); color: var(--text-dim); font-size: 13px; font-weight: 650; padding: 7px 12px; border-radius: 18px; cursor: pointer; white-space: nowrap; }
+  .mk-tab.on { border-color: rgba(224,196,106,.65); background: rgba(224,196,106,.14); color: var(--gold-bright); }
+  .mk-tab-n { font-size: 10.5px; font-weight: 750; padding: 0 6px; border-radius: 8px; background: rgba(0,0,0,.28); color: inherit; opacity: .85; }
+  .mk-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+  .mk-bar .mk-lede { flex: 1 1 260px; margin: 0; }
+  .mk-lede { font-size: 12.5px; color: var(--text-dim); line-height: 1.45; margin: 0 0 8px; }
+  .mk-lede b { color: var(--text); }
+  .mk-list { display: flex; flex-direction: column; }
+  .mk-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto 64px; align-items: center; gap: 11px; padding: 9px 4px; border: 0; border-bottom: 1px solid var(--hair); background: none; color: var(--text); text-align: left; cursor: pointer; animation: skIn .35s var(--fluid) both; animation-delay: calc(min(var(--i, 0), 12) * 30ms); border-radius: 8px; }
+  .mk-row:hover { background: rgba(255,255,255,.03); } .mk-row.busy { opacity: .55; }
+  .mk-thumb { width: 44px; height: 61px; border-radius: 4px; object-fit: cover; background: rgba(255,255,255,.05); box-shadow: 0 2px 6px rgba(0,0,0,.4); }
+  .mk-thumb.set { object-fit: contain; padding: 10px 6px; filter: invert(.85) sepia(.4) saturate(2.2) hue-rotate(5deg); box-shadow: none; background: rgba(255,255,255,.035); }
+  .mk-thumb.ph { display: flex; align-items: center; justify-content: center; color: var(--gold-dim); font-size: 16px; }
+  .mk-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .mk-title { font-weight: 680; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mk-sub { font-size: 11.5px; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+  .mk-tag { font-size: 10px; font-weight: 750; letter-spacing: .02em; padding: 1px 6px; border-radius: 6px; background: rgba(110,150,220,.14); color: #a9c4ee; }
+  .mk-note { font-size: 12px; color: var(--text-dim); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .mk-price { display: flex; flex-direction: column; align-items: flex-end; font-variant-numeric: tabular-nums; }
+  .mk-price b { font-size: 14.5px; } .mk-price span { font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .mk-price span.cheaper { color: #8fdcab; font-weight: 650; }
+  .mk-row .mk-chip { justify-self: end; }
+  .mk-card { padding: 14px; border: 1px solid var(--hair2); border-radius: 16px; background: var(--glass); margin-bottom: 18px; }
+  .mk-card-head { font-family: var(--display); font-size: 12.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold-bright); margin-bottom: 6px; }
+  .mk-card-head.sub { margin: 4px 0 4px; }
+  .mk-big { font-size: 15px; line-height: 1.5; color: var(--text-dim); margin: 0 0 8px; }
+  .mk-big b { color: var(--text); }
+  .mk-foot { font-size: 11px; color: var(--muted2, var(--muted)); margin: 8px 0 0; line-height: 1.4; }
+  @media (min-width: 900px) {
+    .mk-pulse { grid-template-columns: 2fr 1fr 1fr; }
+    .mk-tile.wide { grid-column: auto; }
+    .mk-tabs { margin-left: 0; margin-right: 0; padding-left: 0; }
+    .mk-list { display: grid; grid-template-columns: 1fr 1fr; column-gap: 28px; }
+  }
+  @media (max-width: 400px) { .mk-row { grid-template-columns: 38px minmax(0, 1fr) auto 56px; gap: 9px; } .mk-thumb { width: 38px; height: 53px; } }
 </style>
 </head>
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v8.63 \u00B7 2026-11-17', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v8.64 \u00B7 2026-11-17', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -18227,6 +18283,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v8.64', date: '2026-11-17', focus: 'ui', commander: '—', summary: "THE MARKET, REBUILT. A pulse at the top: a price index of the ~500 most-played Commander cards with a 12-month chart (7d / 30d / 90d / 1y), how many staples are on sale, and how many cards in your decks need a decision. Six views, every row with the card's picture: YOUR DECKS (wait/buy reads for cards you don't own yet), ON SALE (EDHREC top-3,000 staples whose cheapest copy is 15%+ under what it usually costs, sorted by most played or biggest drop, tagged when it's in your decks or just reprinted), RISING (staples 20%+ over usual and still climbing), REPRINTS ($10+ cards just reprinted or announced), MOVERS (the week's biggest moves, steady vs sudden) and NEW SETS — what our own price history says about buying new cards: across 23 sets since 2024, rares and mythics average ~28% cheaper a week after release and bottom around weeks 21–24 at about half their release-day price; each set out now shows where it sits on that curve (holding up, on track, or cheaper than usual), and tapping it browses that set's rares by price. All of it rebuilds daily on GitHub." },
     { build: 'v8.63', date: '2026-11-17', focus: 'ui', commander: '—', summary: "FRONT-PAGE MAKEOVER. The landing was a ~4,800px scroll on phones; it now keeps the brewing surfaces (Today's Commander, Continue brewing, the Forge) plus one small Today card with the three newest headlines and a Market nudge (~900px). Two new tabs: MARKET (Price Watch: your decks, reprints, the week's moves) and NEWS (Headlines — Dispatches, the Wire, community — or Spoilers). On phones the Forge is a two-row swipe rail, the 'For <commander>' shortcuts are one swipe row, the masthead no longer crowds, and the Cards/Printings + Special art/Secret Lair row only appears with results and wraps instead of running off the screen. CARD LISTS: save any card to named lists outside your decks ('Treasures', 'Token value'…) from its detail; My Decks → Card lists shows them, and + Deck adds a card to the deck you're building in one tap (also reachable from the deck's More menu). REMOVING A COMMANDER is now a clear '✕ Remove' on the deck screen and '✕ Remove Commander' in the card detail, both with Undo. FIX: card-name suggestions no longer pop back open over your results after pressing Enter." },
     { build: 'v8.62', date: '2026-11-17', focus: 'ui', commander: '—', summary: "Price Watch polish from live testing. A card in your deck whose printing isn't out yet (like a precon reprint) used to open with no price panel at all, so the 'Wait' had no explanation; it now shows a Price outlook card with the reprint date, what to expect, and what older copies cost today. Brand-new cards (under ~6 weeks on the market) no longer get Spiking/Dropping reads in your decks, the Shop, or Market movers — those compared against preorder prices — and get the New card note instead (prices usually settle 2–3 weeks after release)." },
     { build: 'v8.61', date: '2026-11-17', focus: 'ui', commander: '—', summary: "WHEN TO BUY. Price Watch on the landing now has three views. (1) YOUR DECKS: the unowned cards in your decks that need a decision — WAIT when a reprint is announced or just released (prices slide from the announcement and usually bottom 2–4 months after release) or when the price just spiked (spikes usually settle within weeks); BUY when a card is under its usual 1-year price or dropping. (2) REPRINTS: every $10+ card just reprinted or announced for an upcoming precon, set, Secret Lair or Special Guests, with the cheapest existing copy and the new copy's price, so you can see when an expensive card is coming out for less. Limited printings (Secret Lair, The List, Special Guests) are marked as barely moving older copies, and reprints of sub-$5 cards don't nag. (3) MARKET: the week's biggest TCGplayer moves, now labeled steady climb/slide (real demand) vs sudden spike/drop. The deck SHOP tab shows a Wait/Buy chip on each card still to buy plus a summary of what to hold off on and what's a good buy now. Card detail adds a reprint note above the price read, and first printings get a new-card note (prices usually settle 2–3 weeks after release). Price Watch's Market list also no longer counts a short spike falling back as a crash. All of it updates daily on GitHub." },
@@ -19202,7 +19259,7 @@ function App() {
             React.createElement("button", { className: "build-badge", "aria-label": "What's new in Oracle", onClick: () => { setWhatsNewOn(true); haptic(); } }, BUILD)),
         tab === 'search' && (React.createElement(SearchScreen, { decks: decks, onGoTab: (t) => setTab(t), injectQuery: searchInject, onInjectConsumed: () => setSearchInject(null), forgeIntent: forgeIntent, onForgeIntentConsumed: () => setForgeIntent(null), activeDeck: activeDeck, onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onAdd: addCard, ciViolation: ciViolation, commanderCI: commanderCI, upgrades: upgrades, onOpenRandom: () => { setRandomOn(true); haptic(); }, onGoDeck: () => { setTab('deck'); haptic(); }, onOpenSynergy: () => { setSynergyOn(true); haptic(); } })),
         tab === 'deck' && (React.createElement(DeckScreen, { onOpenLists: () => { setDecksView('lists'); setTab('decks'); haptic(); }, deck: activeDeck, deckList: deckList, deckTotal: deckTotal, onChangeQty: changeQty, onRemove: removeCard, onOpenDetail: setDetailCard, onOpenPrintings: setPrintingsCard, onClearCommander: clearCommander, onDrawHand: startPlaytest, onGoSearch: () => setTab('search'), onFillGap: (q) => { setSearchInject({ q: q, t: Date.now(), sort: 'edhrec' }); setTab('search'); haptic(); }, onOpenSynergy: () => { setSynergyOn(true); haptic(); }, onOpenSimilar: () => { if (activeDeck && activeDeck.commander) { setSimilarFor(activeDeck.commander); haptic(); } }, onOpenBasics: () => { setBasicsOn(true); haptic(); }, onOpenRandom: () => { setRandomOn(true); haptic(); }, onToggleOwned: toggleOwned, onSetOwnedAll: setOwnedAll, ciViolation: ciViolation, showToast: showToast, upgrades: upgrades, decksAll: decks, onCrossDeck: crossDeck })),
-        tab === 'market' && React.createElement(MarketScreen, { decks: decks, activeDeck: activeDeck, onOpenDetail: setDetailCard }),
+        tab === 'market' && React.createElement(MarketScreen, { decks: decks, activeDeck: activeDeck, onOpenDetail: setDetailCard, onSearch: (q, sort) => { setSearchInject({ q: q, t: Date.now(), sort: sort }); setTab('search'); } }),
         tab === 'news' && React.createElement(NewsScreen, null),
         tab === 'decks' && (React.createElement(DecksScreen, { view: decksView, onView: setDecksView, lists: lists, activeDeck: activeDeck, onAddToDeck: (c) => addCard(c, false), onOpenDetail: setDetailCard, onCreateList: createList, onRenameList: renameList, onDeleteList: deleteList, onToggleList: toggleInList, decks: decks, activeDeckId: activeDeckId, onSelect: (id) => { setActiveDeckId(id); setTab('deck'); haptic(); }, onCreate: createDeck, onDelete: deleteDeck, onImport: importDeckList, onRandom: () => { setRandomOn(true); haptic(); } })),
         // v8.01 — C-036: SynergyOverlay seeds its `sections` STATE from
@@ -19672,15 +19729,6 @@ function NewsScreen() {
                         React.createElement("div", { className: "col-stack" },
                             React.createElement(WireCol, null))),
                     React.createElement(CommunityChips, null)))));
-}
-function MarketScreen({ decks, activeDeck, onOpenDetail }) {
-    return React.createElement("div", { className: "screen" },
-        React.createElement("div", { className: "results-pad" },
-            React.createElement("div", { className: "search-landing page" },
-                React.createElement("div", { className: "page-head" },
-                    React.createElement("h1", { className: "page-title" }, "Market"),
-                    React.createElement("span", { className: "page-sub" }, "TCGplayer prices · updated daily")),
-                React.createElement(PriceWatch, { onOpenDetail, decks, activeDeck, page: true }))));
 }
 // Freshest three headlines: the live wire (oracle-data, every 3 h) when it has loaded, else the curated Dispatches.
 function todayItems() {
@@ -22695,128 +22743,233 @@ function signalChip(s) {
     return React.createElement("span", { className: "mk-chip " + pick.tone, title: (pick.head ? pick.head + ' — ' : '') + pick.why }, pick.chip);
 }
 
-// v8.61 — PRICE WATCH, three views:
-//   For you  — your decks' unowned cards with something to act on: a pending reprint (wait),
-//              a dip below the usual price (buy), or a spike (wait)
-//   Reprints — expensive cards ($10+) just reprinted or announced: the cheaper copies coming
-//   Market   — the week's biggest TCGplayer moves (steady trend vs one-week spike)
-function PriceWatch({ onOpenDetail, decks, activeDeck, page }) {
-    const [m, setM] = useState(null);
+// v8.64 — THE MARKET. Everything the daily price history can say that helps a brewer buy well:
+//   pulse      — the Commander staples index (500 most-played cards), how many staples are on sale
+//   Your decks — buy/wait reads for the unowned cards in your decks (reprints, dips, spikes)
+//   On sale    — staples whose cheapest copy is ≥15% under what it usually costs
+//   Rising     — staples well over their usual price and still climbing
+//   Reprints   — $10+ cards just reprinted or announced (the cheaper copies coming)
+//   Movers     — the week's biggest TCGplayer moves, steady vs sudden
+//   New sets   — how new-set rares actually behave after release in our own data, and where each recent set sits
+// Data: oracle-data prices/market.json, movers.json, reprints.json (rebuilt daily by GitHub Actions).
+const sfImg = (sid, size) => sid ? 'https://cards.scryfall.io/' + (size || 'small') + '/front/' + sid[0] + '/' + sid[1] + '/' + sid + '.jpg' : null;
+let marketP = null, moversP = null;
+function loadMarket() { if (!marketP) marketP = fetch(PRICE_BASE + 'market.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => { marketP = null; return null; }); return marketP; }
+function loadMovers() { if (!moversP) moversP = fetch(PRICE_BASE + 'movers.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => { moversP = null; return null; }); return moversP; }
+function MkRow({ img, imgCls, title, sub, note, price, priceSub, priceSubCls, chip, tone, onClick, busy, i, tags }) {
+    return React.createElement("button", { className: "mk-row" + (busy ? ' busy' : ''), style: { '--i': i || 0 }, onClick },
+        img ? React.createElement("img", { className: "mk-thumb" + (imgCls ? ' ' + imgCls : ''), src: img, alt: "", loading: "lazy", decoding: "async" }) : React.createElement("span", { className: "mk-thumb ph", "aria-hidden": true }, "◈"),
+        React.createElement("span", { className: "mk-text" },
+            React.createElement("span", { className: "mk-title" }, title),
+            sub ? React.createElement("span", { className: "mk-sub" }, sub, (tags || []).filter(Boolean).map(t => React.createElement("span", { key: t, className: "mk-tag" }, t))) : null,
+            note ? React.createElement("span", { className: "mk-note" }, note) : null),
+        React.createElement("span", { className: "mk-price" },
+            React.createElement("b", null, price),
+            priceSub ? React.createElement("span", { className: priceSubCls || '' }, priceSub) : null),
+        chip ? React.createElement("span", { className: "mk-chip " + (tone || '') }, chip) : React.createElement("span", null));
+}
+// One-series line chart with a hover/touch crosshair. pts: [{x, y, label}] — x numeric, y numeric.
+function MkLine({ pts, fmtY, fmtX, mark, ref1, height, aria }) {
+    const [hover, setHover] = useState(null);
+    const box = useRef(null);
+    if (!pts || pts.length < 2) return null;
+    const W = 320, H = height || 110, P = 6;
+    const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs);
+    let lo = Math.min(...ys, ref1 != null ? ref1 : Infinity), hi = Math.max(...ys, ref1 != null ? ref1 : -Infinity);
+    const pad = (hi - lo) * 0.12 || 1; lo -= pad; hi += pad;
+    const X = x => P + (x1 === x0 ? 0 : (x - x0) / (x1 - x0)) * (W - 2 * P);
+    const Y = y => H - P - (y - lo) / (hi - lo) * (H - 2 * P);
+    const d = pts.map((p, i) => (i ? 'L' : 'M') + X(p.x).toFixed(1) + ' ' + Y(p.y).toFixed(1)).join(' ');
+    const area = d + ' L' + X(pts[pts.length - 1].x).toFixed(1) + ' ' + (H - P) + ' L' + X(pts[0].x).toFixed(1) + ' ' + (H - P) + ' Z';
+    function move(e) {
+        const r = box.current.getBoundingClientRect();
+        const cx = ((e.touches ? e.touches[0].clientX : e.clientX) - r.left) / r.width * W;
+        let best = pts[0]; for (const p of pts) if (Math.abs(X(p.x) - cx) < Math.abs(X(best.x) - cx)) best = p;
+        setHover(best);
+    }
+    const show = hover || mark;
+    return React.createElement("div", { className: "mk-chart" },
+        React.createElement("svg", { ref: box, viewBox: '0 0 ' + W + ' ' + H, preserveAspectRatio: "none", role: "img", "aria-label": aria, onMouseMove: move, onTouchStart: move, onTouchMove: move, onMouseLeave: () => setHover(null) },
+            React.createElement("defs", null, React.createElement("linearGradient", { id: "mkFill", x1: 0, y1: 0, x2: 0, y2: 1 },
+                React.createElement("stop", { offset: "0", style: { stopColor: "var(--gold)", stopOpacity: .22 } }), React.createElement("stop", { offset: "1", style: { stopColor: "var(--gold)", stopOpacity: 0 } }))),
+            ref1 != null && React.createElement("line", { x1: P, x2: W - P, y1: Y(ref1), y2: Y(ref1), style: { stroke: "rgba(255,255,255,.22)" }, strokeDasharray: "3 4", strokeWidth: 1, vectorEffect: "non-scaling-stroke" }),
+            React.createElement("path", { d: area, fill: "url(#mkFill)" }),
+            React.createElement("path", { d, fill: "none", style: { stroke: "var(--gold-bright)" }, strokeWidth: 2, vectorEffect: "non-scaling-stroke", strokeLinejoin: "round", strokeLinecap: "round" }),
+            show && React.createElement("line", { x1: X(show.x), x2: X(show.x), y1: 0, y2: H, style: { stroke: "rgba(255,255,255,.3)" }, strokeWidth: 1, vectorEffect: "non-scaling-stroke" })),
+        show && React.createElement("span", { className: "mk-dot", style: { left: (X(show.x) / W * 100) + '%', top: (Y(show.y) / H * 100) + '%' } }),
+        React.createElement("div", { className: "mk-readout" }, show ? (fmtX(show) + ' · ' + fmtY(show.y)) : ' '));
+}
+function MarketScreen({ decks, activeDeck, onOpenDetail, onSearch }) {
+    const [mk, setMk] = useState(null);
+    const [mv, setMv] = useState(null);
     const [rp, setRp] = useState(null);
-    const [view, setView] = useState(null);
+    const [failed, setFailed] = useState(false);
+    const [view, setViewS] = useState(() => { try { return localStorage.getItem('oracle_market_view') || ''; } catch (e) { return ''; } });
+    const setView = v => { setViewS(v); setMore(false); haptic(); try { localStorage.setItem('oracle_market_view', v); } catch (e) { } };
+    const [saleSort, setSaleSort] = useState('played');
     const [dir, setDir] = useState('drops');
     const [kind, setKind] = useState('single');
-    const [busy, setBusy] = useState(null);
     const [more, setMore] = useState(false);
+    const [busy, setBusy] = useState(null);
     useEffect(() => {
         let alive = true;
-        fetch(PRICE_BASE + 'movers.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(j => { if (alive && j) setM(j); }).catch(() => { });
-        loadReprints().then(j => { if (alive && j) setRp(j); });
+        Promise.all([loadMarket(), loadMovers(), loadReprints()]).then(([a, b, c]) => { if (!alive) return; setMk(a); setMv(b); setRp(c); if (!a && !b && !c) setFailed(true); });
         return () => { alive = false; };
     }, []);
-    // your unowned cards, active deck first (deduped by printing)
+    // unowned cards across your decks, active deck first
     const mine = useMemo(() => {
         const seen = new Map();
-        const list = (decks || []).slice().sort((a, b) => (activeDeck && b.id === activeDeck.id) - (activeDeck && a.id === activeDeck.id));
-        list.forEach(d => {
+        (decks || []).slice().sort((a, b) => (activeDeck && b.id === activeDeck.id) - (activeDeck && a.id === activeDeck.id)).forEach(d => {
             const owned = d.owned || {};
-            const entries = (d.commander ? [{ card: d.commander }] : []).concat(Object.values(d.cards || {}));
-            entries.forEach(e => {
-                if (!e || !e.card) return; const k = cardKey(e.card);
-                if (owned[k]) return;
+            (d.commander ? [{ card: d.commander }] : []).concat(Object.values(d.cards || {})).forEach(e => {
+                if (!e || !e.card) return; const k = cardKey(e.card); if (owned[k]) return;
                 if (!seen.has(k)) seen.set(k, { card: e.card, decks: [] });
                 seen.get(k).decks.push(d.name || (d.commander && d.commander.name) || 'Untitled');
             });
         });
         return [...seen.values()];
     }, [decks, activeDeck && activeDeck.id]);
-    const v = view || (mine.length ? 'you' : 'market');
+    const myOracles = useMemo(() => new Set(mine.map(x => x.card.oracle_id).filter(Boolean)), [mine]);
+    const v = view || (mine.length ? 'you' : 'sale');
     const sigs = useCardSignals(mine.map(x => x.card), v === 'you', 200);
-    useEffect(() => { setMore(false); }, [v, dir, kind]);
+    function openSid(sid, pref) {
+        haptic(); setBusy(sid);
+        if (pref) PriceData.prefer = pref;
+        fetch(API + '/cards/' + sid, { headers: HEADERS }).then(r => r.ok ? r.json() : null)
+            .then(c => { setBusy(null); if (c && c.object === 'card' && onOpenDetail) onOpenDetail(c); }).catch(() => setBusy(null));
+    }
     function openPid(it) {
-        haptic();
-        if (it.kind !== 'single') { window.open('https://www.tcgplayer.com/product/' + it.pid, '_blank', 'noopener'); return; }
-        setBusy('p' + it.pid);
-        PriceData.prefer = { pid: it.pid, foil: !!it.foil };
-        fetch(API + '/cards/tcgplayer/' + it.pid, { headers: HEADERS }).then(r => r.ok ? r.json() : null)
-            .then(c => { setBusy(null); if (c && c.object === 'card' && onOpenDetail) onOpenDetail(c); else window.open('https://www.tcgplayer.com/product/' + it.pid, '_blank', 'noopener'); })
-            .catch(() => setBusy(null));
+        if (it.sid && it.kind === 'single') return openSid(it.sid, { pid: it.pid, foil: !!it.foil });
+        haptic(); window.open('https://www.tcgplayer.com/product/' + it.pid, '_blank', 'noopener');
     }
-    function openId(id) {
-        haptic(); setBusy(id);
-        fetch(API + '/cards/' + id, { headers: HEADERS }).then(r => r.ok ? r.json() : null)
-            .then(c => { setBusy(null); if (c && c.object === 'card' && onOpenDetail) onOpenDetail(c); })
-            .catch(() => setBusy(null));
-    }
-    if (!m && !rp) return null;
-    const cap = more ? 40 : page ? 10 : 6;
-    let body, foot;
-    if (v === 'you') {
+    const idx = mk && mk.index;
+    const youItems = useMemo(() => {
         const rank = x => { const s = sigs[cardKey(x.card)] || {}; const r = s.reprint, t = s.trend;
             if (r && r.tone === 'wait') return 0; if (t && t.tone === 'good') return 1; if (t) return 2; if (r && r.lo >= 5) return 3; return 9; };
-        const items = mine.filter(x => rank(x) < 9).sort((a, b) => rank(a) - rank(b) || priceValue(b.card) - priceValue(a.card));
-        body = items.length ? React.createElement("div", { className: "pw-list" }, items.slice(0, cap).map((x, i) => {
-            const s = sigs[cardKey(x.card)], r = s.reprint, t = s.trend;
-            const main = r && r.tone === 'wait' ? r : t || r;
-            const price = t ? t.cur : (Number.isFinite(priceValue(x.card)) ? priceValue(x.card) : null);
-            return React.createElement("button", { key: cardKey(x.card), className: "pw-row mk", style: { '--i': i }, onClick: () => { haptic(); onOpenDetail && onOpenDetail(x.card); } },
-                React.createElement("span", { className: "pw-name" },
-                    React.createElement("span", { className: "pw-n" }, x.card.name),
-                    React.createElement("span", { className: "pw-why" }, main.head ? main.head + ' · ' + (r.upcoming ? 'out ' + fmtShort(r.set.rel) : r.kind) : main.why),
-                    React.createElement("span", { className: "pw-set" }, x.decks.slice(0, 2).join(', ') + (x.decks.length > 2 ? ' +' + (x.decks.length - 2) : ''))),
-                React.createElement("span", { className: "pw-price" }, React.createElement("b", null, price != null ? fmtUsd(price) : r && r.lo ? 'from ' + fmtUsd(r.lo) : '—')),
-                React.createElement("span", { className: "mk-chip " + main.tone }, main.tone === 'wait' ? 'Wait' : main.tone === 'good' ? 'Buy' : 'Note'));
-        })) : React.createElement("div", { className: "pw-empty" }, mine.length ? "Nothing to act on in your decks right now — no pending reprints, dips or spikes." : "Add cards to a deck and this shows when to buy them.");
-        foot = "Unowned cards in your decks. Wait = a reprint is coming or the price just spiked. Buy = under its usual price.";
+        return mine.filter(x => rank(x) < 9).sort((a, b) => rank(a) - rank(b) || priceValue(b.card) - priceValue(a.card));
+    }, [mine, sigs]);
+    const t0 = isoToday();
+    const reprintList = rp ? rp.cards.filter(c => c.lo >= 1000) : [];
+    const reprintSorted = reprintList.filter(c => c.new.some(s => s.rel > t0)).concat(reprintList.filter(c => !c.new.some(s => s.rel > t0)));
+    const saleList = mk ? (saleSort === 'played' ? mk.sale.slice().sort((a, b) => a.er - b.er) : mk.sale.slice().sort((a, b) => a.pct - b.pct)) : [];
+    const moverList = mv ? ((mv[dir] || {})[kind] || []) : [];
+    const counts = { you: youItems.length, sale: mk ? mk.saleN : 0, rising: mk ? mk.heatN : 0, reprints: reprintList.length };
+    const cap = more ? 120 : 12;
+    const moreBtn = (n) => n > 12 ? React.createElement("button", { className: "pw-more", onClick: () => { setMore(!more); haptic(); } }, more ? 'Show less' : 'Show all ' + n) : null;
+    let body;
+    if (v === 'you') {
+        body = React.createElement(React.Fragment, null,
+            React.createElement("p", { className: "mk-lede" }, "Cards in your decks you don't own yet, with something to act on. ", React.createElement("b", null, "Wait"), " = a reprint is coming or it just spiked. ", React.createElement("b", null, "Buy"), " = under its usual price."),
+            youItems.length ? React.createElement("div", { className: "mk-list" }, youItems.slice(0, cap).map((x, i) => {
+                const s = sigs[cardKey(x.card)], r = s.reprint, t = s.trend;
+                const main = r && r.tone === 'wait' ? r : t || r;
+                const price = t ? t.cur : (Number.isFinite(priceValue(x.card)) ? priceValue(x.card) : null);
+                return React.createElement(MkRow, { key: cardKey(x.card), i, img: cardImage(x.card, 'small'), title: x.card.name,
+                    sub: x.decks.slice(0, 2).join(', ') + (x.decks.length > 2 ? ' +' + (x.decks.length - 2) : ''),
+                    note: main.head ? main.head + (r && r.upcoming ? ' · out ' + fmtShort(r.set.rel) : '') : main.why,
+                    price: price != null ? fmtUsd(price) : r && r.lo ? 'from ' + fmtUsd(r.lo) : '—',
+                    chip: main.tone === 'wait' ? 'Wait' : main.tone === 'good' ? 'Buy' : 'Note', tone: main.tone,
+                    onClick: () => { haptic(); onOpenDetail && onOpenDetail(x.card); } });
+            })) : React.createElement("div", { className: "pw-empty" }, mine.length ? "Nothing to act on in your decks right now — no pending reprints, dips or spikes." : "Add cards to a deck and this shows when to buy them."),
+            moreBtn(youItems.length));
+    } else if (v === 'sale') {
+        body = React.createElement(React.Fragment, null,
+            React.createElement("div", { className: "mk-bar" },
+                React.createElement("p", { className: "mk-lede" }, "Commander staples (EDHREC top 3,000) whose cheapest copy is at least 15% under what it usually costs."),
+                React.createElement("div", { className: "ios-segment compact" },
+                    React.createElement("button", { className: saleSort === 'played' ? 'active' : '', onClick: () => { setSaleSort('played'); haptic(); } }, "Most played"),
+                    React.createElement("button", { className: saleSort === 'drop' ? 'active' : '', onClick: () => { setSaleSort('drop'); haptic(); } }, "Biggest drop"))),
+            React.createElement("div", { className: "mk-list" }, saleList.slice(0, cap).map((x, i) => React.createElement(MkRow, { key: x.pid, i, img: sfImg(x.sid), title: x.n,
+                sub: '#' + x.er.toLocaleString() + ' in EDH · ' + x.set, tags: [x.rp ? 'Reprinted' : null, myOracles.has(x.o) ? 'In your decks' : null],
+                price: fmtUsd(x.cur / 100), priceSub: 'usually ' + fmtUsd(x.usual / 100), chip: fmtPct(x.pct), tone: 'good', busy: busy === x.sid,
+                onClick: () => openSid(x.sid, { pid: x.pid, foil: false }) }))),
+            moreBtn(saleList.length));
+    } else if (v === 'rising') {
+        body = React.createElement(React.Fragment, null,
+            React.createElement("p", { className: "mk-lede" }, "Staples at least 20% over their usual price and still climbing. If a deck needs one, sooner tends to beat later; if not, spikes often cool off."),
+            React.createElement("div", { className: "mk-list" }, (mk ? mk.heat : []).slice(0, cap).map((x, i) => React.createElement(MkRow, { key: x.pid, i, img: sfImg(x.sid), title: x.n,
+                sub: '#' + x.er.toLocaleString() + ' in EDH · ' + x.set, tags: [myOracles.has(x.o) ? 'In your decks' : null],
+                price: fmtUsd(x.cur / 100), priceSub: 'usually ' + fmtUsd(x.usual / 100), chip: fmtPct(x.pct), tone: 'wait', busy: busy === x.sid,
+                onClick: () => openSid(x.sid, { pid: x.pid, foil: false }) }))),
+            moreBtn(mk ? mk.heat.length : 0));
     } else if (v === 'reprints') {
-        const t = isoToday();
-        const list = rp ? rp.cards.filter(c => c.lo >= 1000) : [];
-        const up = list.filter(c => c.new.some(s => s.rel > t)), recent = list.filter(c => !c.new.some(s => s.rel > t));
-        const items = up.concat(recent);
-        body = items.length ? React.createElement("div", { className: "pw-list" }, items.slice(0, cap).map((c, i) => {
-            const r = reprintRead(c);
-            return React.createElement("button", { key: c.o, className: "pw-row mk" + (busy === r.set.id ? ' busy' : ''), style: { '--i': i }, onClick: () => openId(r.set.id) },
-                React.createElement("span", { className: "pw-name" },
-                    React.createElement("span", { className: "pw-n" }, c.n),
-                    React.createElement("span", { className: "pw-set" }, r.kind + ' · ' + r.set.sn)),
-                React.createElement("span", { className: "pw-price" },
-                    React.createElement("b", null, 'from ' + fmtUsd(r.lo)),
-                    React.createElement("span", { className: r.newUsd && r.newUsd < r.lo * 0.9 ? 'cheaper' : '' }, r.newUsd ? 'new ' + fmtUsd(r.newUsd) : r.upcoming ? 'not out yet' : '')),
-                React.createElement("span", { className: "mk-chip " + (r.upcoming ? 'wait' : 'info') }, r.upcoming ? fmtShort(r.set.rel) : (r.days <= 0 ? 'today' : r.days + 'd ago')));
-        })) : React.createElement("div", { className: "pw-empty" }, "No reprints of $10+ cards announced or released lately.");
-        foot = "Cards whose cheapest existing copy is $10+. 'from' is that copy's price today. Reprints usually bottom 2–4 months after release; Secret Lair and The List barely move older copies.";
-    } else {
-        const list = m ? ((m[dir] || {})[kind] || []) : [];
-        body = list.length ? React.createElement("div", { className: "pw-list" }, list.slice(0, cap).map((it, i) => React.createElement("button", { key: it.pid + '-' + it.foil, className: "pw-row" + (busy === 'p' + it.pid ? ' busy' : ''), style: { '--i': i }, onClick: () => openPid(it) },
-            React.createElement("span", { className: "pw-name" },
-                React.createElement("span", { className: "pw-n" }, it.n),
-                React.createElement("span", { className: "pw-set" }, (it.set || it.sn || '') + (it.num ? ' #' + it.num : '') + (it.foil ? ' · Foil' : '') + (it.g != null ? (it.g ? ' · steady ' + (it.pct > 0 ? 'climb' : 'slide') : (it.pct > 0 ? ' · sudden spike' : ' · sudden drop')) : ''))),
-            React.createElement("span", { className: "pw-price" },
-                React.createElement("b", null, fmtUsd(it.cur / 100)),
-                React.createElement("span", null, "was " + fmtUsd(it.ref / 100))),
-            React.createElement("span", { className: "pw-pct " + (it.pct < 0 ? 'down' : 'up') }, fmtPct(it.pct)))))
-            : React.createElement("div", { className: "pw-empty" }, "No big moves here this week.");
-        foot = m ? "Prices through " + fmtDay(m.d) + ". This week vs the three weeks before. Sudden spikes usually settle; steady climbs are real demand." : '';
+        body = React.createElement(React.Fragment, null,
+            React.createElement("p", { className: "mk-lede" }, "$10+ cards just reprinted or announced. Reprints usually bottom 2–4 months after release; Secret Lair, Special Guests and The List barely move older copies."),
+            React.createElement("div", { className: "mk-list" }, reprintSorted.slice(0, cap).map((c, i) => {
+                const r = reprintRead(c);
+                return React.createElement(MkRow, { key: c.o, i, img: sfImg(r.set.id), title: c.n, sub: r.kind + ' · ' + r.set.sn, tags: [myOracles.has(c.o) ? 'In your decks' : null],
+                    price: 'from ' + fmtUsd(r.lo), priceSub: r.newUsd ? 'new ' + fmtUsd(r.newUsd) : r.upcoming ? 'not out yet' : '', priceSubCls: r.newUsd && r.newUsd < r.lo * 0.9 ? 'cheaper' : '',
+                    chip: r.upcoming ? fmtShort(r.set.rel) : (r.days <= 0 ? 'today' : r.days + 'd ago'), tone: r.upcoming ? 'wait' : 'info', busy: busy === r.set.id,
+                    onClick: () => openSid(r.set.id) });
+            })),
+            moreBtn(reprintSorted.length));
+    } else if (v === 'movers') {
+        body = React.createElement(React.Fragment, null,
+            React.createElement("div", { className: "mk-bar" },
+                React.createElement("div", { className: "ios-segment compact" },
+                    React.createElement("button", { className: dir === 'drops' ? 'active' : '', onClick: () => { setDir('drops'); setMore(false); haptic(); } }, "↓ Dropping"),
+                    React.createElement("button", { className: dir === 'climbs' ? 'active' : '', onClick: () => { setDir('climbs'); setMore(false); haptic(); } }, "↑ Climbing")),
+                React.createElement("div", { className: "ios-segment compact" },
+                    React.createElement("button", { className: kind === 'single' ? 'active' : '', onClick: () => { setKind('single'); setMore(false); haptic(); } }, "Singles"),
+                    React.createElement("button", { className: kind === 'sealed' ? 'active' : '', onClick: () => { setKind('sealed'); setMore(false); haptic(); } }, "Sealed"))),
+            React.createElement("p", { className: "mk-lede" }, "This week vs the three weeks before (cards over ~2 months old). ", React.createElement("b", null, "Sudden"), " moves often settle back; ", React.createElement("b", null, "steady"), " ones are real demand."),
+            moverList.length ? React.createElement("div", { className: "mk-list" }, moverList.slice(0, cap).map((it, i) => React.createElement(MkRow, { key: it.pid + '-' + it.foil, i, img: it.kind === 'single' ? sfImg(it.sid) : null, title: it.n,
+                sub: (it.set || it.sn || '') + (it.num ? ' #' + it.num : '') + (it.foil ? ' · Foil' : ''), tags: [it.g != null ? (it.g ? 'steady' : 'sudden') : null],
+                price: fmtUsd(it.cur / 100), priceSub: 'was ' + fmtUsd(it.ref / 100), chip: fmtPct(it.pct), tone: it.pct < 0 ? 'good' : 'wait', busy: busy === it.sid,
+                onClick: () => openPid(it) }))) : React.createElement("div", { className: "pw-empty" }, "No big moves here this week."),
+            moreBtn(moverList.length));
+    } else if (v === 'sets') {
+        const cv = mk && mk.curve, pts = cv ? cv.pts.map(p => ({ x: p.w, y: Math.round(p.med * 1000) / 10, n: p.n })) : [];
+        const b = cv && cv.bottom;
+        const near = b ? cv.pts.filter(p => p.med <= b.med * 1.05).map(p => p.w) : [];
+        const w1 = cv && cv.pts.find(p => p.w === 1);
+        body = cv ? React.createElement(React.Fragment, null,
+            React.createElement("div", { className: "mk-card" },
+                React.createElement("div", { className: "mk-card-head" }, "When new cards are cheapest"),
+                React.createElement("p", { className: "mk-big" },
+                    "Rares and mythics from a new set average ", React.createElement("b", null, Math.round((1 - w1.med) * 100) + '% cheaper'), " one week after release, and bottom around ",
+                    React.createElement("b", null, "week " + Math.min(...near) + (Math.max(...near) !== Math.min(...near) ? '–' + Math.max(...near) : '')), " at about ", React.createElement("b", null, Math.round(b.med * 100) + '%'), " of their release-day price."),
+                React.createElement(MkLine, { pts, ref1: 100, height: 120, fmtX: p => 'Week ' + p.x + (p.n ? ' · ' + p.n + ' sets' : ''), fmtY: y => Math.round(y) + '% of release price', mark: pts.find(p => p.x === b.w), aria: 'Median price of new-set rares and mythics by week since release' }),
+                React.createElement("div", { className: "mk-axis" }, React.createElement("span", null, "Release"), React.createElement("span", null, "Week 13"), React.createElement("span", null, "Week 26")),
+                React.createElement("p", { className: "mk-foot" }, "Median across " + cv.sets + " sets since early 2024 (Masters sets excluded), TCGplayer market price of each rare/mythic vs its release-day price.")),
+            React.createElement("div", { className: "mk-card-head sub" }, "Sets out now"),
+            React.createElement("div", { className: "mk-list" }, (mk.recent || []).map((s, i) => {
+                const wk = s.curve.length - 1, nowR = s.curve[wk], typ = (cv.pts.find(p => p.w === wk) || {}).med;
+                const diff = nowR != null && typ ? nowR - typ : 0;
+                const status = nowR == null ? '' : diff > 0.06 ? 'Holding up' : diff < -0.06 ? 'Cheaper than usual' : 'On track';
+                const left = b && wk < Math.min(...near) ? 'Usual bottom in ~' + (Math.min(...near) - wk) + ' weeks' : 'In the usual bottom window';
+                return React.createElement(MkRow, { key: s.code, i, img: 'https://svgs.scryfall.io/sets/' + s.code.toLowerCase() + '.svg', imgCls: 'set', title: s.name,
+                    sub: 'Week ' + wk + ' · out ' + fmtShort(s.rel), tags: [status || null], note: (nowR != null ? 'Now ' + Math.round(nowR * 100) + '% of release price; typical by now ' + Math.round((typ || 0) * 100) + '%. ' : '') + left + '.',
+                    price: nowR != null ? fmtPct(nowR - 1) : '—', priceSub: 'since release', chip: null,
+                    onClick: () => { haptic(); onSearch && onSearch('e:' + s.code.toLowerCase() + ' r>=r', 'usd_desc'); } });
+            })),
+            React.createElement("p", { className: "mk-foot" }, "Tap a set to browse its rares and mythics by price.")) : React.createElement("div", { className: "pw-empty" }, "Loading…");
     }
-    const total = v === 'you' ? null : v === 'reprints' ? (rp ? rp.cards.filter(c => c.lo >= 1000).length : 0) : (m ? ((m[dir] || {})[kind] || []).length : 0);
-    return React.createElement("div", { className: "pw-sec" + (page ? ' page' : '') },
-        !page && React.createElement("div", { className: "rr-head" },
-            React.createElement("span", { className: "rr-title" }, React.createElement("span", { className: "cg" }, "◈"), "Price Watch"),
-            React.createElement("span", { className: "rr-sub" }, "TCGplayer · when to buy")),
-        React.createElement("div", { className: "pw-controls" },
-            React.createElement("div", { className: "ios-segment compact", role: "group", "aria-label": "Price Watch view" },
-                mine.length ? React.createElement("button", { className: v === 'you' ? 'active' : '', onClick: () => { setView('you'); haptic(); } }, "Your decks") : null,
-                React.createElement("button", { className: v === 'reprints' ? 'active' : '', onClick: () => { setView('reprints'); haptic(); } }, "Reprints"),
-                React.createElement("button", { className: v === 'market' ? 'active' : '', onClick: () => { setView('market'); haptic(); } }, "Market")),
-            v === 'market' && React.createElement("div", { className: "ios-segment compact", role: "group", "aria-label": "Direction" },
-                React.createElement("button", { className: dir === 'drops' ? 'active' : '', onClick: () => { setDir('drops'); haptic(); } }, "↓ Dropping"),
-                React.createElement("button", { className: dir === 'climbs' ? 'active' : '', onClick: () => { setDir('climbs'); haptic(); } }, "↑ Climbing")),
-            v === 'market' && React.createElement("div", { className: "ios-segment compact", role: "group", "aria-label": "Product type" },
-                React.createElement("button", { className: kind === 'single' ? 'active' : '', onClick: () => { setKind('single'); haptic(); } }, "Singles"),
-                React.createElement("button", { className: kind === 'sealed' ? 'active' : '', onClick: () => { setKind('sealed'); haptic(); } }, "Sealed"))),
-        body,
-        (total == null ? false : total > (page ? 10 : 6)) || (v === 'you' && mine.filter(x => sigs[cardKey(x.card)]).length > (page ? 10 : 6)) ? React.createElement("button", { className: "pw-more", onClick: () => { setMore(!more); haptic(); } }, more ? 'Show less' : 'Show more') : null,
-        foot && React.createElement("div", { className: "pw-foot" }, foot));
+    const tabs = [['you', 'Your decks'], ['sale', 'On sale'], ['rising', 'Rising'], ['reprints', 'Reprints'], ['movers', 'Movers'], ['sets', 'New sets']].filter(([k]) => k !== 'you' || mine.length);
+    return React.createElement("div", { className: "screen" },
+        React.createElement("div", { className: "results-pad" },
+            React.createElement("div", { className: "search-landing page mk-page" },
+                React.createElement("div", { className: "page-head" },
+                    React.createElement("h1", { className: "page-title" }, "Market"),
+                    React.createElement("span", { className: "page-sub" }, "TCGplayer prices" + (mk ? ' · through ' + fmtShort(mk.d) : ''))),
+                failed ? React.createElement("div", { className: "pw-empty" }, "Market data couldn't load. Check your connection and reopen this tab.") : null,
+                idx && React.createElement("div", { className: "mk-pulse" },
+                    React.createElement("div", { className: "mk-tile wide" },
+                        React.createElement("div", { className: "mk-tile-top" },
+                            React.createElement("span", { className: "mk-tile-lab" }, "Commander staples"),
+                            React.createElement("span", { className: "mk-tile-val " + (idx.ch30 < 0 ? 'down' : 'up') }, fmtPct(idx.ch30), React.createElement("i", null, " 30 days"))),
+                        React.createElement(MkLine, { pts: idx.pts.map(p => ({ x: Date.parse(p[0] + 'T12:00:00Z'), y: p[1], d: p[0] })), height: 64, fmtX: p => fmtDay(p.d), fmtY: y => 'today ' + fmtPct(idx.pts[idx.pts.length - 1][1] / y - 1) + ' vs then', aria: 'Commander staples price index, last 12 months' }),
+                        React.createElement("div", { className: "mk-tile-foot" }, "Price index of the " + idx.n + " most-played Commander cards · 7d " + fmtPct(idx.ch7) + " · 90d " + fmtPct(idx.ch90) + " · 1y " + fmtPct(idx.ch365))),
+                    React.createElement("button", { className: "mk-tile", onClick: () => setView('sale') },
+                        React.createElement("span", { className: "mk-tile-num" }, counts.sale), React.createElement("span", { className: "mk-tile-lab" }, "staples on sale")),
+                    mine.length ? React.createElement("button", { className: "mk-tile", onClick: () => setView('you') },
+                        React.createElement("span", { className: "mk-tile-num" }, counts.you), React.createElement("span", { className: "mk-tile-lab" }, "to act on in your decks")) :
+                        React.createElement("button", { className: "mk-tile", onClick: () => setView('reprints') },
+                            React.createElement("span", { className: "mk-tile-num" }, counts.reprints), React.createElement("span", { className: "mk-tile-lab" }, "$10+ reprints"))),
+                React.createElement("div", { className: "mk-tabs", role: "tablist" }, tabs.map(([k, l]) => React.createElement("button", { key: k, role: "tab", "aria-selected": v === k, className: 'mk-tab' + (v === k ? ' on' : ''), onClick: () => setView(k) }, l,
+                    counts[k] ? React.createElement("span", { className: "mk-tab-n" }, counts[k]) : null))),
+                body)));
 }
 function DetailOverlay({ card, onClose, onAdd, onSetCommander, onClearCommander, lists, onToggleList, onCreateList, onBuild, onViewPrintings, onSimilar, onConsult, onOpenSchool, inDeck, isCommander, ciViolation, upgrade }) {
     useEscape(onClose);
