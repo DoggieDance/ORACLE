@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v8.59 · 2026-09-11">
+<meta name="oracle-build" content="v8.60 · 2026-11-17">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1770,12 +1770,101 @@
   .combo-section-label .csl-hint { font-size: 10px; color: var(--muted2); text-transform: none; letter-spacing: 0; font-weight: 500; font-style: italic; }
   .curve-chip.combo-missing { border: 1px dashed rgba(224,196,106,.55); color: var(--gold-bright); background: rgba(224,196,106,.08); }
   .curve-chip.combo-missing:hover { background: rgba(224,196,106,.16); border-color: rgba(224,196,106,.75); }
+  /* v8.60 phone layout for the Reading Room + Fresh Spoilers */
+  .hd-item:not(:has(.hd-thumb-wrap)) { grid-template-columns: 1fr; }
+  .screen { overflow-x: hidden; } /* a 5px decorative overhang let the page wiggle sideways on phones */
+  .fs-swipe { margin-left: auto; font-family: var(--ios-font); font-size: 10.5px; letter-spacing: .04em; color: var(--muted2); text-transform: none; }
+  .fs-type-label { display: flex; align-items: baseline; gap: 8px; }
+  @media (max-width: 639px) {
+    .hd-blurb { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .hd-item { gap: 12px; padding: 11px 2px; }
+    .hd-thumb-wrap { width: 92px; height: 66px; }
+    .hd-item:has(.hd-thumb-wrap) { grid-template-columns: 92px 1fr; }
+    .fs-types { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-right: -16px; padding-right: 16px; -webkit-overflow-scrolling: touch; }
+    .fs-types::-webkit-scrollbar { display: none; }
+    .fs-type-chip { flex: 0 0 auto; }
+    .fs-grid.fs-rail { display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-left: 0; margin-right: -16px; padding: 2px 16px 8px 0; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+    .fs-grid.fs-rail::-webkit-scrollbar { display: none; }
+    .fs-grid.fs-rail > .fs-card { flex: 0 0 44%; scroll-snap-align: start; }
+    .fs-type-group + .fs-type-group { margin-top: 14px; }
+  }
+  /* v8.60 price watch */
+  .pw-sec { margin-top: 30px; }
+  .pw-controls { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 6px; }
+  .pw-list { display: flex; flex-direction: column; }
+  .pw-row { display: grid; grid-template-columns: 1fr auto 62px; align-items: center; gap: 12px; padding: 11px 4px; border: 0; border-bottom: 1px solid var(--hair); background: none; color: var(--text); text-align: left; animation: skIn .4s var(--fluid) both; animation-delay: calc(var(--i, 0) * 40ms); border-radius: 8px; }
+  .pw-row:hover { background: rgba(255,255,255,.03); } .pw-row.busy { opacity: .55; }
+  .pw-name { display: flex; flex-direction: column; min-width: 0; }
+  .pw-n { font-weight: 650; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pw-set { font-size: 11.5px; color: var(--muted); }
+  .pw-price { display: flex; flex-direction: column; align-items: flex-end; font-variant-numeric: tabular-nums; }
+  .pw-price b { font-size: 14.5px; } .pw-price span { font-size: 11px; color: var(--muted); }
+  .pw-pct { justify-self: end; font-size: 12.5px; font-weight: 750; padding: 3px 7px; border-radius: 8px; font-variant-numeric: tabular-nums; }
+  .pw-pct.down { color: #8fdcab; background: rgba(88,184,126,.12); } .pw-pct.up { color: #f0a080; background: rgba(224,96,76,.12); }
+  .pw-empty { color: var(--muted); font-style: italic; padding: 12px 2px; font-size: 13px; }
+  .pw-foot { font-size: 11px; color: var(--muted2); margin-top: 8px; }
+  .bz-flag.wc-src { background: rgba(255,255,255,.1); color: var(--text-dim); }
+  /* v8.60 price insight */
+  .pi { margin: 14px 0 4px; padding: 14px; border-radius: 16px; background: var(--glass); border: 1px solid var(--hair); display: flex; flex-direction: column; gap: 12px; }
+  .pi-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .pi-title { font-family: var(--display); font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold-bright); }
+  .pi-now { display: flex; gap: 10px; flex-wrap: wrap; }
+  .pi-stat { display: flex; flex-direction: column; gap: 1px; padding: 8px 12px; border-radius: 12px; background: var(--glass2); border: 1px solid var(--hair); min-width: 84px; }
+  .pi-stat b { font-size: 17px; font-variant-numeric: tabular-nums; color: var(--text); }
+  .pi-stat.main b { color: var(--gold-bright); font-size: 20px; }
+  .pi-stat span { font-size: 11px; color: var(--muted); }
+  .pi-signal { padding: 10px 12px; border-radius: 12px; border: 1px solid var(--hair); background: var(--glass2); }
+  .pi-signal.good { border-color: rgba(88,184,126,.45); background: rgba(88,184,126,.09); }
+  .pi-signal.warn { border-color: rgba(230,170,70,.45); background: rgba(230,170,70,.09); }
+  .pi-signal-head { font-weight: 700; font-size: 14.5px; color: var(--text); }
+  .pi-signal.good .pi-signal-head { color: #8fdcab; } .pi-signal.warn .pi-signal-head { color: #f0c27a; }
+  .pi-signal-why { font-size: 13px; color: var(--text-dim); margin-top: 2px; }
+  .pi-ranges { display: flex; gap: 4px; }
+  .pi-ranges button { border: 1px solid var(--hair); background: none; color: var(--muted); border-radius: 8px; padding: 4px 10px; font-size: 12px; font-weight: 650; }
+  .pi-ranges button.on { color: var(--gold-bright); border-color: rgba(224,196,106,.55); background: rgba(224,196,106,.1); }
+  .pi-chart { position: relative; }
+  .pi-chart svg { width: 100%; height: 130px; display: block; touch-action: pan-y; cursor: crosshair; }
+  .pi-axis { position: absolute; right: 2px; top: 0; bottom: 22px; display: flex; flex-direction: column; justify-content: space-between; font-size: 10.5px; color: var(--muted); pointer-events: none; font-variant-numeric: tabular-nums; }
+  .pi-readout { font-size: 12px; color: var(--text-dim); margin-top: 4px; min-height: 16px; font-variant-numeric: tabular-nums; }
+  .pi-chart-empty { font-size: 12.5px; color: var(--muted); font-style: italic; }
+  .pi-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
+  .pi-facts > div { display: flex; flex-direction: column; gap: 1px; }
+  .pi-facts span { font-size: 11px; color: var(--muted); }
+  .pi-facts b { font-size: 14px; color: var(--text); font-variant-numeric: tabular-nums; }
+  .pi-facts b.up { color: #f0a080; } .pi-facts b.down { color: #8fdcab; }
+  .pi-facts i { font-size: 11px; color: var(--muted2); font-style: normal; }
+  .pi-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; font-size: 11.5px; color: var(--muted); }
+  .pi-foot a { color: var(--gold-bright); text-decoration: none; white-space: nowrap; }
+  /* v8.60 result lenses */
+  .art-lens { display: flex; gap: 6px; margin-left: auto; }
+  .lens-chip { border: 1px solid var(--hair); background: var(--glass2); color: var(--text-dim); border-radius: 18px; padding: 6px 11px; font-size: 12px; font-weight: 620; white-space: nowrap; }
+  .lens-chip.on { border-color: rgba(224,196,106,.65); background: rgba(224,196,106,.14); color: var(--gold-bright); }
+  .ac-set { gap: 10px; }
+  .state-msg.sethint { display: flex; flex-direction: column; gap: 10px; text-align: left; max-width: 460px; margin: 18px auto; }
+  /* v8.60 SetPicker */
+  .setpick { position: relative; display: flex; flex-direction: column; gap: 8px; }
+  .setpick-field { position: relative; }
+  .setpick-field .filter-text-input { padding-right: 40px; }
+  .setpick-field .filter-text-input.has-ico { padding-left: 42px; }
+  .setpick-field .filter-text-input.bad { border-color: rgba(224,96,76,.6); }
+  .setpick-field > .setpick-ico { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); }
+  .setpick-ico { width: 18px; height: 18px; flex: none; filter: invert(.86) sepia(.35) saturate(1.4) hue-rotate(5deg); object-fit: contain; }
+  .setpick-clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border: 0; background: none; color: var(--muted); font-size: 20px; border-radius: 10px; }
+  .setpick-list { display: flex; flex-direction: column; background: rgba(28,29,41,.98); border: 1px solid var(--hair2); border-radius: 13px; overflow: hidden; box-shadow: var(--shadow-deep); }
+  .setpick-opt { display: flex; align-items: center; gap: 10px; padding: 11px 13px; border: 0; border-bottom: 1px solid rgba(255,255,255,.05); background: none; color: var(--text); text-align: left; font-size: 14.5px; }
+  .setpick-opt:last-child { border-bottom: 0; }
+  .setpick-opt.hi { background: rgba(224,196,106,.1); }
+  .setpick-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .setpick-meta { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; margin-left: auto; }
+  .setpick-fix { background: rgba(224,96,76,.08); border: 1px solid rgba(224,96,76,.3); border-radius: 13px; padding: 11px 13px; font-size: 13.5px; color: var(--text-dim); display: flex; flex-direction: column; gap: 9px; }
+  .setpick-fix-opts { display: flex; flex-direction: column; gap: 6px; }
+  .setpick-fix-btn { display: flex; align-items: center; gap: 9px; padding: 9px 11px; border-radius: 10px; border: 1px solid rgba(224,196,106,.35); background: rgba(224,196,106,.08); color: var(--gold-bright); font-size: 14px; text-align: left; }
 </style>
 </head>
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v8.59 \u00B7 2026-09-11', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v8.60 \u00B7 2026-11-17', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -1923,6 +2012,23 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
   var baseH = window.innerHeight; /* v5.47: last known no-keyboard layout height */
   var lastVvh = '', lastVvt = '', kbHoldT = 0; /* v5.53/v5.60: gate redundant --vvh/--vvt writes + hysteresis disarm timer */
   var wasArmed = false; /* v5.65: previous kb-open state → detect the keyboard-OPEN edge */
+  /* v8.60 FREEZE GUARD. Three listeners (apply, the vv scroll/resize hook, the window scroll hook)
+     pin the window to scrollY 0 while the keyboard is up. When iOS keeps re-scrolling the window to
+     reveal a low field (the Set box), pin and iOS can chase each other until the sheet stops
+     answering taps. All pins now go through pinWindow(): at most 12 per second, then the pin
+     stands down for 1.5s so iOS can settle. ?kbdebug shows the counters on screen. */
+  var pinTimes = [], pinPausedUntil = 0, lastFocusOut = 0;
+  window.__kbStats = { pins: 0, trips: 0 };
+  function pinWindow() {
+    if (!(window.scrollY || window.scrollX)) return;
+    var now = Date.now();
+    if (now < pinPausedUntil) return;
+    pinTimes.push(now);
+    while (pinTimes.length && now - pinTimes[0] > 1000) pinTimes.shift();
+    if (pinTimes.length > 12) { pinPausedUntil = now + 1500; pinTimes = []; window.__kbStats.trips++; return; }
+    window.__kbStats.pins++;
+    window.scrollTo(0, 0);
+  }
 
   function apply() {
     raf = 0;
@@ -1937,7 +2043,7 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
        editing (resize mode), OR the classic overlay delta (overlay mode). */
     var aeK = document.activeElement;
     var editingK = aeK && (aeK.tagName === 'INPUT' || aeK.tagName === 'TEXTAREA' || aeK.tagName === 'SELECT');
-    if (!editingK)
+    if (!editingK && Date.now() - lastFocusOut > 700) /* v8.60: not mid keyboard-close, or baseH caches a short height */
       baseH = window.innerHeight;
     var kbOverlay = vv ? (window.innerHeight - vv.height) > 90 : false;
     var kbResize = editingK && baseH > 0 && (baseH - window.innerHeight) > 90;
@@ -1978,7 +2084,7 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
        (the churn v5.62 rightly removed was the INNER-scroller repairFocusScroll, a
        different thing). This is the combination that never coexisted: v5.60's
        working window pin + v5.66's single inner-scroller reveal + kbClass hysteresis. */
-    if ((armed || !editingK) && (window.scrollY || window.scrollX)) window.scrollTo(0, 0);
+    if (armed || !editingK) pinWindow();
     /* Sizing (kept): gated --vvh/--vvt writes + hold the keyboard-up height through
        a transient 1-frame vv bounce (tallBounce) so the sheet doesn't resize on a
        spike. Pure sizing — the reveal is the one-shot scrollIntoView (focusin +
@@ -2086,8 +2192,10 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
      (pan, blank band, off-top clip) are resolved on v5.87 telemetry and the owner
      found the on-screen pill confusing. Nothing else referenced dbgEl. */
   document.addEventListener('focusout', function () {
+    lastFocusOut = Date.now();
     setTimeout(function () { window.scrollTo(0, 0); apply(); }, 50);
     setTimeout(apply, 350);
+    setTimeout(apply, 800); /* v8.60: re-measure once the keyboard has fully closed (baseH refresh) */
   });
   document.addEventListener('focusin', function (e) {
     setTimeout(sched, 50); /* size the sheet to the keyboard once it opens */
@@ -2145,13 +2253,25 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
        (This is the reactive WINDOW pin; the churn v5.62 removed was the INNER
        repairFocusScroll — a different container.) */
     var onVV = function () {
-      if (root.classList.contains('kb-open') && (window.scrollY || window.scrollX)) window.scrollTo(0, 0);
+      if (root.classList.contains('kb-open')) pinWindow();
       sched();
     };
     vv.addEventListener('resize', onVV);
     vv.addEventListener('scroll', onVV);
   }
   apply(); /* set correct initial --vvh/--vvt/kb-open at startup */
+  if (/[?&]kbdebug\b/.test(location.search)) {
+    var dbg = document.createElement('div');
+    dbg.style.cssText = 'position:fixed;left:6px;top:calc(env(safe-area-inset-top,0px) + 4px);z-index:99999;font:11px/1.35 ui-monospace,monospace;background:rgba(0,0,0,.82);color:#9fe;padding:5px 7px;border-radius:7px;pointer-events:none;white-space:pre';
+    document.documentElement.appendChild(dbg);
+    setInterval(function () {
+      var a = document.activeElement;
+      dbg.textContent = 'kb ' + root.classList.contains('kb-open') + '  pins ' + window.__kbStats.pins + '  trips ' + window.__kbStats.trips +
+        '\nscrollY ' + Math.round(window.scrollY) + '  inner ' + window.innerHeight + '  base ' + baseH +
+        '\nvv ' + (vv ? Math.round(vv.height) + '@' + Math.round(vv.offsetTop) : '-') + '  vvh ' + lastVvh + '  vvt ' + lastVvt +
+        '\nfocus ' + (a ? a.tagName + (a.className ? '.' + String(a.className).split(' ')[0] : '') : '-');
+    }, 250);
+  }
   /* v5.53/v5.82 — SECONDARY window pin (belt-and-suspenders). Catches the case where
      iOS's pan DOES fire a window 'scroll' event. NOTE: on this device the caret-pan
      mostly surfaces as a visualViewport event, so the PRIMARY enforcer is the reset
@@ -2160,8 +2280,8 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
   window.addEventListener('scroll', function () {
     var ae = document.activeElement;
     var editing = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT');
-    if ((window.scrollY || window.scrollX) && (root.classList.contains('kb-open') || !editing))
-      window.scrollTo(0, 0);
+    if (root.classList.contains('kb-open') || !editing)
+      pinWindow();
   }, { passive: true });
 }());
 </script>
@@ -2253,6 +2373,172 @@ var n,l,u,i,t,o,r={},f=[],e=/acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|z
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
 const API = 'https://api.scryfall.com';
 const HEADERS = { 'Accept': 'application/json' };
+// v8.60 — SET INDEX. One shared, cached copy of Scryfall's /sets so every set
+// field (Filters, `set:`/`e:` in the search box) understands set CODES and set
+// NAMES, autocompletes them, and suggests the closest set when the text isn't one.
+// Cached in localStorage for a day; every function is safe to call before it loads.
+const SETS_KEY = 'oracle_sets_v1';
+const SetIndex = { list: null, byCode: null, load: null };
+function setNorm(s) {
+    return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/&/g, ' and ').replace(/[’'`.:,!?()\-–—_/]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function setIndexFrom(data) {
+    const list = (data || []).filter(s => s && s.code && s.name).map(s => ({
+        code: String(s.code).toLowerCase(), name: s.name, released: s.released_at || '', type: s.set_type || '',
+        icon: s.icon_svg_uri || '', count: s.card_count || 0, digital: !!s.digital,
+        n: setNorm(s.name), words: setNorm(s.name).split(' '),
+    }));
+    // initials ("Modern Horizons 3" → "mh3") let people type the shorthand they know
+    list.forEach(s => { s.initials = s.words.map(w => /^\d+$/.test(w) ? w : w[0]).join(''); });
+    SetIndex.list = list;
+    SetIndex.byCode = {};
+    list.forEach(s => { SetIndex.byCode[s.code] = s; });
+    return list;
+}
+function loadSetIndex() {
+    if (SetIndex.list) return Promise.resolve(SetIndex.list);
+    if (SetIndex.load) return SetIndex.load;
+    try {
+        const c = JSON.parse(localStorage.getItem(SETS_KEY) || 'null');
+        if (c && c.t && Date.now() - c.t < 864e5 && Array.isArray(c.data)) return Promise.resolve(setIndexFrom(c.data));
+    } catch (e) { }
+    SetIndex.load = fetch(API + '/sets', { headers: HEADERS })
+        .then(r => { if (!r.ok) throw new Error('sets ' + r.status); return r.json(); })
+        .then(j => {
+            const slim = (j.data || []).map(s => ({ code: s.code, name: s.name, released_at: s.released_at, set_type: s.set_type, icon_svg_uri: s.icon_svg_uri, card_count: s.card_count, digital: s.digital }));
+            try { localStorage.setItem(SETS_KEY, JSON.stringify({ t: Date.now(), data: slim })); } catch (e) { }
+            return setIndexFrom(slim);
+        })
+        .catch(e => { SetIndex.load = null; throw e; });
+    return SetIndex.load;
+}
+// Main paper sets outrank tokens, art series, promos and digital-only sets on ties.
+const SET_TYPE_RANK = { core: 6, expansion: 6, masters: 5, draft_innovation: 5, commander: 4, funny: 3, starter: 3, box: 3, duel_deck: 3, from_the_vault: 3, premium_deck: 3, spellbook: 3, arsenal: 3, planechase: 2, archenemy: 2, masterpiece: 2, alchemy: 0, promo: 1, token: 0, memorabilia: 0, minigame: 0, treasure_chest: 0, vanguard: 0 };
+function setScore(s, q) {
+    if (!q) return 0;
+    if (s.code === q) return 1000;
+    if (s.n === q) return 950;
+    if (s.initials === q && /\d/.test(q)) return 720;
+    if (s.n.startsWith(q)) return 700;
+    if (s.code.startsWith(q) && q.length >= 2) return 640;
+    const qt = q.split(' ');
+    if (qt.every(t => s.words.some(w => w.startsWith(t)))) return 560;
+    if (s.n.includes(q)) return 450;
+    if (/\d/.test(q) && s.initials.startsWith(q)) return 420;
+    return 0;
+}
+function setTiebreak(s) { return (SET_TYPE_RANK[s.type] != null ? SET_TYPE_RANK[s.type] : 2) * 10 - (s.digital ? 30 : 0); }
+function searchSets(text, limit) {
+    const q = setNorm(text);
+    if (!q || !SetIndex.list) return [];
+    return SetIndex.list.map(s => ({ s, sc: setScore(s, q) })).filter(x => x.sc > 0)
+        .sort((a, b) => (b.sc - a.sc) || (setTiebreak(b.s) - setTiebreak(a.s)) || b.s.released.localeCompare(a.s.released))
+        .slice(0, limit || 8).map(x => x.s);
+}
+function editDistance(a, b) {
+    const m = a.length, n = b.length;
+    if (!m) return n; if (!n) return m;
+    let prev = Array.from({ length: n + 1 }, (_, j) => j), prev2 = null;
+    for (let i = 1; i <= m; i++) {
+        const cur = [i];
+        for (let j = 1; j <= n; j++) {
+            let v = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+            if (prev2 && i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) v = Math.min(v, prev2[j - 2] + 1);
+            cur.push(v);
+        }
+        prev2 = prev; prev = cur;
+    }
+    return prev[n];
+}
+// "Did you mean": typo-tolerant match on name, word-by-word name, and code.
+function suggestSets(text, limit) {
+    const q = setNorm(text);
+    if (!q || !SetIndex.list) return [];
+    const qt = q.split(' ');
+    return SetIndex.list.map(s => {
+        const whole = 1 - editDistance(q, s.n) / Math.max(q.length, s.n.length);
+        const code = q.length <= 6 ? 1 - editDistance(q, s.code) / Math.max(q.length, s.code.length, 3) : 0;
+        // each typed word against its best-matching word in the set name
+        const words = qt.reduce((a, t) => a + Math.max(...s.words.map(w => 1 - editDistance(t, w.slice(0, Math.max(t.length, w.length))) / Math.max(t.length, w.length))), 0) / qt.length;
+        return { s, sim: Math.max(whole, code * 0.95, words * 0.92) + setTiebreak(s) / 2000 };
+    }).filter(x => x.sim >= 0.55).sort((a, b) => b.sim - a.sim).slice(0, limit || 3).map(x => x.s);
+}
+// Resolve free text to ONE set when it's unambiguous; otherwise return suggestions.
+function resolveSet(text) {
+    const q = setNorm(text);
+    if (!q) return { empty: true };
+    if (!SetIndex.list) return /^[a-z0-9]{2,6}$/.test(q) ? { code: q, unverified: true } : { pending: true };
+    if (SetIndex.byCode[q]) return { set: SetIndex.byCode[q] };
+    const hits = SetIndex.list.map(s => ({ s, sc: setScore(s, q) })).filter(x => x.sc > 0)
+        .sort((a, b) => (b.sc - a.sc) || (setTiebreak(b.s) - setTiebreak(a.s)) || b.s.released.localeCompare(a.s.released));
+    if (hits.length && hits[0].sc >= 950) return { set: hits[0].s };
+    // a lone strong hit (or a clear winner over the runner-up) is safe to take
+    if (hits.length === 1 && hits[0].sc >= 560) return { set: hits[0].s };
+    if (hits.length > 1 && hits[0].sc >= 700 && hits[0].sc > hits[1].sc) return { set: hits[0].s };
+    // A set family ("Modern Horizons 3" + its Commander/Promos/Tokens spin-offs): take the parent.
+    if (hits.length > 1 && hits[0].sc >= 560) {
+        const top = hits[0].s, tied = hits.filter(x => x.sc === hits[0].sc);
+        if (tied.every(x => x.s === top || x.s.n.startsWith(top.n + ' '))) return { set: top };
+    }
+    if (hits.length) return { choices: hits.slice(0, 5).map(x => x.s) };
+    return { suggestions: suggestSets(q, 3) };
+}
+function setLabel(s) { return s ? s.name + ' (' + s.code.toUpperCase() + ')' : ''; }
+// Rewrites set:/s:/e:/edition: terms in a search string so names work too.
+// set:"modern horizons 3" → set:mh3 · e:foundations → set:fdn · set:modern horizons 3 sol ring → set:mh3 sol ring
+// (unquoted names take extra words only while the longer phrase still names a set). Unknown terms are reported.
+const SET_KEY_RE = /(^|[\s(])(-?)(set|s|e|edition)([:=])/gi;
+function rewriteSetTerms(q) {
+    q = String(q);
+    const unresolved = [];
+    if (!SetIndex.list) return { q, unresolved };
+    let out = '', last = 0, m;
+    SET_KEY_RE.lastIndex = 0;
+    while ((m = SET_KEY_RE.exec(q))) {
+        const start = m.index + m[1].length, vStart = SET_KEY_RE.lastIndex;
+        const neg = m[2], op = m[4];
+        let value = '', vEnd = vStart;
+        if (q[vStart] === '"') {
+            const close = q.indexOf('"', vStart + 1);
+            value = q.slice(vStart + 1, close < 0 ? q.length : close);
+            vEnd = close < 0 ? q.length : close + 1;
+        } else {
+            const rest = q.slice(vStart), words = [], ends = [], wre = /[^\s()]+/g;
+            let w;
+            while ((w = wre.exec(rest)) && words.length < 7) {
+                if (words.length && (/[:<>=!]/.test(w[0]) || /^(or|and)$/i.test(w[0]) || w[0][0] === '-')) break;
+                if (!words.length && w.index !== 0) break;
+                words.push(w[0]); ends.push(w.index + w[0].length);
+                if (rest[w.index + w[0].length] === ')') break;
+            }
+            value = words[0] || ''; vEnd = vStart + (ends[0] || 0);
+            if (value && !SetIndex.byCode[value.toLowerCase()]) {
+                for (let k = words.length; k >= 2; k--) {
+                    const phrase = words.slice(0, k).join(' '), r = resolveSet(phrase);
+                    if (r.set) { value = phrase; vEnd = vStart + ends[k - 1]; break; }
+                }
+            }
+        }
+        out += q.slice(last, start);
+        const term = q.slice(start, vEnd);
+        if (!value || SetIndex.byCode[value.toLowerCase()]) out += term;
+        else {
+            const r = resolveSet(value);
+            if (r.set) out += neg + 'set' + op + r.set.code;
+            else { unresolved.push({ text: value, term, kind: r.choices ? 'choices' : 'suggest', options: r.choices || r.suggestions || [] }); out += term; }
+        }
+        last = vEnd;
+        SET_KEY_RE.lastIndex = Math.max(vEnd, SET_KEY_RE.lastIndex);
+    }
+    out += q.slice(last);
+    return { q: out, unresolved };
+}
+// Every Secret Lair set (Drop, Promo, Countdown, Ultimate Edition…), read from the live set list.
+function secretLairCodes() {
+    const codes = SetIndex.list ? SetIndex.list.filter(st => /^secret lair/i.test(st.name)).map(st => st.code) : [];
+    return codes.length ? codes : ['sld', 'slp', 'slc', 'slu'];
+}
 const haptic = () => { if (navigator.vibrate)
     navigator.vibrate(8); };
 const esc = s => (s == null ? '' : String(s));
@@ -2625,7 +2911,11 @@ function useEdgeGuard() {
     const onTouchMove = useCallback((e) => {
         if (!e.touches || !e.touches.length) return;
         const el = e.currentTarget;
-        const dy = e.touches[0].clientY - st.current.y;
+        // v8.60: direction from the LAST position, not the gesture start — a swipe that
+        // reverses mid-way was being blocked as if it were still heading past the edge.
+        const y = e.touches[0].clientY, dy = y - st.current.y;
+        st.current.y = y;
+        if (!dy) return;
         const canScroll = el.scrollHeight > el.clientHeight + 1;
         if (!canScroll) { e.preventDefault(); return; }
         const atTop = el.scrollTop <= 0;
@@ -17816,6 +18106,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v8.60', date: '2026-11-17', focus: 'ui', commander: '—', summary: "SET SEARCH, PRICES, MOBILE. (1) SETS BY NAME: the Filters set box now takes a set code OR name, autocompletes with set icons, and when the text isn't a set it asks 'Did you mean…' instead of firing a dead search; set:/e: in the search bar accept names too (set:modern horizons 3 → set:mh3). (2) Card-name autocomplete now updates while you type (it only fired when the box lost focus). (3) Results get two quick lenses: ✦ Special art (borderless, showcase, extended & full art, etched, textless) and Secret Lair (every Secret Lair set). (4) PRICES WERE FROZEN: saved decks kept each card's price from the day it was added; they now re-price from Scryfall every 12 hours. (5) PRICE HISTORY on every card: TCGplayer market / lowest listing / direct low, a 1M–All chart reaching back to 2021, 7/30-day moves, all-time low and high, and a plain buy read (near all-time low, below usual, climbing fast, above usual). (6) PRICE WATCH on the landing: the week's biggest real TCGplayer drops and climbs, singles and sealed, glitch-filtered. (7) THE WIRE now comes from MTG news sites (EDHREC, MTGGoldfish, Card Kingdom, Draftsim…) via the oracle-data GitHub Action every 3 hours, since Reddit closed its feeds to servers; prices also update daily on GitHub, no PC needed. (8) PHONE: Fresh Spoilers become swipe rails and only the soonest set opens (≈5,400px → ≈2,200px); artless Dispatches use the full width; no sideways wiggle. (9) Filters freeze guard: the keyboard window-pin can no longer fight iOS in a loop (circuit breaker), the no-keyboard height is no longer captured mid-close, and the sheet's scroll guard tracks the finger's latest direction; ?kbdebug shows live counters." },
     { build: 'v8.59', date: '2026-09-11', focus: 'ui', commander: '—', summary: "Daily housekeeping (KEEP). The Oracle Herald is current again after a month: five live-verified items — the Oct 12 B&R window, Reality Fracture (previews Sept 8–17, five elder-sphinx commanders, the four-color WUBR Jace precon revealed Sept 16, release Oct 2), the five Foundations Commander starter precons (Oct 2), Secret Lair x Masters of the Universe (Sept 14), and the Perfectly Normal Superdrop (on sale Sept 1). The 44-run Scryfall re-key debt is finally paid down: 17 STUDY_DB teardowns moved from name: keys to their real oracle_ids, fetched live from Scryfall this run (Chrome reachable for the first time in 22 runs). One discovery logged rather than forced: Zedruu's rich v8.48 teardown is SHADOWED by an older id-keyed ledger stub in the same literal — re-keying would collide, so it is flagged for a proper merge next run. Necessity audit: artless Dispatch rows no longer render an empty grey thumbnail box (extends the v7.38 lead-item rule; four of five rows were artless today). Regression walk on the live build at desktop width: landing, search, card detail, Scouting Report and Deck view all clean, 0 console errors." },
     { build: 'v8.58', date: '2026-08-09', focus: 'critique-fix', commander: '—', summary: "VERIFY C-039 — THE FIX HOLDS, THE BLAST RADIUS IS SMALLER THAN CLAIMED IN ONE PLACE AND LARGER IN ANOTHER, AND BOTH WERE MEASURED RATHER THAN REPEATED. C-039 is CLOSED. This run did not read v8.57's own instruments (v039.js / why039.js were written to demonstrate the fix); it re-reproduced the FINDING from scratch — 'Zirda, the Dawnwaker gets ZERO actdisc rails' — by booting the PRE-FIX BACKUP (index-backup-20260809-1805-preFixRun.html, v8.56) and the shipped build in sibling jsdom contexts and reading the RENDERED DOM of the real SynergyOverlay on BOTH the scout and workshop paths. OLD build, Zirda: 8 sections, ZERO about the discount that is his entire card. NEW build, same commander, same paths: 10 sections, and the two new ones are 'Abilities Priced to Be Unaffordable' and 'Untap & Activate Again' — CHARACTER-FOR-CHARACTER THE SAME TWO RAIL TITLES AGATHA GETS, which is the shape the family is supposed to have. The defect reproduced before the fix and does not reproduce after it. THE DISCRIMINATOR WAS PROVED AGAINST THE COMPLETE PRINTED POPULATION, NOT AGAINST THE HARNESS CORPUS. Both mtg.wtf cuts were re-cut independently this run and both returned the same counts: `o:\"abilities you activate\" o:\"less to activate\"` = EXACTLY 16 CARDS and `o:\"less to activate\" t:legendary t:creature` = EXACTLY 13 CARDS, the 13 matching the harness corpus name for name. New harness `needle039.js` then EXTRACTS ACT_DISCOUNT_RE, ACT_DISCOUNT_ANY_RE, REMINDER_ACTION_RE and stripReminders OUT OF index.html (so the test cannot drift from what ships), feeds all 16 printed oracle texts through the app's OWN pipeline — stripReminders(text.toLowerCase()), exactly what index.html:13797 hands the reader — and reports: THE NEEDLE FIRES ON EXACTLY ONE OF THE SIXTEEN, AND IT IS ZIRDA (template B, subject 'permanent', amount {2}). The other fifteen are silent, INCLUDING the two equipment commanders a loose needle would have broken (ÉOWYN, LADY OF ROHAN and CLOUD, PLANET'S CHAMPION) and including NAHIRI, STORM OF STONE, whose 'and equip abilities you activate cost {1} less' sits MID-SENTENCE after a conjunction — the hardest case for a sentence-boundary rule and the one nobody had tested, because ELEVEN OF THE SIXTEEN ARE NOT IN THE HARNESS CORPUS AT ALL and had never been modelled. AN INSTRUMENT BUG IN THIS RUN'S OWN TEST, FOUND AND FIXED BEFORE IT COULD BE BELIEVED: the first pass reported the needle firing on ZERO of 16, Zirda included — which would have read as the fix being dead — because the test fed RAW printed text while the shipped regex is lowercase and unflagged. The app lowercases and strips reminders first. Reading the call site rather than trusting the red result is what turned a false FAIL into the run's strongest evidence. BLAST RADIUS RE-MEASURED FROM SCRATCH AND WIDER THAN v8.57's: a KEY-ALIGNED model differential over 143 COMMANDERS / 1,574 SECTIONS (every corpus file in the harness, deduped) reports added 2, removed 0, REORDERED 0, and title / sub / role / QUERY / why ALL ZERO — 142 of 143 BYTE-IDENTICAL, Zirda the only mover. Zero removed and zero reordered is the 9-rail-budget proof done properly: nothing was displaced to make room. v8.57's 'Sam and Mutagen Man are byte-identical' CLAIM IS CORRECTED HERE: they are byte-identical in RAIL STRUCTURE but their `why` DID change, by design — the key-aligned differential over the C-039 population is {added:4, removed:0, reordered:0, title:0, sub:0, role:0, q:0, WHY:2}, and both sentences were READ OUT rather than counted. Each lost exactly 'Soulbright Flamekin, Captivating Crew' from a list and now reads '...the Invoker cycle, Magus of the Candelabra and Soul of New Phyrexia are unplayable at their printed rate and excellent at this one.' — correct comma-to-and conversion, no stranded conjunction, no dangling colon, terminator intact. THAT IS THE FIX REMOVING TWO OFF-COLOUR LEAKS THAT WERE ALREADY LIVE, not a regression: an independent leak census over the RENDERED whys counts 8 leaks on the OLD build (Sam GW and Mutagen Man mono-G each sold RED Soulbright Flamekin and Captivating Crew on both paths) and ZERO on any printed card in the new one. ZIRDA'S OWN SENTENCE WAS READ OUT OF THE RENDERED DOM: it names 'the Invoker cycle, Soulbright Flamekin, Captivating Crew, and Soul of New Phyrexia' — every one castable in RW, mono-green Magus correctly pruned, ZERO leaks. The six leaks the census does report on the new build are ALL on a SYNTHETIC mono-white adversary that no printed card corresponds to, and they are the ALREADY-DOCUMENTED C-005 ≤1-survivor residual behaving exactly as v8.27 designed it to; the 16-card population cut proves NO PRINTED CARD REACHES IT, because Zirda is the only member and he is RW. COLLATERAL HUNT, RENDERED: the 12-commander / 137-section rendered-DOM differential is 11 of 12 IDENTICAL on model, scout DOM and shop DOM, with AGATHA — the family's own study commander and the counter-case that matters most — BYTE-IDENTICAL on both DOMs. The harness README's warned instrument artefact was controlled for: the 'network calls OLD/NEW 279/562' ≈2x was re-run with BOTH paths pointing at the SAME shipped file and reported 283/566, so the doubling is the harness, not the build. SOURCE DIFF READ LINE BY LINE RATHER THAN ASSERTED: block 5 is +74/−2, of which exactly SIX lines are code or data — the new ACT_DISCOUNT_ANY_RE, the ternary-to-if rewrite in readActivatedDiscount, its two new lines, and the EXEMPLAR_CI comma fix plus the two lines carrying the four registered exemplars. Everything else is comment. Script blocks 1, 2, 3 and 4 are BYTE-IDENTICAL — BLOCK 3 IS THE MOBILE VIEWPORT/KEYBOARD IIFE, so mobile is untouched BY PROOF, not by claim — block 0 differs by the version digit alone, and NON-SCRIPT BYTES ARE 195,223 == 195,223 differing by exactly ONE LINE, the <meta> build tag: no CSS, no markup, no layout changed. GUARDS, ALL FLAT AND ALL RUN ON BOTH BUILDS: node --check 6/6 PASS; meta == console banner == CHANGELOG[0] == v8.58; 0 console errors on both builds and on every test script; ALL SIX boot asserts [] on both (assertRegexTermBudget, assertSelfSubjectExcl, assertStudyKeys, assertStudyMerges, assertStudyTrapCap, assertWhyVerbPhrase) — the budget assert matters because it confirms NO NEW SCRYFALL TERM was introduced, the change being a JS-side reader; C-036 keyed 7/7 scout + 4/4 workshop with the UNKEYED control still reproducing (36+26 alien rails, 22 name leaks) so the suite is not passing vacuously; C-034 hygiene over 158 commanders 1,731 -> 1,735 whys with 0 double-stops, 0 empty and UNTERMINATED 4 -> 4 (pre-existing on both builds, so the subtractive direction is clean); C-028 ”. count 226 -> 226; ATOMS 94 / RAIL FAMILIES 86 / STUDY_DB 188 all unchanged; perf 0.523 -> 0.530 ms/buildEngineModel call. TOOLING, TWENTY-FIRST CONSECUTIVE RUN: Claude-in-Chrome is unreachable and api.scryfall.com is unreachable, so RAIL CARD CONTENTS REMAIN UNVERIFIED BY PROOF — Scryfall is stubbed and jsdom has no layout or paint. That limitation does not touch C-039, which is a reader-level defect measured in the model, the rendered DOM and the emitted wire query (Zirda's mounted overlay put `id<=RW legal:commander -t:basic -!\"Zirda, the Dawnwaker\" (o:/\\{[3-9]\\}[^:\\n]{0,14}:/ -is:transform -t:instant -t:sorcery)` on the wire, floor {3} for a {2} refund by the amount+1 rule). mtg.wtf rate-limited (HTTP 429) on a third supplementary cut, which was then shown REDUNDANT: the 16-card cut is a superset of the needle across ALL card types, so no non-creature legend can reach the template either. RESIDUALS UNCHANGED AND STILL NAMED: Hulk, Gamma Goliath's 'Power-up abilities of other creatures you control cost {3} less' is a THIRD wording read by neither template, Professor Hojo's SINGULAR once-per-turn form is deliberately out, and C-005's ≤1-survivor half stays OPEN. C-003 deferred for the fourteenth run — owner-gated (archetype-tile ROSTER/TILE pipeline). PUBLISHER RACE, THIRD RECORDED INSTANCE, CONFIRMED BY INSPECTION THIS RUN: the clone carried `ACT_DISCOUNT_ANY_RE` under an unchanged v8.56 tag and WITHOUT the EXEMPLAR_CI registration — exactly the half-finished v8.57 snapshot the previous run predicted, so the deployed page has been serving Zirda mono-green Magus. Self-correcting on the next :15 sweep now that ORACLE INDEX holds a complete v8.58. Staleness guard PASSED (local v8.57 >= published v8.56); git, the clone, the roster/tile pipeline and the mobile IIFE all untouched. New harness: needle039.js (the population run through the SHIPPED needle), keydiff039.js (key-aligned differential — the index-aligned one mis-attributes every field after an inserted section, which is how v8.57's own numbers got noisy), wide039.js (143-commander collateral), guards039.js, asserts039.js, blocks039.py, vfy039dom.js. Backup index-backup-20260809-1835-preVerifyC039.html; ORACLE INDEX only." },
     { build: 'v8.57', date: '2026-08-09', focus: 'critique-fix', commander: '—', summary: "CRITIQUE-FIX C-039 (MODE FIX) — THE ABILITY-DISCOUNT READER KNEW ONE OF THE TWO WORDINGS MAGIC PRINTS, SO THE CARD THE FAMILY IS NAMED AFTER GOT NOTHING. Reproduced on shipped v8.56 before anything was touched: AGATHA OF THE VILE CAULDRON renders 2 actdisc rails, ZIRDA, THE DAWNWAKER renders ZERO — 8 sections, none of them about the discount that is his entire card. Cause is one regex: ACT_DISCOUNT_RE reads only the subject-bearing template 'activated abilities of <SUBJECT> you control cost {N} less to activate' (Agatha, Sam, Mutagen Man). Magic prints a SECOND wording for the same effect with no subject — 'Abilities you activate ... cost {N} less to activate' — and nothing in the app read it. v7.84's own comment NAMES Zirda and still could not deal him the family, because the reader was written from one card's wording. THE DISCRIMINATOR WAS CUT AGAINST THE COMPLETE PRINTED POPULATION BEFORE IT WAS WRITTEN, and the obvious loose needle would have been a live regression: `o:\"abilities you activate\" o:\"less to activate\"` on mtg.wtf is EXACTLY 16 CARDS and FIFTEEN of them scope the phrase to one keyword ability — Equip (eleven, incl. ÉOWYN, LADY OF ROHAN and CLOUD, PLANET'S CHAMPION), Boast (Dragonkin Berserker), Cycling (Fluctuator), Ninjutsu (Silver-Fur Master x2). ONLY ZIRDA prints the unscoped form. An EQUIP discount is a Voltron deck, not a deck of permanents whose activation cost is the only thing wrong with them, so a bare needle would have dealt 'Abilities Priced to Be Unaffordable' to two popular equipment commanders — the exact class of defect this lane exists to remove. The scoping word always sits immediately before 'abilities', so the shipped needle requires the phrase to OPEN its sentence: no keyword list to maintain, and `[^.\\n]` on the gap so a match can never run across a sentence. COUNTER-CUT ON THE COMPLETE COMMANDER POPULATION: `o:\"less to activate\" t:legendary t:creature` = EXACTLY 13 CARDS, all 13 modelled through the real buildEngineModel old-vs-new, and the template moves exactly ONE — Zirda 0 -> 2 actdisc rails. The other twelve are unchanged, each for a stated reason: Agatha, Sam and Mutagen Man match template A, which is tried FIRST and is byte-identical; Baru, Imoen, Wayta and Whtz reduce THEIR OWN ability; Firion's reduction is printed inside quotes on a token; Cloud and Éowyn are Equip-scoped; PROFESSOR HOJO prints the SINGULAR 'the first activated ability you activate', which the plural needle does not match and should not, because a once-per-turn targeted discount is a different deck. Three synthetic adversaries carrying the Boast / Cycling / Ninjutsu scopings (absent from the legendary population) are also unmoved, and a synthetic BARE control proves the needle fires. SUBJECT RESOLVES TO 'permanent', which is the arm actDiscountPoolQ has carried since v7.84 and which no printed card had ever reached — this deals an EXISTING query shape to its first real member rather than inventing one. Zirda's shelf ships `(o:/\\{[3-9]\\}[^:\\n]{0,14}:/ -is:transform -t:instant -t:sorcery)`, floor {3} because he refunds {2}, by the same amount+1 rule Sam and Mutagen Man already use. THE FIX FOUND AND FIXED ITS OWN REGRESSION, CAUGHT BY MEASURING THE RENDERED `why` RATHER THAN BY REASONING ABOUT IT: RAILS.actdisc's payoff blurb has name-dropped Magus of the Candelabra, Soulbright Flamekin, Captivating Crew and Soul of New Phyrexia since v7.84 and NONE of the four was ever in EXEMPLAR_CI, so the v8.27 colour fence could not see them — the moment the shelf reaches RW Zirda it sells him mono-GREEN Magus. All four registered, every identity read off the printed card on mtg.wtf this run (Magus {G} tsp/203 -> G; Soulbright {1}{R} lrw/190 -> R; Captivating Crew {3}{R} xln/137 -> R; Soul of New Phyrexia {6} artifact creature m15/231 -> colourless), per v8.27's own Saheeli lesson that a wrong entry is a wrong entry. That also removed TWO LEAKS THAT WERE ALREADY LIVE AND UNNOTICED: Sam (GW) and Mutagen Man (mono-G) were both being sold Soulbright Flamekin and Captivating Crew. Sentences read out for all four members — no stranded conjunction, no dangling colon. 'The Invoker cycle' deliberately NOT registered: it is a description rather than a card name, it is castable in every colour, and leaving it guarantees the run can never fall to the <=1-survivor shape v8.27 declined to collapse. BLAST RADIUS: 36-commander model differential 35/36 IDENTICAL, sections 395 -> 397 (+2, exactly Zirda's two new rails), 0 rails dropped from Zirda by the 9-rail budget; 137-section rendered-DOM differential over 12 commanders — 11 of 12 model IDENTICAL with scout DOM and workshop DOM identical, Zirda the only mover; AGATHA BYTE-IDENTICAL on both DOMs, which is the counter-case that matters most. GUARDS FLAT: node --check 6/6; meta == console banner == CHANGELOG[0] == v8.57; 0 console errors on both builds; six boot asserts [] (incl. assertRegexTermBudget — no new Scryfall term is introduced); C-036 keyed 7/7 + 4/4 with the unkeyed control still reproducing (36+26 alien rails, 22 name leaks), so the test is not passing vacuously; C-034 278 rendered whys / 0 double-stops / 0 unterminated / 0 empty; C-028 ”. 32 -> 32; C-005 census 14 blurbs / 45 names -> 14 / 45 with 2 NEW blurbs added and ZERO new leaks; perf 0.456 ms/call (v8.56: 0.450); ATOMS 94 / RAIL FAMILIES 86 / STUDY_DB 188 unchanged. PRIORITY 1 DISCHARGED BY MEASUREMENT, NOT SKIPPED: the renderer-freeze family does NOT reproduce — the file carries exactly 5 infinite shimmer/pulse CSS rules, v7.96's `.dormant` root fix is intact in both the stylesheet and CardImg, and C-035 already closed the Deck->Stats stall as an instrument artefact; re-patching a non-issue was declined. DEFERRED WITH REASONS, NOT SILENTLY: C-037's TYPE-AXIS half and C-013's TYPAL half hit the same measured wall — all 9 anthem-pump shelves in the corpus are colour-fenced and 0 are type-fenced, but a type fence needs 'every type EXCEPT this deck's', which is RE2 with no negative lookahead and 4,108 chars against REGEX_TERM_MAX 214, and ANIM PAKAL is the live counter-example that kills the obvious `artifact` arm outright (her Gnomes ARE artifact creatures). C-003 skipped for the thirteenth run — owner-gated (archetype-tile ROSTER/TILE pipeline). NAMED RESIDUALS: HULK, GAMMA GOLIATH's 'Power-up abilities of other creatures you control cost {3} less' is a THIRD wording (keyword-scoped AND subject-bearing) that neither template reads, and Professor Hojo's singular once-per-turn form is deliberately out — both are scoped discounts and need their own population cut. C-005's <=1-survivor residual is unchanged and was demonstrated on a synthetic mono-W control; NO printed member of this family reaches it. TOOLING, TWENTIETH CONSECUTIVE RUN: Chrome unreachable, api.scryfall.com unreachable — every population cut is mtg.wtf (which rate-limited twice, both cuts landing on retry), all rendered evidence is jsdom, and rail CARD CONTENTS remain unverified by proof. New harness files c039cmdrs.js (the complete 13-card legendary population, text verbatim), v039.js, why039.js, repro857.js. NOT CLOSED — never watched rendering; next run is the VERIFY. Staleness guard PASSED (local v8.56 >= published v8.54). Backup index-backup-20260809-1805-preFixRun.html; ORACLE INDEX only; roster/tile pipeline, mobile viewport IIFE and git all untouched." },
@@ -18324,6 +18615,42 @@ function App() {
             showToast('Heads up: on-device saving may not persist. Use Export to back up.');
         }
     }, [decks, storageWarned, showToast]);
+    // v8.60: a saved deck keeps the card object it was added with — prices included — so
+    // deck totals and the Shop list showed whatever the card cost on the day it was added.
+    // Re-price every saved printing from Scryfall at most every 12 hours (75 per request).
+    useEffect(() => {
+        const KEY = 'oracle_prices_refreshed_v1';
+        let last = 0;
+        try { last = +localStorage.getItem(KEY) || 0; } catch (e) { }
+        if (Date.now() - last < 12 * 3600e3) return;
+        const ids = new Set();
+        decks.forEach(d => {
+            if (d.commander && d.commander.id) ids.add(d.commander.id);
+            Object.values(d.cards || {}).forEach(e => { if (e && e.card && e.card.id) ids.add(e.card.id); });
+        });
+        if (!ids.size) return;
+        let cancelled = false;
+        (async () => {
+            const fresh = {}, list = [...ids];
+            for (let i = 0; i < list.length; i += 75) {
+                const res = await fetch(API + '/cards/collection', { method: 'POST', headers: Object.assign({}, HEADERS, { 'Content-Type': 'application/json' }), body: JSON.stringify({ identifiers: list.slice(i, i + 75).map(id => ({ id })) }) }).catch(() => null);
+                if (!res || !res.ok || cancelled) return;
+                const j = await res.json().catch(() => ({}));
+                (j.data || []).forEach(c => { if (c && c.id && c.prices) fresh[c.id] = c.prices; });
+                if (i + 75 < list.length) await new Promise(r => setTimeout(r, 120));
+            }
+            if (cancelled || !Object.keys(fresh).length) return;
+            const at = Date.now();
+            const rep = c => (c && fresh[c.id]) ? Object.assign({}, c, { prices: fresh[c.id], prices_at: at }) : c;
+            setDecks(prev => prev.map(d => {
+                const cards = {};
+                Object.keys(d.cards || {}).forEach(k => { const e = d.cards[k]; cards[k] = e && e.card ? Object.assign({}, e, { card: rep(e.card) }) : e; });
+                return Object.assign({}, d, { commander: rep(d.commander), cards });
+            }));
+            try { localStorage.setItem(KEY, String(at)); } catch (e) { }
+        })();
+        return () => { cancelled = true; };
+    }, [decks.length]);
     const activeDeck = decks.find(d => d.id === activeDeckId) || null;
     function createDeck(name) {
         const id = 'd' + Date.now();
@@ -18746,7 +19073,9 @@ function App() {
             toast.action && React.createElement("button", { className: "toast-action", onClick: () => { const fn = toast.action.fn; clearTimeout(toastTimer.current); setToast(''); fn(); } }, toast.action.label))));
 }
 // ============ FRONT PAGE — altar masthead, Wire ============
-// WIRE hydrates at mount from feeds.json (refreshed machine-side, hourly);
+// WIRE hydrates at mount from the oracle-data repo's feeds.json (v8.60: rebuilt every 3 h by a
+// GitHub Action from MTG news RSS — EDHREC, MTGGoldfish, Card Kingdom, Draftsim… — since Reddit closed
+// its feeds to servers), falling back to this repo's own feeds.json;
 // the array below is only the offline/fetch-fail FALLBACK. The app never
 // fetches Reddit directly (Reddit blocks browser fetches). Only the first
 // THREE entries can ever render — WIRE.slice(0, 3) is the sole consumer
@@ -18855,8 +19184,9 @@ function WireCol() {
     return React.createElement('div', { className: 'col wire-col' },
         React.createElement('div', { className: 'col-head' },
             React.createElement('span', { className: 'col-title' }, React.createElement('span', { className: 'cg' }, '\u26A1\uFE0E'), 'The Wire'),
-            React.createElement('a', { className: 'col-sub', href: 'https://www.reddit.com/r/magicTCG/', target: '_blank', rel: 'noopener' }, 'r/magicTCG \u2197')),
-        WIRE.slice(0, 3).map((p, i) => { const c = wireCat(p.f); return BazaarRow(p, i, c ? c.label : null, null, c ? c.cls : null); }));
+            WIRE.some(p => p.src) ? React.createElement('span', { className: 'col-sub' }, 'MTG news') : React.createElement('a', { className: 'col-sub', href: 'https://www.reddit.com/r/magicTCG/', target: '_blank', rel: 'noopener' }, 'r/magicTCG \u2197')),
+        // v8.60: items from the news-feed wire carry their source (EDHREC, MTGGoldfish…) as the chip.
+        WIRE.slice(0, 3).map((p, i) => { const c = wireCat(p.f); return BazaarRow(p, i, c ? c.label : (p.src || null), null, c ? c.cls : (p.src ? 'wc-src' : null)); }));
 }
 // ============ SPOILERS_V2 — Fresh Spoilers, evergreen multi-set spoiler board (v6.70) ============
 // A live, self-updating spoiler board for the Reading Room, fed from Scryfall's
@@ -18956,6 +19286,10 @@ const FS_FAR_DAYS = 60;  // v8.02 KEEP necessity audit: sets releasing beyond th
                          // index-backup-20260807-1845.html.
 const FS_CAP_ALL = 4;    // cards shown per type in the "All" view
 const FS_CAP_TYPE = 12;  // cards shown when a single type is selected
+// v8.60 phones: each type in "All" is a horizontal swipe rail, so it can carry more cards
+// for less height (the band was ~5,400px tall on an iPhone); only the soonest set opens.
+const FS_CAP_RAIL = 10;
+function fsIsPhone() { try { return window.matchMedia('(max-width: 639px)').matches; } catch (e) { return false; } }
 function fsArt(c) {
     if (!c) return null;
     const u = c.image_uris || (Array.isArray(c.card_faces) && c.card_faces[0] && c.card_faces[0].image_uris);
@@ -19053,7 +19387,7 @@ function fsTile(c, i) {
 // One spoiling set: a labeled header (symbol + name + preview count + release date +
 // see-all link), a type-filter chip row, and the tiles — grouped by type in the "All"
 // view (top few per type) or the full type list when one type is selected.
-function SpoilerSet({ entry }) {
+function SpoilerSet({ entry, index }) {
     const set = entry.set, cards = entry.cards;
     const groups = useMemo(() => fsGroup(cards), [cards]);
     const [active, setActive] = useState('All');
@@ -19061,7 +19395,8 @@ function SpoilerSet({ entry }) {
     const total = cards.length;
     const rel = fsRelease(set);
     const far = !!(rel && typeof rel.days === 'number' && rel.days > FS_FAR_DAYS);
-    const [collapsed, setCollapsed] = useState(far);
+    const phone = useMemo(fsIsPhone, []);
+    const [collapsed, setCollapsed] = useState(far || (phone && index > 0));
     const seeAll = set.scryfall_uri || ('https://scryfall.com/sets/' + set.code);
     return React.createElement('section', { className: 'fs-set' + (rel && rel.soon ? ' fs-set-soon' : '') },
         React.createElement('div', { className: 'fs-set-head' },
@@ -19078,8 +19413,9 @@ function SpoilerSet({ entry }) {
             ? React.createElement('div', { className: 'fs-groups' },
                 groups.map(g => React.createElement('div', { key: g.type, className: 'fs-type-group' },
                     React.createElement('div', { className: 'fs-type-label' }, g.label,
-                        g.total > FS_CAP_ALL ? React.createElement('span', { className: 'fs-more' }, 'top ' + FS_CAP_ALL + ' of ' + g.total) : null),
-                    React.createElement('div', { className: 'fs-grid' }, g.cards.slice(0, FS_CAP_ALL).map((c, i) => fsTile(c, i))))))
+                        g.total > (phone ? FS_CAP_RAIL : FS_CAP_ALL) ? React.createElement('span', { className: 'fs-more' }, 'top ' + (phone ? FS_CAP_RAIL : FS_CAP_ALL) + ' of ' + g.total) : null,
+                        phone && Math.min(g.total, FS_CAP_RAIL) > 2 ? React.createElement('span', { className: 'fs-swipe', 'aria-hidden': 'true' }, 'swipe \u2192') : null),
+                    React.createElement('div', { className: 'fs-grid' + (phone ? ' fs-rail' : '') }, g.cards.slice(0, phone ? FS_CAP_RAIL : FS_CAP_ALL).map((c, i) => fsTile(c, i))))))
             : React.createElement('div', { className: 'fs-grid' },
                 (activeGroup ? activeGroup.cards.slice(0, FS_CAP_TYPE) : []).map((c, i) => fsTile(c, i))));
 }
@@ -19112,7 +19448,7 @@ function FreshSpoilers() {
         state === 'error' && React.createElement('div', { className: 'fs-note fs-err' }, 'Fresh spoilers are unavailable right now — check back soon.'),
         state === 'ready' && !sets.length && React.createElement('div', { className: 'fs-note' }, 'No sets are currently spoiling — check back when the next preview season begins.'),
         state === 'ready' && sets.length ? React.createElement('div', { className: 'fs-sets' },
-            sets.map((entry, i) => React.createElement(SpoilerSet, { key: (entry.set && entry.set.code) || i, entry: entry }))) : null);
+            sets.map((entry, i) => React.createElement(SpoilerSet, { key: (entry.set && entry.set.code) || i, entry: entry, index: i }))) : null);
 }
 function CommunityChips() {
     const SUBS = [
@@ -20073,6 +20409,10 @@ function SearchScreen({ injectQuery, onInjectConsumed, forgeIntent, onForgeInten
     const [showSort, setShowSort] = useState(false);
     const [showFilter, setShowFilter] = useState(false);
     const [ac, setAc] = useState([]);
+    // v8.60: quick lenses over the results — special-frame printings / Secret Lair only
+    const [artLens, setArtLens] = useState('');
+    const artLensRef = useRef('');
+    const [setHint, setSetHint] = useState(null);
     const [filters, setFilters] = useState({ colors: new Set(), colorMode: 'exact', types: new Set(), subtype: '', subtypeMode: 'any', oracle: '', oracleMode: 'any', cmc: [0, 16], pow: [0, 16], tou: [0, 16], rarities: new Set(), setCode: '', format: '', finish: '', treatment: '', maxPrice: '', ciOnly: false });
     const lastQ = useRef('');
     const acTimer = useRef(null);
@@ -20180,12 +20520,31 @@ function SearchScreen({ injectQuery, onInjectConsumed, forgeIntent, onForgeInten
     const doSearch = useCallback(async (options = {}) => {
         const { chipOverride, queryOverride, filtersOverride, sortOverride, resultModeOverride, _textFallback } = options;
         const chip = chipOverride !== undefined ? chipOverride : activeChip;
-        const mode = resultModeOverride || resultMode;
+        const lens = options.artLensOverride !== undefined ? options.artLensOverride : artLensRef.current;
+        const mode = lens ? 'prints' : (resultModeOverride || resultMode);
         const raw = (queryOverride !== undefined ? queryOverride : query).trim();
+        // v8.60: set:/e: accept set NAMES too — rewrite them to codes, or stop and ask.
+        let rawQ = raw;
+        if (/(^|[\s(])-?(set|s|e|edition)[:=]/i.test(raw)) {
+            await loadSetIndex().catch(() => { });
+            const rw = rewriteSetTerms(raw);
+            if (rw.unresolved.length) {
+                setAc([]); setCards([]); setNextPage(null);
+                setSetHint(Object.assign({}, rw.unresolved[0], { raw }));
+                setStatus('sethint');
+                return;
+            }
+            rawQ = rw.q;
+        }
+        setSetHint(null);
         const fq = buildFilterQ(filtersOverride || filters);
         const parts = [];
-        if (raw)
-            parts.push(raw);
+        if (rawQ)
+            parts.push(rawQ);
+        if (lens === 'special')
+            parts.push('(border:borderless OR frame:showcase OR frame:extendedart OR is:fullart OR frame:inverted OR frame:etched OR is:textless OR frame:colorshifted)');
+        else if (lens === 'sld')
+            parts.push('(' + secretLairCodes().map(c => 'e:' + c).join(' OR ') + ')');
         if (chip && !fq.includes('t:') && !raw.includes('t:'))
             parts.push(chip);
         if (fq)
@@ -20280,6 +20639,14 @@ function SearchScreen({ injectQuery, onInjectConsumed, forgeIntent, onForgeInten
         clearTimeout(acTimer.current);
         if (acCtrl.current)
             acCtrl.current.abort();
+        // v8.60: typing set:/e: suggests sets by name or code
+        const sm = v.match(/(^|\s)(-?(?:set|s|e|edition)[:=])(?:"([^"]*)|([^":()]*))$/i);
+        if (sm && (sm[3] != null ? sm[3] : sm[4]).length >= 1) {
+            const val = sm[3] != null ? sm[3] : sm[4];
+            const base = v.slice(0, v.length - sm[0].length) + sm[1] + sm[2].replace(/^(-?)(?:s|e|edition)([:=])$/i, '$1set$2');
+            loadSetIndex().then(() => setAc(searchSets(val, 8).map(st => ({ set: st, base })))).catch(() => setAc([]));
+            return;
+        }
         if (v.trim().length < 2 || /[:<>=]/.test(v)) {
             setAc([]);
             return;
@@ -20358,7 +20725,7 @@ function SearchScreen({ injectQuery, onInjectConsumed, forgeIntent, onForgeInten
                     React.createElement("svg", { className: "search-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" },
                         React.createElement("circle", { cx: "11", cy: "11", r: "8" }),
                         React.createElement("path", { d: "m21 21-4.35-4.35" })),
-                    React.createElement("input", { className: "search-input", type: "text", value: query, placeholder: "Card name or syntax...", title: "Shortcut: press / anywhere to search", autoComplete: "off", autoCorrect: "off", autoCapitalize: "off", spellCheck: "false", onChange: e => onInput(e.target.value), onKeyDown: e => { if (e.key === 'Enter') {
+                    React.createElement("input", { className: "search-input", type: "text", value: query, placeholder: "Card name or syntax...", title: "Shortcut: press / anywhere to search", autoComplete: "off", autoCorrect: "off", autoCapitalize: "off", spellCheck: "false", onInput: e => onInput(e.target.value), onKeyDown: e => { if (e.key === 'Enter') {
                             // Search EXACTLY what's in the box. Reading e.target.value (not the
                             // React `query` closure) makes Enter immune to the state-commit race
                             // that otherwise fired a bare `game:paper` everything-search (32k cards
@@ -20378,7 +20745,12 @@ function SearchScreen({ injectQuery, onInjectConsumed, forgeIntent, onForgeInten
                     React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" },
                         React.createElement("path", { d: "M3 6h18M7 12h10M11 18h2" })),
                     filterCount() > 0 && React.createElement("span", { className: "filter-badge" }, filterCount()))),
-            ac.length > 0 && (React.createElement("div", { className: "autocomplete" }, ac.map((name, i) => (React.createElement("div", { key: i, className: "ac-item", onClick: () => { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); setQuery(name); setAc([]); doSearch({ queryOverride: name }); } },
+            ac.length > 0 && (React.createElement("div", { className: "autocomplete" }, ac.map((name, i) => typeof name === 'object' && name.set
+                ? React.createElement("div", { key: 'set-' + name.set.code, className: "ac-item ac-set", onClick: () => { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); const nq = name.base + name.set.code; setQuery(nq); setAc([]); doSearch({ queryOverride: nq }); } },
+                    name.set.icon ? React.createElement("img", { className: "setpick-ico", src: name.set.icon, alt: "" }) : null,
+                    React.createElement("span", { className: "setpick-name" }, name.set.name),
+                    React.createElement("span", { className: "setpick-meta" }, name.set.code.toUpperCase() + (name.set.released ? ' \u00B7 ' + name.set.released.slice(0, 4) : '')))
+                : (React.createElement("div", { key: i, className: "ac-item", onClick: () => { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); setQuery(name); setAc([]); doSearch({ queryOverride: name }); } },
                 React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2" },
                     React.createElement("circle", { cx: "11", cy: "11", r: "8" }),
                     React.createElement("path", { d: "m21 21-4.35-4.35" })),
@@ -20393,19 +20765,24 @@ function SearchScreen({ injectQuery, onInjectConsumed, forgeIntent, onForgeInten
                     "In my colors")),
             React.createElement("div", { className: "result-mode-row", "aria-label": "Search result mode" },
                 React.createElement("div", { className: "ios-segment", role: "group", "aria-label": "Cards or printings" },
-                    React.createElement("button", { className: resultMode === 'cards' ? 'active' : '', onClick: () => { if (resultMode !== 'cards') {
+                    React.createElement("button", { className: (artLens ? 'prints' : resultMode) === 'cards' ? 'active' : '', onClick: () => { if (resultMode !== 'cards') {
                             setResultMode('cards');
                             haptic();
                             if (lastQ.current)
                                 doSearch({ resultModeOverride: 'cards' });
                         } } }, "Cards"),
-                    React.createElement("button", { className: resultMode === 'prints' ? 'active' : '', onClick: () => { if (resultMode !== 'prints') {
+                    React.createElement("button", { className: (artLens ? 'prints' : resultMode) === 'prints' ? 'active' : '', onClick: () => { if (resultMode !== 'prints') {
                             setResultMode('prints');
                             haptic();
                             if (lastQ.current)
                                 doSearch({ resultModeOverride: 'prints' });
                         } } }, "Printings")),
-                React.createElement("span", { className: "result-mode-note" }, resultMode === 'prints' ? 'Every version' : 'One per card'))),
+                React.createElement("span", { className: "result-mode-note" }, artLens ? 'Printings' : resultMode === 'prints' ? 'Every version' : 'One per card'),
+                React.createElement("div", { className: "art-lens", role: "group", "aria-label": "Show only special printings" },
+                    [['special', '\u2726 Special art', 'Borderless, showcase, extended & full art, etched, textless'], ['sld', 'Secret Lair', 'Only Secret Lair printings']].map(([k, label, tip]) => React.createElement("button", {
+                        key: k, className: 'lens-chip' + (artLens === k ? ' on' : ''), "aria-pressed": artLens === k, title: tip,
+                        onClick: () => { const next = artLens === k ? '' : k; setArtLens(next); artLensRef.current = next; haptic(); doSearch({ artLensOverride: next }); }
+                    }, label))))),
         React.createElement("div", { className: "results-pad" },
             status === 'empty' && (React.createElement("div", { className: "search-landing" },
                 React.createElement("div", { className: "mast" },
@@ -20535,9 +20912,17 @@ function SearchScreen({ injectQuery, onInjectConsumed, forgeIntent, onForgeInten
                         React.createElement(WireCol, null))),
                 // FRESH_SPOILERS marker — Herald Phase 1: the live Scryfall spoiler feed +
                 // the community subreddit chip row, rendered beneath the Reading Room columns.
+                React.createElement(PriceWatch, { onOpenDetail: onOpenDetail }),
                 React.createElement(FreshSpoilers, null),
                 React.createElement(CommunityChips, null))),
             status === 'loading' && React.createElement(Skeletons, { n: 10, wrap: "card-grid", lines: 2 }),
+            status === 'sethint' && setHint && React.createElement("div", { className: "state-msg sethint" },
+                React.createElement("div", null, setHint.kind === 'choices' ? "\u201C" + setHint.text + "\u201D matches several sets \u2014 which one?" : setHint.options.length ? "No set called \u201C" + setHint.text + "\u201D. Did you mean:" : "No set matches \u201C" + setHint.text + "\u201D. Try a set code like MH3."),
+                setHint.options.length > 0 && React.createElement("div", { className: "setpick-fix-opts" }, setHint.options.map(st => React.createElement("button", { key: st.code, className: "setpick-fix-btn", onClick: () => {
+                        const fixed = setHint.term.replace(/^(-?)(?:set|s|e|edition)([:=]).*$/i, '$1set$2' + st.code);
+                        const nq = setHint.raw.replace(setHint.term, fixed);
+                        setQuery(nq); haptic(); doSearch({ queryOverride: nq });
+                    } }, st.icon ? React.createElement("img", { className: "setpick-ico", src: st.icon, alt: "" }) : null, st.name, React.createElement("span", { className: "setpick-meta" }, st.code.toUpperCase()))))),
             status === 'error' && React.createElement("div", { className: "state-msg" },
                 React.createElement("div", { className: "symbol" }, "\u26A0"),
                 React.createElement("div", null, errMsg)),
@@ -21662,6 +22047,216 @@ function SynergyOverlay({ onViewAll, commander, deck, deckList, onClose, onAdd, 
 }
 
 // ============ DETAIL OVERLAY ============
+// v8.60 — PRICE INSIGHT. TCGplayer market history + "when to buy" read for one printing.
+// Data: static shards published daily by the oracle-prices pipeline (TCGplayer via tcgcsv.com,
+// older points from MTGJSON/Scryfall snapshots). Keyed by Scryfall's card.tcgplayer_id.
+// Everything here fails quiet: no data → the panel simply doesn't render.
+// Everything that updates on its own (prices, the news wire) is published by the oracle-data repo's
+// scheduled GitHub Actions, not by this file. localStorage 'oracle_data_base' points at a test copy.
+const DATA_BASE = (function () { const d = 'https://doggiedance.github.io/oracle-data/'; try { return localStorage.getItem('oracle_data_base') || d; } catch (e) { return d; } })();
+const PRICE_BASE = DATA_BASE + 'prices/';
+const PriceData = { meta: null, shards: {} };
+function priceMeta() {
+    if (!PriceData.meta) PriceData.meta = fetch(PRICE_BASE + 'meta.json', { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error('meta ' + r.status); return r.json(); })
+        .catch(e => { PriceData.meta = null; throw e; });
+    return PriceData.meta;
+}
+function priceShard(kind, n) {
+    const k = kind + '/' + n;
+    if (!PriceData.shards[k]) PriceData.shards[k] = fetch(PRICE_BASE + kind + '/' + n + '.json').then(r => { if (!r.ok) throw new Error(k + ' ' + r.status); return r.json(); })
+        .catch(e => { delete PriceData.shards[k]; throw e; });
+    return PriceData.shards[k];
+}
+async function loadPriceInsight(pid) {
+    const meta = await priceMeta();
+    const [latest, hist] = await Promise.all([priceShard('latest', pid % meta.shards.latest), priceShard('hist', pid % meta.shards.hist)]);
+    const row = latest.p[pid] || null;
+    const h = hist[pid] || {};
+    const toSeries = (arr) => {
+        if (!arr) return [];
+        const out = [];
+        for (let i = 1; i < arr.length; i++) if (arr[i]) out.push({ t: Date.parse(meta.dates[arr[0] + i - 1] + 'T12:00:00Z'), d: meta.dates[arr[0] + i - 1], v: arr[i] / 100, src: meta.src ? meta.src[arr[0] + i - 1] : 't' });
+        return out;
+    };
+    return {
+        updated: meta.latest,
+        now: row ? { n: row[0] ? { market: row[0] / 100, low: row[1] / 100, mid: row[2] / 100, direct: row[3] / 100 } : null, f: row[4] ? { market: row[4] / 100, low: row[5] / 100, mid: row[6] / 100, direct: row[7] / 100 } : null } : { n: null, f: null },
+        n: toSeries(h.n), f: toSeries(h.f),
+    };
+}
+// The buy read. Compares today's market price with its own history, not with other cards.
+function priceSignal(series, current) {
+    if (!series.length || !current) return null;
+    const last = series[series.length - 1].t, day = 864e5;
+    const within = (days) => series.filter(p => p.t >= last - days * day);
+    const avg = (a) => a.reduce((s, p) => s + p.v, 0) / (a.length || 1);
+    const at = (days) => { const target = last - days * day; let best = null; for (const p of series) if (p.t <= target + 2 * day) best = p; return best; };
+    const s30 = within(30), s90 = within(90), s365 = within(365);
+    const mean30 = avg(s30), sd30 = Math.sqrt(avg(s30.map(p => ({ v: (p.v - mean30) ** 2 })))) || 0;
+    const p7 = at(7), p30 = at(30);
+    const allLow = series.reduce((m, p) => p.v < m.v ? p : m, series[0]);
+    const allHigh = series.reduce((m, p) => p.v > m.v ? p : m, series[0]);
+    const span = (last - series[0].t) / day;
+    const r = {
+        cur: current, avg90: avg(s90), avg365: s365.length >= 8 ? avg(s365) : null,
+        low90: s90.length ? Math.min(...s90.map(p => p.v)) : null, high90: s90.length ? Math.max(...s90.map(p => p.v)) : null,
+        ch7: p7 ? (current - p7.v) / p7.v : null, ch30: p30 ? (current - p30.v) / p30.v : null,
+        z30: sd30 > 0 && s30.length >= 5 ? (current - mean30) / sd30 : null, allLow, allHigh, span,
+    };
+    const base = r.avg365 || r.avg90;
+    let tone = 'neutral', head = 'In its normal range', why = 'Within its usual price band.';
+    if (span >= 120 && current <= allLow.v * 1.05) { tone = 'good'; head = 'Near its all-time low'; why = 'Within 5% of the lowest price on record (' + fmtUsd(allLow.v) + ', ' + fmtMonth(allLow.d) + ').'; }
+    else if (base && current <= base * 0.9) { tone = 'good'; head = 'Below its usual price'; why = Math.round((1 - current / base) * 100) + '% under its ' + (r.avg365 ? '1-year' : '90-day') + ' average of ' + fmtUsd(base) + '.'; }
+    else if (r.ch7 != null && r.ch7 >= 0.12) { tone = 'warn'; head = 'Climbing fast'; why = 'Up ' + Math.round(r.ch7 * 100) + '% this week. Spikes often settle back — buy now only if you need it soon.'; }
+    else if (base && current >= base * 1.15) { tone = 'warn'; head = 'Above its usual price'; why = Math.round((current / base - 1) * 100) + '% over its ' + (r.avg365 ? '1-year' : '90-day') + ' average of ' + fmtUsd(base) + '. Waiting may pay off.'; }
+    else if (r.ch30 != null && r.ch30 <= -0.1) { tone = 'good'; head = 'Trending down'; why = 'Down ' + Math.round(-r.ch30 * 100) + '% over 30 days.'; }
+    return Object.assign(r, { tone, head, why });
+}
+function fmtUsd(v) { return v == null ? '—' : '$' + (v >= 100 ? v.toFixed(0) : v.toFixed(2)); }
+function fmtPct(v) { return v == null ? '—' : (v > 0 ? '+' : '') + Math.round(v * 100) + '%'; }
+function fmtMonth(d) { const x = new Date(d + 'T12:00:00Z'); return x.toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }); }
+function fmtDay(d) { const x = new Date(d + 'T12:00:00Z'); return x.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }); }
+
+function PriceChart({ series, range }) {
+    const [hover, setHover] = useState(null);
+    const ref = useRef(null);
+    if (series.length < 2) return React.createElement("div", { className: "pi-chart-empty" }, "Not enough history yet for a chart.");
+    const last = series[series.length - 1].t, day = 864e5;
+    const from = range === 'all' ? series[0].t : last - ({ '1m': 30, '3m': 90, '1y': 365 }[range]) * day;
+    const pts = series.filter(p => p.t >= from);
+    if (pts.length < 2) return React.createElement("div", { className: "pi-chart-empty" }, "No data in this range.");
+    const W = 320, H = 120, P = 4;
+    const t0 = pts[0].t, t1 = pts[pts.length - 1].t;
+    const lo = Math.min(...pts.map(p => p.v)), hi = Math.max(...pts.map(p => p.v));
+    const pad = (hi - lo) * 0.12 || hi * 0.1 || 1;
+    const y0 = Math.max(0, lo - pad), y1 = hi + pad;
+    const X = t => P + (t1 === t0 ? 0 : (t - t0) / (t1 - t0)) * (W - 2 * P);
+    const Y = v => H - P - (v - y0) / (y1 - y0) * (H - 2 * P);
+    // break the line across long gaps (pre-2024 history is sparse)
+    const segs = []; let cur = [];
+    pts.forEach((p, i) => { if (i && p.t - pts[i - 1].t > 45 * day) { segs.push(cur); cur = []; } cur.push(p); });
+    segs.push(cur);
+    const line = segs.map(sg => sg.map((p, i) => (i ? 'L' : 'M') + X(p.t).toFixed(1) + ' ' + Y(p.v).toFixed(1)).join(' ')).join(' ');
+    const area = segs.filter(sg => sg.length > 1).map(sg => 'M' + X(sg[0].t).toFixed(1) + ' ' + (H - P) + ' ' + sg.map(p => 'L' + X(p.t).toFixed(1) + ' ' + Y(p.v).toFixed(1)).join(' ') + ' L' + X(sg[sg.length - 1].t).toFixed(1) + ' ' + (H - P) + ' Z').join(' ');
+    const lone = segs.filter(sg => sg.length === 1).map(sg => sg[0]);
+    function onMove(e) {
+        const r = ref.current.getBoundingClientRect();
+        const x = ((e.touches ? e.touches[0].clientX : e.clientX) - r.left) / r.width * W;
+        let best = pts[0]; for (const p of pts) if (Math.abs(X(p.t) - x) < Math.abs(X(best.t) - x)) best = p;
+        setHover(best);
+    }
+    return React.createElement("div", { className: "pi-chart" },
+        React.createElement("svg", { ref, viewBox: '0 0 ' + W + ' ' + H, preserveAspectRatio: "none", onMouseMove: onMove, onTouchMove: onMove, onTouchStart: onMove, onMouseLeave: () => setHover(null), role: "img", "aria-label": 'Price chart from ' + fmtDay(pts[0].d) + ' to ' + fmtDay(pts[pts.length - 1].d) + ': low ' + fmtUsd(lo) + ', high ' + fmtUsd(hi) },
+            React.createElement("defs", null, React.createElement("linearGradient", { id: "piFill", x1: 0, y1: 0, x2: 0, y2: 1 },
+                React.createElement("stop", { offset: "0", style: { stopColor: "var(--gold)", stopOpacity: .28 } }), React.createElement("stop", { offset: "1", style: { stopColor: "var(--gold)", stopOpacity: 0 } }))),
+            React.createElement("path", { d: area, fill: "url(#piFill)" }),
+            React.createElement("path", { d: line, fill: "none", style: { stroke: "var(--gold-bright)" }, strokeWidth: 1.6, vectorEffect: "non-scaling-stroke", strokeLinejoin: "round" }),
+            lone.map(p => React.createElement("circle", { key: p.t, cx: X(p.t), cy: Y(p.v), r: 2.2, style: { fill: "var(--gold-bright)" } })),
+            hover && React.createElement("line", { x1: X(hover.t), x2: X(hover.t), y1: 0, y2: H, stroke: "rgba(255,255,255,.35)", strokeWidth: 1, vectorEffect: "non-scaling-stroke" })),
+        React.createElement("div", { className: "pi-axis" },
+            React.createElement("span", null, fmtUsd(hi)), React.createElement("span", null, fmtUsd(lo))),
+        React.createElement("div", { className: "pi-readout" }, hover
+            ? fmtDay(hover.d) + ' · ' + fmtUsd(hover.v) + (hover.src && hover.src !== 't' ? (hover.src === 'm' ? ' (MTGJSON)' : ' (Scryfall snapshot)') : '')
+            : fmtMonth(pts[0].d) + ' → ' + fmtMonth(pts[pts.length - 1].d)));
+}
+
+function PriceInsight({ card }) {
+    const etchedOnly = card && card.tcgplayer_etched_id && !card.tcgplayer_id;
+    const pid = card && (card.tcgplayer_id || card.tcgplayer_etched_id);
+    const [data, setData] = useState(null);
+    const [failed, setFailed] = useState(false);
+    const [finish, setFinish] = useState(null);
+    const [range, setRange] = useState('1y');
+    useEffect(() => {
+        let alive = true; setData(null); setFailed(false);
+        // opened from Price Watch → show the finish that moved
+        const pref = PriceData.prefer && PriceData.prefer.pid === pid ? PriceData.prefer : null;
+        setFinish(pref ? (pref.foil ? 'f' : 'n') : null);
+        if (!pid) return;
+        loadPriceInsight(pid).then(d => { if (alive) setData(d); }).catch(() => { if (alive) setFailed(true); });
+        return () => { alive = false; };
+    }, [pid]);
+    if (!pid || failed || !data) return null;
+    const has = { n: data.n.length || data.now.n, f: data.f.length || data.now.f };
+    const fin = finish || (has.n && !etchedOnly ? 'n' : 'f');
+    const series = data[fin], now = data.now[fin];
+    if (!series.length && !now) return null;
+    const current = now ? now.market || (series.length ? series[series.length - 1].v : null) : (series.length ? series[series.length - 1].v : null);
+    const sig = priceSignal(series, current);
+    const span = series.length ? (series[series.length - 1].t - series[0].t) / 864e5 : 0;
+    const ranges = [['1m', '1M'], ['3m', '3M'], ['1y', '1Y'], ['all', 'All']].filter(([k]) => k === 'all' || k === '1m' || span > { '3m': 40, '1y': 120 }[k]);
+    return React.createElement("div", { className: "pi" },
+        React.createElement("div", { className: "pi-head" },
+            React.createElement("span", { className: "pi-title" }, "Price history"),
+            has.n && has.f ? React.createElement("div", { className: "ios-segment compact" },
+                React.createElement("button", { className: fin === 'n' ? 'active' : '', onClick: () => { setFinish('n'); haptic(); } }, etchedOnly ? "Etched" : "Normal"),
+                React.createElement("button", { className: fin === 'f' ? 'active' : '', onClick: () => { setFinish('f'); haptic(); } }, "Foil")) : null),
+        now && React.createElement("div", { className: "pi-now" },
+            React.createElement("div", { className: "pi-stat main" }, React.createElement("b", null, fmtUsd(now.market || current)), React.createElement("span", null, "Market")),
+            now.low ? React.createElement("div", { className: "pi-stat" }, React.createElement("b", null, fmtUsd(now.low)), React.createElement("span", null, "Lowest listing")) : null,
+            now.direct ? React.createElement("div", { className: "pi-stat" }, React.createElement("b", null, fmtUsd(now.direct)), React.createElement("span", null, "Direct low")) : null),
+        sig && React.createElement("div", { className: "pi-signal " + sig.tone },
+            React.createElement("div", { className: "pi-signal-head" }, sig.head),
+            React.createElement("div", { className: "pi-signal-why" }, sig.why)),
+        series.length > 1 && React.createElement(React.Fragment, null,
+            React.createElement("div", { className: "pi-ranges" }, ranges.map(([k, l]) => React.createElement("button", { key: k, className: range === k ? 'on' : '', onClick: () => { setRange(k); haptic(); } }, l))),
+            React.createElement(PriceChart, { series, range: ranges.some(([k]) => k === range) ? range : 'all' })),
+        sig && React.createElement("div", { className: "pi-facts" },
+            React.createElement("div", null, React.createElement("span", null, "7 days"), React.createElement("b", { className: sig.ch7 > 0 ? 'up' : sig.ch7 < 0 ? 'down' : '' }, fmtPct(sig.ch7))),
+            React.createElement("div", null, React.createElement("span", null, "30 days"), React.createElement("b", { className: sig.ch30 > 0 ? 'up' : sig.ch30 < 0 ? 'down' : '' }, fmtPct(sig.ch30))),
+            React.createElement("div", null, React.createElement("span", null, "90-day range"), React.createElement("b", null, fmtUsd(sig.low90) + '–' + fmtUsd(sig.high90))),
+            React.createElement("div", null, React.createElement("span", null, "All-time low"), React.createElement("b", null, fmtUsd(sig.allLow.v)), React.createElement("i", null, fmtMonth(sig.allLow.d))),
+            React.createElement("div", null, React.createElement("span", null, "All-time high"), React.createElement("b", null, fmtUsd(sig.allHigh.v)), React.createElement("i", null, fmtMonth(sig.allHigh.d)))),
+        React.createElement("div", { className: "pi-foot" },
+            React.createElement("span", null, "TCGplayer · updated " + fmtDay(data.updated) + ". Market = recent sales; lowest listing may be a played copy."),
+            React.createElement("a", { href: 'https://www.tcgplayer.com/product/' + pid, target: "_blank", rel: "noopener" }, "View on TCGplayer ↗")));
+}
+// v8.60 — PRICE WATCH. The week's biggest TCGplayer moves (this week vs the median of the
+// three weeks before, noise-filtered), computed daily by the oracle-data pipeline. Drops are
+// the "buy now?" list. Tapping a single opens its card (with the full price history).
+function PriceWatch({ onOpenDetail }) {
+    const [m, setM] = useState(null);
+    const [dir, setDir] = useState('drops');
+    const [kind, setKind] = useState('single');
+    const [busy, setBusy] = useState(null);
+    useEffect(() => {
+        let alive = true;
+        fetch(PRICE_BASE + 'movers.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(j => { if (alive && j) setM(j); }).catch(() => { });
+        return () => { alive = false; };
+    }, []);
+    if (!m || !m.drops) return null;
+    const list = ((m[dir] || {})[kind] || []).slice(0, 6);
+    function open(it) {
+        haptic();
+        if (it.kind !== 'single') { window.open('https://www.tcgplayer.com/product/' + it.pid, '_blank', 'noopener'); return; }
+        setBusy(it.pid);
+        PriceData.prefer = { pid: it.pid, foil: !!it.foil };
+        fetch(API + '/cards/tcgplayer/' + it.pid, { headers: HEADERS }).then(r => r.ok ? r.json() : null)
+            .then(c => { setBusy(null); if (c && c.object === 'card' && onOpenDetail) onOpenDetail(c); else window.open('https://www.tcgplayer.com/product/' + it.pid, '_blank', 'noopener'); })
+            .catch(() => setBusy(null));
+    }
+    return React.createElement("div", { className: "pw-sec" },
+        React.createElement("div", { className: "rr-head" },
+            React.createElement("span", { className: "rr-title" }, React.createElement("span", { className: "cg" }, "◈"), "Price Watch"),
+            React.createElement("span", { className: "rr-sub" }, "TCGplayer · this week")),
+        React.createElement("div", { className: "pw-controls" },
+            React.createElement("div", { className: "ios-segment compact", role: "group", "aria-label": "Direction" },
+                React.createElement("button", { className: dir === 'drops' ? 'active' : '', onClick: () => { setDir('drops'); haptic(); } }, "↓ Dropping"),
+                React.createElement("button", { className: dir === 'climbs' ? 'active' : '', onClick: () => { setDir('climbs'); haptic(); } }, "↑ Climbing")),
+            React.createElement("div", { className: "ios-segment compact", role: "group", "aria-label": "Product type" },
+                React.createElement("button", { className: kind === 'single' ? 'active' : '', onClick: () => { setKind('single'); haptic(); } }, "Singles"),
+                React.createElement("button", { className: kind === 'sealed' ? 'active' : '', onClick: () => { setKind('sealed'); haptic(); } }, "Sealed"))),
+        list.length ? React.createElement("div", { className: "pw-list" }, list.map((it, i) => React.createElement("button", { key: it.pid + '-' + it.foil, className: "pw-row" + (busy === it.pid ? ' busy' : ''), style: { '--i': i }, onClick: () => open(it) },
+            React.createElement("span", { className: "pw-name" },
+                React.createElement("span", { className: "pw-n" }, it.n),
+                React.createElement("span", { className: "pw-set" }, (it.set || it.sn || '') + (it.num ? ' #' + it.num : '') + (it.foil ? ' · Foil' : ''))),
+            React.createElement("span", { className: "pw-price" },
+                React.createElement("b", null, fmtUsd(it.cur / 100)),
+                React.createElement("span", null, "was " + fmtUsd(it.ref / 100))),
+            React.createElement("span", { className: "pw-pct " + (it.pct < 0 ? 'down' : 'up') }, fmtPct(it.pct)))))
+            : React.createElement("div", { className: "pw-empty" }, "No big moves here this week."),
+        React.createElement("div", { className: "pw-foot" }, "Prices through " + fmtDay(m.d) + ". Compared with the median of the three weeks before."));
+}
 function DetailOverlay({ card, onClose, onAdd, onSetCommander, onBuild, onViewPrintings, onSimilar, onConsult, onOpenSchool, inDeck, isCommander, ciViolation, upgrade }) {
     useEscape(onClose);
     const [faceIdx, setFaceIdx] = useState(0);
@@ -21860,6 +22455,7 @@ function DetailOverlay({ card, onClose, onAdd, onSetCommander, onBuild, onViewPr
                                 React.createElement("span", null, "EUR"),
                                 "\u20AC",
                                 prices.eur))))),
+                React.createElement(PriceInsight, { card: card }),
                 legal.length > 0 && React.createElement("div", { className: "info-row" },
                     React.createElement("div", { className: "info-label" }, "Legal"),
                     React.createElement("div", { className: "info-val", style: { fontSize: '13px' } }, legal.map(f => f.charAt(0).toUpperCase() + f.slice(1)).join(', ')))),
@@ -22181,7 +22777,73 @@ function SortSheet({ current, onPick, onClose }) {
             React.createElement("span", { className: "check" }, "\u2713"))))));
 }
 // ============ FILTER SHEET ============
+// v8.60 — SetPicker: one box for set CODE or NAME, with autocomplete (set icons),
+// and a "Did you mean…?" fix-up when the text isn't a set. `apiRef.current.commit()`
+// resolves whatever is typed; it returns false (and shows the fix-up) if it can't.
+function SetPicker({ value, onChange, apiRef }) {
+    const [ready, setReady] = useState(!!SetIndex.list);
+    const labelFor = (code) => code ? (SetIndex.byCode && SetIndex.byCode[code] ? setLabel(SetIndex.byCode[code]) : code.toUpperCase()) : '';
+    const [text, setText] = useState(() => labelFor(value));
+    const [open, setOpen] = useState(false);
+    const [hi, setHi] = useState(0);
+    const [fix, setFix] = useState(null); // { kind: 'choices'|'suggest'|'none', text, options }
+    const blurT = useRef(null);
+    useEffect(() => { loadSetIndex().then(() => { setReady(true); setText(t => (t === (value || '').toUpperCase() ? labelFor(value) : t)); }).catch(() => { }); }, []);
+    useEffect(() => { if (!value && text && /\(\w+\)$/.test(text)) setText(''); }, [value]);
+    const selectedLabel = labelFor(value);
+    const typing = text && text !== selectedLabel;
+    const matches = ready && open && typing ? searchSets(text, 8) : [];
+    function choose(s) {
+        clearTimeout(blurT.current);
+        onChange(s.code); setText(setLabel(s)); setOpen(false); setFix(null); haptic();
+    }
+    function commit() {
+        const t = text.trim();
+        if (!t) { if (value) onChange(''); setFix(null); return { code: '' }; }
+        if (t === selectedLabel) return { code: value };
+        const paren = t.match(/\(([a-z0-9]{2,6})\)\s*$/i);
+        const r = resolveSet(paren ? paren[1] : t);
+        if (r.set) { choose(r.set); return { code: r.set.code }; }
+        if (r.unverified) { onChange(r.code); return { code: r.code }; }
+        if (r.pending) { onChange(t); return { code: t }; }
+        setOpen(false);
+        setFix(r.choices ? { kind: 'choices', text: t, options: r.choices } : r.suggestions && r.suggestions.length ? { kind: 'suggest', text: t, options: r.suggestions } : { kind: 'none', text: t, options: [] });
+        return false;
+    }
+    if (apiRef) apiRef.current = { commit };
+    function onKey(e) {
+        if (e.key === 'ArrowDown' && matches.length) { e.preventDefault(); setHi(h => Math.min(h + 1, matches.length - 1)); }
+        else if (e.key === 'ArrowUp' && matches.length) { e.preventDefault(); setHi(h => Math.max(h - 1, 0)); }
+        else if (e.key === 'Enter') { e.preventDefault(); if (matches.length) choose(matches[Math.min(hi, matches.length - 1)]); else if (commit()) e.target.blur(); }
+        else if (e.key === 'Escape') setOpen(false);
+    }
+    return React.createElement("div", { className: "setpick" },
+        React.createElement("div", { className: "setpick-field" },
+            value && SetIndex.byCode && SetIndex.byCode[value] && SetIndex.byCode[value].icon && !typing
+                ? React.createElement("img", { className: "setpick-ico", src: SetIndex.byCode[value].icon, alt: "" }) : null,
+            React.createElement("input", {
+                className: "filter-text-input" + (value && !typing ? " has-ico" : "") + (fix ? " bad" : ""), type: "text", value: text,
+                placeholder: "Set name or code — e.g. Modern Horizons 3 or MH3", autoCapitalize: "off", autoCorrect: "off", spellCheck: false,
+                enterKeyHint: "done", role: "combobox", "aria-expanded": matches.length > 0, "aria-autocomplete": "list",
+                onFocus: () => { setOpen(true); }, onKeyDown: onKey,
+                onInput: e => { setText(e.target.value); setOpen(true); setHi(0); setFix(null); if (!e.target.value.trim()) onChange(''); },
+                onBlur: () => { blurT.current = setTimeout(() => { setOpen(false); commit(); }, 160); }
+            }),
+            text ? React.createElement("button", { className: "setpick-clear", "aria-label": "Clear set", onMouseDown: e => e.preventDefault(), onClick: () => { setText(''); onChange(''); setFix(null); } }, "×") : null),
+        matches.length > 0 && React.createElement("div", { className: "setpick-list", role: "listbox" }, matches.map((s, i) => React.createElement("button", {
+            key: s.code, role: "option", "aria-selected": i === hi, className: "setpick-opt" + (i === hi ? " hi" : ""),
+            onMouseDown: e => e.preventDefault(), onMouseEnter: () => setHi(i), onClick: () => choose(s)
+        },
+            s.icon ? React.createElement("img", { className: "setpick-ico", src: s.icon, alt: "" }) : React.createElement("span", { className: "setpick-ico" }),
+            React.createElement("span", { className: "setpick-name" }, s.name),
+            React.createElement("span", { className: "setpick-meta" }, s.code.toUpperCase() + (s.released ? " · " + s.released.slice(0, 4) : ""))))),
+        fix && React.createElement("div", { className: "setpick-fix", role: "alert" },
+            React.createElement("div", null, fix.kind === 'choices' ? "“" + fix.text + "” matches several sets — which one?" : fix.kind === 'suggest' ? "No set called “" + fix.text + "”. Did you mean:" : "No set matches “" + fix.text + "”. Try a set code like MH3, or part of a set name."),
+            fix.options.length > 0 && React.createElement("div", { className: "setpick-fix-opts" }, fix.options.map(s => React.createElement("button", { key: s.code, className: "setpick-fix-btn", onClick: () => choose(s) },
+                s.icon ? React.createElement("img", { className: "setpick-ico", src: s.icon, alt: "" }) : null, s.name, React.createElement("span", { className: "setpick-meta" }, s.code.toUpperCase()))))));
+}
 function FilterSheet({ filters, setFilters, onApply, onClose, commanderCI }) {
+    const setPickRef = useRef(null);
     const [local, setLocal] = useState(() => ({
         colors: new Set(filters.colors), colorMode: filters.colorMode, types: new Set(filters.types),
         subtype: filters.subtype, subtypeMode: filters.subtypeMode || 'any',
@@ -22210,9 +22872,16 @@ function FilterSheet({ filters, setFilters, onApply, onClose, commanderCI }) {
     function toggleRarity(r) { const s = new Set(local.rarities); s.has(r) ? s.delete(r) : s.add(r); patch({ rarities: s }); haptic(); }
     function reset() { setLocal({ colors: new Set(), colorMode: 'exact', types: new Set(), subtype: '', subtypeMode: 'any', oracle: '', oracleMode: 'any', cmc: [0, 16], pow: [0, 16], tou: [0, 16], rarities: new Set(), setCode: '', format: '', finish: '', treatment: '', maxPrice: '', ciOnly: false }); haptic(); }
     function apply() {
+        // An unrecognised set stays on screen with its "Did you mean" fix-up instead of firing a dead search.
+        let next = local;
+        if (setPickRef.current) {
+            const r = setPickRef.current.commit();
+            if (!r) { haptic(); return; }
+            if (r.code !== local.setCode) next = Object.assign({}, local, { setCode: r.code });
+        }
         if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-        setFilters(local);
-        onApply(local);
+        setFilters(next);
+        onApply(next);
     }
     return (React.createElement(Sheet, {
         title: "Filters", onClose: onClose,
@@ -22251,7 +22920,7 @@ function FilterSheet({ filters, setFilters, onApply, onClose, commanderCI }) {
                     React.createElement("button", { className: local.oracleMode === 'all' ? 'active' : '', onClick: () => { patch({ oracleMode: 'all' }); haptic(); } }, "All")))),
         React.createElement("div", { className: "fgroup" },
             React.createElement("div", { className: "fgroup-label" }, "Set & legality"),
-            React.createElement("input", { className: "filter-text-input", type: "text", value: local.setCode, placeholder: "Set code, e.g. MH3 or SLD", autoCapitalize: "characters", autoCorrect: "off", enterKeyHint: "done", onKeyDown: blurOnEnter, onChange: e => patch({ setCode: e.target.value }) }),
+            React.createElement(SetPicker, { value: local.setCode, onChange: code => patch({ setCode: code }), apiRef: setPickRef }),
             React.createElement("div", { className: "select-stack" },
                 React.createElement("label", null,
                     "Legal in",
@@ -22827,8 +23496,10 @@ try {
     // fallback and re-render (preact diffs, so app state is preserved). Any
     // failure leaves the baked array in place, so the Herald always renders.
     // (v6.34: f.deals ignored — the Bazaar surface was retired by the daily audit.)
-    fetch('feeds.json?ts=' + Date.now(), { cache: 'no-store' })
-        .then(function (r) { return r.ok ? r.json() : null; })
+    // v8.60: the wire is refreshed by the oracle-data GitHub Action; the repo's own feeds.json is the fallback.
+    fetch(DATA_BASE + 'feeds.json?ts=' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { if (!r.ok) throw new Error('data ' + r.status); return r.json(); })
+        .catch(function () { return fetch('feeds.json?ts=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }); })
         .then(function (f) {
             if (!f) return;
             var changed = false;
