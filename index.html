@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v8.67 · 2026-11-18">
+<meta name="oracle-build" content="v8.68 · 2026-11-18">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2092,7 +2092,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v8.67 \u00B7 2026-11-18', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v8.68 \u00B7 2026-11-18', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -7010,6 +7010,33 @@ const CYCLE_OR_DISCARD_Q = 'o:"cycle or discard"';
 // typecycling for it to matter to. Widening a detector this run could not census would be exactly
 // the move v8.35 was written to stop.
 const CYCLING_ANY_Q = '(keyword:cycling OR o:landcycling OR o:plainscycling OR o:islandcycling OR o:swampcycling OR o:mountaincycling OR o:forestcycling OR o:wizardcycling OR o:slivercycling)';
+// v8.68 — TUTOR IN THE COMMAND ZONE (Sidisi, Undead Vizier + Razaketh, the Foulblooded study, 2026-11-18,
+// community-first: MTG Salvation commander threads read BEFORE the engine, then rules-checked). A commander
+// that can fetch ANY card ("search your library for a card") is not a theme deck — it is a toolbox whose
+// deck is defined by WHAT it fetches. Restricted tutors ("a card named", "a card with", "a ... card") are
+// other families and do not match: the noun must be the bare word "card". Exactly three printings today:
+// SIDISI, UNDEAD VIZIER (once per entry), RAZAKETH, THE FOULBLOODED (repeatable), LAGOMOS, HAND OF HATRED
+// (gated on five deaths). Reminder text is already stripped by the caller (exploit's "sacrifice a creature"
+// lives in reminder text, which is why Sidisi never read as aristocrats — correctly).
+const TUTOR_ANY_RE = /search your library for (?:a |an |up to (?:one|two|three) )?cards?(?! named| with| that has| that shares)[ ,.]/;
+// A life payment that is only the PRICE of the tutor ("pay 2 life, sacrifice another creature: search your
+// library for a card") is a cost, not a life-as-a-resource deck — Razaketh read as "Life as a Resource" +
+// drains. Blanked for the lifeloss atom only (the oGy/oHand per-atom idiom), so no other atom moves.
+const TUTOR_LIFE_COST_RE = /pay \d+ life, (?=[^.:]{0,60}: search your library for (?:a |an )?card[ ,])/g;
+// v8.68 — tutor-commander vocabulary (see TUTOR_ANY_RE). Each live-QA'd on Scryfall, EDHREC-sorted, id<=B and id<=BR.
+// GAME ENDERS: the finishers players actually fetch — anchored on each card's exact template so draw engines that
+// merely share a phrase stay out (Dark Confidant shares Ad Nauseam's "lose life equal to its mana value"; Platinum
+// Angel shares Lich's Mastery's "can't lose the game"). Top of id<=B: Gray Merchant, Exsanguinate, Aetherflux
+// Reservoir, Vito, Sanguine Bond, Exquisite Blood, Torment of Hailfire, Ad Nauseam, Tendrils of Agony, Lich's Mastery.
+const TUTOR_FINISHER_Q = '-t:land (o:"each opponent loses x life" OR o:"loses two times x life" OR o:"repeat the following process x times" OR o:"whenever you gain life, target opponent loses" OR o:"whenever an opponent loses life, you gain" OR (o:"you can\'t lose the game" o:"whenever you gain life") OR o:"repeat this process any number of times" OR o:"pay 50 life" OR keyword:storm)';
+// MANA ENGINES: cards that ADD mana off Swamps/devotion or double land mana. "for each Swamp" alone also matches
+// removal (Defile, Mutilate), hence the o:"add" pairing. id<=B: Urborg, Cabal Coffers, Crypt Ghast, Nirkana
+// Revenant, Magus of the Coffers (+ Gauntlet of Power / Bubbling Muck via the doubling arms).
+const TUTOR_MANA_ENGINE_Q = '((o:"add" (o:"for each swamp you control" OR o:"devotion to black")) OR o:"tap a swamp for mana" OR o:"taps a swamp for mana" OR o:"each land is a swamp" OR (o:"tapped for mana" o:"adds an additional"))';
+// A NEW BODY EVERY TURN: per-upkeep creature makers (Bitterblossom, Ophiomancer, Endless Ranks of the Dead).
+// Same-sentence upkeep + create (Priest of the Blood Rite matched on two unrelated sentences), and never tokens made
+// for OPPONENTS (Akroan Horse). id<=B: Bitterblossom, Ophiomancer, Bitterbloom Bearer, Endless Ranks of the Dead.
+const UPKEEP_BODY_Q = '-t:land o:/at the beginning of (your|each) upkeep[^.]*create/ o:"creature token" -o:"each opponent creates" -o:"target opponent creates" -o:"that player creates"';
 const ATOMS = [
     // --- copy family, split by realization (ledger CS-0001/0002/0011/0046:
     //     token copies re-trigger "enters"; in-place copies never do;
@@ -7384,6 +7411,7 @@ const ATOMS = [
     // by the 36-char window (ALEXIOS, INNIAZ, ELUSEN, KARONA) and by "they own" vs "you own"
     // (AMINATOU, THE FATESHIFTER stays a blink commander, not a donor).
     { key: 'donate', w: 7, chip: 'Gifts', title: 'Gifts & Donations', sub: 'Generosity with teeth', test: /(?:opponent|player) gains control of [^.]{0,36}you (own|control)/, q: '(o:"target opponent gains control" OR o:"an opponent gains control" OR o:"exchange control")', oq: 'o:"gains control"', why: 'gives things away on purpose' },
+    { key: 'tutorcmd', w: 8, chip: 'Tutor', title: 'Tutor in the Command Zone', sub: 'The deck is what it fetches', test: TUTOR_ANY_RE, q: TUTOR_FINISHER_Q, oq: TUTOR_FINISHER_Q, why: 'can fetch ANY card, so it is a toolbox — the list is built around what it tutors for, in what order' },
     { key: 'flash', w: 5, chip: 'Flash', title: 'Flash & Instant Speed', sub: 'Their end step, your turn', test: FLASH_FAMILY_RE, q: '(keyword:flash -t:land)', oq: 'o:flash', why: 'plays at instant speed' },
     { key: 'poison', w: 7, chip: 'Poison', title: 'Poison & Toxic', sub: 'Ten drops of venom', test: /\btoxic \d|poison counters?|\binfect\b/, q: '(keyword:toxic OR keyword:infect OR o:"poison counter")', oq: '(o:toxic OR o:infect OR o:"poison counter")', why: 'wins on poison', sup: [] },
     // DAMAGE-AMPLIFIER family (Torbran study 2026-07-31): a replacement-effect commander
@@ -8973,9 +9001,11 @@ function extractAtoms(card) {
     // Madness, Activated-Ability Toolbox" with the plan named after his actual card missing. The
     // gate therefore lives at the RAIL level (see RAILS.handsize's per-rail `test`), where it can
     // decide which shelves a direction gets without deciding whether the commander has the theme.
+    // v8.68 — a life payment that only prices a tutor is a cost, not a life theme (see TUTOR_LIFE_COST_RE).
+    const oLifeCost = o.replace(TUTOR_LIFE_COST_RE, ' ');
     const oHand = HAND_SELF_CAP_RE.test(o) ? o.replace(new RegExp(BULK_DRAW_SRC, 'g'), ' ') : o;
     ATOMS.forEach(a => {
-        const m = (a.key === 'tokens' ? oTok : a.key === 'lifegain' ? oLifeEng : (a.key === 'enchantments' || a.key === 'artifacts') ? oNoun : a.key === 'taxes' ? oStax : a.key === 'anthem' ? oAnth : a.key === 'graveyard' ? oGy : a.key === 'minuscounters' ? oMinus : (a.key === 'power4' || a.key === 'smallpower') ? oPow : a.key === 'xspells' ? oX : a.key === 'sac' ? oSac : a.key === 'handsize' ? oHand : POLAR[a.key] ? oPol : o).match(a.test);
+        const m = (a.key === 'tokens' ? oTok : a.key === 'lifegain' ? oLifeEng : (a.key === 'enchantments' || a.key === 'artifacts') ? oNoun : a.key === 'taxes' ? oStax : a.key === 'anthem' ? oAnth : a.key === 'graveyard' ? oGy : a.key === 'minuscounters' ? oMinus : (a.key === 'power4' || a.key === 'smallpower') ? oPow : a.key === 'xspells' ? oX : a.key === 'sac' ? oSac : a.key === 'handsize' ? oHand : a.key === 'lifeloss' ? oLifeCost : POLAR[a.key] ? oPol : o).match(a.test);
         if (m) found.push({ atom: a, snippet: m[0] || '' });
     });
     // v7.06 (Charix study) — apply the WEAK basic-type land count demotion described above.
@@ -9426,6 +9456,8 @@ function studyStore(seed) {
     });
 }
 const STUDY_DB = studyStore({
+"3406db41-6b95-48fc-b58e-4476220fd34d": {"traps": ["Exploit's sacrifice is REMINDER text and the trigger reads “when Sidisi exploits a creature” — she can exploit HERSELF and the tutor still resolves (she is the exploited creature). The deck never needs fodder to tutor; a naive reader that sees “sacrifice a creature” and builds Aristocrats (Blood Artist, Grave Pact) is building the wrong deck — she sacrifices once per entry, often herself.", "She tutors once per ENTRY, not per turn: 5, then 7, then 9 mana from the command zone. The cheapest extra tutor is a reanimation spell on her (Animate Dead, Reanimate, Necromancy) or a “when it dies, return it” trick (Supernatural Stamina, Feign Death) — exploit herself, return, exploit again. Players who run her call this out: her presence turns Animate Dead effects into extra tutors.", "Mono-black has almost no artifact/enchantment removal, so a fair toolbox build keeps ONE copy of the right answer (Feed the Swarm, Bojuka Bog, Black Sun's Zenith) instead of redundancy — she is the redundancy. The deck is fragile to a single counterspell on her, to graveyard hate (her re-entry lines), and to exile removal.", "Opponents can respond to the exploit trigger by killing her — if she is the creature being exploited that does not matter, but if you exploited something else you lose the tutor. Self-exploit is the safe default against open removal."], "insight": "Sidisi is Demonic Tutor in the command zone: a 4/6 deathtouch body whose real text is ‘find the best card in your deck’ every time she enters. Players who run her report fetching MANA most of the time (Cabal Coffers + Urborg, Crypt Ghast) so the next turn casts her AND the card she finds; later turns fetch the finisher — Exsanguinate on a Coffers turn, Sanguine Bond + Exquisite Blood, Ad Nauseam, or Lich's Mastery. The fair version is a mono-black toolbox that tutors the exact answer the board needs; the combo version is big mana into one kill card. Her multiplier is re-entry, not fodder: reanimation, persist and undying grants each turn one card into another tutor."},
+"136c9ecb-59b4-4ef6-bcb2-7b8d3df3ee75": {"traps": ["“Pay 2 life” is the PRICE of the tutor, not a life-as-a-resource theme — the deck does not want ‘whenever you lose life’ payoffs. Death payoffs DO belong, but as combo pieces (Gravecrawler + Phyrexian Altar + Blood Artist), not as an aristocrats plan.", "He sacrifices ANOTHER creature — he cannot eat himself, so tutors per turn = bodies per turn. Players recommend only two or so self-recurring bodies (Reassembling Skeleton returns at instant speed, Brood of Cockroaches returns to hand) because he tutors for the rest; per-upkeep makers (Ophiomancer, Bitterblossom) are free fodder every turn.", "Eight mana is the real problem as a commander — testers found him ‘hurting for mana’. Build big black mana (Cabal Coffers, Urborg, Crypt Ghast, rituals), and when he dies put him in the graveyard and reanimate him for one to three mana instead of recasting for ten.", "Do not tutor-chain into a slow combo in a multiplayer pod with no protection — players warn the table will kill you for trying. The ability is instant speed: tutor in response, at end of turn, or with removal on the stack."], "insight": "Razaketh is a repeatable, instant-speed Demonic Tutor on an 8/8 flying trampler, gated by bodies and life rather than mana once he is down. The deck is three things: big black mana to land an eight-drop (or reanimation to bring him back cheaply), a steady fodder supply (per-upkeep token makers and one or two self-recurring creatures), and a tight package of finishers to fetch — Exquisite Blood + Sanguine Bond, Exsanguinate off Coffers, a monolith + Rings of Brighthearth line, or a Gravecrawler + Phyrexian Altar + Blood Artist loop. Played fairly he is a toolbox that answers every board with the single right card; the Aristocrats and Life-as-a-Resource readings are traps that mistake his costs for his plan."},
     // v8.48 (Zedruu the Greathearted STUDY 2026-08-09) — NAME-KEYED, the SEVENTEENTH entry carrying
     // the standing Scryfall debt: api.scryfall.com still returns an empty body through web_fetch and
     // the sandbox has no DNS at all, so her oracle_id could not be fetched and studyFor()'s `name:`
@@ -10437,6 +10469,13 @@ const OPP_MILL_PAYOFF_Q = '((o:"would mill" o:instead) OR o:"mills that many" OR
 // Surprise, so it stays a LOCAL fence at the one site that needs it.
 const CHEAT_INTO_PLAY_Q = '((o:"creature card" OR o:"creature cards") o:"onto the battlefield" -mana:{X})';
 const REANIMATE_Q = '((o:"creature card from a graveyard" OR o:"creature card from your graveyard" OR o:"creature cards from your graveyard" OR o:"creature card in a graveyard" OR o:"creature card in your graveyard") (o:"to the battlefield" OR o:"onto the battlefield"))';
+// RE-ENTRY: an enters-triggered tutor is one Demonic Tutor per ENTRY, so anything that returns it is another
+// tutor — reanimation plus "when it dies, return it" grants (Supernatural Stamina, Feign Death, Not Dead After All).
+// Every commander is LEGENDARY, so a reanimation card restricted to "nonlegendary creature card" (Persist,
+// Undying Malice's cousins) can never return it — fenced on both commander-return rails (found reading the
+// rendered Razaketh/Sidisi shelves: Persist was rank #5 on 'Reanimate It, Don't Recast It').
+const NONLEGENDARY_ONLY_Q = '-o:"nonlegendary creature card"';
+const TUTOR_REENTER_Q = '-t:land ' + NONLEGENDARY_ONLY_Q + ' (' + REANIMATE_Q + ' OR o:"dies, return it to the battlefield" OR o:"gains undying" OR o:"gains persist")';
 // YARD SIZE as the payoff (escape / delve / threshold / delirium / count-the-yard beaters) —
 // hoisted out of RAILS.graveyard's amplifier so the statZone transform below can reuse the
 // same already-QA'd string instead of re-deriving it. 250 cards in BG.
@@ -12943,6 +12982,26 @@ const RAILS = {
             { role: 'payoff', title: 'Hellbent Payoffs', sub: 'Cash in the empty hand', test: (o) => handGripIsEmpty(o), q: EMPTY_GRIP_Q, why: 'turns the empty hand into the upside instead of the cost, so the payoffs are bought for the same reason the commander empties the grip in the first place' }
         ]
     },
+    // TUTOR family (v8.68, Sidisi + Razaketh study — see TUTOR_ANY_RE). Two shelves every unrestricted tutor wants
+    // (what to fetch), then shelves routed by HOW the commander tutors — the nuance the two studies exist to capture:
+    //  • ENTERS-TRIGGERED (Sidisi): one tutor per entry, and exploit may sacrifice HERSELF ("when Sidisi exploits a
+    //    creature" still triggers — the community's 'dirty' line), so she needs no fodder at all. Her multiplier is
+    //    RE-ENTRY: every reanimation spell is another Demonic Tutor ("her presence turns Animate Dead effects into
+    //    extra tutors"). Fodder is optional — self-recurring bodies let her keep the 4/6 deathtouch body.
+    //  • ACTIVATED + "another creature" (Razaketh): repeatable at instant speed, can NOT eat himself, so the deck is
+    //    capped by BODIES per turn — per-upkeep token makers (Ophiomancer, Bitterblossom) are the best fodder because
+    //    they refill for free. He costs 8: as commander, when he dies put him in the GRAVEYARD and reanimate for two
+    //    mana instead of recasting for ten. (His free-outlet sacrifice already deals 'Fodder That Comes Back'.)
+    tutorcmd: {
+        rails: [
+            { role: 'payoff', title: 'Game Enders to Fetch', sub: 'What the tutor is for', q: TUTOR_FINISHER_Q, why: 'every activation is a Demonic Tutor, so the finishers do not need redundancy — they need to be the BEST single cards: Exsanguinate and Torment of Hailfire on a big-mana turn, Sanguine Bond + Exquisite Blood as a two-card kill, Ad Nauseam or Lich’s Mastery as the all-in line. Fetch the engine first, the ender last' },
+            { role: 'enabler', title: 'Mana Engines to Fetch', sub: 'The first thing to tutor', q: TUTOR_MANA_ENGINE_Q, why: 'players who run tutor commanders report fetching MANA most of the time — Cabal Coffers + Urborg, Crypt Ghast, Nirkana Revenant turn a five- or eight-drop commander into a turn where you cast it AND the card it found' },
+            { role: 'enabler', title: 'Re-Enter = Re-Tutor', sub: 'Every return is another tutor', test: (o) => /(?:exploits|enters)[^.]{0,80}search your library for (?:a |an )?card/.test(o), q: TUTOR_REENTER_Q, why: 'tutors when it ENTERS, so the cheapest extra tutor in the deck is a reanimation spell pointed at it — Animate Dead, Reanimate and Necromancy cost one to three mana against a commander tax that climbs by two, and the "when it dies, return it" tricks (Supernatural Stamina, Feign Death, Not Dead After All) make it sacrifice ITSELF to exploit and come straight back to do it again' },
+            { role: 'enabler', title: 'Bodies to Exploit', sub: 'Keep the 4/6, eat these', test: (o) => /exploits[^.]{0,80}search your library for (?:a |an )?card/.test(o), q: RECUR_FODDER_Q, why: 'exploit can eat the commander itself, so fodder is OPTIONAL — but a body that comes back on its own (Gravecrawler, Reassembling Skeleton, Bloodghast) lets you keep the deathtouch blocker AND tutor, and costs nothing to spend again' },
+            { role: 'enabler', title: 'A New Body Every Turn', sub: 'Fodder that refills itself', test: (o) => /sacrifice another creature: search your library for (?:a |an )?card/.test(o), q: UPKEEP_BODY_Q, why: 'it cannot eat itself, so the number of tutors per turn is the number of bodies — a creature made every upkeep (Ophiomancer, Bitterblossom, Endless Ranks of the Dead) is a free tutor every turn cycle without spending a card' },
+            { role: 'enabler', title: 'Reanimate It, Don’t Recast It', sub: 'Two mana instead of ten', test: (o) => /sacrifice another creature: search your library for (?:a |an )?card/.test(o), q: '-t:creature mv<=3 ' + NONLEGENDARY_ONLY_Q + ' ' + REANIMATE_Q, why: 'an eight-mana commander that dies should go to the GRAVEYARD, not the command zone: Animate Dead, Reanimate and Necromancy return it for one to three mana while the recast costs ten and climbs. The same cards answer the turn it gets removed with its ability on the stack' },
+        ]
+    },
     donate: {
         rails: [
             { role: 'enabler', title: 'Ways to Hand It Over', sub: 'Give it, swap it, keep the profit', q: '(o:"opponent gains control" OR o:"player gains control" OR o:"exchange control of")', why: 'the deck only pays you for permanents your opponents hold, so the give-and-swap effects ARE the engine — Harmless Offering, Bazaar Trader, Puca’s Mischief and Role Reversal each turn one gift into a permanent trigger' },
@@ -13584,6 +13643,7 @@ const ARCHETYPES = {
     extraturn: { name: 'Extra Turns', win: 'chain turns until nobody else gets one' },
     sagas: { name: 'Sagas & Chapters', win: 'loop chapter value into an engine' },
     donate: { name: 'Gifts & Group Hug', win: 'give presents that punish, drain the grateful table' },
+    tutorcmd: { name: 'Toolbox Tutor', win: 'tutor the mana engine first, then the finisher — every entry or activation is another Demonic Tutor, so the deck needs one copy of the best answer, not five' },
     leavesbf: { name: 'Departures', win: 'blink and sacrifice loops that pay on every exit' },
     websling: { name: 'Bounce & Rebuy', win: 'treat the web-slinging cost as an engine rather than a tax — float mana off a dork so it is already tapped, fling it back to pay for a discounted spell, then recast it for another "enters" trigger; every loop deploys a threat below rate AND re-buys a body, so you out-tempo and out-card the table at the same time' },
     flash: { name: 'Flash', win: 'hold everything up, act last, punish sorcery-speed tables' },
@@ -18335,6 +18395,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v8.68', date: '2026-11-18', focus: 'ui', commander: '—', summary: "STUDY — TUTOR COMMANDERS (Sidisi, Undead Vizier + Razaketh, the Foulblooded), community-first. Sidisi was one of the most-played commanders the engine could not read at all (staples only); Razaketh was mis-read as 'Life as a Resource' + aristocrats drains. Both can fetch ANY card, so their decks are defined by what they tutor. New Toolbox Tutor reading with Game Enders to Fetch (Exsanguinate, Aetherflux, Sanguine Bond + Exquisite Blood, Torment of Hailfire, Ad Nauseam…) and Mana Engines to Fetch (Coffers, Urborg, Crypt Ghast, Gauntlet of Power — players report tutoring mana most of the time). The two differ the way real players describe: Sidisi tutors once per ENTRY and can exploit herself, so every reanimation spell is another tutor (Re-Enter = Re-Tutor) and fodder is optional; Razaketh tutors repeatedly but must eat ANOTHER creature, so he wants a new body every turn (Bitterblossom, Ophiomancer) and, at eight mana, cheap reanimation instead of a ten-mana recast. Rules caught in the card-by-card read: Persist-style reanimation (nonlegendary only) can never return a commander and is fenced out; tokens made for opponents are excluded. Both commanders now carry studied traps and insight. Measured across all 3,675 commanders: exactly Sidisi, Razaketh and Lagomos changed." },
     { build: 'v8.67', date: '2026-11-18', focus: 'ui', commander: '—', summary: "WORKSHOP SCROLLING, FIXED. Two bugs made the Workshop jitter and flicker while scrolling. (1) The compact-header switch listened to every scroll event in the app — including sideways rail scrolls and the category bar centering itself, which report a vertical position of 0 — so it flipped the header between sizes over and over behind the Workshop. It now follows only the main page scrolling. (2) Every vertical scroll frame re-measured and rewrote the edge fade on every card rail, repainting all the card art; now only the rail you swipe sideways updates, and only when its state changes. Measured on a phone-sized Workshop: layout passes during a scroll 104 → 0, layout shift 0.3 → 0. THE CATEGORY BAR that pins to the top now belongs to the header: full width, solid card-back panel, slides in from under it, with readable tab labels and an underline for the rail you're in (it was a see-through strip of boxed capitals with content showing through a gap). CARD-BACK TEXTURES modeled on the real card back: the page background is the frame's olive-walnut burl grain, and the big lettering (ORACLE, page titles, the Herald) has the MAGIC wordmark's speckled verdigris with a copper rim and dark edge; small headings stay clean bright blue for legibility." },
     { build: 'v8.66', date: '2026-11-18', focus: 'ui', commander: '—', summary: "CARD BACK, EASIER TO READ. Small text was hard to read, especially in a narrow window: 177 of the app's text sizes were under 12px (some 8–9px). Everything under 14px now scales up on a sliding curve with an 11.5px floor (mana symbols excepted), and everyday text uses Crimson Pro, a sturdy book serif in the spirit of card rules text, instead of the thin Cormorant. Colors mesh the way the real card back does: warm parchment cream for reading text on the brown, with the MAGIC blue saved for headings, titles, buttons, active tabs and highlights (cyan text on orange-brown visibly vibrated). Headings get card-back lettering — a beveled ice-blue fill with a dark edge, like the embossed MAGIC wordmark — and the background has a faint card-back marbling. Contrast was re-audited on every screen at phone and desktop sizes (axe-core plus a pixel check of the real background behind each line). Market: the summary tiles now show which view is open and jump you to the list (before, tapping 'staples on sale' while already on that view did nothing visible)." },
     { build: 'v8.65', date: '2026-11-18', focus: 'ui', commander: '—', summary: "CARD BACK THEME, EVERYWHERE. The colors now come from the back of a Magic card: deep card-back browns for every surface and the blue of the MAGIC wordmark for text, headings, buttons, tabs, chips and glows. Before, only part of the app could follow a theme — about 450 colors were written straight into the stylesheet (the gold wash alone in 256 places, plus navy bars, sheets and parchment text); they now all come from theme colors, so the whole app changes together and the classic look is unchanged when no theme is set. READABILITY (WCAG AA): every text color was checked with axe-core and a pixel-level check of the actual background behind each line of text, on every screen at phone and desktop size — body text 7:1 or better, secondary and small text at least 4.5:1; the hero, deck tiles and Forge tiles got firmer dark backing behind text that sits on artwork; the warning red and the 'Wait' chip were brightened for brown; numbers use even lining figures in the new Cormorant Garamond type. Mana symbols keep their classic colors." },
