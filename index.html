@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v8.68 · 2026-11-18">
+<meta name="oracle-build" content="v8.69 · 2026-11-18">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2027,7 +2027,8 @@
   .mk-price { display: flex; flex-direction: column; align-items: flex-end; font-variant-numeric: tabular-nums; }
   .mk-price b { font-size: 14.5px; } .mk-price span { font-size: 12px; color: var(--muted); white-space: nowrap; }
   .mk-price span.cheaper { color: #8fdcab; font-weight: 650; }
-  .mk-row .mk-chip { justify-self: end; }
+  .mk-row .mk-chip { justify-self: end; font-variant-numeric: tabular-nums; }
+  .mk-row { grid-template-columns: 44px minmax(0, 1fr) auto 74px; }
   .mk-card { padding: 14px; border: 1px solid var(--hair2); border-radius: 16px; background: var(--glass); margin-bottom: 18px; }
   .mk-card-head { font-family: var(--display); font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold-bright); margin-bottom: 6px; }
   .mk-card-head.sub { margin: 4px 0 4px; }
@@ -2092,7 +2093,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v8.68 \u00B7 2026-11-18', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v8.69 \u00B7 2026-11-18', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -18395,6 +18396,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v8.69', date: '2026-11-18', focus: 'ui', commander: '—', summary: "MARKET: RANK BY DOLLARS. A $400 card down 12% can matter more to a buyer than a $3 card down 40%, so Movers and Rising now have a % / $ switch — in $ mode they rank by the dollar change and the chip shows it (Underground Sea −$303, Mana Vault rainbow foil +$1,381 this week). On sale gains a 'Most $ off' sort beside Most played and Biggest %. The choice is remembered." },
     { build: 'v8.68', date: '2026-11-18', focus: 'ui', commander: '—', summary: "STUDY — TUTOR COMMANDERS (Sidisi, Undead Vizier + Razaketh, the Foulblooded), community-first. Sidisi was one of the most-played commanders the engine could not read at all (staples only); Razaketh was mis-read as 'Life as a Resource' + aristocrats drains. Both can fetch ANY card, so their decks are defined by what they tutor. New Toolbox Tutor reading with Game Enders to Fetch (Exsanguinate, Aetherflux, Sanguine Bond + Exquisite Blood, Torment of Hailfire, Ad Nauseam…) and Mana Engines to Fetch (Coffers, Urborg, Crypt Ghast, Gauntlet of Power — players report tutoring mana most of the time). The two differ the way real players describe: Sidisi tutors once per ENTRY and can exploit herself, so every reanimation spell is another tutor (Re-Enter = Re-Tutor) and fodder is optional; Razaketh tutors repeatedly but must eat ANOTHER creature, so he wants a new body every turn (Bitterblossom, Ophiomancer) and, at eight mana, cheap reanimation instead of a ten-mana recast. Rules caught in the card-by-card read: Persist-style reanimation (nonlegendary only) can never return a commander and is fenced out; tokens made for opponents are excluded. Both commanders now carry studied traps and insight. Measured across all 3,675 commanders: exactly Sidisi, Razaketh and Lagomos changed." },
     { build: 'v8.67', date: '2026-11-18', focus: 'ui', commander: '—', summary: "WORKSHOP SCROLLING, FIXED. Two bugs made the Workshop jitter and flicker while scrolling. (1) The compact-header switch listened to every scroll event in the app — including sideways rail scrolls and the category bar centering itself, which report a vertical position of 0 — so it flipped the header between sizes over and over behind the Workshop. It now follows only the main page scrolling. (2) Every vertical scroll frame re-measured and rewrote the edge fade on every card rail, repainting all the card art; now only the rail you swipe sideways updates, and only when its state changes. Measured on a phone-sized Workshop: layout passes during a scroll 104 → 0, layout shift 0.3 → 0. THE CATEGORY BAR that pins to the top now belongs to the header: full width, solid card-back panel, slides in from under it, with readable tab labels and an underline for the rail you're in (it was a see-through strip of boxed capitals with content showing through a gap). CARD-BACK TEXTURES modeled on the real card back: the page background is the frame's olive-walnut burl grain, and the big lettering (ORACLE, page titles, the Herald) has the MAGIC wordmark's speckled verdigris with a copper rim and dark edge; small headings stay clean bright blue for legibility." },
     { build: 'v8.66', date: '2026-11-18', focus: 'ui', commander: '—', summary: "CARD BACK, EASIER TO READ. Small text was hard to read, especially in a narrow window: 177 of the app's text sizes were under 12px (some 8–9px). Everything under 14px now scales up on a sliding curve with an 11.5px floor (mana symbols excepted), and everyday text uses Crimson Pro, a sturdy book serif in the spirit of card rules text, instead of the thin Cormorant. Colors mesh the way the real card back does: warm parchment cream for reading text on the brown, with the MAGIC blue saved for headings, titles, buttons, active tabs and highlights (cyan text on orange-brown visibly vibrated). Headings get card-back lettering — a beveled ice-blue fill with a dark edge, like the embossed MAGIC wordmark — and the background has a faint card-back marbling. Contrast was re-audited on every screen at phone and desktop sizes (axe-core plus a pixel check of the real background behind each line). Market: the summary tiles now show which view is open and jump you to the list (before, tapping 'staples on sale' while already on that view did nothing visible)." },
@@ -22941,6 +22943,13 @@ function MarketScreen({ decks, activeDeck, onOpenDetail, onSearch }) {
         }, 30);
     };
     const [saleSort, setSaleSort] = useState('played');
+    // v8.69 — rank moves by percent or by DOLLARS (a $400 card down 12% can matter more than a $3 card down 40%)
+    const [unit, setUnitS] = useState(() => { try { return localStorage.getItem('oracle_market_unit') || 'pct'; } catch (e) { return 'pct'; } });
+    const setUnit = u => { setUnitS(u); setMore(false); haptic(); try { localStorage.setItem('oracle_market_unit', u); } catch (e) { } };
+    const fmtUsdDelta = c => (c >= 0 ? '+' : '\u2212') + fmtUsd(Math.abs(c) / 100);
+    const unitSeg = React.createElement("div", { className: "ios-segment compact", role: "group", "aria-label": "Rank by" },
+        React.createElement("button", { className: unit === 'pct' ? 'active' : '', onClick: () => setUnit('pct') }, "%"),
+        React.createElement("button", { className: unit === 'usd' ? 'active' : '', onClick: () => setUnit('usd') }, "$"));
     const [dir, setDir] = useState('drops');
     const [kind, setKind] = useState('single');
     const [more, setMore] = useState(false);
@@ -22985,8 +22994,9 @@ function MarketScreen({ decks, activeDeck, onOpenDetail, onSearch }) {
     const t0 = isoToday();
     const reprintList = rp ? rp.cards.filter(c => c.lo >= 1000) : [];
     const reprintSorted = reprintList.filter(c => c.new.some(s => s.rel > t0)).concat(reprintList.filter(c => !c.new.some(s => s.rel > t0)));
-    const saleList = mk ? (saleSort === 'played' ? mk.sale.slice().sort((a, b) => a.er - b.er) : mk.sale.slice().sort((a, b) => a.pct - b.pct)) : [];
-    const moverList = mv ? ((mv[dir] || {})[kind] || []) : [];
+    const saleList = mk ? (saleSort === 'played' ? mk.sale.slice().sort((a, b) => a.er - b.er) : saleSort === 'usd' ? mk.sale.slice().sort((a, b) => (b.usual - b.cur) - (a.usual - a.cur)) : mk.sale.slice().sort((a, b) => a.pct - b.pct)) : [];
+    const heatList = mk ? (unit === 'usd' ? mk.heat.slice().sort((a, b) => (b.cur - b.usual) - (a.cur - a.usual)) : mk.heat) : [];
+    const moverList = mv ? (((unit === 'usd' && mv[dir + 'Usd']) ? mv[dir + 'Usd'] : mv[dir]) || {})[kind] || [] : [];
     const counts = { you: youItems.length, sale: mk ? mk.saleN : 0, rising: mk ? mk.heatN : 0, reprints: reprintList.length };
     const cap = more ? 120 : 12;
     const moreBtn = (n) => n > 12 ? React.createElement("button", { className: "pw-more", onClick: () => { setMore(!more); haptic(); } }, more ? 'Show less' : 'Show all ' + n) : null;
@@ -23012,20 +23022,23 @@ function MarketScreen({ decks, activeDeck, onOpenDetail, onSearch }) {
                 React.createElement("p", { className: "mk-lede" }, "Commander staples (EDHREC top 3,000) whose cheapest copy is at least 15% under what it usually costs."),
                 React.createElement("div", { className: "ios-segment compact" },
                     React.createElement("button", { className: saleSort === 'played' ? 'active' : '', onClick: () => { setSaleSort('played'); haptic(); } }, "Most played"),
-                    React.createElement("button", { className: saleSort === 'drop' ? 'active' : '', onClick: () => { setSaleSort('drop'); haptic(); } }, "Biggest drop"))),
+                    React.createElement("button", { className: saleSort === 'drop' ? 'active' : '', onClick: () => { setSaleSort('drop'); haptic(); } }, "Biggest %"),
+                    React.createElement("button", { className: saleSort === 'usd' ? 'active' : '', onClick: () => { setSaleSort('usd'); haptic(); } }, "Most $ off"))),
             React.createElement("div", { className: "mk-list" }, saleList.slice(0, cap).map((x, i) => React.createElement(MkRow, { key: x.pid, i, img: sfImg(x.sid), title: x.n,
                 sub: '#' + x.er.toLocaleString() + ' in EDH · ' + x.set, tags: [x.rp ? 'Reprinted' : null, myOracles.has(x.o) ? 'In your decks' : null],
-                price: fmtUsd(x.cur / 100), priceSub: 'usually ' + fmtUsd(x.usual / 100), chip: fmtPct(x.pct), tone: 'good', busy: busy === x.sid,
+                price: fmtUsd(x.cur / 100), priceSub: 'usually ' + fmtUsd(x.usual / 100), chip: saleSort === 'usd' ? fmtUsdDelta(x.cur - x.usual) : fmtPct(x.pct), tone: 'good', busy: busy === x.sid,
                 onClick: () => openSid(x.sid, { pid: x.pid, foil: false }) }))),
             moreBtn(saleList.length));
     } else if (v === 'rising') {
         body = React.createElement(React.Fragment, null,
-            React.createElement("p", { className: "mk-lede" }, "Staples at least 20% over their usual price and still climbing. If a deck needs one, sooner tends to beat later; if not, spikes often cool off."),
-            React.createElement("div", { className: "mk-list" }, (mk ? mk.heat : []).slice(0, cap).map((x, i) => React.createElement(MkRow, { key: x.pid, i, img: sfImg(x.sid), title: x.n,
+            React.createElement("div", { className: "mk-bar" },
+                React.createElement("p", { className: "mk-lede" }, "Staples at least 20% over their usual price and still climbing. If a deck needs one, sooner tends to beat later; if not, spikes often cool off."),
+                unitSeg),
+            React.createElement("div", { className: "mk-list" }, heatList.slice(0, cap).map((x, i) => React.createElement(MkRow, { key: x.pid, i, img: sfImg(x.sid), title: x.n,
                 sub: '#' + x.er.toLocaleString() + ' in EDH · ' + x.set, tags: [myOracles.has(x.o) ? 'In your decks' : null],
-                price: fmtUsd(x.cur / 100), priceSub: 'usually ' + fmtUsd(x.usual / 100), chip: fmtPct(x.pct), tone: 'wait', busy: busy === x.sid,
+                price: fmtUsd(x.cur / 100), priceSub: 'usually ' + fmtUsd(x.usual / 100), chip: unit === 'usd' ? fmtUsdDelta(x.cur - x.usual) : fmtPct(x.pct), tone: 'wait', busy: busy === x.sid,
                 onClick: () => openSid(x.sid, { pid: x.pid, foil: false }) }))),
-            moreBtn(mk ? mk.heat.length : 0));
+            moreBtn(heatList.length));
     } else if (v === 'reprints') {
         body = React.createElement(React.Fragment, null,
             React.createElement("p", { className: "mk-lede" }, "$10+ cards just reprinted or announced. Reprints usually bottom 2–4 months after release; Secret Lair, Special Guests and The List barely move older copies."),
@@ -23045,11 +23058,12 @@ function MarketScreen({ decks, activeDeck, onOpenDetail, onSearch }) {
                     React.createElement("button", { className: dir === 'climbs' ? 'active' : '', onClick: () => { setDir('climbs'); setMore(false); haptic(); } }, "↑ Climbing")),
                 React.createElement("div", { className: "ios-segment compact" },
                     React.createElement("button", { className: kind === 'single' ? 'active' : '', onClick: () => { setKind('single'); setMore(false); haptic(); } }, "Singles"),
-                    React.createElement("button", { className: kind === 'sealed' ? 'active' : '', onClick: () => { setKind('sealed'); setMore(false); haptic(); } }, "Sealed"))),
-            React.createElement("p", { className: "mk-lede" }, "This week vs the three weeks before (cards over ~2 months old). ", React.createElement("b", null, "Sudden"), " moves often settle back; ", React.createElement("b", null, "steady"), " ones are real demand."),
+                    React.createElement("button", { className: kind === 'sealed' ? 'active' : '', onClick: () => { setKind('sealed'); setMore(false); haptic(); } }, "Sealed")),
+                unitSeg),
+            React.createElement("p", { className: "mk-lede" }, (unit === 'usd' ? "Ranked by dollars moved. " : "Ranked by percent moved. ") + "This week vs the three weeks before (cards over ~2 months old). ", React.createElement("b", null, "Sudden"), " moves often settle back; ", React.createElement("b", null, "steady"), " ones are real demand."),
             moverList.length ? React.createElement("div", { className: "mk-list" }, moverList.slice(0, cap).map((it, i) => React.createElement(MkRow, { key: it.pid + '-' + it.foil, i, img: it.kind === 'single' ? sfImg(it.sid) : null, title: it.n,
                 sub: (it.set || it.sn || '') + (it.num ? ' #' + it.num : '') + (it.foil ? ' · Foil' : ''), tags: [it.g != null ? (it.g ? 'steady' : 'sudden') : null],
-                price: fmtUsd(it.cur / 100), priceSub: 'was ' + fmtUsd(it.ref / 100), chip: fmtPct(it.pct), tone: it.pct < 0 ? 'good' : 'wait', busy: busy === it.sid,
+                price: fmtUsd(it.cur / 100), priceSub: 'was ' + fmtUsd(it.ref / 100), chip: unit === 'usd' ? fmtUsdDelta(it.cur - it.ref) : fmtPct(it.pct), tone: it.pct < 0 ? 'good' : 'wait', busy: busy === it.sid,
                 onClick: () => openPid(it) }))) : React.createElement("div", { className: "pw-empty" }, "No big moves here this week."),
             moreBtn(moverList.length));
     } else if (v === 'sets') {
