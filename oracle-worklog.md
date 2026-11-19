@@ -6437,3 +6437,30 @@ Every query live-QA'd in id<=B. Blast radius over 3,675 commanders: exactly 2 ch
 Rendered Workshops read card-by-card: Gisa = Toxic Deluge, Damnation, Accursed Marauder, Blasphemous Edict, Plaguecrafter,
 Fleshbag Marauder / Ashnod's Altar, Viscera Seer / Conjurer's Closet, Kaya's Ghostform; Maha = Massacre Girl, Pestilence, Crypt
 Rats, Plague Spitter / Doomwake Giant, Mutilate, Night of Souls' Betrayal / The Meathook Massacre, Massacre Wurm, Vincent Valentine.
+
+
+## 2026-11-19 · COMMUNITY PASS (Reddit + official rulings) on Venser, Teferi, Gisa, Maha · v8.72 → v8.73
+
+**Tool:** `oracle-research/reddit.mjs` rebuilt. The Arctic Shift archive's 422 "Timeout. Maybe slow down a bit" is a RATE LIMIT
+(answers in <1 s with `x-ratelimit-reset`), not a slow query — the old date-window splitting multiplied requests and locked
+itself out. Now: one all-time title search per subreddit, wait exactly the reset, 10/20/30-min cooldowns for the longer search
+budget, full comment trees of the threads ranked for deck-building value (Commander subs first; set-reveal/price/art/event posts
+sink). Every digest opens with the card's OFFICIAL RULINGS (Scryfall) as referee. Digests: venser 40 threads / teferi 35 / gisa 32
+/ maha 25, 12 read in full each → `oracle-research/community/*.md`.
+
+**What the community + rulings changed:**
+- Venser: new own-entry rail **Copy the Commander** (Spark Double, Phantasmal Image, Blade of Selves — a copy re-fires the
+  entry; r/EDH). Notes: Paradox Engine / Aetherflux self-bounce loop; infinite Venser blink bounces all lands = MLD, off-limits in
+  bracket 3; flashback spells he targets are exiled (ruling).
+- Teferi: corrected a r/CompetitiveEDH misreading ('turns off your interaction too' — no, opponents only; the real cost is that
+  opponents can't stop each other); end-step 'hold until you win' use; instant-speed clones; ruling confirms the Pool lock.
+- Gisa: **Make Their Creatures Die is now one-sided** — r/EDH: 'boardwipes get you nothing' because a symmetric wrath kills her
+  and she must be out at your upkeep. Damnation/Kindred Dominance/All Is Dust out (All Is Dust's real wording is "permanents …
+  that are one or more colors" — first exclusion missed it; caught reading the rendered rail). Rulings: returned creatures have
+  no haste; an opponent's own graveyard exile wins the replacement choice; opponents' death triggers never fire. Homeward Path
+  'decayed reset' is a myth (corrected in-thread).
+- Maha: new rail **Stop Their Counters** (Blightbeetle, Spike Cannibal, Vampire Hexmage, Archfiend of Ifnir) — +1/+1 counters are
+  'the most common way opponents get around Maha'. Trap: Toxrill is NOT in her color identity.
+
+Blast radius vs live v8.72 over 3,675 commanders: 40 changed (39 own-entry gain Copy the Commander, Maha gains a rail; Gisa's
+rail changed contents not name), 0 lost a rail, 0 errors. Rendered rails read.
