@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v8.70 · 2026-11-18">
+<meta name="oracle-build" content="v8.71 · 2026-11-19">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2240,7 +2240,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v8.70 \u00B7 2026-11-18', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v8.71 \u00B7 2026-11-19', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -5163,7 +5163,11 @@ const ENRAGE_SURVIVE_Q = '(' + grantAnyQ('indestructible') + ' -t:land)';
 // `[^.]{0,90}` is sentence-scoped — a period ends the clause — which is what keeps the two halves
 // of the phrase in the SAME sentence and stops a commander with an unrelated cast trigger in one
 // line and an unrelated "during an opponent" in another from matching across them.
-const FLASH_GRANT_RE = /as though (it|they) had flash/;
+// v8.71 (Teferi, Mage of Zhalfir study) — Magic prints a flash GRANT two ways: "you may cast X as though it had flash"
+// and "creature cards you own that aren't on the battlefield HAVE flash". Only the first was read, so the format's
+// most-played creature-flash granter rendered blank. \b on both sides keeps "flashback" out (Lier, Iroh). Measured over
+// all 3,675 commanders: exactly ONE new match (Teferi); the 17 existing granters are unchanged.
+const FLASH_GRANT_RE = /as though (it|they) had flash|\b(?:cards?|spells?)\b[^.]{0,60}\b(?:have|has) flash\b/;
 const OPP_TURN_CAST_RE = /whenever you cast[^.]{0,90}during (?:each|an|another) (?:opponent|other player)/;
 const FLASH_FAMILY_RE = new RegExp(FLASH_GRANT_RE.source + '|' + OPP_TURN_CAST_RE.source);
 // v7.48 (Nymris VERIFY) — SELF-FLASH IS NOT A GRANTER, and it was a THIRD of the shelf.
@@ -7200,6 +7204,23 @@ const TUTOR_MANA_ENGINE_Q = '((o:"add" (o:"for each swamp you control" OR o:"dev
 // Same-sentence upkeep + create (Priest of the Blood Rite matched on two unrelated sentences), and never tokens made
 // for OPPONENTS (Akroan Horse). id<=B: Bitterblossom, Ophiomancer, Bitterbloom Bearer, Endless Ranks of the Dead.
 const UPKEEP_BODY_Q = '-t:land o:/at the beginning of (your|each) upkeep[^.]*create/ o:"creature token" -o:"each opponent creates" -o:"target opponent creates" -o:"that player creates"';
+// v8.71 (Teferi, Mage of Zhalfir study, community-first) — THE SORCERY-SPEED LOCK. "Each opponent can cast spells only
+// any time they could cast a sorcery" shuts off every instant-speed answer on YOUR turn and, the part a reader misses,
+// turns Knowledge Pool and Omen Machine into HARD LOCKS: both make a player cast a card in the middle of a resolution,
+// which is never sorcery timing, so the card stays exiled and the opponent casts nothing (EDHREC counts Teferi + Knowledge
+// Pool in ~14,700 decks). Deliberately NOT the "can't cast spells during your turn" template (Dragonlord Dromoka, Kutzil,
+// Jennifer Walters): opponents still cast on their own turns, so the Pool lock does not work for them. Exactly one printing.
+const SORCERY_LOCK_RE = /opponents? can cast spells only any time they could cast a sorcery/;
+const SORCERY_LOCK_PIECE_Q = '(o:"whenever a player casts a spell from their hand, that player exiles it" OR (o:"players can\'t draw cards" o:"if able"))'; // Omen Machine now reads "casts it without paying its mana cost if able"
+// Flash makes "untap N lands" creatures (Palinchron, Peregrine Drake, Cloud of Faeries) end-step mana engines and the
+// start of the deck's infinite-mana lines (Palinchron + Deadeye Navigator / clone) on a turn opponents cannot answer.
+const FLASH_UNTAP_LANDS_Q = '(t:creature o:"untap up to" o:land)';
+// v8.71 (Venser, Shaper Savant study, community-first) — THE COMMANDER WHOSE ENTRY IS THE WHOLE CARD. 483 commanders print
+// a trigger on their OWN entry and almost all of them already read through another atom; 55 render completely blank because
+// the entry trigger is their only ability (Venser, Ertai Resurrected, Vendilion Clique, Red Guardian, Renet…). For those the
+// deck IS re-using that trigger: flicker it, double it, bounce and recast it. Pushed in extractAtoms ONLY when no other atom
+// fired, so it can never take a shelf from a commander the engine already reads.
+const SELF_RECAST_Q = '(o:"return target creature you control to its owner\'s hand" OR o:"return another target creature you control to its owner\'s hand" OR o:"return target creature you own to your hand")';
 const ATOMS = [
     // --- copy family, split by realization (ledger CS-0001/0002/0011/0046:
     //     token copies re-trigger "enters"; in-place copies never do;
@@ -7575,6 +7596,8 @@ const ATOMS = [
     // (AMINATOU, THE FATESHIFTER stays a blink commander, not a donor).
     { key: 'donate', w: 7, chip: 'Gifts', title: 'Gifts & Donations', sub: 'Generosity with teeth', test: /(?:opponent|player) gains control of [^.]{0,36}you (own|control)/, q: '(o:"target opponent gains control" OR o:"an opponent gains control" OR o:"exchange control")', oq: 'o:"gains control"', why: 'gives things away on purpose' },
     { key: 'tutorcmd', w: 8, chip: 'Tutor', title: 'Tutor in the Command Zone', sub: 'The deck is what it fetches', test: TUTOR_ANY_RE, q: TUTOR_FINISHER_Q, oq: TUTOR_FINISHER_Q, why: 'can fetch ANY card, so it is a toolbox — the list is built around what it tutors for, in what order' },
+    { key: 'sorcerylock', w: 7, chip: 'Sorcery lock', title: 'Opponents at Sorcery Speed', sub: 'Your turn cannot be answered', test: SORCERY_LOCK_RE, q: SORCERY_LOCK_PIECE_Q, oq: SORCERY_LOCK_PIECE_Q, why: 'locks opponents to sorcery speed, so nothing can be cast in response on your turn and resolution-time casts (Knowledge Pool, Omen Machine) never happen' },
+    { key: 'selfetb', w: 3, chip: 'Own entry', title: 'Re-Use the Entry', sub: 'The trigger is the card', test: /(?!)/, q: BLINK_Q, oq: BLINK_Q, why: 'its own entry trigger is its only ability, so the deck is built to run that trigger again' },
     { key: 'flash', w: 5, chip: 'Flash', title: 'Flash & Instant Speed', sub: 'Their end step, your turn', test: FLASH_FAMILY_RE, q: '(keyword:flash -t:land)', oq: 'o:flash', why: 'plays at instant speed' },
     { key: 'poison', w: 7, chip: 'Poison', title: 'Poison & Toxic', sub: 'Ten drops of venom', test: /\btoxic \d|poison counters?|\binfect\b/, q: '(keyword:toxic OR keyword:infect OR o:"poison counter")', oq: '(o:toxic OR o:infect OR o:"poison counter")', why: 'wins on poison', sup: [] },
     // DAMAGE-AMPLIFIER family (Torbran study 2026-07-31): a replacement-effect commander
@@ -9444,6 +9467,22 @@ function extractAtoms(card) {
         const enchAtom = ATOMS.filter(a => a.key === 'enchantments')[0];
         if (enchAtom) found.push({ atom: enchAtom, snippet: '' });
     }
+    // v8.71 — the own-entry reading, only for a commander nothing else reads (see SELF_RECAST_Q).
+    if (!found.length) {
+        const sn = selfRefNames(card.name || '').map(n => n.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+        const selfEtb = new RegExp('when (?:' + sn.concat(['this creature', '~']).join('|') + ') enters\\b(?![^.]{0,20}or (?:attacks|dies|leaves))');
+        const m = o.match(selfEtb);
+        // The entry trigger must be the card's ONLY ability (keyword lines like "Flash" / "Flying, vigilance" carry no
+        // sentence and don't count): Yasharn's real card is its static lock, Toph's is land creatures with double strike,
+        // Kyodai/Duskana/Splinter/Plagon each have another ability that matters more. And a pure DRAWBACK entry ("you lose
+        // 3 life", Cao Ren) is not worth repeating. Both found reading the 57 commanders the first cut admitted.
+        // keyword lines (incl. their kept reminder text, e.g. "flash you may cast this spell…") start with one of the card's
+        // printed keywords; "•" lines are modes of the ability above them.
+        const kws = (card.keywords || []).map(k => String(k).toLowerCase());
+        const abilityLines = o.split('\n').map(l => l.trim()).filter(l => (/[.:]/.test(l) || selfEtb.test(l)) && !l.startsWith('•') && !kws.some(k => l.startsWith(k)));
+        const drawbackOnly = m && /enters[^.]*,\s*(?:you lose \d+ life|sacrifice|discard)[^.]*\.\s*$/.test((abilityLines.find(l => selfEtb.test(l)) || ''));
+        if (m && abilityLines.length === 1 && !drawbackOnly) found.push({ atom: ATOMS.filter(a => a.key === 'selfetb')[0], snippet: m[0] });
+    }
     const have = {};
     found.forEach(f => { have[f.atom.key] = 1; });
     // v7.49 (Sheoldred study) — CONDITIONAL SUPPRESSION. `sup` was an unconditional veto: atom A
@@ -9619,6 +9658,8 @@ function studyStore(seed) {
     });
 }
 const STUDY_DB = studyStore({
+"0f41cefc-d6ff-4db7-ba35-502b7e081de1": {"traps": ["Treating him as a generic ETB or blink-payoff deck. He is not a payoff for OTHER creatures entering — his own entry trigger is the whole card, so the deck re-runs THAT trigger (Deadeye Navigator, Displacer Kitten, Ghostly Flicker, Panharmonicon) and recasts him.", "Forgetting the trigger can target a SPELL. Returning a spell on the stack to its owner's hand removes it — it counters even 'can't be countered' spells (players name Supreme Verdict and Emrakul). Hold him with mana open as a flash Remand, don't tap out to cast him on your own turn.", "Wasting the self-bounce. With two triggers (Panharmonicon, Naban), one answers the threat and the other returns Venser himself to hand for the next turn. He is a Human Wizard, so Riptide Laboratory rebuys him every turn from a land slot.", "Building him as a combo shell first. The community's durable builds are mono-blue permission and control with Venser as the backup answer; the Deadeye Navigator lock ('most players will concede') and Gilded Lotus/Basalt resets are the finishers, not the plan."], "insight": "Venser, Shaper Savant is a repeatable, flash-speed Remand that can also bounce any permanent — including lands, and including the spell on the stack. Players describe him as 'at worst a turn-4 Remand'. The deck is mono-blue control: hold up counters and Venser, answer the table's best spell or permanent each turn cycle, and re-use the trigger. Every way to re-enter him is another answer: Deadeye Navigator (a near-lock with mana open), Displacer Kitten off any noncreature spell, Ghostly Flicker with Archaeomancer, Panharmonicon or Naban to double him, and Riptide Laboratory because he is a Wizard. His own ETB also rebuys your value creatures (Solemn Simulacrum, Snapcaster Mage) and resets mana rocks, which is how the infinite-mana finishes (Gilded Lotus + Navigator) appear."},
+"2b6cbd55-5adc-4a34-ac45-8531705a7ee1": {"traps": ["Missing the lock half of the card. 'Each opponent can cast spells only any time they could cast a sorcery' means nothing can be cast in response on YOUR turn — your combo, your big spell and your end-step plays resolve unopposed. It does NOT stop activated or triggered abilities, and opponents can still cast instants during their own main phase.", "Missing the Knowledge Pool interaction. Knowledge Pool and Omen Machine make a player cast a card in the middle of a resolution, which is never sorcery timing — so with Teferi out the card stays exiled and the opponent casts nothing. Teferi + Knowledge Pool is the card's signature lock (~14,700 decks on EDHREC).", "Building a sorcery-speed creature deck. Every creature card you own has flash — cast creatures at an opponent's end step, ambush attackers, and dodge sorcery-speed removal. Palinchron (untap seven lands at their end step; infinite mana with Deadeye Navigator or a clone) is the primer's 'linchpin'.", "Playing Back to Basics or symmetric stax that hurts you more than them, or ignoring clones of Teferi — the legend rule can take him off the table and break the lock."], "insight": "Teferi, Mage of Zhalfir does two things that add up to 'your turn cannot be answered': every creature card you own has flash, and opponents can only cast at sorcery speed. The deck plays creatures at the end of opponents' turns (Palinchron, Peregrine Drake, clones, Archaeomancer), keeps counterspells for opponents' own turns, and wins on a turn nobody can respond to — or locks the table outright with Knowledge Pool (or Omen Machine), which becomes 'nobody casts anything' under his lock. Tutors for the lock: Fabricate, Treasure Mage, Trinket/Ethereal Usher. Threats to the plan: Winter Orb/Static Orb style mana denial, opposing Grand Abolisher, and anything that copies or removes Teferi."},
 "3406db41-6b95-48fc-b58e-4476220fd34d": {"traps": ["Exploit's sacrifice is REMINDER text and the trigger reads “when Sidisi exploits a creature” — she can exploit HERSELF and the tutor still resolves (she is the exploited creature). The deck never needs fodder to tutor; a naive reader that sees “sacrifice a creature” and builds Aristocrats (Blood Artist, Grave Pact) is building the wrong deck — she sacrifices once per entry, often herself.", "She tutors once per ENTRY, not per turn: 5, then 7, then 9 mana from the command zone. The cheapest extra tutor is a reanimation spell on her (Animate Dead, Reanimate, Necromancy) or a “when it dies, return it” trick (Supernatural Stamina, Feign Death) — exploit herself, return, exploit again. Players who run her call this out: her presence turns Animate Dead effects into extra tutors.", "Mono-black has almost no artifact/enchantment removal, so a fair toolbox build keeps ONE copy of the right answer (Feed the Swarm, Bojuka Bog, Black Sun's Zenith) instead of redundancy — she is the redundancy. The deck is fragile to a single counterspell on her, to graveyard hate (her re-entry lines), and to exile removal.", "Opponents can respond to the exploit trigger by killing her — if she is the creature being exploited that does not matter, but if you exploited something else you lose the tutor. Self-exploit is the safe default against open removal."], "insight": "Sidisi is Demonic Tutor in the command zone: a 4/6 deathtouch body whose real text is ‘find the best card in your deck’ every time she enters. Players who run her report fetching MANA most of the time (Cabal Coffers + Urborg, Crypt Ghast) so the next turn casts her AND the card she finds; later turns fetch the finisher — Exsanguinate on a Coffers turn, Sanguine Bond + Exquisite Blood, Ad Nauseam, or Lich's Mastery. The fair version is a mono-black toolbox that tutors the exact answer the board needs; the combo version is big mana into one kill card. Her multiplier is re-entry, not fodder: reanimation, persist and undying grants each turn one card into another tutor."},
 "136c9ecb-59b4-4ef6-bcb2-7b8d3df3ee75": {"traps": ["“Pay 2 life” is the PRICE of the tutor, not a life-as-a-resource theme — the deck does not want ‘whenever you lose life’ payoffs. Death payoffs DO belong, but as combo pieces (Gravecrawler + Phyrexian Altar + Blood Artist), not as an aristocrats plan.", "He sacrifices ANOTHER creature — he cannot eat himself, so tutors per turn = bodies per turn. Players recommend only two or so self-recurring bodies (Reassembling Skeleton returns at instant speed, Brood of Cockroaches returns to hand) because he tutors for the rest; per-upkeep makers (Ophiomancer, Bitterblossom) are free fodder every turn.", "Eight mana is the real problem as a commander — testers found him ‘hurting for mana’. Build big black mana (Cabal Coffers, Urborg, Crypt Ghast, rituals), and when he dies put him in the graveyard and reanimate him for one to three mana instead of recasting for ten.", "Do not tutor-chain into a slow combo in a multiplayer pod with no protection — players warn the table will kill you for trying. The ability is instant speed: tutor in response, at end of turn, or with removal on the stack."], "insight": "Razaketh is a repeatable, instant-speed Demonic Tutor on an 8/8 flying trampler, gated by bodies and life rather than mana once he is down. The deck is three things: big black mana to land an eight-drop (or reanimation to bring him back cheaply), a steady fodder supply (per-upkeep token makers and one or two self-recurring creatures), and a tight package of finishers to fetch — Exquisite Blood + Sanguine Bond, Exsanguinate off Coffers, a monolith + Rings of Brighthearth line, or a Gravecrawler + Phyrexian Altar + Blood Artist loop. Played fairly he is a toolbox that answers every board with the single right card; the Aristocrats and Life-as-a-Resource readings are traps that mistake his costs for his plan."},
     // v8.48 (Zedruu the Greathearted STUDY 2026-08-09) — NAME-KEYED, the SEVENTEENTH entry carrying
@@ -13155,6 +13196,24 @@ const RAILS = {
     //    capped by BODIES per turn — per-upkeep token makers (Ophiomancer, Bitterblossom) are the best fodder because
     //    they refill for free. He costs 8: as commander, when he dies put him in the GRAVEYARD and reanimate for two
     //    mana instead of recasting for ten. (His free-outlet sacrifice already deals 'Fodder That Comes Back'.)
+    // SORCERY-LOCK family (v8.71, Teferi, Mage of Zhalfir — see SORCERY_LOCK_RE). His flash GRANT now also fires the flash
+    // family (Untap & Hold Up Mana, Hold Up Protection, More Flash Granters), so this family carries only what the lock adds.
+    sorcerylock: {
+        rails: [
+            { role: 'payoff', title: 'Locks He Completes', sub: 'Knowledge Pool, Omen Machine', q: SORCERY_LOCK_PIECE_Q, why: 'both make a player cast a card in the middle of a resolution — never sorcery timing — so with the lock in play the card stays exiled and the opponent casts nothing at all. The primer’s fast line is Sol Ring into Fabricate or Treasure Mage for the Pool, Teferi at an opponent’s end step, Pool on your turn' },
+            { role: 'enabler', title: 'Flash-In Mana Engines', sub: 'Untap lands at their end step', q: FLASH_UNTAP_LANDS_Q, why: 'with every creature at flash, a creature that untaps lands is free mana at an opponent’s end step — and Palinchron with Deadeye Navigator or a clone is infinite mana on a turn nobody can respond to (players call Palinchron the deck’s linchpin)' },
+        ]
+    },
+    // SELF-ENTRY family (v8.71, Venser, Shaper Savant — see SELF_RECAST_Q). Only reached by commanders whose entry trigger is
+    // their only ability. Venser's players: Deadeye Navigator + Venser 'most players will concede'; Displacer Kitten and
+    // Panharmonicon/Naban loops; Riptide Laboratory because he is a Wizard; recast him as 'a turn-4 Remand'.
+    selfetb: {
+        rails: [
+            { role: 'enabler', title: 'Re-Trigger the Entry', sub: 'Flicker it again', q: BLINK_Q, why: 'the commander does one thing, when it enters — so every flicker is that thing again. Deadeye Navigator, Displacer Kitten, Ghostly Flicker and Conjurer’s Closet each turn the entry trigger into a repeatable effect' },
+            { role: 'amplifier', title: 'Double the Entry', sub: 'Every entrance, twice', q: TRIG_DOUBLE_ETB_Q, why: 'Panharmonicon-class doublers make the single trigger happen twice — for a bounce or counter trigger one copy handles the threat and the other can reset the commander itself' },
+            { role: 'enabler', title: 'Bounce It & Recast It', sub: 'Pick it up, play it again', q: (ctx) => (/\bwizard\b/i.test(ctx.type || '') ? '(' + SELF_RECAST_Q + ' OR o:"return target wizard you control")' : SELF_RECAST_Q), why: 'returning it to hand and casting it again re-runs the trigger for its mana cost instead of the climbing commander tax — and a Wizard commander gets Riptide Laboratory, a land that does it every turn' },
+        ]
+    },
     tutorcmd: {
         rails: [
             { role: 'payoff', title: 'Game Enders to Fetch', sub: 'What the tutor is for', q: TUTOR_FINISHER_Q, why: 'every activation is a Demonic Tutor, so the finishers do not need redundancy — they need to be the BEST single cards: Exsanguinate and Torment of Hailfire on a big-mana turn, Sanguine Bond + Exquisite Blood as a two-card kill, Ad Nauseam or Lich’s Mastery as the all-in line. Fetch the engine first, the ender last' },
@@ -13807,6 +13866,8 @@ const ARCHETYPES = {
     sagas: { name: 'Sagas & Chapters', win: 'loop chapter value into an engine' },
     donate: { name: 'Gifts & Group Hug', win: 'give presents that punish, drain the grateful table' },
     tutorcmd: { name: 'Toolbox Tutor', win: 'tutor the mana engine first, then the finisher — every entry or activation is another Demonic Tutor, so the deck needs one copy of the best answer, not five' },
+    sorcerylock: { name: 'Sorcery-Speed Lock', win: 'flash threats in at their end step, then win on a turn nobody can answer — or lock them out with Knowledge Pool' },
+    selfetb: { name: 'Entry Loop', win: 'run the commander’s own entry trigger again and again — flicker, double, bounce and recast it' },
     leavesbf: { name: 'Departures', win: 'blink and sacrifice loops that pay on every exit' },
     websling: { name: 'Bounce & Rebuy', win: 'treat the web-slinging cost as an engine rather than a tax — float mana off a dork so it is already tapped, fling it back to pay for a discounted spell, then recast it for another "enters" trigger; every loop deploys a threat below rate AND re-buys a body, so you out-tempo and out-card the table at the same time' },
     flash: { name: 'Flash', win: 'hold everything up, act last, punish sorcery-speed tables' },
@@ -14690,7 +14751,7 @@ function buildEngineModel(commander) {
     // strip), and reminder text is not rules the commander provides — a keyword's reminder must
     // never be able to summon or suppress the scoped read.
     const oAnthCtx = o.replace(/\([^)]*\)/g, ' ').replace(ANTHEM_TEMP_RE, ' ').replace(ANTHEM_TARGET_RE, ' ');
-    const railCtx = { ci: ciArr, tribe: ((found.slice(0, 6).find(f => f.tribe) || {}).tribe) || null, o: o, scopedAnthem: ANTHEM_RE.test(oAnthCtx) && !ANTHEM_BARE_RE.test(oAnthCtx) };
+    const railCtx = { type: (commander.type_line || ((commander.card_faces || [])[0] || {}).type_line || ''), ci: ciArr, tribe: ((found.slice(0, 6).find(f => f.tribe) || {}).tribe) || null, o: o, scopedAnthem: ANTHEM_RE.test(oAnthCtx) && !ANTHEM_BARE_RE.test(oAnthCtx) };
     // v7.19 — `anthemWide`: this commander's board has NO shared creature type, so a
     // subtype-scoped anthem is a dead card on its shelf (see ANTHEM_NARROW_RE). Read off the
     // commander's OWN anthem wording via ANTHEM_TRIBAL_SCOPE_RE, never off the TRIBES whitelist,
@@ -18558,6 +18619,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v8.71', date: '2026-11-19', focus: 'ui', commander: '—', summary: "STUDY — TWO FLASH COMMANDERS, TWO OPPOSITE DECKS (Venser, Shaper Savant + Teferi, Mage of Zhalfir), community-first. Both rendered blank. VENSER's entry trigger is the whole card — a flash Remand that can return a spell on the stack (removing even uncounterable spells) or any permanent — so he now reads as an Entry Loop: Re-Trigger the Entry (Deadeye Navigator, Displacer Kitten, Ghostly Flicker, Conjurer's Closet), Double the Entry (Panharmonicon, Naban) and Bounce It & Recast It (Riptide Laboratory, since he is a Wizard). The same reading now reaches the commanders whose ONLY ability is their own entry trigger (Ertai Resurrected, Vendilion Clique, Niv-Mizzet Reborn and others — 39 in all), and deliberately not ones whose entry is a drawback or a side ability. TEFERI gives all your creature cards flash and locks opponents to sorcery speed: the engine now reads his 'have flash' wording (so the flash shelves reach him) and the lock, which turns Knowledge Pool and Omen Machine into hard locks; plus Flash-In Mana Engines (Palinchron, Peregrine Drake). Both carry studied traps and insight. Measured across all 3,675 commanders: 40 gained a reading, none lost a shelf." },
     { build: 'v8.70', date: '2026-11-18', focus: 'ui', commander: '—', summary: "DESIGN PASS — same Card Back look, finished like a premium product. One system for spacing, corner radii and depth across the app; every segmented control and the top nav share one selected style (a raised walnut key with a blue edge, instead of a loud glossy slab that outshone real buttons); chips, pills and Market tabs share one selected tint; buttons are one family with consistent heights; deck and list rows sit on clean hairlines instead of stacks of separate boxes; cards and tiles get a subtle resting depth; leftover gold from the old theme now follows the theme colors; a clear keyboard focus ring; numbers line up in columns. Desktop: the sidebar shows the walnut texture with a blue marker on the active screen, and the Workshop's Deck Doctor sits in the reading column. The color filter's OS emoji are replaced by drawn mana-color icons that look the same on every device. Contrast audits and the Workshop scroll metrics are unchanged or better." },
     { build: 'v8.69', date: '2026-11-18', focus: 'ui', commander: '—', summary: "MARKET: RANK BY DOLLARS. A $400 card down 12% can matter more to a buyer than a $3 card down 40%, so Movers and Rising now have a % / $ switch — in $ mode they rank by the dollar change and the chip shows it (Underground Sea −$303, Mana Vault rainbow foil +$1,381 this week). On sale gains a 'Most $ off' sort beside Most played and Biggest %. The choice is remembered." },
     { build: 'v8.68', date: '2026-11-18', focus: 'ui', commander: '—', summary: "STUDY — TUTOR COMMANDERS (Sidisi, Undead Vizier + Razaketh, the Foulblooded), community-first. Sidisi was one of the most-played commanders the engine could not read at all (staples only); Razaketh was mis-read as 'Life as a Resource' + aristocrats drains. Both can fetch ANY card, so their decks are defined by what they tutor. New Toolbox Tutor reading with Game Enders to Fetch (Exsanguinate, Aetherflux, Sanguine Bond + Exquisite Blood, Torment of Hailfire, Ad Nauseam…) and Mana Engines to Fetch (Coffers, Urborg, Crypt Ghast, Gauntlet of Power — players report tutoring mana most of the time). The two differ the way real players describe: Sidisi tutors once per ENTRY and can exploit herself, so every reanimation spell is another tutor (Re-Enter = Re-Tutor) and fodder is optional; Razaketh tutors repeatedly but must eat ANOTHER creature, so he wants a new body every turn (Bitterblossom, Ophiomancer) and, at eight mana, cheap reanimation instead of a ten-mana recast. Rules caught in the card-by-card read: Persist-style reanimation (nonlegendary only) can never return a commander and is fenced out; tokens made for opponents are excluded. Both commanders now carry studied traps and insight. Measured across all 3,675 commanders: exactly Sidisi, Razaketh and Lagomos changed." },

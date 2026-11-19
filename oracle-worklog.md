@@ -79,6 +79,9 @@ Omnath Locus of Rage, Titania, Nekusar, Niv-Mizzet Parun, Alrund, Muldrotha, and
 - 2026-11-18: **Sidisi, Undead Vizier** (oracle_id `3406db41-6b95-48fc-b58e-4476220fd34d` — COMMUNITY-FIRST study chosen from the new full-corpus coverage audit (~/projects/oracle-research: she rendered ZERO engine rails, staples only). Unrestricted ETB tutor; exploit may eat herself; re-entry = re-tutor. New `tutorcmd` atom + RAILS family + Toolbox Tutor plan.)
 - 2026-11-18: **Razaketh, the Foulblooded** (oracle_id `136c9ecb-59b4-4ef6-bcb2-7b8d3df3ee75` — the paired study with a different nuance: REPEATABLE activated tutor that eats ANOTHER creature. Was mis-read as Life as a Resource + drains; the life payment is the tutor's price. Bodies-per-turn and reanimate-don't-recast rails.)
 
+- 2026-11-19: **Venser, Shaper Savant** (oracle_id `0f41cefc-d6ff-4db7-ba35-502b7e081de1` — community-first paired study; rendered blank. His entry trigger IS the card (a flash Remand that bounces any spell or permanent). New own-entry reading `selfetb` ('Entry Loop') for commanders whose entry trigger is their ONLY ability.)
+- 2026-11-19: **Teferi, Mage of Zhalfir** (oracle_id `2b6cbd55-5adc-4a34-ac45-8531705a7ee1` — the paired flash commander with the opposite plan: grants flash to all his creature cards and locks opponents to sorcery speed. FLASH_GRANT_RE now reads the "have flash" template; new `sorcerylock` atom — Knowledge Pool / Omen Machine become hard locks.)
+
 ## Run history
 | Run | Date | Focus | Commander studied | Summary of changes | New build tag |
 |-----|------|-------|-------------------|--------------------|---------------|
@@ -6374,3 +6377,37 @@ oracle_id on faces only, so keying by top-level oracle_id collided five commande
 
 **Next (paired-study candidates from the worklist):** Venser, Shaper Savant / Teferi, Mage of Zhalfir (flash: re-buy ETB vs flash-creatures
 lock); Gisa, Glorious Resurrector (opponents' creatures die → yours) vs a self-reanimator; God-Eternal Rhonas (power doubling) vs Xenagos.
+
+
+## 2026-11-19 · STUDY Venser, Shaper Savant + Teferi, Mage of Zhalfir (paired, community-first) · v8.70 → v8.71
+
+**Community (MTG Salvation primers; Reddit via the Arctic Shift archive was attempted — its full-text search timed out even on
+11-day windows, so the tool now caps window-splitting at depth 2 to stay polite):** Venser — 'at worst a turn-4 Remand'; the
+trigger can target a SPELL, which removes even uncounterable spells (Supreme Verdict, Emrakul); Deadeye Navigator + Venser 'most
+players will concede'; Displacer Kitten, Panharmonicon/Naban (one trigger answers, one returns Venser), Ghostly Flicker +
+Archaeomancer; Riptide Laboratory because he is a Wizard; builds are mono-U permission with Venser as backup. Teferi — flash for
+every creature card + opponents at sorcery speed = your turn 'unhindered and unopposed'; Knowledge Pool lock (~14,700 decks);
+Palinchron the 'linchpin' (infinite mana with Deadeye/clone); traps: does not stop activated/triggered abilities, opponents still
+cast instants in their own main phase, Back to Basics hurts you more, clones of Teferi break the lock via the legend rule.
+
+**Engine:** (1) FLASH_GRANT_RE reads "creature cards … HAVE flash" (\b-bounded so flashback stays out) — exactly one new match
+(Teferi), so the flash family's granter rails now reach him. (2) New `sorcerylock` atom on the exact sorcery-speed wording ONLY
+(Dromoka/Kutzil/Jennifer Walters print "can't cast spells during your turn", under which the Pool lock does NOT work) + family:
+Locks He Completes (Knowledge Pool, Omen Machine — Omen Machine's current wording "casts it without paying its mana cost if able"
+broke the first query; fixed on the two fixed phrases), Flash-In Mana Engines (Peregrine Drake, Cloud of Faeries, Palinchron,
+Great Whale). (3) New `selfetb` reading pushed in extractAtoms only when NO other atom fired, the self-entry trigger is the card's
+ONLY ability (keyword lines incl. their kept reminder text and • mode lines don't count; the entry line always counts), and it is
+not a pure drawback. Family: Re-Trigger the Entry (BLINK_Q), Double the Entry (TRIG_DOUBLE_ETB_Q), Bounce It & Recast It (adds
+Riptide Laboratory for Wizards via the new railCtx.type). Plans 'Sorcery-Speed Lock' and 'Entry Loop'. STUDY_DB +2.
+
+**Verified as we went (each found by reading results, then fixed):** first cut admitted 57 own-entry commanders — reading every
+one found Cao Ren ('you lose 3 life' — a drawback) and Yasharn/Toph/Kyodai/Duskana/Splinter/Plagon (entry is not their main
+ability) → ONLY-ability + drawback rules; that rule then wrongly dropped Venser (kept Flash reminder text read as an ability) and
+Ertai (entry line ends in '—', modes on • lines) → keyword/mode-aware counting. Final blast radius over all 3,675 commanders:
+40 changed (Teferi + 39 own-entry), ZERO lost any rail, zero errors; blank commanders 244 → 205. Rendered Workshops read
+card-by-card with live Scryfall: Venser = Conjurer's Closet, Displacer Kitten, Ghostly Flicker, Thassa, Deadeye Navigator /
+Panharmonicon, Naban / Riptide Laboratory, Decoction Module; Teferi = Knowledge Pool, Omen Machine / Peregrine Drake, Palinchron
+/ Reset, Unwinding Clock / Leyline of Anticipation, Vedalken Orrery.
+
+**Next pair:** Gisa, Glorious Resurrector (opponents' creatures die → yours) vs a self-reanimator; God-Eternal Rhonas (now reads
+as Entry Loop — its power-doubling entry is real, but his deck is also a big-power aggro shell; revisit with community input).
