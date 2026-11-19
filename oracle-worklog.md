@@ -82,6 +82,9 @@ Omnath Locus of Rage, Titania, Nekusar, Niv-Mizzet Parun, Alrund, Muldrotha, and
 - 2026-11-19: **Venser, Shaper Savant** (oracle_id `0f41cefc-d6ff-4db7-ba35-502b7e081de1` — community-first paired study; rendered blank. His entry trigger IS the card (a flash Remand that bounces any spell or permanent). New own-entry reading `selfetb` ('Entry Loop') for commanders whose entry trigger is their ONLY ability.)
 - 2026-11-19: **Teferi, Mage of Zhalfir** (oracle_id `2b6cbd55-5adc-4a34-ac45-8531705a7ee1` — the paired flash commander with the opposite plan: grants flash to all his creature cards and locks opponents to sorcery speed. FLASH_GRANT_RE now reads the "have flash" template; new `sorcerylock` atom — Knowledge Pool / Omen Machine become hard locks.)
 
+- 2026-11-19: **Gisa, Glorious Resurrector** (oracle_id `f1354b1b-896c-4492-b0c0-3dd07c6d3917` — community-first paired study; rendered blank. Opponents' deaths become your decayed army. New `oppsteal` atom keyed on the RETURN clause.)
+- 2026-11-19: **Maha, Its Feathers Night** (oracle_id `129476ae-9dab-4e04-8e8e-f249afd56ff9` — the paired study: opponents' creatures at base toughness 1, every ping a one-sided wipe. New `tough1` atom.)
+
 ## Run history
 | Run | Date | Focus | Commander studied | Summary of changes | New build tag |
 |-----|------|-------|-------------------|--------------------|---------------|
@@ -6411,3 +6414,26 @@ Panharmonicon, Naban / Riptide Laboratory, Decoction Module; Teferi = Knowledge 
 
 **Next pair:** Gisa, Glorious Resurrector (opponents' creatures die → yours) vs a self-reanimator; God-Eternal Rhonas (now reads
 as Entry Loop — its power-doubling entry is real, but his deck is also a big-power aggro shell; revisit with community input).
+
+
+## 2026-11-19 · STUDY Gisa, Glorious Resurrector + Maha, Its Feathers Night (paired, community-first) · v8.71 → v8.72
+
+**Community (Cardmarket deck tech, Cardboard Chronicles + TheGamer build guides, Archidekt lists) — and two community claims
+CORRECTED by the rules check:** the Gisa deck tech says she 'ignores permanents that are sacrificed' — wrong: an edict is a death,
+so Fleshbag Marauder/Plaguecrafter steal (the search snippets and Archidekt lists agree). The Maha guide says Night of Souls'
+Betrayal leaves 'your creatures unaffected' — wrong: it is symmetric (Maha, a 5/5, survives; your small creatures don't). Rules
+nuances captured: Gisa returns creature CARDS (tokens cease to exist in exile), only deaths count (exile removal/bounce give
+nothing), the army arrives only if she survives to your upkeep, decayed can't block and is sacrificed after attacking, and most
+blinks return 'under its owner's control' (hands it back) — only 'under your control' blinks keep it. Maha's base toughness 1 is
+set BEFORE counters and pump (CR 613), so +1/+1-counter and anthem boards survive a ping; Pestilence needs a sturdy creature.
+
+**Measured before designing:** four other commanders print Gisa's 'would die, exile it instead' as GRAVEYARD HATE (Liesa,
+Nemata, Vren, Valentin) — the reader keys on the RETURN clause, so they are untouched. Maha's wording is unique.
+
+**Engine:** atoms `oppsteal` (OPP_STEAL_RE) and `tough1` (OPP_TOUGH1_RE), both w7; families — Gisa: Make Their Creatures Die
+(destroy/-X/-X/edicts), Cash In the Decayed (free sac outlets), Steal & Keep ('under your control' blinks + theft-reanimation);
+Maha: One-Damage Sweepers, Global -1/-1, Profit When Theirs Die. Plans 'Their Deaths, Your Army' / 'Pinger Lock'. STUDY_DB +2.
+Every query live-QA'd in id<=B. Blast radius over 3,675 commanders: exactly 2 changed (Gisa, Maha), 0 lost a rail, 0 errors.
+Rendered Workshops read card-by-card: Gisa = Toxic Deluge, Damnation, Accursed Marauder, Blasphemous Edict, Plaguecrafter,
+Fleshbag Marauder / Ashnod's Altar, Viscera Seer / Conjurer's Closet, Kaya's Ghostform; Maha = Massacre Girl, Pestilence, Crypt
+Rats, Plague Spitter / Doomwake Giant, Mutilate, Night of Souls' Betrayal / The Meathook Massacre, Massacre Wurm, Vincent Valentine.
