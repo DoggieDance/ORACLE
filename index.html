@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v8.79 · 2026-11-24">
+<meta name="oracle-build" content="v8.80 · 2026-11-24">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2240,7 +2240,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v8.79 \u00B7 2026-11-24', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v8.80 \u00B7 2026-11-24', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -10399,7 +10399,7 @@ const TOKEN_MULT_VERB = '(o:"twice that many" OR o:"three times that many")';
 // Treasures under Mondrak, and Pitiless Plunderer makes a Treasure AND a Squirrel under Chatterfang.
 // Ojer Taq and Queen Allenal say "creature tokens" and are deliberately not matched.
 const TOKEN_ANY_REPL_RE = /if one or more tokens would be created under your control/;
-const TOKEN_NONCREATURE_MAKER_Q = '-t:land o:/creates? (a|an|one|two|three|four|x|that many) (tapped )?(treasure|food|clue|blood|map|powerstone|gold|junk)\\b/ -o:"opponent creates" -o:"that player creates"';
+const TOKEN_NONCREATURE_MAKER_Q = '-t:land o:/creates? (a|an|one|two|three|four|x|that many) (tapped )?(treasure|food|clue|blood|map|powerstone|gold|junk)\\b/ -o:"opponent creates" -o:"opponents create" -o:"that player creates" -o:"controller creates"';
 // The add-a-creature version of the same replacement (Chatterfang's Squirrels, Quina's Frogs): every
 // token made brings an extra body, so a death that makes ANY token puts more creatures back than it
 // took. That is the community's "Chatterfang 101" loop — Pitiless Plunderer plus a free sac outlet
@@ -18812,6 +18812,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v8.80', date: '2026-11-24', focus: 'ui', commander: '—', summary: "FIX — the new Every Token Counts shelf listed Get Lost, whose Map tokens go to the OPPONENT whose creature you removed. Cards where the other player's controller creates the tokens are now left out." },
     { build: 'v8.79', date: '2026-11-24', focus: 'ui', commander: '—', summary: "COMMANDER STUDY — MONDRAK, GLORY DOMINUS and CHATTERFANG, SQUIRREL GENERAL, from the rulings, r/EDH threads, EDHREC's Chatterfang article and Commander Spellbook. Both replace token creation; the difference is the sacrifice. Mondrak's sacrifice only buys itself an indestructible counter, so it no longer reads as an Aristocrats or mana-sink deck and leads with tokens — and the same fix reaches the other Dominuses and self-regenerators (Zopandrel gets its Extra Combats shelf back). A sacrifice that costs no mana (Yahenni, Varolz) is still a free outlet and stays Aristocrats. New shelves: Every Token Counts (Treasure, Food and Clue makers count for token replacers like Mondrak and Chatterfang) and Deaths Into Tokens (Pitiless Plunderer's loop for Chatterfang and Quina). Notes for both commanders cover the shield timing, cast triggers that aren't doubled, the two-card Plunderer loop, +X/-X as removal and the bracket warning." },
     { build: 'v8.78', date: '2026-11-24', focus: 'ui', commander: '—', summary: "COMMANDER STUDY — ANZRAG, THE QUAKE-MOLE, from r/EDH threads, the rulings and Draftsim's guide, and every commander paid when its creature becomes blocked (Anzrag, Grazilaxx, General Marhault, Norin, She-Hulk, Ib Halfheart, Bill Ferny, Nivea). New 'Get Blocked' read: Lures & Forced Blocks (nobody blocks voluntarily), Survive the Block for commanders whose creature stays in combat (Darksteel Plate, Mithril Coat, Dolmen Gate, Zilortha), and Give Them Blockers (Hunted Troll, Akroan Horse, Forbidden Orchard — no blocker means no trigger). Anzrag's notes cover the blocker loop and the deck's missing card draw." },
     { build: 'v8.77', date: '2026-11-24', focus: 'ui', commander: '—', summary: "COMMANDER STUDY — FLORIAN, VOLDAREN SCION, from r/EDH threads and the rulings, and the commanders that read 'life your opponents lost this turn' (Florian, Rakdos Lord of Riots, Sygg, Davros, Abaddon). They now get Bleed Every Opponent (damage to EACH opponent scales; damage on their turns doesn't count), Double the Damage, and for Florian Extra Combats (each extra main phase re-fires him). Florian's notes: X of 3-5 is plenty since he exiles one card, and keep mana open after combat to cast it. Neheb's own read is unchanged." },
