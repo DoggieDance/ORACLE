@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v8.74 · 2026-11-24">
+<meta name="oracle-build" content="v8.75 · 2026-11-24">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2240,7 +2240,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v8.74 \u00B7 2026-11-24', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v8.75 \u00B7 2026-11-24', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -7257,6 +7257,15 @@ const OPP_DIES_PAYOFF_Q = '-t:land (o:"whenever a creature an opponent controls 
 const TEAM_DOUBLE_RE = /double the power(?: and toughness)? of each (?:other )?creature you control/;
 const CASH_POWER_Q = '-t:land (o:/draw cards equal to [^.]*power/ OR o:/damage equal to the sacrificed creature\'s power/ OR o:"cards equal to the greatest power among creatures you control" OR o:/creature you control[^.]* deals damage equal to its power to (any target|each opponent|target player|each other creature and each opponent)/)';
 const TEAM_TRAMPLE_Q = '-t:land (o:/creatures you control (gain|have|get [^.]* and gain) [^.]*trample/ OR o:/creatures you control [^.]*(gain|have) [^.]*can\'t be blocked/)';
+// v8.74b — COUNTERS_GEN_RE. A KEYWORD counter (indestructible, shield, flying, double strike…) is a keyword, not a counters
+// engine: the four Dominus praetors (Mondrak #439, Solphim, Zopandrel, Drivnod) print "put an indestructible counter on
+// <self>" as a protection cost and were dealt Counter Batteries / Proliferate / Counter Sinks ahead of their real card —
+// as were Captain America, Rigo and Mai (a shield/double strike counter on themselves). A keyword counter no longer
+// counts; and the two real counters decks the old test only caught by accident are now read for what they say:
+// FALCO SPARA casts by "removing a counter" and PERRIE counts "kinds of counters"; ME, THE IMMORTAL keeps counters
+// across zones ("counters remain on"). Measured gain: PIR and BRAD BOIMLER ("that many plus one of each of those kinds of
+// counters" — counter doublers, Pir was plan-less) now read as the counter engines they are.
+const COUNTERS_GEN_RE = /(?<!\b(?:flying|first strike|double strike|deathtouch|hexproof|indestructible|lifelink|menace|reach|trample|vigilance|haste|shield) )counters? on |counters? from among|remov(?:e|ing) [^.]{0,26}counter|\bmove [^.]{0,26}counter|kinds of counters|counters remain on/;
 const ATOMS = [
     // --- copy family, split by realization (ledger CS-0001/0002/0011/0046:
     //     token copies re-trigger "enters"; in-place copies never do;
@@ -7794,7 +7803,7 @@ const ATOMS = [
     // Zhulodok's cascade w7) keep the lead they already had and gain the band behind it. See
     // MV_HIGH_RE above for the reader, the ownership argument and the 3,348-commander census.
     { key: 'bigcast', w: 5, chip: 'Mana-value band', title: 'Expensive Spells Matter', sub: 'The printed band is the curve', test: MV_HIGH_RE, q: '(-t:land mv>=4)', oq: 'o:"or greater"', why: 'prints a MANA-VALUE floor on its own spells — the number on the card is the deck’s curve, so every slot either sits above the band or gets you there' },
-    { key: 'countersgen', w: 5, chip: 'Counters', title: 'Counter Engine', sub: 'Any counter, more of it', sup: ['counters', 'proliferate', 'minuscounters'], test: /counters? on |counters? from among|remove [^.]{0,26}counter|\bmove [^.]{0,26}counter/, q: '(o:proliferate OR (o:"put a" o:"counter on"))', oq: 'o:"counter on"', why: 'runs on counters \u2014 proliferate scales every source' },
+    { key: 'countersgen', w: 5, chip: 'Counters', title: 'Counter Engine', sub: 'Any counter, more of it', sup: ['counters', 'proliferate', 'minuscounters'], test: COUNTERS_GEN_RE, q: '(o:proliferate OR (o:"put a" o:"counter on"))', oq: 'o:"counter on"', why: 'runs on counters \u2014 proliferate scales every source' },
     // v7.28 (Massacre Girl, Known Killer STUDY) \u2014 THE MINUS DIRECTION OF THE COUNTERS FAMILY.
     // See MINUS_COUNTER_RE above for the detector, the negation guard and the full 3,348-commander
     // census. Weight 7 so it outranks `countersgen` (5) and `proliferate` (6) \u2014 the two atoms that
@@ -8706,7 +8715,9 @@ function tribeFromTemplates(o, list) {
 const TRIBE_SCAN_RE = TRIBES.map(function (t) {
     if (TRIBE_GENERIC[t]) return null;
     const e = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return new RegExp('\\b' + e + '(?:s you control\\b| you control\\b| spells\\b| creature cards\\b| creature spell\\b)|\\beach ' + e + '\\b');
+    // v8.74b — `e?s`: "-es" plurals. CAPTAIN AMERICA-class text ("you and other HEROES you control have hexproof") and
+    // Foxes/Witches never matched "<tribe>s you control", so a Hero deck read as nothing at all.
+    return new RegExp('\\b' + e + '(?:e?s you control\\b| you control\\b| spells\\b| creature cards\\b| creature spell\\b)|\\beach ' + e + '\\b');
 });
 function detectTribe(o) {
     const named = tribeFromTemplates(o, TYPAL_TEMPLATES);
@@ -8736,7 +8747,7 @@ function detectTribe(o) {
 // v7.16 detector additions land two of them straight away (Ulalek -> "More Eldrazi",
 // Verdeloth -> "More Treefolk", which would otherwise have read "Eldrazis"/"Treefolks").
 const TRIBE_PLURAL_SAME = { astartes: 1, eldrazi: 1, kithkin: 1, kor: 1, moonfolk: 1, myr: 1, samurai: 1, treefolk: 1, vedalken: 1 };
-const TRIBE_PLURAL_IRR = { mouse: 'mice', ox: 'oxen', fungus: 'fungi', pegasus: 'pegasi' };
+const TRIBE_PLURAL_IRR = { mouse: 'mice', ox: 'oxen', fungus: 'fungi', pegasus: 'pegasi', hero: 'heroes' };
 function pluralTribe(t) {
     t = String(t || ''); const l = t.toLowerCase();
     if (TRIBE_PLURAL_SAME[l]) return t;
@@ -9402,7 +9413,9 @@ function extractAtoms(card) {
     // Voltron second (EDHREC Merfolk #1, 17); and Callaphe keeps Devotion Payoffs leading with
     // Voltron and her enchantment rails behind (EDHREC Auras 94 / Enchantress 62 / Devotion 57 /
     // Voltron 56 — all four now represented, in very nearly EDHREC's own order).
-    if (!hasGear && (voltronKws.some(k => kws.indexOf(k) !== -1) || (!kws.length && voltronRe.test(oSelf)) || SELF_TAX_RE.test(o))) {
+    // v8.74b — a KEYWORD COUNTER is not the keyword printed: Mondrak/Solphim/Zopandrel/Drivnod pay to put "an indestructible
+    // counter" on themselves as a protection cost, and that phrase was firing Voltron (it LED Mondrak, a token doubler).
+    if (!hasGear && (voltronKws.some(k => kws.indexOf(k) !== -1) || (!kws.length && voltronRe.test(oSelf.replace(/\b(?:hexproof|indestructible|shroud|double strike) counters?\b/g, ''))) || SELF_TAX_RE.test(o))) {
         found.push({ atom: ATOM_VOLTRON, snippet: '' });
     }
     // v7.12 (Spider-Man, Web-Slinger study) — KEYWORD-ABILITY read. See KEYWORD_ATOMS above for
@@ -18694,6 +18707,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v8.75', date: '2026-11-24', focus: 'ui', commander: '—', summary: "ENGINE FIXES found while checking the Rhonas study. (1) A keyword counter (indestructible, shield, flying, double strike) is no longer read as a +1/+1-counters engine: Mondrak, Solphim, Zopandrel and Drivnod stop being shown proliferate shelves for the counter they pay to protect themselves, and Mondrak no longer leads with Voltron. Counter doublers Pir and Brad Boimler now get the counters read they always deserved. (2) Hero decks are read as Hero typal (Captain America, Invisible Woman, The Thing, Zarda) — the engine could not read the plural 'Heroes'. Shelf titles say 'Heroes', not 'Heros'." },
     { build: 'v8.74', date: '2026-11-24', focus: 'ui', commander: '—', summary: "COMMANDER STUDY — GOD-ETERNAL RHONAS & XENAGOS, from r/EDH threads, official rulings and written primers. (1) Rhonas had no commander rails at all; a new 'Double the Whole Team' read gives him and Zopandrel big evasive bodies, team trample (players' top complaint: 'no trample and gets chumped'), cards that draw or deal damage equal to power, and ways to make Rhonas enter again (Temur Sabertooth, Stampeding Wildebeests, Panharmonicon, Helm of the Host). Rhonas notes: build the board first and pump before his trigger resolves. (2) Xenagos gains 'Cash In the Power' — Greater Good, Momentous Fall, Life's Legacy, Fling, Chandra's Ignition — plus community notes (stay tall; keeping him an enchantment is a feature). (3) Fixed: Doran, Besieged by Time was misread as a power doubler and shown Xenagos shelves." },
     { build: 'v8.73', date: '2026-11-19', focus: 'ui', commander: '—', summary: "COMMUNITY PASS — the last four studies re-checked against Reddit (r/EDH, r/CompetitiveEDH, r/magicTCG) and the official rulings. GISA's removal shelf is now one-sided only: players report symmetric board wipes get her nothing, because she has to survive to your upkeep (Damnation, All Is Dust out; edicts, Grave Pact, one-sided wipes in). VENSER and the other 38 own-entry commanders gain Copy the Commander (Spark Double, Phantasmal Image, Blade of Selves). MAHA gains Stop Their Counters (Blightbeetle, Spike Cannibal) — +1/+1 counters are how boards survive her. New traps from the community and rulings: Gisa's stolen creatures have no haste and an opponent's Rest in Peace wins the exile choice; Homeward Path does not reset decayed; Teferi does not stop YOUR interaction; Toxrill is not legal under Maha; an infinite Venser blink is mass land destruction for bracket purposes. Measured across all 3,675 commanders: 40 gained a shelf, none lost one." },
     { build: 'v8.72', date: '2026-11-19', focus: 'ui', commander: '—', summary: "STUDY — WHEN THEIR CREATURES DIE (Gisa, Glorious Resurrector + Maha, Its Feathers Night), community-first. Both rendered blank. GISA turns opponents' deaths into your creatures at your upkeep (decayed): Make Their Creatures Die (destroy, -X/-X and edicts — an opponent's sacrifice IS a death, despite a popular deck tech saying otherwise; exile removal, bounce and tokens give you nothing), Cash In the Decayed (free sacrifice outlets), and Steal & Keep (blinks that return the card under YOUR control — most say 'its owner's control' and would hand it back). MAHA sets their creatures to base toughness 1, so every ping is a one-sided wipe: One-Damage Sweepers (Pestilence, Crypt Rats, Massacre Girl), Global -1/-1 (Night of Souls' Betrayal — it hits your creatures too), Profit When Theirs Die (The Meathook Massacre, Massacre Wurm). Traps recorded: counters and anthems apply on top of base toughness, so those boards survive a ping. Four commanders that print Gisa's exile clause as graveyard hate are deliberately untouched. Measured across all 3,675 commanders: exactly these two changed." },
