@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="Oracle">
 <meta name="theme-color" content="#0a0b12">
 <title>Oracle — Commander Deck Builder</title>
-<meta name="oracle-build" content="v8.78 · 2026-11-24">
+<meta name="oracle-build" content="v8.79 · 2026-11-24">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0b12'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23e0c46a' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.4' fill='%23f0da89'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2240,7 +2240,7 @@
 <body>
 <div id="root"><div class="boot-state">Loading Oracle…</div></div>
 <script>
-console.info('%cORACLE%c v8.78 \u00B7 2026-11-24', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
+console.info('%cORACLE%c v8.79 \u00B7 2026-11-24', 'color:#f0da89;font-weight:bold;letter-spacing:2px', 'color:#888');
 window.__oracleShowBootFailure = function (msg) {
   var r = document.getElementById('root');
   if (r && !window.__oracleMounted) r.innerHTML = '<div class="boot-state">' + msg + '<br>Pull down to refresh and try again.</div>';
@@ -6386,9 +6386,28 @@ function actDiscountable(cost) {
 // adapt and level up read like mana-costed activations but each stops paying after it resolves, so
 // a discount and a copier are worth a fraction of what they are worth on a repeatable ability.
 const ACT_ONCE_ONLY_RE = /^(?:monstrosity|adapt|level up)\b/;
+// v8.79 (Mondrak, Glory Dominus STUDY 2026-11-24) — AN ACTIVATION THAT ONLY PROTECTS ITS OWN SOURCE
+// IS A SHIELD, NOT AN ENGINE. Mondrak's "{1}{W/P}{W/P}, Sacrifice two other artifacts and/or
+// creatures: Put an indestructible counter on Mondrak" was read twice over as a deck plan: the
+// sacrifice in its COST fired the `sac` atom (Aristocrats led his report) and its generic pip made
+// it a mana sink ("More Out of Each Activation", "Mana to Burn"). The community reads it the way the
+// rules do: a second indestructible counter does nothing, so you activate it ONCE, in response to
+// removal, and the deck is tokens. The same shape is the whole Dominus cycle (Solphim discards for
+// it, Zopandrel and Drivnod pay without a generic pip) and the regenerate/"gains indestructible"
+// self-shields (Thrun, Ink-Eyes, Korlash, Kytheon, Wolverine): copying or discounting any of them
+// buys nothing a single activation doesn't. TARGETED shields (Sygg, Eight-and-a-Half-Tails, Ezuri)
+// stay engines — each activation can protect a different body.
+const SELF_PROTECT_FX_RE = /^(?:put an? (?:indestructible|hexproof|shield) counter on (?!target\b|another\b|each\b)[^.;\n]{1,40}|regenerate (?!target\b|another\b|each\b|all\b)[^.;\n]{1,40}|(?!target\b|another\b|each\b|all\b|other\b|creatures\b)[^.;\n]{1,40}? gains (?:indestructible|hexproof|shroud|protection from [^.;\n]{1,30})(?: and (?:indestructible|hexproof|shroud))? until end of turn)$/;
+// The `sac` atom's input with every self-shield activation whose COST sacrifices removed, so a
+// sacrifice paid only to protect the commander can't make it an aristocrats deck. Kels keeps the
+// atom through "whenever you sacrifice a creature"; Rhys the Exiled (sac an Elf: regenerate Rhys)
+// correctly loses it. A MANA-FREE sacrifice is never stripped, whatever it buys: Yahenni's
+// "Sacrifice another creature: Yahenni gains indestructible" and Varolz's regenerate are free,
+// repeatable outlets, and a free outlet is the aristocrats engine itself — the shield is incidental.
+const stripSelfProtectSac = o => o.replace(/^([^\n:]*\bsacrifice[^\n:]*):\s*([^.;\n]*)/gm, (m, cost, fx) => /\{/.test(cost) && SELF_PROTECT_FX_RE.test(fx.trim()) ? ' ' : m);
 function manaSinkActivations(o) {
     return manaActivations(o).filter(a => actDiscountable(a.cost)
-        && !/^add\b/.test(a.fx) && !/^transform\b/.test(a.fx) && !ACT_ONCE_ONLY_RE.test(a.fx));
+        && !/^add\b/.test(a.fx) && !/^transform\b/.test(a.fx) && !ACT_ONCE_ONLY_RE.test(a.fx) && !SELF_PROTECT_FX_RE.test(a.fx));
 }
 // v8.07 (Kenrith VERIFY 2026-08-08) — ONE OPINION ABOUT WHAT A MANA-SINK ENGINE IS, shared by the
 // atom push and the parameter layer. v7.40 is the standing lesson about hoisting only half of a
@@ -6419,7 +6438,9 @@ function copyableActivations(o) {
     // templates (monstrosity / adapt / level up) is mana-costed, so applying the exclusion here
     // rather than to both halves is a no-op in substance and the only placement that cannot drift.
     const manaFx = manaActivations(o).filter(a => !/^add\b/.test(a.fx) && !/^transform\b/.test(a.fx) && !ACT_ONCE_ONLY_RE.test(a.fx)).map(a => a.fx);
-    return tapFx.concat(manaFx);
+    // v8.79 — a copied self-shield (a second indestructible counter, a second regeneration shield)
+    // buys nothing, so Rings of Brighthearth has nothing to copy on Mondrak; see SELF_PROTECT_FX_RE.
+    return tapFx.concat(manaFx).filter(fx => !SELF_PROTECT_FX_RE.test(fx));
 }
 // v8.08 (Yawgmoth, Thran Physician STUDY 2026-08-08) — THE THIRD COST SHAPE, AND THE FIRST READER
 // IN THIS FILE THAT ASKS WHAT AN ACTIVATION *COSTS* RATHER THAN WHICH SYMBOL IT STARTS WITH.
@@ -9158,7 +9179,7 @@ function extractAtoms(card) {
     // it inherits every polarity strip above it and no other atom's input changes by one byte. The
     // clue/food/treasure/blood commanders keep their OWN families (all four atoms exist and all four
     // have rails) — this only stops them ALSO being handed an Aristocrats plan they cannot execute.
-    const oSac = oPol.replace(ARTIFACT_TOKEN_SAC_RE, ' ');
+    const oSac = stripSelfProtectSac(oPol.replace(ARTIFACT_TOKEN_SAC_RE, ' '));
     // v7.01 (Zacama study) — REMOVAL-TARGET NOUN GUARD, fed only to the noun-theme atoms
     // (enchantments / artifacts). See stripRemovalNouns above.
     // v7.77 — the second half of the noun read; see stripTypeListNouns. Composed AFTER the
@@ -10341,6 +10362,9 @@ STUDY_DB["d0ade00d-a496-441d-9b7e-7dc033d3292c"] = {"traps":["THE SOURCE ZONE IS
 // against ALL THREE of his Gatherer rulings, fetched verbatim this run, and against his EDHREC
 // page (Lifegain 194 against Tokens 18, a ten-to-one lead). Exactly TRAP_RENDER_MAX traps.
 STUDY_DB["a177295e-3b58-4e46-a1cb-fc003a7a0848"] = {"insight": "The Gaffer is a mono-white LIFEGAIN-THRESHOLD ENGINE, and the two words that build the deck are “each end step.” He is not a lifegain deck that draws cards; he is a card-draw deck whose meter resets four times per turn cycle. Clear three life in your own turn and you draw once. Clear three life in EVERY player's turn and the same 2/3 for {2}{W} draws FOUR cards a lap in a four-player pod, which is why Soul Warden (67% synergy) and Soul's Attendant (69%) are his #1 and #2 cards in the whole format: they trigger on EVERY player's creatures, not just yours, so the meter fills on turns you are not taking. Auriok Champion, Suture Priest, Authority of the Consuls, Shattered Angel and Crested Sunmare are on his page for the identical reason, and Rhox Faithmender is there because doubling turns one Soul Warden trigger into two. Build the number of gain EVENTS across all four turns, not the size of any one of them — then spend the tank on the threshold payoffs that share his switch (Angelic Accord, Resplendent Angel, Valkyrie Harbinger, Griffin Aerie, The Book of Exalted Deeds all read ‘gained N or more life this turn’ and all turn on together) and close with Aetherflux Reservoir, Felidar Sovereign or Test of Endurance.", "traps": ["“You draw just one card, no matter how much life you've gained past 3 life.” One Congregate for 20 draws exactly as many cards as gaining 3 — the size of a gain is worth NOTHING past the third point. Big one-shot lifegain spells are the trap; cheap repeatable triggers that clear 3 again next turn are the deck.", "“It doesn't care if you also lost life, even if you lost more life than you gained.” Your LIFE TOTAL is irrelevant to him; only the amount GAINED is counted. Painlands, fetches, Phyrexian mana, Necropotence-style life payment and symmetric group-hug gains are all completely free here, and a turn where you gain 4 and lose 10 still draws you a card.", "“If you haven't gained 3 or more life by the time an end step begins, The Gaffer's ability won't trigger at all.” It is an intervening-if checked as the step BEGINS, so instant-speed lifegain held up until the end step is too late for that end step's trigger — gain during the turn, not after it.", "He gains ZERO life himself. A pile of lifegain PAYOFFS with no sources never turns on, and three is a real floor: a single Soul Warden trigger is one point, not three. The deck needs several gain triggers per turn cycle stacked (Soul Warden plus Soul's Attendant plus Auriok Champion), a lifelink attacker, or a doubler.", "“The Gaffer's ability looks at how much life you've gained in the turn, even if it wasn't on the battlefield when you gained life.” He does not have to be out when the life is gained — only when the end step begins — so recasting him into a turn where you have already gained still draws, and he is safe to hold up rather than deploy into an open board."]};
+// v8.79 (Mondrak, Glory Dominus / Chatterfang, Squirrel General STUDY 2026-11-24) — community-first pair; see SELF_PROTECT_FX_RE and TOKEN_ANY_REPL_RE.
+STUDY_DB["fe83087d-c6c1-40be-9295-baaa1c6b2db1"] = {"traps": ["THE SACRIFICE IS A SHIELD, NOT AN ENGINE. {1}{W/P}{W/P} plus two artifacts or creatures buys ONE indestructible counter, and a second counter does nothing, so you activate it once, ideally in response to a destroy effect, and never again. Building Mondrak as an aristocrats deck around that line (Blood Artist, Zulaport) spends slots on a plan the card never asks for; the community and the engine both read this as a tokens deck that keeps two spare tokens around for insurance.", "INDESTRUCTIBLE IS NOT SAFE. The counter stops destroy effects and lethal damage only. Exile (Swords to Plowshares, Farewell), bounce, tuck, edicts and -X/-X all still answer it, and players report pods that simply remove Mondrak again before the counter goes on. Keep W open for the activation, and run Flawless Maneuver, Teferi's Protection or Heroic Intervention for the board.", "CAST TRIGGERS AND COPIED PERMANENT SPELLS ARE NOT DOUBLED. Oketra's Monument triggers when you CAST Mondrak, so its token is made while Mondrak is still on the stack and comes out single. A copy of a permanent spell (The Sixth Doctor) becomes a token without being CREATED, so no doubler, Mondrak or Parallel Lives, touches it.", "EVERY TOKEN COUNTS, NOT JUST CREATURES. The text says \"tokens\", so Smothering Tithe makes two Treasures, Academy Manufactor stacks with it, and Food and Clue engines double too. Ojer Taq triples only creature tokens; Mondrak doubles them all.", "MONDRAK ARRIVES ON TURN FOUR, SO BIG ONE-SHOT TOKEN SPELLS BEAT EARLY TRICKLES. Players who run it say the tokens mostly come AFTER Mondrak lands, so Secure the Wastes, Conqueror's Pledge, Increasing Devotion, White Sun's Twilight and Martial Coup make ten-plus bodies, where a two-drop that makes one token a turn only begins to matter later. Copy-token engines (Helm of the Host with Legion Loyalty, Battle Angels of Tyr) are the community's favourite explosions."], "insight": "Mondrak, Glory Dominus is a mono-white token DOUBLER whose second line is a bodyguard. Everything that has a token in it, creature or not, comes in twice: everything the creating effect specifies (tapped and attacking, counters on it) is true of the copies too, per the ruling. The sacrifice ability exists to keep the doubler alive through destroy-based removal, which is why the engine no longer reads it as an aristocrats or mana-sink deck. Close the game with anthems and overruns (Intangible Virtue, Starlight Spectacular, Skyhunter Strike Force), since a hundred 1/1s still need a pump to deal 120 damage. Mondrak is also often played in the 99 of Thalisse, Myrel or Adeline rather than at the helm, so its doubling stacks with Anointed Procession and Parallel Lives multiplicatively. Community: r/EDH threads 2023-2024 (Bennie vs Mondrak vs Ojer Taq, 'Can a player use Mondrak's ability more than once', Oketra's Monument timing); Cardsrealm commander page."};
+STUDY_DB["f15b3b76-d38a-48db-bb44-3296183c8641"] = {"traps": ["HIS ABILITY IS THE SACRIFICE OUTLET, AND PITILESS PLUNDERER CLOSES THE LOOP. {B}, sacrifice a Squirrel: Plunderer makes a Treasure, Chatterfang turns that token into a Treasure plus a Squirrel, and the Treasure pays the next {B}. That is an unbounded loop of deaths and -1/-1 on opposing creatures with no third card; Blood Artist or Zulaport Cutthroat converts it into a win. Commander Spellbook lists it, and r/EDH calls Plunderer, Scurry Oak and Ivy Lane Denizen \"Chatterfang 101\".", "ANY TOKEN MAKES A SQUIRREL. The ruling says Clue, Food and Treasure count, so Tireless Provisioner, Academy Manufactor, Gilded Goose, Deadly Dispute and Black Market Connections are creature makers here. A deck that only counts creature-token makers undercounts its own fodder by half.", "THE EXTRA SQUIRRELS ARE PLAIN 1/1s. Per the ruling, they don't get the original token's abilities, but tapped-and-attacking and \"exile at end of combat\" do apply to them. Squirrels made alongside Myriad or Hero of Bladehold attackers are attacking too, then are exiled with them when the effect says so.", "+X/-X IS REMOVAL FIRST, A PUMP SECOND. Sacrificing X Squirrels gives -X toughness, so it kills an X-toughness creature at instant speed for {B}, including indestructible ones, and players call it \"removal on a stick\". It is also how the Dead Man's Chest and Nested Shambler lines work: target your own or an enchanted creature so it dies for value.", "HE IS A BRACKET PROBLEM. Players report that a fair bracket-3 build keeps stumbling into two-card infinites by turn four, because the best Chatterfang cards (Plunderer, Warren Soultrader, Ivy Lane Denizen plus Scurry Oak) are combo pieces. Decide the bracket first and cut those cards deliberately if the table is casual."], "insight": "Chatterfang, Squirrel General is a Golgari TOKEN-ADDER that is his own sacrifice outlet. Every token you make, of any kind, brings a 1/1 Squirrel with it, and the {B} ability turns those Squirrels into instant-speed +X/-X removal or a death-trigger engine. That makes him the rare token commander that really is aristocrats. The engine's new 'Every Token Counts' and 'Deaths Into Tokens' shelves are the noncreature-token makers and the death-into-token cards (Pitiless Plunderer, Ogre Slumlord, Ghoulish Procession) that turn each death into more fodder. The pair with Mondrak is the lesson: both replace token creation, but Mondrak's sacrifice buys a shield and Chatterfang's sacrifice is the deck. Forestwalk is unreliable (most opponents aren't green), so don't count on him connecting. Community: r/EDH deck techs 2021-2026, the Sephiroth-vs-Chatterfang bracket thread, EDHREC 'Power Sink: Chatterfang Off the Walnuts', Commander Spellbook combo 3000-4871."};
 // v8.36 (Gavi, Nest Warden STUDY) — NAME-KEYED, and the reason is recorded rather than assumed:
 // api.scryfall.com has answered with an empty body for every run since v7.57, so this run could
 // not look her oracle_id up. assertStudyKeys() re-checks at boot that no id-keyed entry shadows
@@ -10368,6 +10392,20 @@ const ROLE_LABEL = { enabler: 'Enabler', payoff: 'Payoff', amplifier: 'Amplifier
 // TRIPLER wording, which pulls in Ojer Taq, Deepest Foundation (the format's premier token
 // tripler) that the generic Token Doublers rail had been missing for EVERY token commander.
 const TOKEN_MULT_VERB = '(o:"twice that many" OR o:"three times that many")';
+// v8.79 (Mondrak / Chatterfang STUDY 2026-11-24) — A TOKEN REPLACEMENT THAT READS "TOKENS", NOT
+// "CREATURE TOKENS", SEES TREASURE, FOOD AND CLUES TOO. Chatterfang's ruling says so outright ("applies
+// to all kinds of tokens, including Clue, Food, and Treasure tokens") and Mondrak's text is the same
+// template, so for these commanders a Treasure maker is a token maker: Smothering Tithe makes two
+// Treasures under Mondrak, and Pitiless Plunderer makes a Treasure AND a Squirrel under Chatterfang.
+// Ojer Taq and Queen Allenal say "creature tokens" and are deliberately not matched.
+const TOKEN_ANY_REPL_RE = /if one or more tokens would be created under your control/;
+const TOKEN_NONCREATURE_MAKER_Q = '-t:land o:/creates? (a|an|one|two|three|four|x|that many) (tapped )?(treasure|food|clue|blood|map|powerstone|gold|junk)\\b/ -o:"opponent creates" -o:"that player creates"';
+// The add-a-creature version of the same replacement (Chatterfang's Squirrels, Quina's Frogs): every
+// token made brings an extra body, so a death that makes ANY token puts more creatures back than it
+// took. That is the community's "Chatterfang 101" loop — Pitiless Plunderer plus a free sac outlet
+// turns each Squirrel into a Treasure and a new Squirrel, forever.
+const TOKEN_PLUS_CREATURE_RE = /if one or more tokens would be created under your control, those tokens plus [^.]{0,40}creature tokens?/;
+const DEATH_TO_TOKEN_Q = '-t:land o:/whenever (a|another|one or more) (other )?(nontoken )?creatures? (you control )?(dies|die|is put into a graveyard from the battlefield), (you may )?(pay [^,]{1,12}\\. if you do, )?create/';
 // v7.70 (Prosper, Tome-Bound STUDY 2026-08-06) — THE ENGINE READ ARISTOCRATS ONLY THROUGH
 // CREATURE DEATH, so a whole payoff class had no shelf anywhere in the app.
 // Every drain/sacrifice shelf in RAILS keys on a CREATURE dying: `death` is
@@ -12110,7 +12148,10 @@ const RAILS = {
             // clause of the Scryfall string the reader never sees. It shipped to 163 of 1,225 census
             // commanders. Kept here as the comment it always was \u2014 the `(o:token OR o:counter)`
             // conjunct is what excludes Bruvac-class "twice that many" mill doublers. Query untouched.
-            { role: 'amplifier', title: 'Token Doublers', sub: 'Two for one', q: '(' + TOKEN_MULT_VERB + ' (o:token OR o:counter))', why: 'Doubling Season, Parallel Lives, and Primal Vigor double every mint \u2014 Ojer Taq triples it' }
+            { role: 'amplifier', title: 'Token Doublers', sub: 'Two for one', q: '(' + TOKEN_MULT_VERB + ' (o:token OR o:counter))', why: 'Doubling Season, Parallel Lives, and Primal Vigor double every mint \u2014 Ojer Taq triples it' },
+            // v8.79 — see TOKEN_ANY_REPL_RE / TOKEN_PLUS_CREATURE_RE.
+            { role: 'enabler', title: 'Every Token Counts', sub: 'Treasure, Food and Clues too', test: TOKEN_ANY_REPL_RE, q: TOKEN_NONCREATURE_MAKER_Q, why: 'the replacement reads \u201ctokens\u201d, not creature tokens, so Treasure, Food and Clue makers feed it exactly as soldier makers do \u2014 and the ones that make a token every turn feed it every turn' },
+            { role: 'enabler', title: 'Deaths Into Tokens', sub: 'Every death refills the board', test: TOKEN_PLUS_CREATURE_RE, q: DEATH_TO_TOKEN_Q, why: 'each token you make arrives with an extra creature, so a death that makes any token puts back more bodies than it took \u2014 with a free sacrifice outlet (Ashnod\u2019s Altar, Viscera Seer, Warren Soultrader) that is a loop, and a drain like Zulaport Cutthroat ends the game' }
         ]
     },
     // -1/-1 COUNTERS family (Massacre Girl, Known Killer STUDY 2026-08-05). The mirror of the
@@ -18771,6 +18812,7 @@ function Skeletons({ n, wrap, lines }) {
 // Newest first. One entry per improvement run. The badge in the topbar shows
 // CHANGELOG[0].build and must always match <meta name="oracle-build">.
 const CHANGELOG = [
+    { build: 'v8.79', date: '2026-11-24', focus: 'ui', commander: '—', summary: "COMMANDER STUDY — MONDRAK, GLORY DOMINUS and CHATTERFANG, SQUIRREL GENERAL, from the rulings, r/EDH threads, EDHREC's Chatterfang article and Commander Spellbook. Both replace token creation; the difference is the sacrifice. Mondrak's sacrifice only buys itself an indestructible counter, so it no longer reads as an Aristocrats or mana-sink deck and leads with tokens — and the same fix reaches the other Dominuses and self-regenerators (Zopandrel gets its Extra Combats shelf back). A sacrifice that costs no mana (Yahenni, Varolz) is still a free outlet and stays Aristocrats. New shelves: Every Token Counts (Treasure, Food and Clue makers count for token replacers like Mondrak and Chatterfang) and Deaths Into Tokens (Pitiless Plunderer's loop for Chatterfang and Quina). Notes for both commanders cover the shield timing, cast triggers that aren't doubled, the two-card Plunderer loop, +X/-X as removal and the bracket warning." },
     { build: 'v8.78', date: '2026-11-24', focus: 'ui', commander: '—', summary: "COMMANDER STUDY — ANZRAG, THE QUAKE-MOLE, from r/EDH threads, the rulings and Draftsim's guide, and every commander paid when its creature becomes blocked (Anzrag, Grazilaxx, General Marhault, Norin, She-Hulk, Ib Halfheart, Bill Ferny, Nivea). New 'Get Blocked' read: Lures & Forced Blocks (nobody blocks voluntarily), Survive the Block for commanders whose creature stays in combat (Darksteel Plate, Mithril Coat, Dolmen Gate, Zilortha), and Give Them Blockers (Hunted Troll, Akroan Horse, Forbidden Orchard — no blocker means no trigger). Anzrag's notes cover the blocker loop and the deck's missing card draw." },
     { build: 'v8.77', date: '2026-11-24', focus: 'ui', commander: '—', summary: "COMMANDER STUDY — FLORIAN, VOLDAREN SCION, from r/EDH threads and the rulings, and the commanders that read 'life your opponents lost this turn' (Florian, Rakdos Lord of Riots, Sygg, Davros, Abaddon). They now get Bleed Every Opponent (damage to EACH opponent scales; damage on their turns doesn't count), Double the Damage, and for Florian Extra Combats (each extra main phase re-fires him). Florian's notes: X of 3-5 is plenty since he exiles one card, and keep mana open after combat to cast it. Neheb's own read is unchanged." },
     { build: 'v8.76', date: '2026-11-24', focus: 'ui', commander: '—', summary: "COMMANDER STUDY — NEYITH OF THE DIRE HUNT, from r/EDH threads, the official rulings and Goonhammer's primer. She showed only generic shelves; now she reads as Fight Club: creatures that fight on their own bodies (players say these beat a pile of fight spells), cheap fight spells (only real fights draw — a bite like Ram Through doesn't, per the rulings), deathtouch to make every fight and forced block a kill (Ohran Frostfang, Basilisk Collar, Saryth), and Lure effects, since being blocked draws too. Notes cover the defender choosing the forced blocker (give the doubled creature trample or deathtouch) and paying only once per combat." },
